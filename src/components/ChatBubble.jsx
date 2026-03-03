@@ -97,7 +97,7 @@ export default function ChatBubble({
       {/* ── Bubble body ── */}
       <div style={{
         maxWidth: '75%',
-        padding: '12px 16px',
+        padding: isAI ? '12px 0' : '12px 16px',
         borderRadius: isAI ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
         background: isAI ? 'transparent' : 'var(--color-brand)',
         color: isAI ? 'var(--text-primary)' : '#fff',

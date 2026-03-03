@@ -7,6 +7,25 @@ const MENTION_ITEMS = [
   { id: 3, name: 'Something makes seance',          handle: 'Whatever@' },
 ]
 
+function WaveAnimation() {
+  const delays = ['0ms', '120ms', '240ms', '80ms', '200ms']
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2, height: 14 }}>
+      {delays.map((delay, i) => (
+        <span key={i} style={{
+          display: 'inline-block',
+          width: 2,
+          height: 2,
+          borderRadius: 1,
+          background: '#FF7056',
+          animation: 'wave-bar 900ms ease-in-out infinite',
+          animationDelay: delay,
+        }} />
+      ))}
+    </div>
+  )
+}
+
 function ThinkingDots() {
   const base = {
     display: 'inline-block',
@@ -34,13 +53,37 @@ function getActiveMention(text, cursorPos) {
 }
 
 export default function ChatInput({ onSubmit, onMentionChange, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null }) {
-  const [text, setText]       = useState(defaultText)
-  const [hovered, setHovered] = useState(false)
+  const [text, setText]           = useState(defaultText)
+  const [hovered, setHovered]     = useState(false)
   const [mentionQuery, setMentionQuery] = useState(initialMentionQuery)
   const [mentionStart, setMentionStart] = useState(0)
   const [activeIndex, setActiveIndex]   = useState(0)
   const [uploadOpen, setUploadOpen]     = useState(initialUploadOpen)
-  const textareaRef = useRef(null)
+  const [listening, setListening] = useState(false)
+  const textareaRef    = useRef(null)
+  const recognitionRef = useRef(null)
+
+  function toggleListening() {
+    if (listening) {
+      recognitionRef.current?.stop()
+      return
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) return
+    const rec = new SR()
+    rec.continuous      = false
+    rec.interimResults  = true
+    rec.lang            = 'en-US'
+    rec.onresult = (e) => {
+      const transcript = Array.from(e.results).map(r => r[0].transcript).join('')
+      setText(transcript)
+    }
+    rec.onend = () => setListening(false)
+    rec.onerror = () => setListening(false)
+    recognitionRef.current = rec
+    rec.start()
+    setListening(true)
+  }
 
   useEffect(() => {
     onMentionChange?.(mentionQuery !== null)
@@ -216,16 +259,19 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
             <div className="relative w-9 h-9">
               <button
                 aria-label="Voice input"
+                onClick={toggleListening}
                 style={{
-                  transition: 'opacity 200ms ease, transform 200ms ease',
+                  transition: 'opacity 200ms ease, transform 200ms ease, background 200ms ease',
                   opacity: (text.trim() || loading) ? 0 : 1,
                   transform: (text.trim() || loading) ? 'scale(0.8)' : 'scale(1)',
                   pointerEvents: (text.trim() || loading) ? 'none' : 'auto',
-                  color: 'var(--text-muted)',
+                  color: listening ? '#FF7056' : 'var(--text-muted)',
+                  background: listening ? 'rgba(255,112,86,0.08)' : 'transparent',
+                  borderRadius: 10,
                 }}
-                className="absolute inset-0 flex items-center justify-center rounded-xl"
+                className="absolute inset-0 flex items-center justify-center"
               >
-                <MicIcon />
+                {listening ? <WaveAnimation /> : <MicIcon />}
               </button>
               {/* Submit button — arrow slides out, dots slide in */}
               <button
