@@ -21,41 +21,35 @@ function StorybookDisabledButton() {
   const [hovered, setHovered] = useState(false)
 
   return (
-    <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+    <div style={{ position: 'relative', width: '100%' }}>
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
-          display:        'flex',
-          alignItems:     'center',
-          gap:            10,
-          padding:        '7px 12px',
-          borderRadius:   8,
-          background:     'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
-          color:          '#fff',
-          fontSize:       13,
-          fontWeight:     500,
-          letterSpacing:  '0.01em',
-          opacity:        0.38,
-          cursor:         'not-allowed',
-          userSelect:     'none',
-          pointerEvents:  'auto',
+          width:       '100%',
+          display:     'flex',
+          alignItems:  'center',
+          gap:         10,
+          padding:     '8px 12px',
+          borderRadius: 8,
+          background:  'transparent',
+          color:       'var(--text-muted)',
+          fontSize:    13.5,
+          fontWeight:  400,
+          cursor:      'not-allowed',
+          userSelect:  'none',
         }}
       >
-        {/* Hear logo mark */}
-        <svg
-          width="18" height="16" viewBox="0 0 69 60" fill="none"
-          xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
-          style={{ flexShrink: 0 }}
-        >
-          <path d="M63.6202 25.6905C66.431 26.6546 69 26.1754 69 28.5414C69 30.9074 65.4639 29.2245 61.4139 32.459C57.364 35.6935 56.1551 40.0061 53.4954 45.4868C50.8357 50.9675 46.5138 61.4496 39.1091 59.8324C31.7043 58.2151 34.2129 46.1157 34.0618 41.1741C33.9106 36.2325 33.2457 32.5189 29.2865 32.0696C25.3272 31.6204 23.0302 34.6153 20.7332 38.2391C18.4363 41.863 16.502 49.3802 11.0315 47.7629C5.5611 46.1457 9.3088 36.1726 7.46518 33.2077C5.62155 30.2427 3.17346 30.1886 2.29698 30.1886C1.4205 30.1886 8.16629e-06 29.7394 0 28.5714C-8.16629e-06 27.4033 1.26938 27.0739 2.29698 27.0739C3.32457 27.0739 4.60326 27.2375 7.19317 26.5291C13.6307 24.7681 12.8147 11.2251 20.1288 11.5845C27.0146 11.9229 23.4533 26.0798 30.0118 26.0798C36.5703 26.0798 38.7464 18.5027 41.4665 12.8424C44.1866 7.18205 49.4152 -1.32349 56.1551 0.173941C62.8949 1.67137 60.5677 14.1302 60.1445 18.0535C59.7214 21.9768 60.8095 24.7264 63.6202 25.6905Z" fill="white"/>
+        {/* Hear wave mark — same size as other nav icons */}
+        <svg width="16" height="16" viewBox="0 0 69 60" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ flexShrink: 0 }}>
+          <path d="M63.6202 25.6905C66.431 26.6546 69 26.1754 69 28.5414C69 30.9074 65.4639 29.2245 61.4139 32.459C57.364 35.6935 56.1551 40.0061 53.4954 45.4868C50.8357 50.9675 46.5138 61.4496 39.1091 59.8324C31.7043 58.2151 34.2129 46.1157 34.0618 41.1741C33.9106 36.2325 33.2457 32.5189 29.2865 32.0696C25.3272 31.6204 23.0302 34.6153 20.7332 38.2391C18.4363 41.863 16.502 49.3802 11.0315 47.7629C5.5611 46.1457 9.3088 36.1726 7.46518 33.2077C5.62155 30.2427 3.17346 30.1886 2.29698 30.1886C1.4205 30.1886 8.16629e-06 29.7394 0 28.5714C-8.16629e-06 27.4033 1.26938 27.0739 2.29698 27.0739C3.32457 27.0739 4.60326 27.2375 7.19317 26.5291C13.6307 24.7681 12.8147 11.2251 20.1288 11.5845C27.0146 11.9229 23.4533 26.0798 30.0118 26.0798C36.5703 26.0798 38.7464 18.5027 41.4665 12.8424C44.1866 7.18205 49.4152 -1.32349 56.1551 0.173941C62.8949 1.67137 60.5677 14.1302 60.1445 18.0535C59.7214 21.9768 60.8095 24.7264 63.6202 25.6905Z" fill="currentColor"/>
         </svg>
         <span style={{ flex: 1 }}>Storybook</span>
         <span style={{
-          fontSize: 9, fontWeight: 700, letterSpacing: '0.08em',
+          fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
           textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4,
-          background: 'rgba(255,255,255,0.20)', border: '1px solid rgba(255,255,255,0.35)',
-          color: '#fff', lineHeight: 1.4, flexShrink: 0,
+          background: 'var(--bg-active)', color: 'var(--text-muted)',
+          lineHeight: 1.4, flexShrink: 0,
         }}>
           DEV
         </span>
@@ -65,7 +59,7 @@ function StorybookDisabledButton() {
       {hovered && (
         <div style={{
           position:     'absolute',
-          bottom:       'calc(100% + 8px)',
+          bottom:       'calc(100% + 6px)',
           left:         '50%',
           transform:    'translateX(-50%)',
           background:   'var(--text-primary)',
@@ -81,18 +75,17 @@ function StorybookDisabledButton() {
           zIndex:       300,
         }}>
           Storybook is currently unavailable.
-          {/* Arrow */}
           <div style={{
-            position:   'absolute',
-            top:        '100%',
-            left:       '50%',
-            transform:  'translateX(-50%)',
-            width:      0, height: 0,
-            borderLeft:  '5px solid transparent',
-            borderRight: '5px solid transparent',
-            borderTopColor: 'var(--text-primary)',
-            borderTopWidth: '5px',
-            borderTopStyle: 'solid',
+            position:        'absolute',
+            top:             '100%',
+            left:            '50%',
+            transform:       'translateX(-50%)',
+            width:           0, height: 0,
+            borderLeft:      '5px solid transparent',
+            borderRight:     '5px solid transparent',
+            borderTopColor:  'var(--text-primary)',
+            borderTopWidth:  '5px',
+            borderTopStyle:  'solid',
           }} />
         </div>
       )}
