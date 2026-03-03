@@ -16,6 +16,10 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ── Font Faces ────────────────────────────────────────────────────────────── */
 @font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-Light.woff2') format('woff2'); font-weight: 300; font-style: normal; }
 @font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-LightItalic.woff2') format('woff2'); font-weight: 300; font-style: italic; }
