@@ -1,6 +1,6 @@
 export default function SignInHero({ badge = 'Design Lab' }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16 }}>
+    <div data-inspector="SignInHero" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 16 }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
         <img
           src="/Logo.svg"

@@ -6,7 +6,7 @@
  */
 export default function EmailForm({ disabled = true }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div data-inspector="EmailForm" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <input
         type="email"
         placeholder="Enter your email"

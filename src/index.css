@@ -225,6 +225,12 @@ body {
   transition: background-color 200ms ease, color 200ms ease;
 }
 
+textarea::placeholder,
+input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
 /* ── Scrollbar ──────────────────────────────────────────────────────────────── */
 .cards-scroll::-webkit-scrollbar { width: 4px; }
 .cards-scroll::-webkit-scrollbar-track { background: transparent; }

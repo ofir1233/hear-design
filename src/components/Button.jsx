@@ -98,6 +98,7 @@ export default function Button({
 
   return (
     <button
+      data-inspector="Button"
       type={type}
       disabled={disabled}
       onClick={!frozen ? onClick : undefined}

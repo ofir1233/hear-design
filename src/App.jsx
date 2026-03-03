@@ -43,7 +43,7 @@ function useIsMobile() {
 }
 
 
-function MainApp() {
+function MainApp({ isDark, onThemeToggle }) {
   const greeting = getGreeting()
   const fullGreeting = `${greeting}, ${USER_NAME}.`
   const isMobile = useIsMobile()
@@ -125,6 +125,8 @@ function MainApp() {
         mobileOpen={sidebarOpen}
         onMobileClose={() => setSidebarOpen(false)}
         isMobile={isMobile}
+        isDark={isDark}
+        onThemeToggle={onThemeToggle}
       />
 
       {/* Mobile hamburger button */}
@@ -147,9 +149,9 @@ function MainApp() {
           }}
           aria-label="Open menu"
         >
-          <span style={{ width: 18, height: 1.5, background: '#374151', borderRadius: 2 }} />
-          <span style={{ width: 18, height: 1.5, background: '#374151', borderRadius: 2 }} />
-          <span style={{ width: 18, height: 1.5, background: '#374151', borderRadius: 2 }} />
+          <span style={{ width: 18, height: 1.5, background: 'var(--text-secondary)', borderRadius: 2 }} />
+          <span style={{ width: 18, height: 1.5, background: 'var(--text-secondary)', borderRadius: 2 }} />
+          <span style={{ width: 18, height: 1.5, background: 'var(--text-secondary)', borderRadius: 2 }} />
         </button>
       )}
 
@@ -171,8 +173,9 @@ function MainApp() {
         <HearLogo className="w-20 h-14 mb-6" />
         <div className="text-center">
           <h1
-            className="text-3xl md:text-5xl font-bold text-gray-900 tracking-tight"
+            className="text-3xl md:text-5xl font-bold tracking-tight"
             style={{
+              color: 'var(--text-primary)',
               opacity: showGreeting ? 1 : 0,
               transform: showGreeting ? 'translateY(0)' : 'translateY(20px)',
               transition: 'opacity 500ms cubic-bezier(0.22,1,0.36,1), transform 500ms cubic-bezier(0.22,1,0.36,1)',
@@ -181,8 +184,9 @@ function MainApp() {
             {fullGreeting}
           </h1>
           <p
-            className="mt-2 text-lg text-gray-400 tracking-wide"
+            className="mt-2 text-lg tracking-wide"
             style={{
+              color: 'var(--text-muted)',
               opacity: showSubtitle ? 1 : 0,
               transform: showSubtitle ? 'translateY(0)' : 'translateY(20px)',
               transition: 'opacity 500ms cubic-bezier(0.22,1,0.36,1), transform 500ms cubic-bezier(0.22,1,0.36,1)',
@@ -289,7 +293,7 @@ function MainApp() {
                   </div>
                   <span style={{ color: '#9ca3af', flexShrink: 0 }}><ExternalLinkIcon /></span>
                 </div>
-                <p style={{ fontSize: 13, color: '#6b7280', margin: 0, lineHeight: 1.5 }}>{req.description}</p>
+                <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{req.description}</p>
               </div>
             ))}
           </div>
@@ -471,6 +475,15 @@ function MainApp() {
 
 export default function App() {
   const [signedIn, setSignedIn] = useState(false)
+  const [isDark, setIsDark] = useState(() => localStorage.getItem('hear-theme') === 'dark')
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
+    localStorage.setItem('hear-theme', isDark ? 'dark' : 'light')
+  }, [isDark])
+
+  const toggleTheme = () => setIsDark(d => !d)
+
   if (!signedIn) return <SignIn onSignIn={() => setSignedIn(true)} />
-  return <MainApp />
+  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} />
 }

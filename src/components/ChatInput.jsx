@@ -161,15 +161,16 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
   const mentionOpen = mentionQuery !== null && filteredItems.length > 0
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
+    <div data-inspector="ChatInput" className="relative w-full max-w-2xl mx-auto">
       {/* Drag indicator dot */}
       <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 border-fuchsia-500" style={{ zIndex: 10 }} />
 
       {/* Card */}
       <div
-        className="bg-white border overflow-hidden"
+        className="border overflow-hidden"
         style={{
-          borderColor: hovered ? '#d1d5db' : '#f3f4f6',
+          background: 'var(--bg-card)',
+          borderColor: hovered ? 'var(--border-default)' : 'var(--bg-active)',
           boxShadow: '0 2px 8px 0 rgba(0,0,0,0.06)',
           transition: 'border-color 200ms ease, border-radius 200ms ease',
           borderRadius: (mentionOpen || uploadOpen)
@@ -190,18 +191,21 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
             placeholder="Ask me anything..."
             className="
               w-full resize-none bg-transparent outline-none
-              text-gray-800 placeholder-gray-400
               text-base leading-relaxed
               min-h-[28px] max-h-48 overflow-y-auto
             "
+            style={{ color: 'var(--text-primary)' }}
           />
 
           {/* Bottom row */}
           <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center gap-3 text-gray-400">
+            <div className="flex items-center gap-3" style={{ color: 'var(--text-muted)' }}>
               <button
                 onClick={() => { setUploadOpen(o => !o); setMentionQuery(null) }}
-                className="hover:text-gray-600 transition-colors text-2xl font-thin leading-none"
+                className="transition-colors text-2xl font-thin leading-none"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
                 aria-label="Add attachment"
               >
                 +
@@ -218,7 +222,8 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
                   transform: (text.trim() || loading) ? 'scale(0.8)' : 'scale(1)',
                   pointerEvents: (text.trim() || loading) ? 'none' : 'auto',
                 }}
-                className="absolute inset-0 flex items-center justify-center rounded-xl text-gray-400 hover:text-gray-600"
+                className="absolute inset-0 flex items-center justify-center rounded-xl"
+                style={{ color: 'var(--text-muted)' }}
               >
                 <MicIcon />
               </button>
@@ -287,16 +292,17 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
       >
         <div className="overflow-hidden">
           <div
-            className={`bg-white px-4 ${settled ? 'border-x border-t rounded-t-2xl pt-3 pb-4' : 'border-x border-b rounded-b-2xl pb-4 pt-3'}`}
+            className={`px-4 ${settled ? 'border-x border-t rounded-t-2xl pt-3 pb-4' : 'border-x border-b rounded-b-2xl pb-4 pt-3'}`}
             style={{
-              borderColor: hovered ? '#d1d5db' : '#f3f4f6',
+              background: 'var(--bg-card)',
+              borderColor: hovered ? 'var(--border-default)' : 'var(--bg-active)',
               boxShadow: settled
                 ? '0 -8px 16px 0 rgba(0,0,0,0.08)'
                 : '0 8px 16px 0 rgba(0,0,0,0.08)',
             }}
           >
             {/* Label */}
-            <p className="text-[11px] font-semibold tracking-widest text-gray-400 uppercase mb-2">
+            <p className="text-[11px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'var(--text-muted)' }}>
               Mention
             </p>
 
@@ -311,25 +317,25 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
                     onClick={() => selectMention(item)}
                     className="flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-left"
                     style={{
-                      background: focused ? '#f3f4f6' : 'transparent',
-                      border: focused ? '1.5px solid #e5e7eb' : '1.5px solid transparent',
+                      background: focused ? 'var(--bg-active)' : 'transparent',
+                      border: focused ? '1.5px solid var(--border-default)' : '1.5px solid transparent',
                       opacity: focused ? 1 : 0.3,
                       transition: 'opacity 150ms ease, background 150ms ease',
                     }}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-800">{item.name}</span>
+                      <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{item.name}</span>
                       <span
                         className="text-xs px-2 py-0.5 rounded-full border"
                         style={{
-                          borderColor: focused ? '#374151' : '#e5e7eb',
-                          color: focused ? '#374151' : '#9ca3af',
+                          borderColor: focused ? 'var(--text-secondary)' : 'var(--border-default)',
+                          color: focused ? 'var(--text-primary)' : 'var(--text-muted)',
                         }}
                       >
                         {item.handle}
                       </span>
                     </div>
-                    <span className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0">
+                    <span className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
                       <ReturnIcon />
                     </span>
                   </button>
@@ -338,14 +344,14 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
             </div>
 
             {/* Footer hints */}
-            <div className="flex items-center justify-end gap-4 mt-3 pt-3 border-t border-gray-100">
-              <span className="flex items-center gap-1.5 text-xs text-gray-400">
+            <div className="flex items-center justify-end gap-4 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-default)', color: 'var(--text-muted)' }}>
+              <span className="flex items-center gap-1.5 text-xs">
                 Close <EscIcon />
               </span>
-              <span className="flex items-center gap-1.5 text-xs text-gray-400">
+              <span className="flex items-center gap-1.5 text-xs">
                 Select <ReturnIcon />
               </span>
-              <span className="flex items-center gap-1.5 text-xs text-gray-400">
+              <span className="flex items-center gap-1.5 text-xs">
                 Navigate <NavigateIcon />
               </span>
             </div>
@@ -365,31 +371,33 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
       >
         <div className="overflow-hidden">
           <div
-            className={`bg-white px-4 ${settled ? 'border-x border-t rounded-t-2xl pt-3 pb-4' : 'border-x border-b rounded-b-2xl pb-4 pt-3'}`}
+            className={`px-4 ${settled ? 'border-x border-t rounded-t-2xl pt-3 pb-4' : 'border-x border-b rounded-b-2xl pb-4 pt-3'}`}
             style={{
-              borderColor: hovered ? '#d1d5db' : '#f3f4f6',
+              background: 'var(--bg-card)',
+              borderColor: hovered ? 'var(--border-default)' : 'var(--bg-active)',
               boxShadow: settled
                 ? '0 -8px 16px 0 rgba(0,0,0,0.08)'
                 : '0 8px 16px 0 rgba(0,0,0,0.08)',
             }}
           >
-            <p className="text-[11px] font-semibold tracking-widest text-gray-400 uppercase mb-2">
+            <p className="text-[11px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'var(--text-muted)' }}>
               Upload
             </p>
             <button
               onClick={() => setUploadOpen(false)}
               className="flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-left"
               style={{
-                background: '#f3f4f6',
-                border: '1.5px solid #e5e7eb',
+                background: 'var(--bg-active)',
+                border: '1.5px solid var(--border-default)',
+                color: 'var(--text-primary)',
                 transition: 'background 150ms ease',
               }}
             >
               <div className="flex items-center gap-2">
                 <AttachIcon />
-                <span className="text-sm text-gray-800">Upload file</span>
+                <span className="text-sm">Upload file</span>
               </div>
-              <span className="flex items-center justify-center w-7 h-7 flex-shrink-0">
+              <span className="flex items-center justify-center w-7 h-7 flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
                 <ReturnIcon />
               </span>
             </button>

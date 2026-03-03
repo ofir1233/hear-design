@@ -1,6 +1,7 @@
 export default function HearLogo({ className = '' }) {
   return (
     <svg
+      data-inspector="HearLogo"
       className={className}
       viewBox="0 0 69 60"
       fill="none"

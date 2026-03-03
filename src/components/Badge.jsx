@@ -66,6 +66,7 @@ export default function Badge({
 
   return (
     <span
+      data-inspector="Badge"
       style={{
         display:        'inline-flex',
         alignItems:     'center',

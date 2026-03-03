@@ -19,7 +19,7 @@ function GoogleIcon() {
  */
 export default function GoogleButton({ onClick, loading = false, error = '' }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div data-inspector="GoogleButton" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <button
         onClick={onClick}
         disabled={loading}

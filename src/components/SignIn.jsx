@@ -37,15 +37,17 @@ export default function SignIn({ onSignIn }) {
   })
 
   return (
-    <div style={{
-      height: '100vh',
-      background: '#000000',
-      fontFamily: "'Byrd', sans-serif",
-      position: 'relative',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+    <div
+      data-inspector="SignIn"
+      style={{
+        height: '100vh',
+        background: '#000000',
+        fontFamily: "'Byrd', sans-serif",
+        position: 'relative',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
 
       {/* ── Dev bypass ── */}
       <button
