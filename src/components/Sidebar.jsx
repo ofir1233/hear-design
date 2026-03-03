@@ -392,7 +392,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           {/* ── Storybook Dev Link ──────────────────────────────────────────────── */}
           <div style={{ padding: '6px 24px 4px' }}>
             <a
-              href="http://localhost:6007"
+              href={window.location.hostname === 'localhost' ? 'http://localhost:6007' : '/storybook/'}
               target="_blank"
               rel="noopener noreferrer"
               style={{

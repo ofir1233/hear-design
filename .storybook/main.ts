@@ -28,9 +28,11 @@ const config: StorybookConfig = {
    * Do NOT create postcss.config.js — that is the v3 approach.
    * mergeConfig() deduplicates plugins so @vitejs/plugin-react is not registered twice.
    */
-  viteFinal: async (viteConfig) => {
+  viteFinal: async (viteConfig, { configType }) => {
     return mergeConfig(viteConfig, {
       plugins: [tailwindcss()],
+      // When building for production (Vercel), serve from /storybook/ subpath
+      base: configType === 'PRODUCTION' ? '/storybook/' : '/',
     })
   },
 }
