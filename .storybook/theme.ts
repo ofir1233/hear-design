@@ -11,6 +11,7 @@ const hearTheme = create({
   brandTitle: 'Hear Design System',
   brandUrl:   'https://hear.ai',
   brandTarget: '_self',
+  brandImage:  '/hear-logo.svg',
 
   // ── Color palette ────────────────────────────────────────────────────────
   colorPrimary:   '#FF7056',   // Pulse Coral C100 — brand primary

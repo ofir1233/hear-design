@@ -20,7 +20,10 @@
       "Bash(gh repo:*)",
       "Bash(netstat -ano)",
       "Bash(xargs -I{} taskkill //PID {} //F)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(xargs -I{} taskkill /PID {} /F)",
+      "Bash(cmd:*)",
+      "Bash(powershell:*)"
     ]
   }
 }
