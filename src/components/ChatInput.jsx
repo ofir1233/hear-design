@@ -79,7 +79,12 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
       setText(transcript)
     }
     rec.onend = () => setListening(false)
-    rec.onerror = () => setListening(false)
+    rec.onerror = (e) => {
+      setListening(false)
+      if (e.error === 'not-allowed') {
+        alert('Microphone access was blocked. Please allow microphone permission for this site in your browser settings.')
+      }
+    }
     recognitionRef.current = rec
     rec.start()
     setListening(true)
