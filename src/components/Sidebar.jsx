@@ -68,19 +68,19 @@ function StorybookDisabledButton() {
           bottom:       'calc(100% + 8px)',
           left:         '50%',
           transform:    'translateX(-50%)',
-          background:   '#1a1a1a',
-          color:        '#e5e5e5',
+          background:   'var(--text-primary)',
+          color:        'var(--bg-canvas)',
           fontSize:     12,
           fontWeight:   400,
           lineHeight:   1.4,
           padding:      '6px 10px',
           borderRadius: 6,
           whiteSpace:   'nowrap',
-          boxShadow:    '0 4px 12px rgba(0,0,0,0.25)',
+          boxShadow:    '0 4px 16px rgba(0,0,0,0.35)',
           pointerEvents:'none',
           zIndex:       300,
         }}>
-          This feature is unavailable for now.
+          Storybook is currently unavailable.
           {/* Arrow */}
           <div style={{
             position:   'absolute',
@@ -90,7 +90,9 @@ function StorybookDisabledButton() {
             width:      0, height: 0,
             borderLeft:  '5px solid transparent',
             borderRight: '5px solid transparent',
-            borderTop:   '5px solid #1a1a1a',
+            borderTopColor: 'var(--text-primary)',
+            borderTopWidth: '5px',
+            borderTopStyle: 'solid',
           }} />
         </div>
       )}
