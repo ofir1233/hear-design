@@ -542,11 +542,19 @@ export default function ComponentsTab() {
   const [selected, setSelected]     = useState(null)
 
   useEffect(() => {
-    const nodes = document.querySelectorAll('[data-inspector]')
-    const names = [...new Set([...nodes].map(n => n.getAttribute('data-inspector')))]
-    const valid  = names.filter(name => COMPONENT_DEFS[name])
-    setDiscovered(valid)
-    if (valid.length > 0 && !selected) setSelected(valid[0])
+    function scan() {
+      const nodes = document.querySelectorAll('[data-inspector]')
+      const names = [...new Set([...nodes].map(n => n.getAttribute('data-inspector')))]
+      const valid  = names.filter(name => COMPONENT_DEFS[name])
+      setDiscovered(valid)
+      setSelected(prev => prev ?? (valid.length > 0 ? valid[0] : null))
+    }
+
+    scan()
+
+    const observer = new MutationObserver(scan)
+    observer.observe(document.body, { childList: true, subtree: true, attributeFilter: ['data-inspector'] })
+    return () => observer.disconnect()
   }, [])
 
   if (discovered.length === 0) {
