@@ -9,12 +9,13 @@
  *   notes[]         — flags, quirks, dev reminders
  */
 
-import Button    from '../../components/Button.jsx'
-import Badge     from '../../components/Badge.jsx'
-import HearLogo  from '../../components/HearLogo.jsx'
-import ChatInput from '../../components/ChatInput.jsx'
-import Sidebar   from '../../components/Sidebar.jsx'
-import SignIn    from '../../components/SignIn.jsx'
+import Button     from '../../components/Button.jsx'
+import Badge      from '../../components/Badge.jsx'
+import HearLogo   from '../../components/HearLogo.jsx'
+import ChatBubble from '../../components/ChatBubble.jsx'
+import ChatInput  from '../../components/ChatInput.jsx'
+import Sidebar    from '../../components/Sidebar.jsx'
+import SignIn     from '../../components/SignIn.jsx'
 import SignInHero   from '../../components/sign-in/SignInHero.jsx'
 import GoogleButton from '../../components/sign-in/GoogleButton.jsx'
 import AuthDivider  from '../../components/sign-in/AuthDivider.jsx'
@@ -22,12 +23,13 @@ import EmailForm    from '../../components/sign-in/EmailForm.jsx'
 
 // Raw source imports — Vite ?raw gives the file content as a plain string.
 // Used in the handoff panel so developers can copy the full implementation.
-import ButtonSrc    from '../../components/Button.jsx?raw'
-import BadgeSrc     from '../../components/Badge.jsx?raw'
-import HearLogoSrc  from '../../components/HearLogo.jsx?raw'
-import ChatInputSrc from '../../components/ChatInput.jsx?raw'
-import SidebarSrc   from '../../components/Sidebar.jsx?raw'
-import SignInSrc    from '../../components/SignIn.jsx?raw'
+import ButtonSrc     from '../../components/Button.jsx?raw'
+import BadgeSrc      from '../../components/Badge.jsx?raw'
+import HearLogoSrc   from '../../components/HearLogo.jsx?raw'
+import ChatBubbleSrc from '../../components/ChatBubble.jsx?raw'
+import ChatInputSrc  from '../../components/ChatInput.jsx?raw'
+import SidebarSrc    from '../../components/Sidebar.jsx?raw'
+import SignInSrc     from '../../components/SignIn.jsx?raw'
 import IconsSrc     from '../../components/icons/index.jsx?raw'
 import SignInHeroSrc    from '../../components/sign-in/SignInHero.jsx?raw'
 import GoogleButtonSrc  from '../../components/sign-in/GoogleButton.jsx?raw'
@@ -184,6 +186,63 @@ export const COMPONENT_DEFS = {
         'SVG viewBox: 0 0 69 60',
         'Sized exclusively via Tailwind className (w-* h-*)',
         'No stroke — pure fill path',
+      ],
+    },
+  },
+
+  // ── ChatBubble ─────────────────────────────────────────────────────────────
+
+  ChatBubble: {
+    tier: 'Molecule',
+    description: 'Chat message unit. User bubbles (coral, right) · AI bubbles (transparent, left, markdown) · Thinking indicator (3-dot bounce). Action row fades in on hover/last message.',
+    props: [
+      { name: 'role',        type: "'user'|'ai'|'thinking'", default: "'ai'" },
+      { name: 'text',        type: 'string',                  default: "''" },
+      { name: 'related',     type: 'string[]',                default: '[]' },
+      { name: 'showActions', type: 'boolean',                  default: 'false' },
+      { name: 'onCopy',      type: '() => void',              default: 'undefined' },
+      { name: 'copied',      type: 'boolean',                  default: 'false' },
+    ],
+    states: [
+      { label: 'User message', props: { role: 'user', text: 'Could you please clarify your request?' } },
+      { label: 'AI response',  props: { role: 'ai',  text: 'I detected **3 signal anomalies** in the last 48 hours.\n\nTwo relate to `sentiment shifts` in inbound calls, one to an unusual spike in escalation keywords.', showActions: true } },
+      { label: 'With related', props: { role: 'ai',  text: 'Signal detected in recent calls.', related: ['Call transcription analysis', 'Sentiment detection', 'Keyword extraction'], showActions: true } },
+      { label: 'Thinking',     props: { role: 'thinking' } },
+    ],
+    render: (p) => (
+      <div style={{ background: 'var(--bg-canvas)', padding: '20px 24px', minHeight: 80 }}>
+        <ChatBubble {...p} onCopy={() => {}} />
+      </div>
+    ),
+    snippet: (p) => {
+      const attrs = [`role="${p.role}"`]
+      if (p.text)        attrs.push(`text="..."`)
+      if (p.showActions) attrs.push('showActions')
+      if (p.related?.length) attrs.push(`related={[...]}`)
+      return `<ChatBubble\n  ${attrs.join('\n  ')}\n  onCopy={handleCopy}\n/>`
+    },
+    source: ChatBubbleSrc,
+    files: [
+      { path: 'src/components/ChatBubble.jsx', src: ChatBubbleSrc },
+    ],
+    npm: ['react-markdown', 'remark-gfm'],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: '--color-brand (user bg)',  hex: '#FF7056' },
+        { name: '--bg-canvas (AI bg)',      hex: '#F4F3F1' },
+        { name: '--bg-card (thinking)',     hex: '#FFFFFF' },
+        { name: '--text-primary',           hex: '#181818' },
+        { name: 'Action icons',            hex: '#9CA3AF' },
+      ],
+      subComponents: [],
+      notes: [
+        'role="user"    → right-aligned, coral bubble, white text, no actions',
+        'role="ai"      → left-aligned, transparent, ReactMarkdown, action row',
+        'role="thinking"→ left-aligned, bg-card bubble, 3-dot dot-bounce animation',
+        'showActions controls opacity of action row (0→1, transition 150ms)',
+        'related[] renders slideInRight list below the bubble (AI only)',
+        'Animations: msgIn (entrance) · dot-bounce (thinking) · slideInRight (related) — defined in index.css',
       ],
     },
   },
