@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(sudo chown:*)",
+      "Bash(unzip:*)",
+      "Bash(start:*)",
+      "Bash(vercel:*)",
+      "Bash(npm run:*)",
+      "Bash(npx vercel:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(curl:*)",
+      "Bash(npx storybook@8:*)",
+      "Bash(npx storybook@latest:*)",
+      "Bash(npx storybook:*)",
+      "Bash(node:*)",
+      "Bash(python3:*)",
+      "Bash(taskkill:*)"
+    ]
+  }
+}
