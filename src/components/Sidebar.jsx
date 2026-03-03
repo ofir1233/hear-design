@@ -199,8 +199,8 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
 
           {/* Logo */}
           <div style={{ padding: '24px 20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <img src="/hear-logo.svg" alt="Hear" style={{ height: 34 }} />
-            <img src="/powered-by-hear.svg" alt="Powered by Hear" style={{ height: 17, opacity: 0.7 }} />
+            <img src={isDark ? '/hear-logo-dark.svg' : '/hear-logo.svg'} alt="Hear" style={{ height: 34 }} />
+            <img src={isDark ? '/powered-by-hear-dark.svg' : '/powered-by-hear.svg'} alt="Powered by Hear" style={{ height: 17, opacity: 0.7 }} />
           </div>
 
           {/* Project selector + bell */}
