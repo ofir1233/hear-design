@@ -221,9 +221,9 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
                   opacity: (text.trim() || loading) ? 0 : 1,
                   transform: (text.trim() || loading) ? 'scale(0.8)' : 'scale(1)',
                   pointerEvents: (text.trim() || loading) ? 'none' : 'auto',
+                  color: 'var(--text-muted)',
                 }}
                 className="absolute inset-0 flex items-center justify-center rounded-xl"
-                style={{ color: 'var(--text-muted)' }}
               >
                 <MicIcon />
               </button>
