@@ -1,0 +1,484 @@
+/**
+ * Foundations/Iconography
+ *
+ * Tier: Foundations — the complete icon inventory of the Hear design system.
+ *
+ * All 28 icons currently used across the product, catalogued by category.
+ * Most icons are defined inline inside their parent component files (not exported).
+ * This story resolves the COMPOSITION OPACITY flag on Organisms/Chat Input and
+ * Organisms/Sidebar by making every icon visible and discoverable here.
+ *
+ * ⚠️ Resolution path: Extract icons to src/components/icons/ as individual
+ * exported components, then import them into this story and their parent organisms.
+ */
+
+// ─── Brand ────────────────────────────────────────────────────────────────────
+
+function IconHearCoral() {
+  return (
+    <svg viewBox="0 0 69 60" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M63.6202 25.6905C66.431 26.6546 69 26.1754 69 28.5414C69 30.9074 65.4639 29.2245 61.4139 32.459C57.364 35.6935 56.1551 40.0061 53.4954 45.4868C50.8357 50.9675 46.5138 61.4496 39.1091 59.8324C31.7043 58.2151 34.2129 46.1157 34.0618 41.1741C33.9106 36.2325 33.2457 32.5189 29.2865 32.0696C25.3272 31.6204 23.0302 34.6153 20.7332 38.2391C18.4363 41.863 16.502 49.3802 11.0315 47.7629C5.5611 46.1457 9.3088 36.1726 7.46518 33.2077C5.62155 30.2427 3.17346 30.1886 2.29698 30.1886C1.4205 30.1886 8.16629e-06 29.7394 0 28.5714C-8.16629e-06 27.4033 1.26938 27.0739 2.29698 27.0739C3.32457 27.0739 4.60326 27.2375 7.19317 26.5291C13.6307 24.7681 12.8147 11.2251 20.1288 11.5845C27.0146 11.9229 23.4533 26.0798 30.0118 26.0798C36.5703 26.0798 38.7464 18.5027 41.4665 12.8424C44.1866 7.18205 49.4152 -1.32349 56.1551 0.173941C62.8949 1.67137 60.5677 14.1302 60.1445 18.0535C59.7214 21.9768 60.8095 24.7264 63.6202 25.6905Z" fill="#FF7056"/>
+    </svg>
+  )
+}
+
+function IconHearWhite() {
+  return (
+    <svg viewBox="0 0 69 60" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M63.6202 25.6905C66.431 26.6546 69 26.1754 69 28.5414C69 30.9074 65.4639 29.2245 61.4139 32.459C57.364 35.6935 56.1551 40.0061 53.4954 45.4868C50.8357 50.9675 46.5138 61.4496 39.1091 59.8324C31.7043 58.2151 34.2129 46.1157 34.0618 41.1741C33.9106 36.2325 33.2457 32.5189 29.2865 32.0696C25.3272 31.6204 23.0302 34.6153 20.7332 38.2391C18.4363 41.863 16.502 49.3802 11.0315 47.7629C5.5611 46.1457 9.3088 36.1726 7.46518 33.2077C5.62155 30.2427 3.17346 30.1886 2.29698 30.1886C1.4205 30.1886 8.16629e-06 29.7394 0 28.5714C-8.16629e-06 27.4033 1.26938 27.0739 2.29698 27.0739C3.32457 27.0739 4.60326 27.2375 7.19317 26.5291C13.6307 24.7681 12.8147 11.2251 20.1288 11.5845C27.0146 11.9229 23.4533 26.0798 30.0118 26.0798C36.5703 26.0798 38.7464 18.5027 41.4665 12.8424C44.1866 7.18205 49.4152 -1.32349 56.1551 0.173941C62.8949 1.67137 60.5677 14.1302 60.1445 18.0535C59.7214 21.9768 60.8095 24.7264 63.6202 25.6905Z" fill="white"/>
+    </svg>
+  )
+}
+
+// ─── Navigation (Sidebar) ──────────────────────────────────────────────────────
+
+function IconDashboard() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+      <path d="M9 21V12h6v9"/>
+    </svg>
+  )
+}
+
+function IconData() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <ellipse cx="12" cy="5" rx="9" ry="3"/>
+      <path d="M3 5v4c0 1.657 4.03 3 9 3s9-1.343 9-3V5"/>
+      <path d="M3 9v4c0 1.657 4.03 3 9 3s9-1.343 9-3V9"/>
+      <path d="M3 13v4c0 1.657 4.03 3 9 3s9-1.343 9-3v-4"/>
+    </svg>
+  )
+}
+
+function IconReports() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+  )
+}
+
+function IconSignals() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M12.3717 2.6696C12.5268 2.67208 12.669 2.67673 12.7968 2.68718C13.0602 2.70873 13.322 2.75665 13.5741 2.88509C13.9497 3.07645 14.2564 3.38183 14.4485 3.75879C14.5769 4.01087 14.6249 4.27292 14.6464 4.53614C14.6673 4.79166 14.6666 5.10353 14.6666 5.46517V10.5355C14.6666 10.897 14.6673 11.2085 14.6464 11.4639C14.6249 11.7271 14.5769 11.9892 14.4485 12.2412C14.2568 12.6175 13.9504 12.9238 13.5741 13.1156C13.3221 13.244 13.06 13.292 12.7968 13.3135C12.5414 13.3343 12.2299 13.3337 11.8684 13.3337H4.13143C3.76979 13.3337 3.45792 13.3344 3.2024 13.3135C2.93918 13.292 2.67713 13.244 2.42505 13.1156C2.04809 12.9234 1.74271 12.6168 1.55135 12.2412C1.42291 11.9891 1.37499 11.7273 1.35344 11.4639C1.33254 11.2082 1.33325 10.8959 1.33325 10.5335V5.46713C1.33325 5.10475 1.33254 4.79263 1.35344 4.53679C1.37497 4.27327 1.42283 4.01103 1.55135 3.75879C1.74309 3.38255 2.04881 3.07683 2.42505 2.88509C2.67729 2.75657 2.93953 2.70871 3.20305 2.68718C3.45889 2.66628 3.77101 2.667 4.13339 2.667H11.8665L12.3717 2.6696ZM4.13339 4.00033C3.74902 4.00033 3.50074 4.00117 3.31177 4.0166C3.13057 4.03141 3.06344 4.05647 3.03052 4.07325C2.90512 4.13715 2.80341 4.23886 2.73951 4.36426C2.72273 4.39718 2.69767 4.46431 2.68286 4.64551C2.66743 4.83448 2.66659 5.08276 2.66659 5.46713V10.5335C2.66659 10.9179 2.66678 11.1664 2.68221 11.3551C2.69699 11.5358 2.72268 11.6027 2.73951 11.6357C2.80379 11.7619 2.9058 11.8645 3.03052 11.9281C3.06339 11.9448 3.13055 11.9699 3.31112 11.9847C3.49975 12.0001 3.7478 12.0003 4.13143 12.0003H11.8684C12.2518 12.0003 12.4996 12.0001 12.6881 11.9847C12.8683 11.97 12.9357 11.9448 12.9687 11.9281C13.0941 11.8641 13.1971 11.7612 13.261 11.6357C13.2777 11.6028 13.3029 11.5353 13.3176 11.3551C13.333 11.1667 13.3333 10.9189 13.3333 10.5355V5.46517C13.3333 5.08154 13.333 4.83349 13.3176 4.64486C13.3029 4.46429 13.2777 4.39713 13.261 4.36426C13.1974 4.23954 13.0948 4.13753 12.9687 4.07325C12.9356 4.05642 12.8687 4.03073 12.6881 4.01595C12.5937 4.00824 12.4844 4.00434 12.3508 4.00228L11.8665 4.00033H4.13339ZM4.15422 6.23991C4.38994 5.95712 4.81084 5.91894 5.09367 6.15463L7.09367 7.82129C7.24563 7.94795 7.33325 8.13584 7.33326 8.33366C7.33326 8.53149 7.24563 8.71937 7.09367 8.84603L5.09367 10.5127C4.81084 10.7484 4.38994 10.7102 4.15422 10.4274C3.91853 10.1446 3.95671 9.72368 4.2395 9.48796L5.62427 8.33366L4.2395 7.17937C3.95671 6.94365 3.91853 6.52274 4.15422 6.23991ZM11.3333 9.33366C11.7014 9.33366 11.9999 9.63214 11.9999 10.0003C11.9999 10.3685 11.7014 10.667 11.3333 10.667H7.99992C7.63173 10.667 7.33326 10.3685 7.33326 10.0003C7.33326 9.63214 7.63173 9.33366 7.99992 9.33366H11.3333Z" fill="currentColor"/>
+    </svg>
+  )
+}
+
+function IconAlerts() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+  )
+}
+
+function IconCompliance() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      <polyline points="9 12 11 14 15 10"/>
+    </svg>
+  )
+}
+
+function IconAgentEval() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M7.99998 1.33301C11.6819 1.33301 14.6666 4.31778 14.6666 7.99967C14.6666 11.6816 11.6819 14.6663 7.99998 14.6663C6.8048 14.6663 5.68157 14.3506 4.71027 13.7985L3.22524 14.2933C3.07157 14.3452 2.91527 14.3978 2.78383 14.4287C2.66228 14.4573 2.43484 14.5017 2.19139 14.415C1.90829 14.3141 1.68595 14.0906 1.58527 13.8083C1.49849 13.5648 1.54238 13.3375 1.57094 13.2158C1.60123 13.0869 1.65278 12.9344 1.7018 12.7874H1.70115L1.7018 12.7855L1.70441 12.777L2.33722 12.988L1.70506 12.777L2.2005 11.2887C1.64867 10.3176 1.33331 9.19455 1.33331 7.99967C1.33331 4.31778 4.31808 1.33301 7.99998 1.33301ZM7.99998 2.66634C5.05446 2.66634 2.66665 5.05416 2.66665 7.99967C2.66665 8.96973 2.92504 9.87741 3.37628 10.6598L3.37823 10.6631C3.49943 10.6998 3.45112 10.783 3.49217 10.8825L3.52797 10.9867L3.54685 11.0687C3.5625 11.1509 3.56776 11.2342 3.56183 11.3213C3.55178 11.4682 3.5006 11.6072 3.4837 11.6579L3.05336 12.945L4.34113 12.5166C4.39265 12.4994 4.53141 12.4479 4.67836 12.4378L4.7643 12.4352C4.82085 12.4361 4.87611 12.4424 4.93097 12.4528L5.013 12.4717L5.11717 12.5081C5.21723 12.5494 5.30128 12.6011 5.33982 12.6234C6.12222 13.0746 7.02994 13.333 7.99998 13.333C10.9455 13.333 13.3333 10.9452 13.3333 7.99967C13.3333 5.05416 10.9455 2.66634 7.99998 2.66634ZM7.99998 5.33301C8.36817 5.33301 8.66665 5.63148 8.66665 5.99967V7.33301H9.99998C10.3682 7.33301 10.6666 7.63148 10.6666 7.99967C10.6666 8.36786 10.3682 8.66634 9.99998 8.66634H8.66665V9.99967C8.66665 10.3679 8.36817 10.6663 7.99998 10.6663C7.63179 10.6663 7.33331 10.3679 7.33331 9.99967V8.66634H5.99998C5.63179 8.66634 5.33331 8.36786 5.33331 7.99967C5.33331 7.63148 5.63179 7.33301 5.99998 7.33301H7.33331V5.99967C7.33331 5.63148 7.63179 5.33301 7.99998 5.33301Z" fill="currentColor"/>
+    </svg>
+  )
+}
+
+function IconKnowledge() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    </svg>
+  )
+}
+
+function IconAiTask() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M10.6666 3.99967C10.6666 3.26329 10.0697 2.66634 9.33331 2.66634C8.59693 2.66634 7.99998 3.26329 7.99998 3.99967C7.99998 4.31439 7.89161 4.62829 7.69594 4.87337C7.49615 5.12357 7.17534 5.333 6.76756 5.33301H5.33331V6.76725C5.33331 7.17503 5.12388 7.49584 4.87368 7.69564C4.6286 7.89131 4.31469 7.99967 3.99998 7.99967C3.2636 7.99967 2.66665 8.59663 2.66665 9.33301C2.66665 10.0694 3.2636 10.6663 3.99998 10.6663C4.31469 10.6663 4.62859 10.7747 4.87368 10.9704C5.12389 11.1702 5.33331 11.491 5.33331 11.8988V13.333H13.3333V11.9997C11.8606 11.9997 10.6666 10.8058 10.6666 9.33301C10.6666 7.86025 11.8606 6.66634 13.3333 6.66634V5.33301H11.8991C11.4913 5.33301 11.1705 5.12358 10.9707 4.87337C10.775 4.62829 10.6666 4.31438 10.6666 3.99967ZM13.3333 3.99967C14.0696 3.99969 14.6666 4.59658 14.6666 5.33301V6.76725L14.6569 6.91569C14.6134 7.25311 14.426 7.52077 14.207 7.69564C13.9619 7.89131 13.648 7.99967 13.3333 7.99967C12.5969 7.99967 12 8.59663 12 9.33301C12 10.0694 12.5969 10.6663 13.3333 10.6663C13.648 10.6663 13.9619 10.7747 14.207 10.9704C14.4572 11.1702 14.6666 11.491 14.6666 11.8988V13.333C14.6666 14.0234 14.1419 14.591 13.4694 14.6592L13.3333 14.6663H5.33331C4.59693 14.6663 3.99998 14.0694 3.99998 13.333V11.9997C2.52722 11.9997 1.33331 10.8058 1.33331 9.33301C1.33331 7.86025 2.52722 6.66634 3.99998 6.66634V5.33301C3.99998 4.59663 4.59693 3.99967 5.33331 3.99967H6.66665C6.66665 2.52692 7.86055 1.33301 9.33331 1.33301C10.8061 1.33301 12 2.52692 12 3.99967H13.3333Z" fill="currentColor"/>
+    </svg>
+  )
+}
+
+function IconCustomers() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+      <circle cx="9" cy="7" r="4"/>
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    </svg>
+  )
+}
+
+function IconSettings() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  )
+}
+
+// ─── UI Controls ──────────────────────────────────────────────────────────────
+
+function IconBell() {
+  return (
+    <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M13.0001 4.2666C13.589 4.26664 14.0663 4.74405 14.0665 5.33301V5.43945C16.501 5.9335 18.3331 8.08667 18.3331 10.667V12.7998C18.3331 14.7878 19.6931 16.4579 21.5333 16.9316V17.0664H4.46686V16.9316C6.24944 16.4727 7.58163 14.8911 7.66315 12.9854L7.66705 12.7998V10.667C7.66705 8.08663 9.49906 5.93345 11.9337 5.43945V5.33301C11.9338 4.74402 12.411 4.2666 13.0001 4.2666Z" fill="currentColor"/>
+      <path d="M21.5333 17.0669C21.5333 18.2451 20.5782 19.2002 19.4 19.2002L6.59999 19.2002C5.42178 19.2002 4.46666 18.2451 4.46666 17.0669L21.5333 17.0669Z" fill="currentColor"/>
+      <path d="M15.1334 20.2671C15.1334 21.4453 14.1782 22.4004 13 22.4004C11.8218 22.4004 10.8667 21.4453 10.8667 20.2671L15.1334 20.2671Z" fill="currentColor"/>
+    </svg>
+  )
+}
+
+function IconChevron() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  )
+}
+
+function IconCollapse() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+  )
+}
+
+function IconDots() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" width="100%" height="100%">
+      <circle cx="12" cy="5" r="2"/>
+      <circle cx="12" cy="12" r="2"/>
+      <circle cx="12" cy="19" r="2"/>
+    </svg>
+  )
+}
+
+// ─── User Actions ─────────────────────────────────────────────────────────────
+
+function IconMoon() {
+  return (
+    <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path fillRule="evenodd" clipRule="evenodd" d="M21.9978 14.909C21.0547 16.5395 19.2918 17.6366 17.2727 17.6366C14.2602 17.6366 11.8182 15.1945 11.8182 12.1821C11.8182 10.163 12.9152 8.40009 14.5458 7.45703C10.613 7.55332 7.45453 10.7716 7.45453 14.7275C7.45453 18.7442 10.7106 22.0003 14.7273 22.0003C18.6832 22.0003 21.9015 18.8418 21.9978 14.909Z" fill="currentColor"/>
+    </svg>
+  )
+}
+
+function IconAccessibility() {
+  return (
+    <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path fillRule="evenodd" clipRule="evenodd" d="M13.6534 8.23228C12.2142 7.93754 10.8316 8.96106 10.62 10.478L10.2128 13.3961C10.3617 13.3845 10.5125 13.3731 10.6595 13.362C10.867 13.3463 11.0683 13.3311 11.249 13.3164C11.5022 13.2958 11.7218 13.5043 11.7218 13.7698C11.7218 13.9987 11.5567 14.1901 11.3384 14.2082C11.1419 14.2244 10.9152 14.2412 10.6802 14.2587C10.094 14.3022 9.45587 14.3497 9.10585 14.4009L9.09459 14.4026C8.99542 14.4229 8.92935 14.4581 8.87548 14.5069L8.86577 14.5158C8.7655 14.6122 8.71087 14.7569 8.73159 14.9085C8.765 15.153 8.9817 15.3229 9.21559 15.2879C13.7157 14.616 18.2843 14.616 22.7843 15.2879C23.0182 15.3229 23.2349 15.153 23.2683 14.9085C23.3017 14.664 23.1392 14.4375 22.9053 14.4026L22.8854 14.3996C22.5335 14.3489 21.9011 14.3019 21.3199 14.2587C21.0849 14.2412 20.8582 14.2244 20.6618 14.2082C20.4434 14.1901 20.2784 13.9987 20.2784 13.7698C20.2784 13.5043 20.498 13.2958 20.7512 13.3164C20.9319 13.3311 21.133 13.3463 21.3406 13.362C21.4875 13.3731 21.6382 13.3845 21.787 13.3961L21.3798 10.478C21.1682 8.96106 19.7857 7.93754 18.3464 8.23228L16.3289 8.64542C16.1116 8.68992 15.8882 8.68992 15.6709 8.64542L13.6534 8.23228ZM14.2891 19.3169C14.2891 20.3047 13.523 21.1055 12.5779 21.1055C11.6328 21.1055 10.8667 20.3047 10.8667 19.3169C10.8667 18.329 11.6328 17.5282 12.5779 17.5282C13.523 17.5282 14.2891 18.329 14.2891 19.3169ZM14.8812 18.1313C14.9614 18.3013 15.1199 18.4225 15.3012 18.4225H16.6995C16.8808 18.4225 17.0393 18.3013 17.1195 18.1313C17.5382 17.2442 18.4123 16.6339 19.4228 16.6339C20.8404 16.6339 21.9896 17.8351 21.9896 19.3169C21.9896 20.7986 20.8404 21.9998 19.4228 21.9998C18.1503 21.9998 17.0941 21.032 16.8911 19.7621C16.8522 19.5186 16.6644 19.3169 16.4281 19.3169H15.5725C15.3363 19.3169 15.1485 19.5186 15.1095 19.7621C14.9066 21.032 13.8504 21.9998 12.5779 21.9998C11.1603 21.9998 10.0111 20.7986 10.0111 19.3169C10.0111 17.8351 11.1603 16.6339 12.5779 16.6339C13.5883 16.6339 14.4624 17.2442 14.8812 18.1313ZM19.4228 21.1055C18.4777 21.1055 17.7115 20.3047 17.7115 19.3169C17.7115 18.329 18.4777 17.5282 19.4228 17.5282C20.3678 17.5282 21.134 18.329 21.134 19.3169C21.134 20.3047 20.3678 21.1055 19.4228 21.1055Z" fill="currentColor"/>
+    </svg>
+  )
+}
+
+function IconLogout() {
+  return (
+    <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path fillRule="evenodd" clipRule="evenodd" d="M17.728 20.0908C17.728 20.4923 17.4019 20.8181 17.0004 20.8184L12.6371 20.8184C11.4323 20.8184 10.4547 19.8416 10.4545 18.6367L10.4545 11.3633C10.4548 10.1585 11.4323 9.18164 12.6371 9.18164L17.0004 9.18164C17.4019 9.18188 17.728 9.50767 17.728 9.90918C17.728 10.3107 17.4019 10.6365 17.0004 10.6367L12.6371 10.6367C12.2356 10.6367 11.9098 10.9618 11.9096 11.3633L11.9096 18.6367C11.9098 19.0383 12.2356 19.3633 12.6371 19.3633L17.0004 19.3633C17.4018 19.3635 17.7279 19.6894 17.728 20.0908Z" fill="currentColor"/>
+      <rect x="21.0909" y="14" width="1.45455" height="6.54545" rx="0.727273" transform="rotate(90 21.0909 14)" fill="currentColor"/>
+      <path d="M18.9091 12.5459L21.0909 14.7277L18.9091 16.9095" stroke="currentColor" strokeWidth="1.45455" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+// ─── Chat Input ───────────────────────────────────────────────────────────────
+
+function IconMic() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="100%" height="100%">
+      <rect x="9" y="2" width="6" height="11" rx="3"/>
+      <path d="M5 10a7 7 0 0 0 14 0"/>
+      <line x1="12" y1="19" x2="12" y2="22"/>
+      <line x1="8" y1="22" x2="16" y2="22"/>
+    </svg>
+  )
+}
+
+function IconSubmitArrow() {
+  return (
+    <svg viewBox="0 0 18 18" fill="none" width="100%" height="100%">
+      <rect width="18" height="18" rx="4" fill="#007AFF"/>
+      <rect x="8.08" y="0.75" width="1.67" height="16.67" rx="0.83" fill="white"/>
+      <path d="M3.17 7.33L9 1.5L14.83 7.33" stroke="white" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IconAttach() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M4.53516 11.4652L11.4294 4.57089C13.4797 2.52064 16.8039 2.52064 18.8541 4.57089C20.9044 6.62114 20.9041 9.94544 18.8539 11.9957L10.8989 19.9506C9.53209 21.3175 7.31639 21.3173 5.94955 19.9505C4.58272 18.5836 4.58238 16.3678 5.94922 15.0009L13.9042 7.04599C14.5876 6.36257 15.6962 6.36257 16.3796 7.04599C17.0631 7.72941 17.0626 8.83718 16.3792 9.5206L9.48486 16.4149" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function IconReturn() {
+  return (
+    <svg viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M6 20C2.68629 20 1.28855e-07 17.3137 0 14V6C0.000264 2.68652 2.68645 0 6 0H18C21.3135 0 23.9997 2.68652 24 6V14C24 17.3137 21.3137 20 18 20H6ZM18 17C20.7614 17 23 14.7614 23 12V6C22.9997 3.2388 20.7613 1 18 1H6C3.23874 1 1.00026 3.2388 1 6V12C1 14.7614 3.23858 17 6 17H18ZM9.90332 12.9346C9.9032 13.1907 9.61129 13.337 9.40625 13.1836L7.12402 11.4727C6.95827 11.3483 6.95847 11.0991 7.12402 10.9746L9.40625 9.26367C9.61122 9.10999 9.90296 9.25566 9.90332 9.51172V10.4453H13.0146C13.4442 10.4453 13.793 10.0965 13.793 9.66699V5.77832C13.7932 5.34899 14.1409 5 14.5703 5C14.9997 5 15.3474 5.34899 15.3477 5.77832V9.66699C15.3477 10.9557 14.3033 12 13.0146 12H9.90332V12.9346Z" fill="currentColor"/>
+    </svg>
+  )
+}
+
+function IconNavigate() {
+  return (
+    <svg viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M18 0C21.3137 0 24 2.68629 24 6V14C24 17.3137 21.3137 20 18 20H6C2.68629 20 1.28855e-07 17.3137 0 14V6C1.28855e-07 2.68629 2.68629 0 6 0H18ZM6 1C3.23858 1 1 3.23858 1 6V12C1 14.7614 3.23858 17 6 17H18C20.7614 17 23 14.7614 23 12V6C23 3.23858 20.7614 1 18 1H6ZM8.77344 5.125C8.89787 4.95909 9.14703 4.95913 9.27148 5.125L10.9824 7.40625C11.1361 7.61122 10.9904 7.90393 10.7344 7.9043H9.7998V12.5713C9.79931 13.0004 9.45171 13.3486 9.02246 13.3486C8.59349 13.3483 8.24561 13.0002 8.24512 12.5713V7.9043H7.31152C7.05542 7.90409 6.90903 7.61126 7.0625 7.40625L8.77344 5.125ZM14.624 5C15.0531 5.00026 15.401 5.34826 15.4014 5.77734V10.4443H16.335C16.5912 10.4445 16.7377 10.7373 16.584 10.9424L14.873 13.2236C14.7486 13.3895 14.4994 13.3895 14.375 13.2236L12.6641 10.9424C12.5104 10.7374 12.6561 10.4448 12.9121 10.4443H13.8467V5.77734C13.847 5.34814 14.1947 5.00006 14.624 5Z" fill="currentColor"/>
+    </svg>
+  )
+}
+
+function IconEsc() {
+  return (
+    <svg viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M18 0C21.3137 0 24 2.68629 24 6V14C24 17.3137 21.3137 20 18 20H6C2.68629 20 1.28855e-07 17.3137 0 14V6C1.28855e-07 2.68629 2.68629 0 6 0H18ZM6 1C3.23858 1 1 3.23858 1 6V12C1 14.7614 3.23858 17 6 17H18C20.7614 17 23 14.7614 23 12V6C23 3.23858 20.7614 1 18 1H6ZM9.33887 6.85547H6.36133V8.38965H9.11621V9.5127H6.36133V11.0498H9.35156V12.1729H5V5.7334H9.33887V6.85547ZM12.0059 7.28027C12.6156 7.28032 13.0953 7.40933 13.4453 7.66699C13.7975 7.92484 14.0038 8.27629 14.0625 8.7207L12.8359 8.7959C12.815 8.69108 12.7694 8.59655 12.7002 8.5127C12.631 8.42687 12.5398 8.35886 12.4268 8.30859C12.3157 8.25621 12.1824 8.22949 12.0273 8.22949C11.8199 8.22952 11.6445 8.27429 11.502 8.3623C11.3597 8.44822 11.2891 8.56353 11.2891 8.70801C11.2891 8.82313 11.3347 8.92042 11.4268 9C11.5189 9.07962 11.6772 9.14418 11.9014 9.19238L12.7764 9.36816C13.2457 9.4646 13.5956 9.62022 13.8262 9.83398C14.0566 10.0478 14.1719 10.3289 14.1719 10.6768C14.1718 10.9931 14.079 11.2709 13.8926 11.5098C13.7081 11.7487 13.4537 11.9352 13.1309 12.0693C12.8103 12.2013 12.4405 12.2676 12.0215 12.2676C11.3822 12.2676 10.8726 12.1343 10.4932 11.8682C10.1158 11.5998 9.89506 11.2346 9.83008 10.7734L11.1475 10.7041C11.1873 10.8991 11.2835 11.0486 11.4365 11.1514C11.5895 11.2519 11.7855 11.3018 12.0244 11.3018C12.2592 11.3018 12.4483 11.2571 12.5908 11.167C12.7353 11.0748 12.8084 10.9561 12.8105 10.8115C12.8085 10.6899 12.7569 10.5903 12.6562 10.5127C12.5557 10.4331 12.4008 10.372 12.1914 10.3301L11.3545 10.1641C10.8829 10.0697 10.5314 9.90553 10.3008 9.67285C10.0726 9.44022 9.95898 9.14355 9.95898 8.7832C9.95901 8.47301 10.0423 8.20572 10.21 7.98145C10.3797 7.75717 10.6178 7.58447 10.9238 7.46289C11.232 7.34131 11.5929 7.28027 12.0059 7.28027ZM16.8369 7.28027C17.2581 7.2803 17.6269 7.35682 17.9434 7.50977C18.2599 7.6628 18.5108 7.87759 18.6953 8.1543C18.8797 8.43093 18.9811 8.7559 19 9.12891H17.7363C17.7007 8.88807 17.606 8.69452 17.4531 8.54785C17.3022 8.39901 17.1037 8.32422 16.8584 8.32422C16.651 8.32428 16.4695 8.381 16.3145 8.49414C16.1615 8.60524 16.042 8.76774 15.9561 8.98145C15.8702 9.19518 15.8272 9.45402 15.8271 9.75781C15.8271 10.0659 15.8693 10.3281 15.9531 10.5439C16.0391 10.7598 16.1594 10.9249 16.3145 11.0381C16.4695 11.1512 16.651 11.2079 16.8584 11.208C17.0114 11.208 17.1489 11.1761 17.2705 11.1133C17.3941 11.0504 17.4956 10.9592 17.5752 10.8398C17.657 10.7183 17.7112 10.5721 17.7363 10.4023H19C18.979 10.7713 18.8785 11.097 18.6982 11.3779C18.5201 11.6566 18.2733 11.8741 17.959 12.0312C17.6446 12.1884 17.2725 12.2676 16.8428 12.2676C16.3482 12.2675 15.9227 12.1627 15.5664 11.9531C15.2121 11.7414 14.9398 11.4475 14.749 11.0723C14.5604 10.6971 14.4659 10.2656 14.4658 9.77734C14.4658 9.28277 14.5613 8.84865 14.752 8.47559C14.9448 8.10042 15.2181 7.80728 15.5723 7.59766C15.9265 7.38593 16.3485 7.28027 16.8369 7.28027Z" fill="currentColor"/>
+    </svg>
+  )
+}
+
+// ─── Third-party ──────────────────────────────────────────────────────────────
+
+function IconGoogle() {
+  return (
+    <svg viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+      <path d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+    </svg>
+  )
+}
+
+// ─── Grid layout ──────────────────────────────────────────────────────────────
+
+const ICON_SIZE = 40
+
+function IconCard({ name, source, colorNote, bg = 'transparent', children }) {
+  return (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 10,
+      padding: '20px 12px 16px',
+      background: '#ffffff',
+      border: '1px solid #e5e7eb',
+      borderRadius: 12,
+      minWidth: 110,
+    }}>
+      <div style={{
+        width: ICON_SIZE,
+        height: ICON_SIZE,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: bg,
+        borderRadius: bg !== 'transparent' ? 8 : 0,
+        color: '#181818',
+        padding: bg !== 'transparent' ? 6 : 0,
+      }}>
+        {children}
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#181818', marginBottom: 2 }}>{name}</div>
+        <div style={{ fontSize: 10, color: '#9ca3af', fontFamily: 'monospace' }}>{source}</div>
+        {colorNote && (
+          <div style={{
+            marginTop: 4,
+            fontSize: 9,
+            color: '#fff',
+            background: colorNote === 'currentColor' ? '#6b7280' : '#FF7056',
+            borderRadius: 4,
+            padding: '1px 5px',
+            display: 'inline-block',
+          }}>
+            {colorNote}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function Section({ title, children }) {
+  return (
+    <div style={{ marginBottom: 40 }}>
+      <div style={{
+        fontSize: 11,
+        fontWeight: 700,
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        color: '#9ca3af',
+        marginBottom: 16,
+        paddingBottom: 8,
+        borderBottom: '1px solid #e5e7eb',
+      }}>
+        {title}
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+// ─── Stories ──────────────────────────────────────────────────────────────────
+
+export default {
+  title: 'Foundations/Iconography',
+  tags: ['autodocs'],
+  parameters: {
+    layout: 'padded',
+    backgrounds: { default: 'hear-light' },
+    docs: {
+      description: {
+        component:
+          '**Tier: Foundations** — Complete icon inventory. All 28 icons currently used across the product. ' +
+          '\n\n**Color convention:** Icons marked `currentColor` inherit the text color of their parent and can be tinted freely. ' +
+          'Icons marked with a specific hex have that color hardcoded in the SVG path. ' +
+          '\n\n> ⚠️ **Extraction pending** — All icons are currently inline-only inside their parent component files. ' +
+          'They should be extracted to `src/components/icons/` as individual exported components ' +
+          'to resolve the `COMPOSITION OPACITY` flags on `Organisms/Chat Input` and `Organisms/Sidebar`.',
+      },
+    },
+  },
+}
+
+/** All 28 icons grouped by category. */
+export const AllIcons = {
+  render: () => (
+    <div style={{ maxWidth: 900, fontFamily: "'Byrd', sans-serif" }}>
+
+      <Section title="Brand">
+        <IconCard name="Hear Logo" source="HearLogo.jsx" colorNote="#FF7056">
+          <IconHearCoral />
+        </IconCard>
+        <IconCard name="Hear (White)" source="Sidebar.jsx" colorNote="#FFFFFF" bg="#181818">
+          <IconHearWhite />
+        </IconCard>
+      </Section>
+
+      <Section title="Navigation — Sidebar">
+        <IconCard name="Dashboard" source="Sidebar.jsx" colorNote="currentColor"><IconDashboard /></IconCard>
+        <IconCard name="Data" source="Sidebar.jsx" colorNote="currentColor"><IconData /></IconCard>
+        <IconCard name="Reports" source="Sidebar.jsx" colorNote="currentColor"><IconReports /></IconCard>
+        <IconCard name="Signals" source="Sidebar.jsx" colorNote="currentColor"><IconSignals /></IconCard>
+        <IconCard name="Alerts" source="Sidebar.jsx" colorNote="currentColor"><IconAlerts /></IconCard>
+        <IconCard name="Compliance" source="Sidebar.jsx" colorNote="currentColor"><IconCompliance /></IconCard>
+        <IconCard name="Agent Eval" source="Sidebar.jsx" colorNote="currentColor"><IconAgentEval /></IconCard>
+        <IconCard name="Knowledge" source="Sidebar.jsx" colorNote="currentColor"><IconKnowledge /></IconCard>
+        <IconCard name="AI Task" source="Sidebar.jsx" colorNote="currentColor"><IconAiTask /></IconCard>
+        <IconCard name="Customers" source="Sidebar.jsx" colorNote="currentColor"><IconCustomers /></IconCard>
+        <IconCard name="Settings" source="Sidebar.jsx" colorNote="currentColor"><IconSettings /></IconCard>
+      </Section>
+
+      <Section title="UI Controls">
+        <IconCard name="Bell" source="Sidebar.jsx" colorNote="currentColor"><IconBell /></IconCard>
+        <IconCard name="Chevron" source="Sidebar.jsx" colorNote="currentColor"><IconChevron /></IconCard>
+        <IconCard name="Collapse" source="Sidebar.jsx" colorNote="currentColor"><IconCollapse /></IconCard>
+        <IconCard name="More (Dots)" source="Sidebar.jsx" colorNote="currentColor"><IconDots /></IconCard>
+      </Section>
+
+      <Section title="User Actions">
+        <IconCard name="Dark Mode" source="Sidebar.jsx" colorNote="currentColor"><IconMoon /></IconCard>
+        <IconCard name="Accessibility" source="Sidebar.jsx" colorNote="currentColor"><IconAccessibility /></IconCard>
+        <IconCard name="Logout" source="Sidebar.jsx" colorNote="currentColor"><IconLogout /></IconCard>
+      </Section>
+
+      <Section title="Chat Input">
+        <IconCard name="Microphone" source="ChatInput.jsx" colorNote="currentColor"><IconMic /></IconCard>
+        <IconCard name="Submit Arrow" source="ChatInput.jsx" colorNote="#007AFF"><IconSubmitArrow /></IconCard>
+        <IconCard name="Attach" source="ChatInput.jsx" colorNote="currentColor"><IconAttach /></IconCard>
+        <IconCard name="Return ↵" source="ChatInput.jsx" colorNote="currentColor"><IconReturn /></IconCard>
+        <IconCard name="Navigate ↑↓" source="ChatInput.jsx" colorNote="currentColor"><IconNavigate /></IconCard>
+        <IconCard name="ESC" source="ChatInput.jsx" colorNote="currentColor"><IconEsc /></IconCard>
+      </Section>
+
+      <Section title="Third-party">
+        <IconCard name="Google" source="GoogleButton.jsx" colorNote="Brand colors"><IconGoogle /></IconCard>
+      </Section>
+
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: '28 icons across 6 categories. Grey badge = `currentColor` (inherits). Coral badge = hardcoded color.',
+      },
+    },
+  },
+}
+
+/** Navigation icons only — useful for sidebar design review. */
+export const Navigation = {
+  render: () => (
+    <div style={{ fontFamily: "'Byrd', sans-serif" }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+        <IconCard name="Dashboard" source="Sidebar.jsx" colorNote="currentColor"><IconDashboard /></IconCard>
+        <IconCard name="Data" source="Sidebar.jsx" colorNote="currentColor"><IconData /></IconCard>
+        <IconCard name="Reports" source="Sidebar.jsx" colorNote="currentColor"><IconReports /></IconCard>
+        <IconCard name="Signals" source="Sidebar.jsx" colorNote="currentColor"><IconSignals /></IconCard>
+        <IconCard name="Alerts" source="Sidebar.jsx" colorNote="currentColor"><IconAlerts /></IconCard>
+        <IconCard name="Compliance" source="Sidebar.jsx" colorNote="currentColor"><IconCompliance /></IconCard>
+        <IconCard name="Agent Eval" source="Sidebar.jsx" colorNote="currentColor"><IconAgentEval /></IconCard>
+        <IconCard name="Knowledge" source="Sidebar.jsx" colorNote="currentColor"><IconKnowledge /></IconCard>
+        <IconCard name="AI Task" source="Sidebar.jsx" colorNote="currentColor"><IconAiTask /></IconCard>
+        <IconCard name="Customers" source="Sidebar.jsx" colorNote="currentColor"><IconCustomers /></IconCard>
+        <IconCard name="Settings" source="Sidebar.jsx" colorNote="currentColor"><IconSettings /></IconCard>
+      </div>
+    </div>
+  ),
+}
+
+/** currentColor icons on the brand Coral — confirms they tint correctly. */
+export const OnBrandColor = {
+  render: () => (
+    <div style={{ background: '#FF7056', padding: 24, borderRadius: 12, display: 'flex', flexWrap: 'wrap', gap: 16, fontFamily: "'Byrd', sans-serif" }}>
+      {[
+        ['Dashboard', <IconDashboard />],
+        ['Data', <IconData />],
+        ['Reports', <IconReports />],
+        ['Alerts', <IconAlerts />],
+        ['Compliance', <IconCompliance />],
+        ['Knowledge', <IconKnowledge />],
+        ['Customers', <IconCustomers />],
+        ['Settings', <IconSettings />],
+        ['Mic', <IconMic />],
+        ['Attach', <IconAttach />],
+      ].map(([name, icon]) => (
+        <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 32, height: 32, color: 'white' }}>{icon}</div>
+          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)' }}>{name}</span>
+        </div>
+      ))}
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: '`currentColor` icons inherit white when placed on Coral `#FF7056` — no overrides needed.',
+      },
+    },
+  },
+}
