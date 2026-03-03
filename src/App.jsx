@@ -262,7 +262,7 @@ function MainApp({ isDark, onThemeToggle }) {
             position: 'absolute',
             top: 0, left: 0, right: 6,
             height: 1,
-            background: '#e5e7eb',
+            background: 'var(--border-default)',
             zIndex: 2,
             opacity: cardsScrolled ? 1 : 0,
             transition: 'opacity 200ms ease',
@@ -274,7 +274,7 @@ function MainApp({ isDark, onThemeToggle }) {
             maxHeight: 320,
             overflowY: 'auto',
             scrollbarWidth: 'thin',
-            scrollbarColor: '#d1d5db transparent',
+            scrollbarColor: 'var(--border-default) transparent',
             maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
             WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
             paddingBottom: 40,
@@ -291,7 +291,7 @@ function MainApp({ isDark, onThemeToggle }) {
                     <span className="card-title" style={{ fontSize: 13, fontWeight: 600 }}>Request {req.id}</span>
                     <span className="card-tag" style={{ fontSize: 11, borderRadius: 999, border: '1px solid', padding: '2px 8px', whiteSpace: 'nowrap' }}>{req.tag}</span>
                   </div>
-                  <span style={{ color: '#9ca3af', flexShrink: 0 }}><ExternalLinkIcon /></span>
+                  <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}><ExternalLinkIcon /></span>
                 </div>
                 <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{req.description}</p>
               </div>
@@ -337,8 +337,8 @@ function MainApp({ isDark, onThemeToggle }) {
                       maxWidth: '75%',
                       padding: '12px 16px',
                       borderRadius: isAI ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
-                      background: isAI ? 'transparent' : '#111827',
-                      color: isAI ? 'rgba(17,24,39,0.85)' : '#fff',
+                      background: isAI ? 'transparent' : 'var(--color-brand)',
+                      color: isAI ? 'var(--text-primary)' : '#fff',
                       fontSize: 14,
                       lineHeight: 1.55,
                       boxShadow: isAI ? 'none' : '0 1px 4px rgba(0,0,0,0.08)',
@@ -348,16 +348,16 @@ function MainApp({ isDark, onThemeToggle }) {
                           remarkPlugins={[remarkGfm]}
                           components={{
                             table: ({node, ...props}) => <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13, marginBottom: 8 }} {...props} />,
-                            th: ({node, ...props}) => <th style={{ border: '1px solid #e5e7eb', padding: '6px 10px', background: '#f9fafb', fontWeight: 600, textAlign: 'left' }} {...props} />,
-                            td: ({node, ...props}) => <td style={{ border: '1px solid #e5e7eb', padding: '6px 10px' }} {...props} />,
-                            blockquote: ({node, ...props}) => <blockquote style={{ borderLeft: '3px solid #d1d5db', margin: '8px 0', padding: '4px 12px', color: 'rgba(17,24,39,0.6)', fontStyle: 'italic' }} {...props} />,
+                            th: ({node, ...props}) => <th style={{ border: '1px solid var(--border-default)', padding: '6px 10px', background: 'var(--bg-active)', fontWeight: 600, textAlign: 'left', color: 'var(--text-primary)' }} {...props} />,
+                            td: ({node, ...props}) => <td style={{ border: '1px solid var(--border-default)', padding: '6px 10px', color: 'var(--text-primary)' }} {...props} />,
+                            blockquote: ({node, ...props}) => <blockquote style={{ borderLeft: '3px solid var(--border-default)', margin: '8px 0', padding: '4px 12px', color: 'var(--text-muted)', fontStyle: 'italic' }} {...props} />,
                             code: ({node, inline, ...props}) => inline
-                              ? <code style={{ background: '#f3f4f6', borderRadius: 4, padding: '1px 5px', fontSize: 12, fontFamily: 'monospace' }} {...props} />
-                              : <pre style={{ background: '#f3f4f6', borderRadius: 8, padding: '10px 14px', overflowX: 'auto', fontSize: 12, fontFamily: 'monospace', margin: '8px 0' }}><code {...props} /></pre>,
+                              ? <code style={{ background: 'var(--bg-active)', borderRadius: 4, padding: '1px 5px', fontSize: 12, fontFamily: 'monospace', color: 'var(--text-primary)' }} {...props} />
+                              : <pre style={{ background: 'var(--bg-active)', borderRadius: 8, padding: '10px 14px', overflowX: 'auto', fontSize: 12, fontFamily: 'monospace', margin: '8px 0', color: 'var(--text-primary)' }}><code {...props} /></pre>,
                             p: ({node, ...props}) => <p style={{ margin: '0 0 6px 0', lineHeight: 1.6 }} {...props} />,
-                            h1: ({node, ...props}) => <h1 style={{ fontSize: 16, fontWeight: 700, margin: '10px 0 6px', color: '#111827' }} {...props} />,
-                            h2: ({node, ...props}) => <h2 style={{ fontSize: 14, fontWeight: 700, margin: '10px 0 6px', color: '#111827' }} {...props} />,
-                            h3: ({node, ...props}) => <h3 style={{ fontSize: 13, fontWeight: 600, margin: '8px 0 4px', color: '#111827' }} {...props} />,
+                            h1: ({node, ...props}) => <h1 style={{ fontSize: 16, fontWeight: 700, margin: '10px 0 6px', color: 'var(--text-primary)' }} {...props} />,
+                            h2: ({node, ...props}) => <h2 style={{ fontSize: 14, fontWeight: 700, margin: '10px 0 6px', color: 'var(--text-primary)' }} {...props} />,
+                            h3: ({node, ...props}) => <h3 style={{ fontSize: 13, fontWeight: 600, margin: '8px 0 4px', color: 'var(--text-primary)' }} {...props} />,
                             ul: ({node, ...props}) => <ul style={{ paddingLeft: 18, margin: '4px 0' }} {...props} />,
                             ol: ({node, ...props}) => <ol style={{ paddingLeft: 18, margin: '4px 0' }} {...props} />,
                             li: ({node, ...props}) => <li style={{ marginBottom: 2 }} {...props} />,
@@ -403,7 +403,7 @@ function MainApp({ isDark, onThemeToggle }) {
                               borderRadius: 6,
                               transition: 'background 120ms ease',
                             }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.06)'}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-active)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'none'}
                           >
                             {icon}
@@ -414,7 +414,7 @@ function MainApp({ isDark, onThemeToggle }) {
 
                     {isAI && i === lastAIIndex && msg.related?.length > 0 && (
                       <div style={{ marginTop: 20, width: '100%', maxWidth: '75%' }}>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', margin: '0 0 2px 0' }}>Related</p>
+                        <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 2px 0' }}>Related</p>
                         {msg.related.map((topic, ri) => (
                           <div
                             key={ri}
@@ -423,14 +423,14 @@ function MainApp({ isDark, onThemeToggle }) {
                               alignItems: 'center',
                               justifyContent: 'space-between',
                               padding: '11px 0',
-                              borderTop: '1px solid #e5e7eb',
+                              borderTop: '1px solid var(--border-default)',
                               cursor: 'pointer',
                               opacity: 0,
                               animation: `slideInRight 220ms cubic-bezier(0.22,1,0.36,1) forwards`,
                               animationDelay: `${ri * 60}ms`,
                             }}
                           >
-                            <span style={{ fontSize: 13, color: 'rgba(17,24,39,0.8)', lineHeight: 1.4 }}>{topic}</span>
+                            <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{topic}</span>
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginLeft: 12 }}>
                               <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="#9ca3af" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
@@ -449,8 +449,8 @@ function MainApp({ isDark, onThemeToggle }) {
                 <div style={{
                   padding: '12px 16px',
                   borderRadius: '18px 18px 18px 4px',
-                  background: '#fff',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+                  background: 'var(--bg-card)',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
                   display: 'flex', alignItems: 'center', gap: 4,
                 }}>
                   {[0, 160, 320].map(delay => (
