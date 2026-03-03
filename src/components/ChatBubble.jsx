@@ -97,10 +97,11 @@ export default function ChatBubble({
       {/* ── Bubble body ── */}
       <div style={{
         maxWidth: '75%',
-        padding: isAI ? '12px 0' : '12px 16px',
+        padding: isAI ? '8px 10px' : '12px 16px',
         borderRadius: isAI ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
         background: isAI ? 'transparent' : 'var(--color-brand)',
         color: isAI ? 'var(--text-primary)' : '#fff',
+        opacity: isAI ? 0.8 : 1,
         fontSize: 14,
         lineHeight: 1.55,
         boxShadow: isAI ? 'none' : '0 1px 4px rgba(0,0,0,0.08)',
