@@ -54,7 +54,7 @@ export default function SignInHero() {
       </div>
 
       <h1 style={{
-        fontSize: 'clamp(40px, 4vw, 64px)',
+        fontSize: 'clamp(34px, 3.5vw, 52px)',
         fontWeight: 800,
         color: '#ffffff',
         lineHeight: 1.08,
