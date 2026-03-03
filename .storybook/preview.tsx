@@ -9,15 +9,19 @@ import '../src/index.css'
  * not inherit body-level font-family from index.css. This decorator ensures
  * the Byrd font is active in every story without per-story boilerplate.
  */
+const DARK_BG = '#181818'
+
 const withByrdFont: Decorator = (Story, context) => {
-  const isDark = context.globals?.backgrounds?.value === '#111827'
+  const bg = context.globals?.backgrounds?.value
+  const isDark = bg === DARK_BG || bg === '#111827'
   return (
     <div
+      data-theme={isDark ? 'dark' : 'light'}
       style={{
         fontFamily: "'Byrd', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         minHeight: '100vh',
-        background: isDark ? '#111827' : 'transparent',
-        color: isDark ? '#f9fafb' : 'inherit',
+        background: isDark ? DARK_BG : 'transparent',
+        color: isDark ? '#F4F3F1' : 'inherit',
       }}
     >
       <Story />
@@ -32,9 +36,9 @@ const preview: Preview = {
       default: 'hear-light',
       values: [
         { name: 'hear-light',   value: '#EFEFED' },
-        { name: 'hear-sidebar', value: '#f5f5f3' },
-        { name: 'hear-dark',    value: '#111827' },
-        { name: 'white',        value: '#ffffff' },
+        { name: 'hear-sidebar', value: '#F5F5F3' },
+        { name: 'hear-dark',    value: '#181818' },
+        { name: 'white',        value: '#FFFFFF' },
       ],
     },
 
@@ -65,6 +69,13 @@ const preview: Preview = {
 
     // ── Default layout ────────────────────────────────────────────────────
     layout: 'centered',
+
+    // ── Sidebar ordering — enforces Atomic Design taxonomy ────────────────
+    options: {
+      storySort: {
+        order: ['Foundations', 'Atoms', 'Molecules', 'Organisms', 'Templates', '*'],
+      },
+    },
   },
 
   decorators: [withByrdFont],

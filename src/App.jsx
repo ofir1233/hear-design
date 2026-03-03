@@ -119,7 +119,7 @@ function MainApp() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center px-6"
-      style={{ backgroundColor: '#EFEFED', paddingLeft }}
+      style={{ backgroundColor: 'var(--bg-canvas)', paddingLeft }}
     >
       <Sidebar
         mobileOpen={sidebarOpen}
@@ -137,8 +137,8 @@ function MainApp() {
             left: 16,
             zIndex: 90,
             width: 40, height: 40,
-            background: '#fff',
-            border: '1px solid #e5e7eb',
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
             borderRadius: 10,
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',

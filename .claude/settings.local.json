@@ -15,7 +15,12 @@
       "Bash(npx storybook:*)",
       "Bash(node:*)",
       "Bash(python3:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo:*)",
+      "Bash(netstat -ano)",
+      "Bash(xargs -I{} taskkill //PID {} //F)",
+      "Bash(ls:*)"
     ]
   }
 }

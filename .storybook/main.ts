@@ -10,19 +10,10 @@ const config: StorybookConfig = {
   ],
 
   addons: [
-    // ── Core (Storybook 10 bundled) ─────────────────────────────────────────
-    '@storybook/addon-docs',          // Auto-generated API documentation
-    '@storybook/addon-a11y',          // Accessibility audit (axe-core)
-    '@storybook/addon-themes',        // Background / theme switching
-    '@storybook/addon-onboarding',    // First-run onboarding tour
-    '@chromatic-com/storybook',       // Chromatic visual regression CI
-    '@storybook/addon-vitest',        // Vitest integration (must precede interactions)
-    // ── Interaction & measurement (must follow addon-vitest) ────────────────
-    '@storybook/addon-interactions',  // User event visualization
-    '@storybook/addon-measure',       // Box-model / spacing overlay
-    '@storybook/addon-outline',       // Grid alignment overlay
-    // ── Developer experience ────────────────────────────────────────────────
-    '@storybook/addon-storysource',   // Shows raw story source in panel
+    '@storybook/addon-docs',
+    '@storybook/addon-a11y',
+    '@storybook/addon-themes',
+    '@storybook/addon-onboarding',
   ],
 
   framework: '@storybook/react-vite',

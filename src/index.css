@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* ── Keyframes ─────────────────────────────────────────────────────────────── */
 @keyframes msgIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -15,121 +16,222 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-style: normal;
-}
+/* ── Font Faces ────────────────────────────────────────────────────────────── */
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-Light.woff2') format('woff2'); font-weight: 300; font-style: normal; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-LightItalic.woff2') format('woff2'); font-weight: 300; font-style: italic; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-RegularItalic.woff2') format('woff2'); font-weight: 400; font-style: italic; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-MediumItalic.woff2') format('woff2'); font-weight: 500; font-style: italic; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-SemiBoldItalic.woff2') format('woff2'); font-weight: 600; font-style: italic; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-BoldItalic.woff2') format('woff2'); font-weight: 700; font-style: italic; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-ExtraBold.woff2') format('woff2'); font-weight: 800; font-style: normal; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-ExtraBoldItalic.woff2') format('woff2'); font-weight: 800; font-style: italic; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-Black.woff2') format('woff2'); font-weight: 900; font-style: normal; }
+@font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-BlackItalic.woff2') format('woff2'); font-weight: 900; font-style: italic; }
 
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-LightItalic.woff2') format('woff2');
-  font-weight: 300;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-RegularItalic.woff2') format('woff2');
-  font-weight: 400;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-MediumItalic.woff2') format('woff2');
-  font-weight: 500;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-SemiBoldItalic.woff2') format('woff2');
-  font-weight: 600;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-BoldItalic.woff2') format('woff2');
-  font-weight: 700;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-ExtraBold.woff2') format('woff2');
-  font-weight: 800;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-ExtraBoldItalic.woff2') format('woff2');
-  font-weight: 800;
-  font-style: italic;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-Black.woff2') format('woff2');
-  font-weight: 900;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'Byrd';
-  src: url('/fonts/Byrd-BlackItalic.woff2') format('woff2');
-  font-weight: 900;
-  font-style: italic;
-}
-
+/* ── Tailwind Theme Extensions ─────────────────────────────────────────────── */
 @theme {
   --font-byrd: 'Byrd', sans-serif;
+
+  /* Primary */
+  --color-coral-100: #FF7056;
+  --color-coral-80:  #FF8D78;
+  --color-coral-60:  #FFA99A;
+  --color-coral-50:  #FFB8AB;
+  --color-coral-40:  #FFC6BB;
+  --color-coral-30:  #FFD4CC;
+  --color-coral-20:  #FFE2DD;
+  --color-coral-10:  #FFF1EE;
+
+  --color-charcoal-100: #181818;
+  --color-charcoal-80:  #464646;
+  --color-charcoal-60:  #747474;
+  --color-charcoal-50:  #8C8C8C;
+  --color-charcoal-40:  #A3A3A3;
+  --color-charcoal-30:  #BABABA;
+  --color-charcoal-20:  #D1D1D1;
+  --color-charcoal-10:  #E8E8E8;
+
+  /* Complementary */
+  --color-cobalt-100: #1779F7;
+  --color-cobalt-80:  #4594F9;
+  --color-cobalt-60:  #74AFFA;
+  --color-cobalt-50:  #8BBCFB;
+  --color-cobalt-40:  #A2C9FC;
+  --color-cobalt-30:  #B9D7FD;
+  --color-cobalt-20:  #D1E4FD;
+
+  --color-green-100: #4BA373;
+  --color-green-80:  #6FB58F;
+  --color-green-60:  #93C8AB;
+  --color-green-50:  #A5D1B9;
+  --color-green-40:  #B7DAC7;
+  --color-green-30:  #C9E3D5;
+  --color-green-20:  #DBEDE3;
+
+  --color-lilac-100: #D799E2;
+  --color-lilac-80:  #DFADE8;
+  --color-lilac-60:  #E7C2EE;
+  --color-lilac-50:  #EBCCF1;
+  --color-lilac-40:  #EFD6F3;
+  --color-lilac-30:  #F3E0F6;
+  --color-lilac-20:  #F7EBF9;
+
+  /* Accent */
+  --color-teal-100: #455F61;
+  --color-teal-80:  #6A7F81;
+  --color-teal-60:  #8F9FA0;
+  --color-teal-50:  #A2AFB0;
+  --color-teal-40:  #B5BFC0;
+  --color-teal-30:  #C7CFD0;
+  --color-teal-20:  #DADFDF;
+
+  --color-sage-100: #B09495;
+  --color-sage-80:  #C0A9AA;
+  --color-sage-60:  #D0BFBF;
+  --color-sage-50:  #D8CACA;
+  --color-sage-40:  #DFD4D5;
+  --color-sage-30:  #E7DFDF;
+  --color-sage-20:  #EFEAEA;
+
+  --color-horizon-100: #6E95A0;
+  --color-horizon-80:  #8BAAB3;
+  --color-horizon-60:  #A8BFC6;
+  --color-horizon-50:  #B7CAD0;
+  --color-horizon-40:  #C5D5D9;
+  --color-horizon-30:  #D4DFE3;
+  --color-horizon-20:  #E2EAEC;
+
+  /* Neutrals */
+  --color-neutral-100: #606060;
+  --color-neutral-80:  #7D7D7D;
+  --color-neutral-60:  #9B9B9B;
+  --color-neutral-40:  #B9B9B9;
+  --color-neutral-20:  #D6D6D6;
+
+  --color-paper-100: #F4F3F1;
+  --color-paper-50:  #F9F9F7;
+  --color-paper-20:  #FFFFFF;
 }
 
+/* ── Design Tokens — Light Mode ────────────────────────────────────────────── */
+:root {
+  /* Raw palette (short names matching design file notation) */
+  --c100: #FF7056; --c80: #FF8D78; --c60: #FFA99A; --c50: #FFB8AB;
+  --c40: #FFC6BB;  --c30: #FFD4CC; --c20: #FFE2DD; --c10: #FFF1EE;
+
+  --d100: #181818; --d80: #464646; --d60: #747474; --d50: #8C8C8C;
+  --d40: #A3A3A3;  --d30: #BABABA; --d20: #D1D1D1; --d10: #E8E8E8;
+
+  --b100: #1779F7; --b80: #4594F9; --b60: #74AFFA; --b50: #8BBCFB;
+  --b40: #A2C9FC;  --b30: #B9D7FD; --b20: #D1E4FD;
+
+  --g100: #4BA373; --g80: #6FB58F; --g60: #93C8AB; --g50: #A5D1B9;
+  --g40: #B7DAC7;  --g30: #C9E3D5; --g20: #DBEDE3;
+
+  --l100: #D799E2; --l80: #DFADE8; --l60: #E7C2EE; --l50: #EBCCF1;
+  --l40: #EFD6F3;  --l30: #F3E0F6; --l20: #F7EBF9;
+
+  --t100: #455F61; --t80: #6A7F81; --t60: #8F9FA0; --t50: #A2AFB0;
+  --t40: #B5BFC0;  --t30: #C7CFD0; --t20: #DADFDF;
+
+  --s100: #B09495; --s80: #C0A9AA; --s60: #D0BFBF; --s50: #D8CACA;
+  --s40: #DFD4D5;  --s30: #E7DFDF; --s20: #EFEAEA;
+
+  --h100: #6E95A0; --h80: #8BAAB3; --h60: #A8BFC6; --h50: #B7CAD0;
+  --h40: #C5D5D9;  --h30: #D4DFE3; --h20: #E2EAEC;
+
+  --n100: #606060; --n80: #7D7D7D; --n60: #9B9B9B; --n40: #B9B9B9; --n20: #D6D6D6;
+  --p100: #F4F3F1; --p50: #F9F9F7; --p20: #FFFFFF;
+
+  /* ── Semantic tokens ── */
+  --bg-canvas:   #EFEFED;
+  --bg-sidebar:  #F5F5F3;
+  --bg-active:   #E8E8E6;
+  --bg-card:     #FFFFFF;
+  --bg-elevated: #FFFFFF;
+
+  --text-primary:   var(--d100);
+  --text-secondary: var(--n100);
+  --text-muted:     var(--n60);
+  --text-inverse:   var(--p100);
+
+  --border-default: #E5E7EB;
+  --border-input:   #C4C4C4;
+
+  --color-brand:       var(--c100);
+  --color-interactive: var(--b100);
+
+  /* ── Typography Scale ── */
+  /* Titles */
+  --type-h1: 140px; --type-h1-lh: 160px;
+  --type-h2: 100px; --type-h2-lh: 140px;
+  --type-h3:  80px; --type-h3-lh: 100px;
+  --type-h4:  64px; --type-h4-lh:  88px;
+  --type-h5:  56px; --type-h5-lh:  72px;
+  --type-h6:  48px; --type-h6-lh:  68px;
+  --type-h7:  40px; --type-h7-lh:  56px;
+  --type-h8:  32px; --type-h8-lh:  48px;
+
+  /* Body */
+  --type-p1:  40px; --type-p1-lh:  54px;
+  --type-p2:  40px; --type-p2-lh:  54px;
+  --type-p3:  40px; --type-p3-lh:  54px;
+  --type-p4:  32px; --type-p4-lh:  48px;
+  --type-p5:  32px; --type-p5-lh:  48px;
+  --type-p6:  32px; --type-p6-lh:  48px;
+  --type-p7:  24px; --type-p7-lh:  40px;
+  --type-p8:  24px; --type-p8-lh:  40px;
+  --type-p9:  24px; --type-p9-lh:  32px;
+  --type-p10: 18px; --type-p10-lh: 24px;
+  --type-p11: 16px; --type-p11-lh: 24px;
+  --type-p12: 16px; --type-p12-lh: 24px;
+  --type-p13: 16px; --type-p13-lh: 24px;
+  --type-p14: 12px; --type-p14-lh: 16px;
+}
+
+/* ── Design Tokens — Dark Mode ─────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --bg-canvas:   #181818;
+  --bg-sidebar:  #1C1C1C;
+  --bg-active:   #2A2A2A;
+  --bg-card:     #242424;
+  --bg-elevated: #2E2E2E;
+
+  --text-primary:   #F4F3F1;
+  --text-secondary: #9B9B9B;
+  --text-muted:     #606060;
+  --text-inverse:   #181818;
+
+  --border-default: #333333;
+  --border-input:   #444444;
+
+  --color-brand:       var(--c100);
+  --color-interactive: var(--b80);
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────────── */
 body {
   font-family: 'Byrd', sans-serif;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
+/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
 .cards-scroll::-webkit-scrollbar { width: 4px; }
 .cards-scroll::-webkit-scrollbar-track { background: transparent; }
-.cards-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 99px; }
-.cards-scroll::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+.cards-scroll::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 99px; }
+.cards-scroll::-webkit-scrollbar-thumb:hover { background: var(--n60); }
 .cards-scroll::-webkit-scrollbar-button { display: none; }
 
-.request-card { background: transparent; border: 1px solid #d1d5db; transition: background 150ms ease; }
-.request-card:hover { background: #fff; }
-.request-card .card-tag { background: #f3f4f6; border-color: transparent; color: #6b7280; font-size: 10px; font-weight: 500; letter-spacing: 0.02em; transition: background 150ms ease, color 150ms ease; }
-.request-card:hover .card-tag { background: #111827; border-color: transparent; color: #fff; }
-.request-card .card-title { color: #374151; transition: color 150ms ease; }
-.request-card:hover .card-title { color: #111827; }
+/* ── Request Cards ──────────────────────────────────────────────────────────── */
+.request-card { background: transparent; border: 1px solid var(--border-default); transition: background 150ms ease; }
+.request-card:hover { background: var(--bg-card); }
+.request-card .card-tag { background: var(--bg-active); border-color: transparent; color: var(--text-muted); font-size: 10px; font-weight: 500; letter-spacing: 0.02em; transition: background 150ms ease, color 150ms ease; }
+.request-card:hover .card-tag { background: var(--text-primary); border-color: transparent; color: var(--text-inverse); }
+.request-card .card-title { color: var(--text-secondary); transition: color 150ms ease; }
+.request-card:hover .card-title { color: var(--text-primary); }

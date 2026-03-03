@@ -85,13 +85,13 @@ function getActiveMention(text, cursorPos) {
   return { query: match[1], start: match.index }
 }
 
-export default function ChatInput({ onSubmit, onMentionChange, loading = false, settled = false }) {
-  const [text, setText]       = useState('')
+export default function ChatInput({ onSubmit, onMentionChange, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null }) {
+  const [text, setText]       = useState(defaultText)
   const [hovered, setHovered] = useState(false)
-  const [mentionQuery, setMentionQuery] = useState(null)
+  const [mentionQuery, setMentionQuery] = useState(initialMentionQuery)
   const [mentionStart, setMentionStart] = useState(0)
   const [activeIndex, setActiveIndex]   = useState(0)
-  const [uploadOpen, setUploadOpen]     = useState(false)
+  const [uploadOpen, setUploadOpen]     = useState(initialUploadOpen)
   const textareaRef = useRef(null)
 
   useEffect(() => {

@@ -13,8 +13,8 @@ const hearTheme = create({
   brandTarget: '_self',
 
   // ── Color palette ────────────────────────────────────────────────────────
-  colorPrimary:   '#FF7056',   // Brand coral — matches HearLogo SVG fill
-  colorSecondary: '#111827',   // Near-black — active state / dark text
+  colorPrimary:   '#FF7056',   // Pulse Coral C100 — brand primary
+  colorSecondary: '#181818',   // Charcoal D100 — primary text / dark bg
 
   // ── UI chrome ────────────────────────────────────────────────────────────
   appBg:          '#f5f5f3',   // Sidebar background — mirrors Sidebar.jsx
