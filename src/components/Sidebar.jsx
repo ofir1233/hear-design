@@ -22,23 +22,25 @@ function StorybookDisabledButton() {
 
   return (
     <div style={{ position: 'relative', width: '100%' }}>
-      <div
+      <a
+        href={import.meta.env.DEV ? 'http://localhost:6006' : '/storybook'}
+        target="_blank"
+        rel="noopener noreferrer"
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        onClick={() => window.open(import.meta.env.DEV ? 'http://localhost:6006' : '/storybook', '_blank')}
         style={{
-          width:       '100%',
-          display:     'flex',
-          alignItems:  'center',
-          gap:         10,
-          padding:     '8px 12px',
-          borderRadius: 8,
-          background:  'transparent',
-          color:       'var(--text-muted)',
-          fontSize:    13.5,
-          fontWeight:  400,
-          cursor:      'pointer',
-          userSelect:  'none',
+          width:          '100%',
+          display:        'flex',
+          alignItems:     'center',
+          gap:            10,
+          padding:        '8px 12px',
+          borderRadius:   8,
+          background:     'transparent',
+          color:          'var(--text-muted)',
+          fontSize:       13.5,
+          fontWeight:     400,
+          textDecoration: 'none',
+          userSelect:     'none',
         }}
       >
         {/* Hear wave mark — same size as other nav icons */}
@@ -54,7 +56,7 @@ function StorybookDisabledButton() {
         }}>
           DEV
         </span>
-      </div>
+      </a>
 
       {/* Tooltip */}
       {hovered && (
