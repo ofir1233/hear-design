@@ -288,7 +288,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           <div style={{ height: 1, background: 'var(--border-input)', margin: '0 24px 8px' }} />
 
           {/* Nav items */}
-          <nav style={{ padding: '0 24px', flex: 1 }}>
+          <nav style={{ padding: '0 24px' }}>
             {NAV_ITEMS.map(({ id, label, Icon }) => {
               const active = activeNav === id
               return (
