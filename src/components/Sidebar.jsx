@@ -123,8 +123,7 @@ const PROJECTS = [
   { id: 3, label: 'Gamma Solutions' },
 ]
 
-export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange }) {
-  const [collapsed, setCollapsed]       = useState(false)
+export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
   const [hoveredHistory, setHoveredHistory] = useState(null)
   const [projectOpen, setProjectOpen]   = useState(false)
@@ -483,7 +482,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
       {/* Collapse tab — desktop only */}
       {!isMobile && (
         <button
-          onClick={() => setCollapsed(c => !c)}
+          onClick={() => onToggleCollapse?.()}
           style={{
             alignSelf: 'center',
             width: 20,

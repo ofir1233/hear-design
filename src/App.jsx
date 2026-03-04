@@ -49,6 +49,7 @@ function MainApp({ isDark, onThemeToggle }) {
   const isMobile = useIsMobile()
   const [activePage, setActivePage] = useState(() => window.__hearActivePage || 'dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [submitted, setSubmitted]     = useState(false)
   const [settled, setSettled]         = useState(false)
   const [loading, setLoading]         = useState(false)
@@ -126,7 +127,9 @@ function MainApp({ isDark, onThemeToggle }) {
       })
   }
 
-  const paddingLeft = isMobile ? '1.5rem' : `calc(${SIDEBAR_WIDTH}px + 1.5rem)`
+  const effectiveSidebarWidth = isMobile ? 0 : (sidebarCollapsed ? 0 : SIDEBAR_WIDTH)
+  const sidebarTransition = 'left 250ms cubic-bezier(0.4,0,0.2,1), padding-left 250ms cubic-bezier(0.4,0,0.2,1), width 250ms cubic-bezier(0.4,0,0.2,1)'
+  const paddingLeft = isMobile ? '1.5rem' : `calc(${effectiveSidebarWidth}px + 1.5rem)`
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-canvas)' }}>
@@ -138,6 +141,8 @@ function MainApp({ isDark, onThemeToggle }) {
         onThemeToggle={onThemeToggle}
         activeNav={activePage}
         onNavChange={setActivePage}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(c => !c)}
       />
 
       {/* Mobile hamburger button */}
@@ -167,13 +172,14 @@ function MainApp({ isDark, onThemeToggle }) {
       )}
 
       {activePage === 'data' ? (
-        <DataPage isMobile={isMobile} sidebarWidth={SIDEBAR_WIDTH} />
+        <DataPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage !== 'dashboard' ? (
         /* Placeholder for unimplemented pages */
         <div style={{
           position: 'fixed', top: 0,
-          left: isMobile ? 0 : SIDEBAR_WIDTH,
+          left: effectiveSidebarWidth,
           right: 0, bottom: 0,
+          transition: sidebarTransition,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexDirection: 'column', gap: 8,
         }}>
@@ -185,7 +191,7 @@ function MainApp({ isDark, onThemeToggle }) {
       ) : (
       <div
         className="min-h-screen flex flex-col items-center justify-center px-6"
-        style={{ paddingLeft }}
+        style={{ paddingLeft, transition: sidebarTransition }}
       >
 
       {/* Header */}
@@ -242,9 +248,10 @@ function MainApp({ isDark, onThemeToggle }) {
             ? {
                 position:  'fixed',
                 bottom:    32,
-                left:      isMobile ? '50%' : `calc(50% + ${SIDEBAR_WIDTH / 2}px)`,
-                transform: 'translateX(-50%)',
-                width:     isMobile ? 'calc(100% - 3rem)' : `calc(100% - ${SIDEBAR_WIDTH}px - 3rem)`,
+                left:       isMobile ? '50%' : `calc(50% + ${effectiveSidebarWidth / 2}px)`,
+                transform:  'translateX(-50%)',
+                width:      isMobile ? 'calc(100% - 3rem)' : `calc(100% - ${effectiveSidebarWidth}px - 3rem)`,
+                transition: sidebarTransition,
                 maxWidth:  '42rem',
                 zIndex:    50,
               }
@@ -336,10 +343,11 @@ function MainApp({ isDark, onThemeToggle }) {
         <div className="smooth-scroll" style={{
           position: 'fixed',
           top: 0,
-          left: isMobile ? 0 : SIDEBAR_WIDTH,
+          left: effectiveSidebarWidth,
           right: 0,
           bottom: 80,
           overflowY: 'auto',
+          transition: sidebarTransition,
           padding: '40px 24px 160px',
           display: 'flex',
           flexDirection: 'column',

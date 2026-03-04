@@ -347,7 +347,7 @@ function FilterPopover({ anchor, chip, onChange, onDone, onClose }) {
 
 // ── DataPage ──────────────────────────────────────────────────────────────────
 
-export default function DataPage({ isMobile = false, sidebarWidth = 272 }) {
+export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebarTransition }) {
   const [schemaId,       setSchemaId]       = useState('acme')
   const [customPresets,  setCustomPresets]  = useState([])
   const [selectedPreset, setSelectedPreset] = useState('')
@@ -458,6 +458,7 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272 }) {
         position: 'fixed', top: 0, left, right: 0, bottom: 0,
         background: 'var(--bg-canvas)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        transition: sidebarTransition,
       }}
     >
       {/* ── Page Header ──────────────────────────────────────────────────── */}
