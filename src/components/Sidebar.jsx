@@ -25,7 +25,7 @@ function StorybookDisabledButton() {
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        onClick={() => window.open('http://localhost:6006', '_blank')}
+        onClick={() => window.open(import.meta.env.DEV ? 'http://localhost:6006' : '/storybook', '_blank')}
         style={{
           width:       '100%',
           display:     'flex',
