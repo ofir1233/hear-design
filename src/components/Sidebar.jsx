@@ -23,7 +23,7 @@ function StorybookDisabledButton() {
   return (
     <div style={{ position: 'relative', width: '100%' }}>
       <a
-        href={import.meta.env.DEV ? 'http://localhost:6006' : undefined}
+        href={import.meta.env.DEV ? 'http://localhost:6006' : '/storybook/'}
         target="_blank"
         rel="noopener noreferrer"
         onMouseEnter={() => setHovered(true)}
@@ -77,7 +77,7 @@ function StorybookDisabledButton() {
           pointerEvents:'none',
           zIndex:       300,
         }}>
-          {import.meta.env.DEV ? 'Open Storybook on localhost:6006' : 'Available in local dev only'}
+          {import.meta.env.DEV ? 'Open Storybook on localhost:6006' : 'Open Storybook'}
           <div style={{
             position:        'absolute',
             top:             '100%',
