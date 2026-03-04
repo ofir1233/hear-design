@@ -328,10 +328,10 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           </div>
           {/* ── end Storybook Dev Link ─────────────────────────────────────────── */}
 
-          <div style={{ height: 1, background: 'var(--border-input)', margin: '8px 24px' }} />
+          {activeNav === 'dashboard' && <div style={{ height: 1, background: 'var(--border-input)', margin: '8px 24px' }} />}
 
-          {/* History section */}
-          <div style={{ padding: '0 24px 8px' }}>
+          {/* History section — dashboard only */}
+          {activeNav === 'dashboard' && <div style={{ padding: '0 24px 8px' }}>
             <button
               onClick={() => setHistoryOpen(o => !o)}
               style={{
@@ -399,6 +399,8 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               </div>
             ))}
           </div>
+
+          }
 
           {/* Spacer */}
           <div style={{ flex: 1 }} />
