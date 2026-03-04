@@ -25,6 +25,7 @@ function StorybookDisabledButton() {
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        onClick={() => window.open('http://localhost:6006', '_blank')}
         style={{
           width:       '100%',
           display:     'flex',
@@ -36,7 +37,7 @@ function StorybookDisabledButton() {
           color:       'var(--text-muted)',
           fontSize:    13.5,
           fontWeight:  400,
-          cursor:      'not-allowed',
+          cursor:      'pointer',
           userSelect:  'none',
         }}
       >
