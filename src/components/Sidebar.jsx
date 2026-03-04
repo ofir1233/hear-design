@@ -123,9 +123,8 @@ const PROJECTS = [
   { id: 3, label: 'Gamma Solutions' },
 ]
 
-export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle }) {
+export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange }) {
   const [collapsed, setCollapsed]       = useState(false)
-  const [activeNav, setActiveNav]       = useState('dashboard')
   const [historyOpen, setHistoryOpen]   = useState(true)
   const [hoveredHistory, setHoveredHistory] = useState(null)
   const [projectOpen, setProjectOpen]   = useState(false)
@@ -170,11 +169,11 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           display: 'flex',
           flexDirection: 'column',
           background: 'var(--bg-sidebar)',
-          borderRight: '1px solid var(--border-default)',
+          borderRight: '1px solid var(--border-input)',
           height: '100vh',
         }}
       >
-        <div style={{ position: 'relative', width: 272, display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+        <div className="smooth-scroll" style={{ position: 'relative', width: 272, display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
 
           {/* Mobile close button */}
           {isMobile && (
@@ -286,7 +285,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
             </div>
           </div>
 
-          <div style={{ height: 1, background: 'var(--border-default)', margin: '0 24px 8px' }} />
+          <div style={{ height: 1, background: 'var(--border-input)', margin: '0 24px 8px' }} />
 
           {/* Nav items */}
           <nav style={{ padding: '0 24px', flex: 1 }}>
@@ -295,7 +294,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               return (
                 <button
                   key={id}
-                  onClick={() => setActiveNav(id)}
+                  onClick={() => onNavChange?.(id)}
                   style={{
                     width: '100%',
                     display: 'flex',
@@ -329,7 +328,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           </div>
           {/* ── end Storybook Dev Link ─────────────────────────────────────────── */}
 
-          <div style={{ height: 1, background: 'var(--border-default)', margin: '8px 24px' }} />
+          <div style={{ height: 1, background: 'var(--border-input)', margin: '8px 24px' }} />
 
           {/* History section */}
           <div style={{ padding: '0 24px 8px' }}>
@@ -453,7 +452,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                 { Icon: LogoutIcon,                   onClick: null },
               ].map(({ Icon, onClick }, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                  {i > 0 && <div style={{ width: 1, height: 20, background: 'var(--border-default)', flexShrink: 0 }} />}
+                  {i > 0 && <div style={{ width: 1, height: 20, background: 'var(--border-input)', flexShrink: 0 }} />}
                   <button
                     onClick={onClick ?? undefined}
                     style={{

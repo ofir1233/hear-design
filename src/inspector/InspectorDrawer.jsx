@@ -7,8 +7,23 @@ import ComponentsTab  from './tabs/ComponentsTab.jsx'
 
 const TABS = ['Foundations', 'Icons', 'Components']
 
+const NAV_PAGES = [
+  { id: 'dashboard',   label: 'Dashboard'   },
+  { id: 'data',        label: 'Data'        },
+  { id: 'reports',     label: 'Reports'     },
+  { id: 'signals',     label: 'Signals'     },
+  { id: 'alerts',      label: 'Alerts'      },
+  { id: 'compliance',  label: 'Compliance'  },
+  { id: 'agent-eval',  label: 'Agent eval'  },
+  { id: 'knowledge',   label: 'Knowledge'   },
+  { id: 'ai-task',     label: 'AI task'     },
+  { id: 'customers',   label: 'Customers'   },
+  { id: 'settings',    label: 'Settings'    },
+]
+
 export default function InspectorDrawer({ open, onClose }) {
   const [activeTab, setActiveTab] = useState('Foundations')
+  const [activePage, setActivePage] = useState(() => window.__hearActivePage || 'dashboard')
 
   // Close on Escape
   useEffect(() => {
@@ -17,9 +32,23 @@ export default function InspectorDrawer({ open, onClose }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
+  // Sync activePage with main app
+  useEffect(() => {
+    function handler(e) { setActivePage(e.detail) }
+    window.addEventListener('hear:nav-changed', handler)
+    return () => window.removeEventListener('hear:nav-changed', handler)
+  }, [])
+
   // Re-scan components whenever drawer opens
   const [scanKey, setScanKey] = useState(0)
   useEffect(() => { if (open) setScanKey(k => k + 1) }, [open])
+
+  function handlePageNav(pageId) {
+    window.dispatchEvent(new CustomEvent('hear:nav', { detail: pageId }))
+    setActiveTab('Components')
+    // Re-scan after page renders
+    setTimeout(() => setScanKey(k => k + 1), 200)
+  }
 
   return (
     <>
@@ -108,6 +137,45 @@ export default function InspectorDrawer({ open, onClose }) {
           </button>
         </div>
 
+        {/* ── Page nav strip ── */}
+        <div className="smooth-scroll" style={{
+          display:       'flex',
+          gap:           2,
+          padding:       '6px 12px',
+          borderBottom:  `1px solid ${T.border}`,
+          flexShrink:    0,
+          overflowX:     'auto',
+          overflowY:     'hidden',
+        }}>
+          {NAV_PAGES.map(p => {
+            const isActive = activePage === p.id
+            return (
+              <button
+                key={p.id}
+                onClick={() => handlePageNav(p.id)}
+                style={{
+                  padding:       '3px 9px',
+                  fontSize:      11,
+                  fontWeight:    isActive ? 600 : 400,
+                  color:         isActive ? T.brand : T.textMuted,
+                  background:    isActive ? `rgba(255,112,86,0.12)` : 'none',
+                  border:        isActive ? `1px solid rgba(255,112,86,0.25)` : '1px solid transparent',
+                  borderRadius:  99,
+                  cursor:        'pointer',
+                  whiteSpace:    'nowrap',
+                  transition:    'color 120ms ease, background 120ms ease',
+                  fontFamily:    T.fontMono,
+                  flexShrink:    0,
+                }}
+                onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = T.textDefault }}
+                onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = T.textMuted }}
+              >
+                {p.label}
+              </button>
+            )
+          })}
+        </div>
+
         {/* ── Tab bar ── */}
         <div style={{
           display:       'flex',
@@ -144,7 +212,7 @@ export default function InspectorDrawer({ open, onClose }) {
         </div>
 
         {/* ── Tab content ── */}
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
           {activeTab === 'Foundations'  && <FoundationsTab />}
           {activeTab === 'Icons'        && <IconsTab />}
           {activeTab === 'Components'   && <ComponentsTab key={scanKey} />}

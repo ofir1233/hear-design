@@ -19,7 +19,7 @@ const SYNTAX_COLOR = {
 function CodeBlock({ code }) {
   const tokens = tokenize(code)
   return (
-    <pre style={{
+    <pre className="smooth-scroll" style={{
       margin:       0,
       padding:      '12px 14px',
       background:   T.bg,
@@ -186,7 +186,7 @@ function PropsTable({ propDefs }) {
         Props ({propDefs.length})
       </button>
       {open && (
-        <div style={{ overflowX: 'auto' }}>
+        <div className="smooth-scroll" style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10, fontFamily: T.fontMono }}>
             <thead>
               <tr>
@@ -352,7 +352,7 @@ function HandoffPanel({ def }) {
         </div>
 
         {/* Code */}
-        <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+        <div className="smooth-scroll" style={{ maxHeight: 400, overflowY: 'auto' }}>
           <CodeBlock code={file.src} />
         </div>
       </div>
@@ -567,7 +567,7 @@ export default function ComponentsTab() {
     <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
 
       {/* ── Left column — component list ── */}
-      <div style={{
+      <div className="smooth-scroll" style={{
         width:       156,
         flexShrink:  0,
         borderRight: `1px solid ${T.border}`,
@@ -663,7 +663,7 @@ export default function ComponentsTab() {
       </div>
 
       {/* ── Right panel ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', minWidth: 0 }}>
+      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', minWidth: 0 }}>
         {def ? (
           <ComponentDetail
             key={selected}

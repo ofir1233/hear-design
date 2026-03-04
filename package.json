@@ -13,6 +13,8 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@react-oauth/google": "^0.13.4",
+    "ag-grid-community": "^35.1.0",
+    "ag-grid-react": "^35.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",

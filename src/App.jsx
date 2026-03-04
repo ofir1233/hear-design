@@ -4,6 +4,7 @@ import ChatBubble from './components/ChatBubble.jsx'
 import ChatInput from './components/ChatInput.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import SignIn from './components/SignIn.jsx'
+import DataPage from './components/data/DataPage.jsx'
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -46,6 +47,7 @@ function MainApp({ isDark, onThemeToggle }) {
   const greeting = getGreeting()
   const fullGreeting = `${greeting}, ${USER_NAME}.`
   const isMobile = useIsMobile()
+  const [activePage, setActivePage] = useState(() => window.__hearActivePage || 'dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [submitted, setSubmitted]     = useState(false)
   const [settled, setSettled]         = useState(false)
@@ -63,6 +65,17 @@ function MainApp({ isDark, onThemeToggle }) {
 
   const [showGreeting, setShowGreeting]   = useState(false)
   const [showSubtitle, setShowSubtitle]   = useState(false)
+
+  // ── Inspector ↔ App page nav bridge ────────────────────────────────────────
+  useEffect(() => {
+    window.__hearActivePage = activePage
+    window.dispatchEvent(new CustomEvent('hear:nav-changed', { detail: activePage }))
+  }, [activePage])
+  useEffect(() => {
+    function onInspectorNav(e) { setActivePage(e.detail) }
+    window.addEventListener('hear:nav', onInspectorNav)
+    return () => window.removeEventListener('hear:nav', onInspectorNav)
+  }, [])
 
   useEffect(() => {
     const t1 = setTimeout(() => setShowGreeting(true), 100)
@@ -116,16 +129,15 @@ function MainApp({ isDark, onThemeToggle }) {
   const paddingLeft = isMobile ? '1.5rem' : `calc(${SIDEBAR_WIDTH}px + 1.5rem)`
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center px-6"
-      style={{ backgroundColor: 'var(--bg-canvas)', paddingLeft }}
-    >
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-canvas)' }}>
       <Sidebar
         mobileOpen={sidebarOpen}
         onMobileClose={() => setSidebarOpen(false)}
         isMobile={isMobile}
         isDark={isDark}
         onThemeToggle={onThemeToggle}
+        activeNav={activePage}
+        onNavChange={setActivePage}
       />
 
       {/* Mobile hamburger button */}
@@ -153,6 +165,28 @@ function MainApp({ isDark, onThemeToggle }) {
           <span style={{ width: 18, height: 1.5, background: 'var(--text-secondary)', borderRadius: 2 }} />
         </button>
       )}
+
+      {activePage === 'data' ? (
+        <DataPage isMobile={isMobile} sidebarWidth={SIDEBAR_WIDTH} />
+      ) : activePage !== 'dashboard' ? (
+        /* Placeholder for unimplemented pages */
+        <div style={{
+          position: 'fixed', top: 0,
+          left: isMobile ? 0 : SIDEBAR_WIDTH,
+          right: 0, bottom: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexDirection: 'column', gap: 8,
+        }}>
+          <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>
+            {activePage.charAt(0).toUpperCase() + activePage.slice(1).replace(/-/g, ' ')}
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', opacity: 0.6 }}>Coming soon</span>
+        </div>
+      ) : (
+      <div
+        className="min-h-screen flex flex-col items-center justify-center px-6"
+        style={{ paddingLeft }}
+      >
 
       {/* Header */}
       <div
@@ -266,14 +300,12 @@ function MainApp({ isDark, onThemeToggle }) {
             opacity: cardsScrolled ? 1 : 0,
             transition: 'opacity 200ms ease',
           }} />
-          <div ref={cardsRef} className="cards-scroll" onScroll={e => setCardsScrolled(e.currentTarget.scrollTop > 0)} style={{
+          <div ref={cardsRef} className="smooth-scroll" onScroll={e => setCardsScrolled(e.currentTarget.scrollTop > 0)} style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: 12,
             maxHeight: 320,
             overflowY: 'auto',
-            scrollbarWidth: 'thin',
-            scrollbarColor: 'var(--border-default) transparent',
             maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
             WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
             paddingBottom: 40,
@@ -301,7 +333,7 @@ function MainApp({ isDark, onThemeToggle }) {
 
       {/* Chat thread — post-submit */}
       {submitted && settled && (
-        <div style={{
+        <div className="smooth-scroll" style={{
           position: 'fixed',
           top: 0,
           left: isMobile ? 0 : SIDEBAR_WIDTH,
@@ -342,6 +374,8 @@ function MainApp({ isDark, onThemeToggle }) {
         </div>
       )}
 
+    </div>
+      )}
     </div>
   )
 }

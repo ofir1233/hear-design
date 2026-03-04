@@ -169,7 +169,7 @@
   --text-inverse:   var(--p100);
 
   --border-default: #E5E7EB;
-  --border-input:   #C4C4C4;
+  --border-input:   #D2D2D0;
 
   --color-brand:       var(--c100);
   --color-interactive: var(--b100);
@@ -216,7 +216,7 @@
   --text-inverse:   #181818;
 
   --border-default: #333333;
-  --border-input:   #444444;
+  --border-input:   #3C3C3C;
 
   --color-brand:       var(--c100);
   --color-interactive: var(--b80);
@@ -236,12 +236,15 @@ input::placeholder {
   opacity: 1;
 }
 
-/* ── Scrollbar ──────────────────────────────────────────────────────────────── */
-.cards-scroll::-webkit-scrollbar { width: 4px; }
-.cards-scroll::-webkit-scrollbar-track { background: transparent; }
-.cards-scroll::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 99px; }
-.cards-scroll::-webkit-scrollbar-thumb:hover { background: var(--n60); }
-.cards-scroll::-webkit-scrollbar-button { display: none; }
+/* ── Scrollbar — universal seamless style ───────────────────────────────────── */
+.smooth-scroll { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.smooth-scroll:hover { scrollbar-color: var(--border-default) transparent; }
+.smooth-scroll::-webkit-scrollbar { width: 3px; height: 3px; }
+.smooth-scroll::-webkit-scrollbar-track { background: transparent; }
+.smooth-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 99px; transition: background 200ms ease; }
+.smooth-scroll:hover::-webkit-scrollbar-thumb { background: var(--border-default); }
+.smooth-scroll::-webkit-scrollbar-thumb:hover { background: var(--n60); }
+.smooth-scroll::-webkit-scrollbar-button { display: none; }
 
 /* ── Request Cards ──────────────────────────────────────────────────────────── */
 .request-card { background: transparent; border: 1px solid var(--border-default); transition: background 150ms ease; }
@@ -250,3 +253,52 @@ input::placeholder {
 .request-card:hover .card-tag { background: var(--text-primary); border-color: transparent; color: var(--text-inverse); }
 .request-card .card-title { color: var(--text-secondary); transition: color 150ms ease; }
 .request-card:hover .card-title { color: var(--text-primary); }
+
+/* ── AG Grid — hear-grid theme ───────────────────────────────────────────── */
+.hear-grid.ag-theme-quartz {
+  --ag-font-family: 'Byrd', sans-serif;
+  --ag-font-size: 13px;
+  --ag-background-color: var(--bg-card);
+  --ag-foreground-color: var(--text-primary);
+  --ag-border-color: var(--border-default);
+  --ag-header-background-color: var(--bg-canvas);
+  --ag-header-foreground-color: var(--text-secondary);
+  --ag-row-hover-color: var(--bg-active);
+  --ag-selected-row-background-color: #1779F718;
+  --ag-odd-row-background-color: var(--bg-card);
+  --ag-cell-horizontal-padding: 14px;
+  --ag-row-border-color: var(--border-default);
+  --ag-header-column-separator-color: var(--border-default);
+  --ag-border-radius: 0;
+  height: 100%;
+  width: 100%;
+}
+.hear-grid .ag-header-cell-text {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+  font-weight: 600;
+}
+.hear-grid .ag-cell {
+  display: flex;
+  align-items: center;
+}
+.hear-grid .ag-checkbox-input-wrapper {
+  width: 14px;
+  height: 14px;
+}
+.hear-grid .ag-row-selected {
+  background-color: #1779F718 !important;
+}
+.hear-grid .ag-paging-panel {
+  border-top: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+/* Seamless scrollbars inside AG Grid */
+.hear-grid ::-webkit-scrollbar { width: 3px; height: 3px; }
+.hear-grid ::-webkit-scrollbar-track { background: transparent; }
+.hear-grid ::-webkit-scrollbar-button { display: none; }
+.hear-grid ::-webkit-scrollbar-thumb { background: transparent; border-radius: 99px; transition: background 200ms ease; }
+.hear-grid:hover ::-webkit-scrollbar-thumb { background: var(--border-default); }
+.hear-grid ::-webkit-scrollbar-thumb:hover { background: var(--n60); }

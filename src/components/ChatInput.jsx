@@ -237,11 +237,7 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="Ask me anything..."
-            className="
-              w-full resize-none bg-transparent outline-none
-              text-base leading-relaxed
-              min-h-[28px] max-h-48 overflow-y-auto
-            "
+            className="smooth-scroll w-full resize-none bg-transparent outline-none text-base leading-relaxed min-h-[28px] max-h-48 overflow-y-auto"
             style={{ color: 'var(--text-primary)' }}
           />
 

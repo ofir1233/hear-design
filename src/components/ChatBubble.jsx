@@ -19,7 +19,7 @@ const MD_COMPONENTS = {
   blockquote: ({ node, ...p }) => <blockquote style={{ borderLeft: '3px solid var(--border-default)', margin: '8px 0', padding: '4px 12px', color: 'var(--text-muted)', fontStyle: 'italic' }} {...p} />,
   code:       ({ node, inline, ...p }) => inline
     ? <code style={{ background: 'var(--bg-active)', borderRadius: 4, padding: '1px 5px', fontSize: 12, fontFamily: 'monospace', color: 'var(--text-primary)' }} {...p} />
-    : <pre  style={{ background: 'var(--bg-active)', borderRadius: 8, padding: '10px 14px', overflowX: 'auto', fontSize: 12, fontFamily: 'monospace', margin: '8px 0', color: 'var(--text-primary)' }}><code {...p} /></pre>,
+    : <pre  className="smooth-scroll" style={{ background: 'var(--bg-active)', borderRadius: 8, padding: '10px 14px', overflowX: 'auto', fontSize: 12, fontFamily: 'monospace', margin: '8px 0', color: 'var(--text-primary)' }}><code {...p} /></pre>,
   p:  ({ node, ...p }) => <p  style={{ margin: '0 0 6px 0', lineHeight: 1.6 }} {...p} />,
   h1: ({ node, ...p }) => <h1 style={{ fontSize: 16, fontWeight: 700, margin: '10px 0 6px', color: 'var(--text-primary)' }} {...p} />,
   h2: ({ node, ...p }) => <h2 style={{ fontSize: 14, fontWeight: 700, margin: '10px 0 6px', color: 'var(--text-primary)' }} {...p} />,
