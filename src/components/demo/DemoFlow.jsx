@@ -244,16 +244,18 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     const demoToken = params.get('demoToken')
     if (!demoToken) return
     setScreen(S.CHECKING)
-    apiFetch(`/api/demo/token/${encodeURIComponent(demoToken)}`)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 8000)
+    apiFetch(`/api/demo/token/${encodeURIComponent(demoToken)}`, { signal: controller.signal })
       .then(r => r.json())
       .then(data => {
+        clearTimeout(timeout)
         const list = data.profiles || []
         setProfiles(list)
         setScreen(list.length > 0 ? S.SELECT : S.GATE)
-        // Clean the token from the URL so it doesn't persist on refresh
         window.history.replaceState({}, '', window.location.pathname)
       })
-      .catch(() => setScreen(S.GATE))
+      .catch(() => { clearTimeout(timeout); setScreen(S.GATE) })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Animate in on screen change
@@ -271,16 +273,20 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     if (!googleUser) return
     if (screen === S.GATE || screen === S.CHECKING) {
       setScreen(S.CHECKING)
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 8000)
       apiFetch('/api/demo/profiles', {
         headers: { 'X-User-Email': googleUser.email },
+        signal: controller.signal,
       })
         .then(r => r.json())
         .then(data => {
+          clearTimeout(timeout)
           const list = data.profiles || []
           setProfiles(list)
           setScreen(list.length > 0 ? S.SELECT : S.CREATE)
         })
-        .catch(() => setScreen(S.CREATE))
+        .catch(() => { clearTimeout(timeout); setScreen(S.CREATE) })
     }
   }, [googleUser]) // eslint-disable-line react-hooks/exhaustive-deps
 
