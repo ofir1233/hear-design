@@ -20,19 +20,34 @@ const SIDEBAR_WIDTH = 272
 
 // Build request cards from company config, or fall back to generic ones
 function buildRequestCards(config) {
+  const name = config?.companyName || 'your company'
+  const topics = config?.commonTopics?.length
+    ? config.commonTopics
+    : ['Trending Topics', 'Agent Performance', 'Customer Sentiment', 'Escalations', 'Call Volume', 'Product Mentions', 'Churn Risk', 'Satisfaction']
+
   if (config?.suggestedPrompts?.length) {
-    const topics = config.commonTopics || []
     return config.suggestedPrompts.slice(0, 8).map((prompt, i) => ({
       id: `#${String(21195386 + i).slice(-8)}`,
-      tag: topics[i % Math.max(topics.length, 1)] || 'Analysis',
+      tag: topics[i % topics.length],
       description: prompt,
     }))
   }
-  return Array(8).fill({
-    id: '#21195386',
-    tag: 'Signal Create',
-    description: 'Detect and categorize alien/UFO-related content in calls for monitoring and reporting.',
-  })
+
+  const fallbackPrompts = [
+    `Show me trending topics from ${name} customer calls this week`,
+    `Which agents handled ${name} inquiries best this month?`,
+    `What are the top complaints from ${name} customers?`,
+    `Summarize sentiment trends for ${name} support calls`,
+    `Which ${name} topics are driving the most escalations?`,
+    `Show me call volume patterns for ${name} over the last 30 days`,
+    `What products are ${name} customers mentioning most?`,
+    `Identify churn risk signals in recent ${name} conversations`,
+  ]
+  return fallbackPrompts.map((prompt, i) => ({
+    id: `#${String(21195386 + i).slice(-8)}`,
+    tag: topics[i % topics.length],
+    description: prompt,
+  }))
 }
 
 function ExternalLinkIcon() {
@@ -44,11 +59,6 @@ function ExternalLinkIcon() {
   )
 }
 
-const REQUESTS = Array(8).fill({
-  id: '#21195386',
-  tag: 'Signal Create',
-  description: 'Detect and categorize alien/UFO-related content in calls for monitoring and reporting.',
-})
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)

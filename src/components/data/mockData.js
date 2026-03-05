@@ -130,9 +130,8 @@ const STATUSES   = ['IN PROGRESS', 'DONE', null, null, 'IN PROGRESS', 'DONE', 'D
 const PRIORITIES = ['HIGH', 'MEDIUM', 'LOW', null, 'HIGH', 'MEDIUM', null, 'LOW']
 
 export function generateCompanyRows(config, count = 2000) {
-  if (!config?.commonTopics?.length) return generateRows('acme', count)
-
-  const topics   = config.commonTopics
+  const defaultTopics = ['Pricing', 'Support', 'Product Inquiry', 'Complaint', 'Onboarding', 'Renewal', 'Feedback', 'Technical Issue']
+  const topics   = config?.commonTopics?.length ? config.commonTopics : defaultTopics
   const products = config.keyProducts?.length ? config.keyProducts : [config.companyName || 'product']
 
   const industryKey = (config.industry || '').toLowerCase()

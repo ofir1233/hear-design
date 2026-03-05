@@ -420,7 +420,7 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
 
   // Full row pool — use company data when config is available, otherwise schema mock data
   const rowPool      = useMemo(() =>
-    companyConfig?.commonTopics?.length
+    companyConfig?.companyName
       ? generateCompanyRows(companyConfig)
       : generateRows(schemaId),
   [schemaId, companyConfig])
