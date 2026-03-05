@@ -5,6 +5,26 @@ import { apiFetch } from '../../lib/api.js'
 // ── Screen IDs ────────────────────────────────────────────────────
 const S = { GATE: 'GATE', CHECKING: 'CHECKING', SELECT: 'SELECT', CREATE: 'CREATE', WAITING: 'WAITING' }
 
+// ── Local fallback profile (when backend is unreachable) ───────────
+function makeLocalProfile(url, email) {
+  let name = 'Your Demo'
+  if (url) {
+    try {
+      const raw = url.startsWith('http') ? url : `https://${url}`
+      const base = new URL(raw).hostname.replace(/^www\./, '').split('.')[0]
+      name = base.charAt(0).toUpperCase() + base.slice(1)
+    } catch {}
+  }
+  return {
+    id: `local-${Date.now()}`,
+    user_email: email || '',
+    name,
+    subtitle: 'Demo',
+    color: '#FF7056',
+    config: { companyName: name },
+  }
+}
+
 // ── Shared style helpers ──────────────────────────────────────────
 const inputStyle = {
   width: '100%',
@@ -327,7 +347,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     setScreen(S.WAITING)
     let resultProfile = null
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 35000)
+    const timeout = setTimeout(() => controller.abort(), 60000)
     try {
       const body = new FormData()
       body.append('userEmail', googleUser?.email ?? '')
@@ -349,18 +369,27 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
         }
       }
       resultProfile = data.profile || null
-      // Cache full profile so returning users see it instantly
-      if (resultProfile && googleUser?.email) {
-        const cacheKey = `hear-demo-profiles-${googleUser.email}`
-        const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
-        const updated = [...cached.filter(p => p.id !== resultProfile.id), resultProfile]
-        localStorage.setItem(cacheKey, JSON.stringify(updated))
-      }
     } catch {
       clearTimeout(timeout)
-      // even on error, proceed — stub environment
+      // Backend unreachable — synthesize a local profile from the URL so the
+      // user isn't stranded and return visits still show their company
+      resultProfile = makeLocalProfile(url.trim(), googleUser?.email)
     }
-    // brief pause to let the WAITING animation breathe, then complete
+
+    // Always cache — whether the profile came from the backend or is a local fallback.
+    // This guarantees return visits show SELECT instantly without waiting for Render.
+    if (resultProfile && googleUser?.email) {
+      const cacheKey = `hear-demo-profiles-${googleUser.email}`
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
+      const updated = [...cached.filter(p => p.id !== resultProfile.id), resultProfile]
+      localStorage.setItem(cacheKey, JSON.stringify(updated))
+      // Persist config so the platform personalises immediately on next load
+      if (resultProfile.config?.companyName) {
+        localStorage.setItem('hear-demo-config', JSON.stringify(resultProfile.config))
+      }
+    }
+
+    // Brief pause to let the WAITING animation breathe, then complete
     setTimeout(() => onComplete(resultProfile), 1200)
   }
 
