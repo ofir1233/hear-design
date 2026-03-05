@@ -1,6 +1,38 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { AgGridReact } from 'ag-grid-react'
-import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community'
+import { ModuleRegistry, AllCommunityModule, themeQuartz, colorSchemeDark, colorSchemeLight } from 'ag-grid-community'
+
+// ── AG Grid themes (v33+ theming API) ─────────────────────────────────────────
+const THEME_PARAMS = {
+  fontFamily: "'Byrd', sans-serif",
+  fontSize: 13,
+  cellHorizontalPaddingScale: 1.1,
+  wrapperBorderRadius: 0,
+}
+const lightTheme = themeQuartz.withPart(colorSchemeLight).withParams({
+  ...THEME_PARAMS,
+  backgroundColor:            '#FFFFFF',
+  foregroundColor:            '#181818',
+  headerBackgroundColor:      '#EFEFED',
+  headerTextColor:            '#606060',
+  borderColor:                '#E5E7EB',
+  rowHoverColor:              '#E8E8E6',
+  selectedRowBackgroundColor: 'rgba(23,121,247,0.07)',
+  oddRowBackgroundColor:      '#FFFFFF',
+  headerColumnResizeHandleColor: '#D1D5DB',
+})
+const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
+  ...THEME_PARAMS,
+  backgroundColor:            '#242424',
+  foregroundColor:            '#F4F3F1',
+  headerBackgroundColor:      '#181818',
+  headerTextColor:            '#9B9B9B',
+  borderColor:                '#333333',
+  rowHoverColor:              '#2A2A2A',
+  selectedRowBackgroundColor: 'rgba(23,121,247,0.12)',
+  oddRowBackgroundColor:      '#242424',
+  headerColumnResizeHandleColor: '#444444',
+})
 import { SCHEMAS, generateRows } from './mockData.js'
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
@@ -361,6 +393,18 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
 
   const gridRef = useRef(null)
 
+  // Track dark mode — switch AG Grid theme reactively
+  const [isDark, setIsDark] = useState(
+    () => document.documentElement.dataset.theme === 'dark'
+  )
+  useEffect(() => {
+    const obs = new MutationObserver(() =>
+      setIsDark(document.documentElement.dataset.theme === 'dark')
+    )
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
+
   useEffect(() => {
     setSelectedPreset('')
     setChips([])
@@ -599,7 +643,8 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
       <div data-inspector="DataGrid" style={{ flex: 1, overflow: 'hidden', padding: '20px 20px 0' }}>
         <AgGridReact
           ref={gridRef}
-          className="ag-theme-quartz hear-grid"
+          theme={isDark ? darkTheme : lightTheme}
+          className="hear-grid"
           rowModelType="infinite"
           cacheBlockSize={100}
           maxBlocksInCache={10}

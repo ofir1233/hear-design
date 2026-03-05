@@ -120,12 +120,12 @@ export function SettingsIcon() {
 
 // ─── UI Controls ──────────────────────────────────────────────────────────────
 
-/** Stroke-based bell — inherits color from parent via currentColor */
+/** Filled bell */
 export function BellIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 8a6 6 0 0 1 12 0c0 5.5 2.5 8 3 9H3c.5-1 3-3.5 3-9"/>
-      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2a7 7 0 0 0-7 7c0 4.17-1.75 6.58-2.73 7.75A1 1 0 0 0 3 18.5h18a1 1 0 0 0 .73-1.75C20.75 15.58 19 13.17 19 9a7 7 0 0 0-7-7z"/>
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
     </svg>
   )
 }

@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
+import { gsap } from 'gsap'
+import { apiFetch, apiHeaders } from './lib/api.js'
 import HearLogo from './components/HearLogo.jsx'
 import ChatBubble from './components/ChatBubble.jsx'
 import ChatInput from './components/ChatInput.jsx'
@@ -64,8 +66,8 @@ function MainApp({ isDark, onThemeToggle }) {
   const [hoveredMsg, setHoveredMsg] = useState(null)
   const [copiedIndex, setCopiedIndex] = useState(null)
 
-  const [showGreeting, setShowGreeting]   = useState(false)
-  const [showSubtitle, setShowSubtitle]   = useState(false)
+  const logoRef     = useRef(null)
+  const subtitleRef = useRef(null)
 
   // ── Inspector ↔ App page nav bridge ────────────────────────────────────────
   useEffect(() => {
@@ -78,11 +80,30 @@ function MainApp({ isDark, onThemeToggle }) {
     return () => window.removeEventListener('hear:nav', onInspectorNav)
   }, [])
 
+  // ── Dashboard entrance animation ───────────────────────────────────────────
   useEffect(() => {
-    const t1 = setTimeout(() => setShowGreeting(true), 100)
-    const t2 = setTimeout(() => setShowSubtitle(true), 600)
-    return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [])
+    if (activePage !== 'dashboard' || submitted) return
+    const logo     = logoRef.current
+    const subtitle = subtitleRef.current
+    const words    = document.querySelectorAll('.dash-word')
+    const input    = inputRef.current
+    const cards    = cardsRef.current?.querySelectorAll('.request-card') ?? []
+    if (!logo || !subtitle || !input) return
+
+    const tl = gsap.timeline({ defaults: { ease: 'expo.out' } })
+
+    gsap.set(logo,     { opacity: 0, scale: 0.82 })
+    gsap.set(words,    { opacity: 0, y: 22, filter: 'blur(10px)' })
+    gsap.set(subtitle, { opacity: 0, y: 14, filter: 'blur(8px)' })
+    gsap.set(input,    { opacity: 0, y: 18 })
+    gsap.set(cards,    { opacity: 0, y: 20 })
+
+    tl.to(logo,     { opacity: 1, scale: 1, duration: 0.55 },                                    0)
+    tl.to(words,    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.65, stagger: 0.07 },    0.15)
+    tl.to(subtitle, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.55 },                   0.48)
+    tl.to(input,    { opacity: 1, y: 0, duration: 0.55 },                                        0.62)
+    tl.to(cards,    { opacity: 1, y: 0, duration: 0.42, stagger: 0.045 },                        0.78)
+  }, [activePage])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -111,9 +132,9 @@ function MainApp({ isDark, onThemeToggle }) {
       content: m.text,
     }))
 
-    fetch('/api/chat', {
+    apiFetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: apiHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ messages: history }),
     })
       .then(r => r.json())
@@ -209,27 +230,28 @@ function MainApp({ isDark, onThemeToggle }) {
           ].join(', '),
         }}
       >
-        <HearLogo className="w-20 h-14 mb-6" />
+        <div ref={logoRef} style={{ marginBottom: '1.5rem' }}>
+          <HearLogo className="w-20 h-14" />
+        </div>
         <div className="text-center">
           <h1
             className="text-3xl md:text-5xl font-bold tracking-tight"
-            style={{
-              color: 'var(--text-primary)',
-              opacity: showGreeting ? 1 : 0,
-              transform: showGreeting ? 'translateY(0)' : 'translateY(20px)',
-              transition: 'opacity 500ms cubic-bezier(0.22,1,0.36,1), transform 500ms cubic-bezier(0.22,1,0.36,1)',
-            }}
+            style={{ color: 'var(--text-primary)' }}
           >
-            {fullGreeting}
+            {fullGreeting.split(' ').map((word, i) => (
+              <span
+                key={i}
+                className="dash-word"
+                style={{ display: 'inline-block', marginRight: '0.28em' }}
+              >
+                {word}
+              </span>
+            ))}
           </h1>
           <p
+            ref={subtitleRef}
             className="mt-2 text-lg tracking-wide"
-            style={{
-              color: 'var(--text-muted)',
-              opacity: showSubtitle ? 1 : 0,
-              transform: showSubtitle ? 'translateY(0)' : 'translateY(20px)',
-              transition: 'opacity 500ms cubic-bezier(0.22,1,0.36,1), transform 500ms cubic-bezier(0.22,1,0.36,1)',
-            }}
+            style={{ color: 'var(--text-muted)' }}
           >
             What would you like to explore today?
           </p>
@@ -390,7 +412,11 @@ function MainApp({ isDark, onThemeToggle }) {
 
 export default function App() {
   const [signedIn, setSignedIn] = useState(false)
-  const [isDark, setIsDark] = useState(() => localStorage.getItem('hear-theme') === 'dark')
+  const [isDark, setIsDark] = useState(() => {
+    const dark = localStorage.getItem('hear-theme') !== 'light'
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+    return dark
+  })
 
   useEffect(() => {
     document.documentElement.dataset.theme = isDark ? 'dark' : 'light'

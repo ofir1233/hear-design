@@ -1,13 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { gsap } from 'gsap'
 import { useGoogleLogin } from '@react-oauth/google'
 import SignInHero from './sign-in/SignInHero.jsx'
 import GoogleButton from './sign-in/GoogleButton.jsx'
 import AuthDivider from './sign-in/AuthDivider.jsx'
 import EmailForm from './sign-in/EmailForm.jsx'
+import DemoFlow from './demo/DemoFlow.jsx'
+import DevFlow from './dev/DevFlow.jsx'
 
 const ALLOWED_DOMAIN = 'hear.ai'
 
 export default function SignIn({ onSignIn }) {
+  const [env, setEnv] = useState('Design Lab')
+
+  // ── Regular (hear.ai) Google login ───────────────────────────────
   const [googleError, setGoogleError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -35,6 +41,43 @@ export default function SignIn({ onSignIn }) {
       setLoading(false)
     },
   })
+
+  // ── Demo Google login (any account) ─────────────────────────────
+  const [demoUser, setDemoUser] = useState(null)
+  const [demoAuthError, setDemoAuthError] = useState('')
+
+  const demoGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        })
+        const userInfo = await res.json()
+        setDemoUser(userInfo)
+      } catch {
+        setDemoAuthError('Google sign-in failed. Please try again.')
+      }
+    },
+    onError: () => {
+      setDemoAuthError('Google sign-in failed. Please try again.')
+    },
+  })
+
+  // ── Form entrance animation ──────────────────────────────────────
+  const formRef = useRef(null)
+  useEffect(() => {
+    const form = formRef.current
+    gsap.set(form, { opacity: 0, y: 24, filter: 'blur(8px)' })
+    gsap.to(form, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6, ease: 'expo.out', delay: 0.66 })
+  }, [])
+
+  // Reset demo auth error when switching away from Demo
+  useEffect(() => {
+    if (env !== 'Demo') {
+      setDemoUser(null)
+      setDemoAuthError('')
+    }
+  }, [env])
 
   return (
     <div
@@ -83,19 +126,40 @@ export default function SignIn({ onSignIn }) {
 
           {/* Left panel */}
           <div style={{ flex: '0 0 340px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <SignInHero />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <GoogleButton
-                onClick={() => googleLogin()}
-                loading={loading}
-                error={googleError}
-              />
-              <AuthDivider />
-              <EmailForm />
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center', margin: 0 }}>
-                By continuing, you acknowledge Hear's{' '}
-                <a href="#" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'underline' }}>Privacy Policy</a>.
-              </p>
+            <SignInHero env={env} onEnvChange={setEnv} />
+
+            <div
+              ref={formRef}
+              style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+            >
+              {env === 'Demo' ? (
+                <>
+                  <DemoFlow
+                    googleUser={demoUser}
+                    onGoogleLogin={() => demoGoogleLogin()}
+                    onComplete={() => onSignIn()}
+                  />
+                  {demoAuthError && (
+                    <p style={{ fontSize: 12, color: '#FF6B6B', textAlign: 'center', margin: 0 }}>{demoAuthError}</p>
+                  )}
+                </>
+              ) : env === 'Dev' ? (
+                <DevFlow onComplete={() => onSignIn()} />
+              ) : (
+                <>
+                  <GoogleButton
+                    onClick={() => googleLogin()}
+                    loading={loading}
+                    error={googleError}
+                  />
+                  <AuthDivider />
+                  <EmailForm />
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center', margin: 0 }}>
+                    By continuing, you acknowledge Hear's{' '}
+                    <a href="#" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'underline' }}>Privacy Policy</a>.
+                  </p>
+                </>
+              )}
             </div>
           </div>
 

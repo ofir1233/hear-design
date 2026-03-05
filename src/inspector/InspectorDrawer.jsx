@@ -68,6 +68,7 @@ export default function InspectorDrawer({ open, onClose }) {
 
       {/* Drawer panel */}
       <div
+        className="hear-inspector"
         style={{
           position:    'fixed',
           top:         0,

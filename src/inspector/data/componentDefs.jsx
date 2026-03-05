@@ -197,7 +197,7 @@ export const COMPONENT_DEFS = {
 
   Badge: {
     tier: 'Atom',
-    description: '3 variants × 2 shapes. Outline for @ mentions, subtle/solid for status tags.',
+    description: '3 variants × 2 shapes + 7 tinted colors. Each tinted color shown on light and dark backgrounds.',
     props: [
       { name: 'variant',   type: "'outline'|'subtle'|'solid'|'tinted'",                           default: "'outline'" },
       { name: 'color',     type: "'cobalt'|'green'|'coral'|'lilac'|'teal'|'horizon'|'sage'",      default: 'undefined (tinted only)' },
@@ -207,24 +207,43 @@ export const COMPONENT_DEFS = {
     ],
     states: [
       { label: 'Outline',         props: { variant: 'outline',  children: 'mention' } },
-      { label: 'Subtle',          props: { variant: 'subtle',   children: 'Beta',        style: { background: 'rgba(24,24,24,0.6)' } } },
-      { label: 'Solid',           props: { variant: 'solid',    children: 'Dev',         style: { background: '#374151' } } },
+      { label: 'Subtle',          props: { variant: 'subtle',   children: 'Beta' } },
+      { label: 'Solid',           props: { variant: 'solid',    children: 'Dev' } },
       { label: 'Rect outline',    props: { variant: 'outline',  shape: 'rect', children: 'Label' } },
-      { label: 'Tinted — cobalt', props: { variant: 'tinted',   color: 'cobalt',  children: 'IN PROGRESS' } },
-      { label: 'Tinted — green',  props: { variant: 'tinted',   color: 'green',   children: 'DONE' } },
-      { label: 'Tinted — coral',  props: { variant: 'tinted',   color: 'coral',   children: 'HIGH' } },
-      { label: 'Tinted — lilac',  props: { variant: 'tinted',   color: 'lilac',   children: 'MEDIUM' } },
-      { label: 'Tinted — teal',   props: { variant: 'tinted',   color: 'teal',    children: 'LOW' } },
+      { label: 'Tinted — cobalt', props: { variant: 'tinted',   color: 'cobalt',  children: 'IN PROGRESS', _dual: true } },
+      { label: 'Tinted — green',  props: { variant: 'tinted',   color: 'green',   children: 'DONE',        _dual: true } },
+      { label: 'Tinted — coral',  props: { variant: 'tinted',   color: 'coral',   children: 'HIGH',        _dual: true } },
+      { label: 'Tinted — lilac',  props: { variant: 'tinted',   color: 'lilac',   children: 'MEDIUM',      _dual: true } },
+      { label: 'Tinted — teal',   props: { variant: 'tinted',   color: 'teal',    children: 'LOW',         _dual: true } },
+      { label: 'Tinted — horizon',props: { variant: 'tinted',   color: 'horizon', children: 'HORIZON',     _dual: true } },
+      { label: 'Tinted — sage',   props: { variant: 'tinted',   color: 'sage',    children: 'SAGE',        _dual: true } },
     ],
     render: (p) => {
+      const { _dual, ...badgeProps } = p
+      if (_dual) {
+        // Show same badge on light bg + dark bg side by side
+        return (
+          <div style={{ display: 'flex', gap: 0, borderRadius: 8, overflow: 'hidden', border: '1px solid #30363d' }}>
+            <div style={{ background: '#FFFFFF', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+              <Badge {...badgeProps} />
+            </div>
+            <div style={{ width: 1, background: '#30363d', flexShrink: 0 }} />
+            <div style={{ background: '#181818', padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }} data-theme="dark">
+              <Badge {...badgeProps} />
+            </div>
+          </div>
+        )
+      }
       const darkBg = p.variant === 'subtle' || p.variant === 'solid'
-      return center(<Badge {...p} />, darkBg ? '#1C1C1C' : 'transparent')
+      return center(<Badge {...badgeProps} />, darkBg ? '#1C1C1C' : 'transparent')
     },
     snippet: (p) => {
-      const attrs = [`variant="${p.variant}"`]
-      if (p.shape && p.shape !== 'pill') attrs.push(`shape="${p.shape}"`)
-      if (p.uppercase !== undefined) attrs.push(`uppercase={${p.uppercase}}`)
-      return `<Badge ${attrs.join(' ')}>\n  ${p.children ?? ''}\n</Badge>`
+      const { _dual, ...badgeProps } = p
+      const attrs = [`variant="${badgeProps.variant}"`]
+      if (badgeProps.color)                       attrs.push(`color="${badgeProps.color}"`)
+      if (badgeProps.shape && badgeProps.shape !== 'pill') attrs.push(`shape="${badgeProps.shape}"`)
+      if (badgeProps.uppercase !== undefined)     attrs.push(`uppercase={${badgeProps.uppercase}}`)
+      return `<Badge ${attrs.join(' ')}>\n  ${badgeProps.children ?? ''}\n</Badge>`
     },
     source: BadgeSrc,
     files: [
@@ -240,6 +259,7 @@ export const COMPONENT_DEFS = {
       ],
       subComponents: [],
       notes: [
+        'Tinted fills use --*20/--*30 tokens; dark mode overrides to rgba(color, 0.14/0.30)',
         'Subtle + Solid variants designed for dark/coloured backgrounds',
         'uppercase auto-derives from variant unless explicitly passed',
       ],

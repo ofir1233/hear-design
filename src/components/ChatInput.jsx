@@ -1,6 +1,81 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { MicIcon, ReturnIcon, NavigateIcon, EscIcon, AttachIcon } from './icons'
 
+const PROMPTS = [
+  'Who are my top performing agents this month?',
+  'Show me trending topics from the last 24 hours',
+  'Which calls had the highest risk score this week?',
+  'Summarize customer sentiment from today\'s calls',
+  'What are the most common complaints in the last 7 days?',
+  'Which agent has the lowest CSAT score this month?',
+  'Show me all calls flagged for compliance review',
+  'What topics are spiking in enterprise accounts?',
+  'Compare agent performance across all regions',
+  'How many escalations happened in the last 48 hours?',
+]
+
+function useTypewriter(active) {
+  const [display, setDisplay]   = useState('')
+  const [blink,   setBlink]     = useState(true)
+  const promptIdx = useRef(0)
+  const charIdx   = useRef(0)
+  const phase     = useRef('typing') // typing | hold | deleting | gap
+  const timer     = useRef(null)
+
+  useEffect(() => {
+    if (!active) {
+      clearTimeout(timer.current)
+      setDisplay('')
+      charIdx.current = 0
+      phase.current   = 'typing'
+      return
+    }
+
+    function tick() {
+      const prompt = PROMPTS[promptIdx.current]
+      if (phase.current === 'typing') {
+        charIdx.current++
+        setDisplay(prompt.slice(0, charIdx.current))
+        if (charIdx.current >= prompt.length) {
+          phase.current = 'hold'
+          timer.current = setTimeout(tick, 2000)
+        } else {
+          // slight speed variation for natural feel
+          const speed = 44 + Math.random() * 24
+          timer.current = setTimeout(tick, speed)
+        }
+      } else if (phase.current === 'hold') {
+        phase.current = 'deleting'
+        tick()
+      } else if (phase.current === 'deleting') {
+        charIdx.current--
+        setDisplay(prompt.slice(0, charIdx.current))
+        if (charIdx.current <= 0) {
+          phase.current   = 'gap'
+          promptIdx.current = (promptIdx.current + 1) % PROMPTS.length
+          timer.current   = setTimeout(tick, 380)
+        } else {
+          timer.current = setTimeout(tick, 18)
+        }
+      } else {
+        phase.current = 'typing'
+        tick()
+      }
+    }
+
+    timer.current = setTimeout(tick, 900)
+    return () => clearTimeout(timer.current)
+  }, [active])
+
+  // blinking cursor
+  useEffect(() => {
+    const id = setInterval(() => setBlink(b => !b), 530)
+    return () => clearInterval(id)
+  }, [])
+
+  return { display, blink }
+}
+
 const MENTION_ITEMS = [
   { id: 1, name: 'Ai assistant',                  handle: 'Tommy@'    },
   { id: 2, name: 'Another something makes seance', handle: 'Whatever@' },
@@ -55,6 +130,7 @@ function getActiveMention(text, cursorPos) {
 export default function ChatInput({ onSubmit, onMentionChange, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null }) {
   const [text, setText]           = useState(defaultText)
   const [hovered, setHovered]     = useState(false)
+  const [focused, setFocused]     = useState(false)
   const [mentionQuery, setMentionQuery] = useState(initialMentionQuery)
   const [mentionStart, setMentionStart] = useState(0)
   const [activeIndex, setActiveIndex]   = useState(0)
@@ -62,6 +138,9 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
   const [listening, setListening] = useState(false)
   const textareaRef    = useRef(null)
   const recognitionRef = useRef(null)
+
+  const typewriterActive = !text && !focused && !settled && !loading
+  const { display: typedHint, blink } = useTypewriter(typewriterActive)
 
   function toggleListening() {
     if (listening) {
@@ -229,17 +308,53 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
         onMouseLeave={() => setHovered(false)}
       >
         <div className="px-5 pt-5 pb-4">
-          {/* Textarea */}
-          <textarea
-            ref={textareaRef}
-            rows={1}
-            value={text}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask me anything..."
-            className="smooth-scroll w-full resize-none bg-transparent outline-none text-base leading-relaxed min-h-[28px] max-h-48 overflow-y-auto"
-            style={{ color: 'var(--text-primary)' }}
-          />
+          {/* Textarea + animated typewriter placeholder */}
+          <div style={{ position: 'relative' }}>
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              value={text}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              placeholder=""
+              className="smooth-scroll w-full resize-none bg-transparent outline-none text-base leading-relaxed min-h-[28px] max-h-48 overflow-y-auto"
+              style={{ color: 'var(--text-primary)' }}
+            />
+            {typewriterActive && (
+              <div
+                aria-hidden="true"
+                style={{
+                  position:   'absolute',
+                  top:        0,
+                  left:       0,
+                  right:      0,
+                  pointerEvents: 'none',
+                  color:      'var(--text-muted)',
+                  fontSize:   '1rem',
+                  lineHeight: 1.625,
+                  fontFamily: "'Byrd', sans-serif",
+                  whiteSpace: 'pre-wrap',
+                  wordBreak:  'break-word',
+                  userSelect: 'none',
+                }}
+              >
+                {typedHint || '\u00A0'}
+                <span style={{
+                  display:    'inline-block',
+                  width:      1.5,
+                  height:     '0.85em',
+                  background: 'var(--text-muted)',
+                  marginLeft: 1,
+                  verticalAlign: 'text-bottom',
+                  opacity:    blink ? 0.7 : 0,
+                  transition: 'opacity 120ms ease',
+                  borderRadius: 1,
+                }} />
+              </div>
+            )}
+          </div>
 
           {/* Bottom row */}
           <div className="flex items-center justify-between mt-4">

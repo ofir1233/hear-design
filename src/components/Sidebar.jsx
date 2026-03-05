@@ -270,15 +270,17 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               }}>
                 <BellIcon />
                 <span style={{
-                  position: 'absolute', top: 4, right: 4,
+                  position: 'absolute', top: -3, right: -3,
                   background: '#E8613A',
                   color: '#fff',
-                  fontSize: 10,
+                  fontSize: 9,
                   fontWeight: 700,
-                  width: 16, height: 16,
-                  borderRadius: '50%',
+                  minWidth: 16, height: 16,
+                  padding: '0 3px',
+                  borderRadius: 999,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   outline: '2px solid var(--bg-sidebar)',
+                  animation: 'notif-pulse 2s ease-out infinite',
                 }}>7</span>
               </button>
             </div>
