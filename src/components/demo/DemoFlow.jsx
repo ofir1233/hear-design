@@ -272,9 +272,19 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
   useEffect(() => {
     if (!googleUser) return
     if (screen === S.GATE || screen === S.CHECKING) {
-      setScreen(S.CHECKING)
+      // Show cached profiles instantly if available
+      const cacheKey = `hear-demo-profiles-${googleUser.email}`
+      const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
+      if (cached.length > 0) {
+        setProfiles(cached)
+        setScreen(S.SELECT)
+      } else {
+        setScreen(S.CHECKING)
+      }
+
+      // Refresh from backend in background
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 3000)
+      const timeout = setTimeout(() => controller.abort(), 8000)
       apiFetch('/api/demo/profiles', {
         headers: { 'X-User-Email': googleUser.email },
         signal: controller.signal,
@@ -283,10 +293,15 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
         .then(data => {
           clearTimeout(timeout)
           const list = data.profiles || []
-          setProfiles(list)
-          setScreen(list.length > 0 ? S.SELECT : S.CREATE)
+          if (list.length > 0) {
+            localStorage.setItem(cacheKey, JSON.stringify(list))
+            setProfiles(list)
+            setScreen(S.SELECT)
+          } else if (cached.length === 0) {
+            setScreen(S.CREATE)
+          }
         })
-        .catch(() => { clearTimeout(timeout); setScreen(S.CREATE) })
+        .catch(() => { clearTimeout(timeout); if (cached.length === 0) setScreen(S.CREATE) })
     }
   }, [googleUser]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -294,10 +309,13 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     try {
       await apiFetch(`/api/demo/profiles/${id}`, { method: 'DELETE' })
     } catch { /* silent */ }
-    // Wait for the fade-out animation, then remove from list
     setTimeout(() => {
       setProfiles(prev => {
         const next = prev.filter(p => p.id !== id)
+        if (googleUser?.email) {
+          const cacheKey = `hear-demo-profiles-${googleUser.email}`
+          localStorage.setItem(cacheKey, JSON.stringify(next))
+        }
         if (next.length === 0) setScreen(S.CREATE)
         return next
       })
@@ -331,6 +349,13 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
         }
       }
       resultProfile = data.profile || null
+      // Cache full profile so returning users see it instantly
+      if (resultProfile && googleUser?.email) {
+        const cacheKey = `hear-demo-profiles-${googleUser.email}`
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
+        const updated = [...cached.filter(p => p.id !== resultProfile.id), resultProfile]
+        localStorage.setItem(cacheKey, JSON.stringify(updated))
+      }
     } catch {
       clearTimeout(timeout)
       // even on error, proceed — stub environment
