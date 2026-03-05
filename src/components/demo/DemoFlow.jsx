@@ -308,6 +308,8 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     if (!url.trim() && !description.trim() && !file) return
     setScreen(S.WAITING)
     let resultProfile = null
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 35000)
     try {
       const body = new FormData()
       body.append('userEmail', googleUser?.email ?? '')
@@ -315,8 +317,9 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
       body.append('description', description.trim())
       if (file) body.append('file', file)
 
-      const res  = await apiFetch('/api/demo/generate', { method: 'POST', body })
+      const res  = await apiFetch('/api/demo/generate', { method: 'POST', body, signal: controller.signal })
       const data = await res.json().catch(() => ({}))
+      clearTimeout(timeout)
 
       if (data.profile?.id) {
         localStorage.setItem('hear-demo-profile-id', String(data.profile.id))
@@ -329,6 +332,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
       }
       resultProfile = data.profile || null
     } catch {
+      clearTimeout(timeout)
       // even on error, proceed — stub environment
     }
     // brief pause to let the WAITING animation breathe, then complete
