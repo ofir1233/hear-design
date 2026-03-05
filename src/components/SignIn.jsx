@@ -120,12 +120,12 @@ export default function SignIn({ onSignIn }) {
       </svg>
 
       {/* ── Decorative images ── */}
-      <img src="/top-image.svg" alt="" aria-hidden="true" style={{ position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)', width: '100%', minWidth: 900, pointerEvents: 'none', zIndex: 1 }} />
-      <img src="/bot.svg"       alt="" aria-hidden="true" style={{ position: 'absolute', bottom: -80, left: '50%', transform: 'translateX(-50%)', width: '100%', minWidth: 900, pointerEvents: 'none', zIndex: 1, display: 'block' }} />
+      <img src="/top-image.svg" alt="" aria-hidden="true" style={{ position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)', width: '80vw', pointerEvents: 'none', zIndex: 1 }} />
+      <img src="/bot.svg"       alt="" aria-hidden="true" style={{ position: 'absolute', bottom: -80, left: '50%', transform: 'translateX(-50%)', width: '80vw', pointerEvents: 'none', zIndex: 1, display: 'block' }} />
 
       {/* ── Main content ── */}
-      <div style={{ position: 'absolute', top: 153, bottom: 153, left: 0, right: 0, zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', overflowY: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', width: '100%', maxWidth: 1160, minHeight: '100%', padding: '0 60px', boxSizing: 'border-box', gap: 100 }}>
+      <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', maxWidth: 1160, padding: '0 60px', boxSizing: 'border-box', gap: 100 }}>
 
           {/* Left panel */}
           <div style={{ flex: '0 0 340px', display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 24, paddingBottom: 24 }}>
