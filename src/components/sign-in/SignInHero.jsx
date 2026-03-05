@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 
-const TABS = ['Design Lab', 'Dev', 'Demo']
+const TABS = ['Design Lab', 'Demo']
 
 function EnvironmentToggle({ env, onEnvChange }) {
   return (
