@@ -15,13 +15,31 @@ function makeLocalProfile(url, email) {
       name = base.charAt(0).toUpperCase() + base.slice(1)
     } catch {}
   }
+  // Generate rich defaults so the platform is immediately personalized
+  // even without a backend LLM response
+  const config = {
+    companyName: name,
+    industry: 'Enterprise',
+    keyProducts: [name],
+    commonTopics: ['Pricing', 'Support', 'Product Inquiry', 'Complaint', 'Onboarding', 'Renewal', 'Feedback', 'Technical Issue'],
+    suggestedPrompts: [
+      `Show me trending topics from ${name} customer calls this week`,
+      `Which agents handled ${name} inquiries best this month?`,
+      `What are the most common complaints from ${name} customers?`,
+      `Summarize customer sentiment from today's ${name} calls`,
+      `Show me all ${name} calls flagged for compliance review`,
+      `Which topics are spiking in ${name} enterprise accounts?`,
+      `Compare agent performance on ${name} customer calls`,
+      `How many ${name} customer escalations happened this week?`,
+    ],
+  }
   return {
     id: `local-${Date.now()}`,
     user_email: email || '',
     name,
     subtitle: 'Demo',
     color: '#FF7056',
-    config: { companyName: name },
+    config,
   }
 }
 
@@ -270,7 +288,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
       .then(r => r.json())
       .then(data => {
         clearTimeout(timeout)
-        const list = data.profiles || []
+        const list = filterDeleted('token', data.profiles || [])
         setProfiles(list)
         setScreen(list.length > 0 ? S.SELECT : S.GATE)
         window.history.replaceState({}, '', window.location.pathname)
@@ -312,7 +330,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
         .then(r => r.json())
         .then(data => {
           clearTimeout(timeout)
-          const list = data.profiles || []
+          const list = filterDeleted(googleUser.email, data.profiles || [])
           if (list.length > 0) {
             localStorage.setItem(cacheKey, JSON.stringify(list))
             setProfiles(list)
@@ -325,7 +343,23 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     }
   }, [googleUser]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  function markDeleted(email, id) {
+    const key = `hear-demo-deleted-${email}`
+    const existing = JSON.parse(localStorage.getItem(key) || '[]')
+    if (!existing.includes(id)) {
+      localStorage.setItem(key, JSON.stringify([...existing, id]))
+    }
+  }
+
+  function filterDeleted(email, list) {
+    const key = `hear-demo-deleted-${email}`
+    const deleted = JSON.parse(localStorage.getItem(key) || '[]')
+    return list.filter(p => !deleted.includes(p.id))
+  }
+
   async function handleDeleteProfile(id) {
+    // Mark as deleted client-side immediately so it never comes back from backend
+    if (googleUser?.email) markDeleted(googleUser.email, id)
     try {
       await apiFetch(`/api/demo/profiles/${id}`, { method: 'DELETE' })
     } catch { /* silent */ }
