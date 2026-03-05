@@ -11,7 +11,10 @@ import DevFlow from './dev/DevFlow.jsx'
 const ALLOWED_DOMAIN = 'hear.ai'
 
 export default function SignIn({ onSignIn }) {
-  const [env, setEnv] = useState('Design Lab')
+  const [env, setEnv] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('demoToken') ? 'Demo' : 'Design Lab'
+  })
 
   // ── Regular (hear.ai) Google login ───────────────────────────────
   const [googleError, setGoogleError] = useState('')

@@ -1,8 +1,9 @@
 import { Router } from 'express'
 import multer from 'multer'
-import { getProfilesByEmail, createDemoProfile } from '../db.js'
+import { getProfilesByEmail, createDemoProfile, upsertDemoAccessToken, getProfilesByDemoToken } from '../db.js'
 import { extractFromUrl, extractFromFile } from '../services/extract.js'
 import { extractConfig } from '../services/llm.js'
+import { sendDemoReadyEmail } from '../services/email.js'
 
 const router = Router()
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
@@ -50,9 +51,27 @@ router.post('/generate', upload.single('file'), async (req, res) => {
       config,
     })
 
+    // Fire-and-forget: send access link email so the user can return without Google auth
+    upsertDemoAccessToken(userEmail)
+      .then(token => sendDemoReadyEmail(userEmail, token, process.env.FRONTEND_URL, config.companyName))
+      .catch(err => console.error('[demo/access-email]', err))
+
     res.json({ success: true, profile, config })
   } catch (err) {
     console.error('[demo/generate]', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── GET /api/demo/token/:token ────────────────────────────────────
+// Called when user clicks the access link email. Returns all profiles for that user.
+router.get('/token/:token', async (req, res) => {
+  try {
+    const profiles = await getProfilesByDemoToken(req.params.token)
+    if (!profiles) return res.status(404).json({ error: 'Token not found' })
+    res.json({ profiles })
+  } catch (err) {
+    console.error('[demo/token]', err)
     res.status(500).json({ error: err.message })
   }
 })

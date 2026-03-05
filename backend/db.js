@@ -69,6 +69,13 @@ export async function initDb() {
     -- Index for fast profile lookups by email
     CREATE INDEX IF NOT EXISTS demo_profiles_email_idx
       ON demo_profiles (user_email);
+
+    -- One access token per demo user — used in magic-link emails
+    CREATE TABLE IF NOT EXISTS demo_access_tokens (
+      token      TEXT        PRIMARY KEY,
+      email      TEXT        NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
   `)
 
   console.log('[db] schema ready')
@@ -139,4 +146,34 @@ export async function createDemoProfile(email, { name, subtitle, color, config }
     [email, name, subtitle ?? '', color ?? '#FF7056', JSON.stringify(config ?? {})]
   )
   return rows[0]
+}
+
+// ─────────────────────────────────────────────────────────────────
+// demo_access_tokens helpers
+// ─────────────────────────────────────────────────────────────────
+
+// Returns existing token for the email, or creates a new one.
+export async function upsertDemoAccessToken(email) {
+  const { v4: uuidv4 } = await import('uuid')
+  const { rows } = await pool.query(
+    'SELECT token FROM demo_access_tokens WHERE email = $1',
+    [email]
+  )
+  if (rows[0]) return rows[0].token
+  const token = uuidv4()
+  await pool.query(
+    'INSERT INTO demo_access_tokens (token, email) VALUES ($1, $2)',
+    [token, email]
+  )
+  return token
+}
+
+// Looks up the email from the token, then returns all profiles for that email.
+export async function getProfilesByDemoToken(token) {
+  const { rows } = await pool.query(
+    'SELECT email FROM demo_access_tokens WHERE token = $1',
+    [token]
+  )
+  if (!rows[0]) return null
+  return getProfilesByEmail(rows[0].email)
 }

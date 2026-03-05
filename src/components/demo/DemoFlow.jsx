@@ -59,9 +59,10 @@ function DemoGoogleButton({ onClick }) {
 
 // ── Profile Card ──────────────────────────────────────────────────
 function ProfileCard({ profile, onClick }) {
+  const isReady = !profile.status || profile.status === 'ready'
   return (
     <button
-      onClick={onClick}
+      onClick={isReady ? onClick : undefined}
       style={{
         width: '100%',
         display: 'flex',
@@ -71,12 +72,14 @@ function ProfileCard({ profile, onClick }) {
         border: '1px solid rgba(255,255,255,0.1)',
         borderRadius: 14,
         padding: '14px 16px',
-        cursor: 'pointer',
+        cursor: isReady ? 'pointer' : 'default',
+        opacity: isReady ? 1 : 0.6,
         transition: 'background 180ms ease, border-color 180ms ease, transform 120ms ease',
         textAlign: 'left',
         fontFamily: "'Byrd', sans-serif",
       }}
       onMouseEnter={e => {
+        if (!isReady) return
         e.currentTarget.style.background = 'rgba(255,255,255,0.09)'
         e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
         e.currentTarget.style.transform = 'translateY(-1px)'
@@ -100,9 +103,13 @@ function ProfileCard({ profile, onClick }) {
         <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{profile.name}</div>
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.subtitle}</div>
       </div>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>
-        <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
+      {isReady ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>
+          <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      ) : (
+        <span style={{ fontSize: 11, color: '#F59E0B', whiteSpace: 'nowrap', flexShrink: 0 }}>Building…</span>
+      )}
     </button>
   )
 }
@@ -195,6 +202,24 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
   const [file, setFile] = useState(null)
 
   const containerRef = useRef(null)
+
+  // On mount: if ?demoToken= in URL, skip Google auth and load profiles directly
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const demoToken = params.get('demoToken')
+    if (!demoToken) return
+    setScreen(S.CHECKING)
+    apiFetch(`/api/demo/token/${encodeURIComponent(demoToken)}`)
+      .then(r => r.json())
+      .then(data => {
+        const list = data.profiles || []
+        setProfiles(list)
+        setScreen(list.length > 0 ? S.SELECT : S.GATE)
+        // Clean the token from the URL so it doesn't persist on refresh
+        window.history.replaceState({}, '', window.location.pathname)
+      })
+      .catch(() => setScreen(S.GATE))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Animate in on screen change
   useEffect(() => {
@@ -397,8 +422,9 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
             <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 5 }}>
               Building your demo environment
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)' }}>
-              This takes about 30 seconds
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', lineHeight: 1.6 }}>
+              This takes about 30 seconds.<br />
+              We'll email you a link to come back anytime.
             </div>
           </div>
         </div>
