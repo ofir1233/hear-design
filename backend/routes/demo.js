@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import multer from 'multer'
-import { getProfilesByEmail, createDemoProfile, upsertDemoAccessToken, getProfilesByDemoToken } from '../db.js'
+import { getProfilesByEmail, createDemoProfile, deleteDemoProfile, upsertDemoAccessToken, getProfilesByDemoToken } from '../db.js'
 import { extractFromUrl, extractFromFile } from '../services/extract.js'
 import { extractConfig } from '../services/llm.js'
 import { sendDemoReadyEmail } from '../services/email.js'
@@ -59,6 +59,17 @@ router.post('/generate', upload.single('file'), async (req, res) => {
     res.json({ success: true, profile, config })
   } catch (err) {
     console.error('[demo/generate]', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── DELETE /api/demo/profiles/:id ────────────────────────────────
+router.delete('/profiles/:id', async (req, res) => {
+  try {
+    await deleteDemoProfile(req.params.id)
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[demo/delete]', err)
     res.status(500).json({ error: err.message })
   }
 })

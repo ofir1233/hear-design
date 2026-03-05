@@ -58,36 +58,41 @@ function DemoGoogleButton({ onClick }) {
 }
 
 // ── Profile Card ──────────────────────────────────────────────────
-function ProfileCard({ profile, onClick }) {
+function ProfileCard({ profile, onClick, onDelete }) {
+  const [hovered, setHovered] = useState(false)
+  const [removing, setRemoving] = useState(false)
   const isReady = !profile.status || profile.status === 'ready'
+
+  function handleDelete(e) {
+    e.stopPropagation()
+    setRemoving(true)
+    onDelete(profile.id)
+  }
+
   return (
-    <button
-      onClick={isReady ? onClick : undefined}
+    <div
+      onClick={isReady && !removing ? onClick : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         width: '100%',
         display: 'flex',
         alignItems: 'center',
         gap: 14,
-        background: 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(255,255,255,0.1)',
+        background: hovered && isReady ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.05)',
+        border: `1px solid ${hovered && isReady ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}`,
         borderRadius: 14,
         padding: '14px 16px',
-        cursor: isReady ? 'pointer' : 'default',
-        opacity: isReady ? 1 : 0.6,
-        transition: 'background 180ms ease, border-color 180ms ease, transform 120ms ease',
+        cursor: isReady && !removing ? 'pointer' : 'default',
+        opacity: removing ? 0 : (isReady ? 1 : 0.6),
+        transform: removing ? 'scale(0.97)' : (hovered && isReady ? 'translateY(-1px)' : 'translateY(0)'),
+        transition: removing
+          ? 'opacity 200ms ease, transform 200ms ease'
+          : 'background 180ms ease, border-color 180ms ease, transform 120ms ease, opacity 200ms ease',
         textAlign: 'left',
         fontFamily: "'Byrd', sans-serif",
-      }}
-      onMouseEnter={e => {
-        if (!isReady) return
-        e.currentTarget.style.background = 'rgba(255,255,255,0.09)'
-        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'
-        e.currentTarget.style.transform = 'translateY(-1px)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-        e.currentTarget.style.transform = 'translateY(0)'
+        boxSizing: 'border-box',
+        pointerEvents: removing ? 'none' : 'auto',
       }}
     >
       <div style={{
@@ -103,14 +108,39 @@ function ProfileCard({ profile, onClick }) {
         <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', marginBottom: 2 }}>{profile.name}</div>
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.subtitle}</div>
       </div>
+
+      {/* Delete button — reveals on hover */}
+      <button
+        onClick={handleDelete}
+        style={{
+          flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 28, height: 28,
+          borderRadius: 8,
+          background: hovered ? 'rgba(239,68,68,0.12)' : 'transparent',
+          border: hovered ? '1px solid rgba(239,68,68,0.25)' : '1px solid transparent',
+          cursor: 'pointer',
+          opacity: hovered ? 1 : 0,
+          transform: hovered ? 'scale(1)' : 'scale(0.8)',
+          transition: 'opacity 150ms ease, transform 150ms ease, background 150ms ease, border-color 150ms ease',
+          color: '#EF4444',
+        }}
+        title="Remove demo"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
       {isReady ? (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0, opacity: hovered ? 0 : 1, transition: 'opacity 150ms ease', marginLeft: -42 }}>
           <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       ) : (
         <span style={{ fontSize: 11, color: '#F59E0B', whiteSpace: 'nowrap', flexShrink: 0 }}>Building…</span>
       )}
-    </button>
+    </div>
   )
 }
 
@@ -249,6 +279,20 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     }
   }, [googleUser]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  async function handleDeleteProfile(id) {
+    try {
+      await apiFetch(`/api/demo/profiles/${id}`, { method: 'DELETE' })
+    } catch { /* silent */ }
+    // Wait for the fade-out animation, then remove from list
+    setTimeout(() => {
+      setProfiles(prev => {
+        const next = prev.filter(p => p.id !== id)
+        if (next.length === 0) setScreen(S.CREATE)
+        return next
+      })
+    }, 220)
+  }
+
   async function handleCreate() {
     if (!url.trim() && !description.trim() && !file) return
     setScreen(S.WAITING)
@@ -322,6 +366,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
                 if (p.config) localStorage.setItem('hear-demo-config', JSON.stringify(p.config))
                 onComplete(p)
               }}
+              onDelete={handleDeleteProfile}
             />
           ))}
           <button

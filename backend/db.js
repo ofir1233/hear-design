@@ -138,6 +138,10 @@ export async function getProfilesByEmail(email) {
   return rows
 }
 
+export async function deleteDemoProfile(id) {
+  await pool.query('DELETE FROM demo_profiles WHERE id = $1', [id])
+}
+
 export async function getDemoProfile(id) {
   const { rows } = await pool.query(
     'SELECT * FROM demo_profiles WHERE id = $1',
