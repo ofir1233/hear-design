@@ -109,37 +109,42 @@ function ProfileCard({ profile, onClick, onDelete }) {
         <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.subtitle}</div>
       </div>
 
-      {/* Delete button — reveals on hover */}
-      <button
-        onClick={handleDelete}
-        style={{
-          flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: 28, height: 28,
-          borderRadius: 8,
-          background: hovered ? 'rgba(239,68,68,0.12)' : 'transparent',
-          border: hovered ? '1px solid rgba(239,68,68,0.25)' : '1px solid transparent',
-          cursor: 'pointer',
-          opacity: hovered ? 1 : 0,
-          transform: hovered ? 'scale(1)' : 'scale(0.8)',
-          transition: 'opacity 150ms ease, transform 150ms ease, background 150ms ease, border-color 150ms ease',
-          color: '#EF4444',
-        }}
-        title="Remove demo"
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-          <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
+      {/* Right side: trash + chevron */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+        {/* Delete button — slides in from right on hover */}
+        <button
+          onClick={handleDelete}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 28, height: 28,
+            borderRadius: 8,
+            background: hovered ? 'rgba(239,68,68,0.12)' : 'transparent',
+            border: hovered ? '1px solid rgba(239,68,68,0.25)' : '1px solid transparent',
+            cursor: 'pointer',
+            opacity: hovered ? 1 : 0,
+            transform: hovered ? 'translateX(0)' : 'translateX(10px)',
+            transition: 'opacity 220ms ease, transform 220ms ease, background 220ms ease, border-color 220ms ease',
+            color: '#EF4444',
+            pointerEvents: hovered ? 'auto' : 'none',
+          }}
+          title="Remove demo"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
 
-      {isReady ? (
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-          style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0, opacity: hovered ? 0 : 1, transition: 'opacity 150ms ease', marginLeft: -42 }}>
-          <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      ) : (
-        <span style={{ fontSize: 11, color: '#F59E0B', whiteSpace: 'nowrap', flexShrink: 0 }}>Building…</span>
-      )}
+        {isReady ? (
+          <div style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+              style={{ color: hovered ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.3)', transform: hovered ? 'translateX(2px)' : 'translateX(0)', transition: 'color 220ms ease, transform 220ms ease' }}>
+              <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        ) : (
+          <span style={{ fontSize: 11, color: '#F59E0B', whiteSpace: 'nowrap' }}>Building…</span>
+        )}
+      </div>
     </div>
   )
 }
