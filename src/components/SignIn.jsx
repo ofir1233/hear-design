@@ -140,14 +140,14 @@ export default function SignIn({ onSignIn }) {
                   <DemoFlow
                     googleUser={demoUser}
                     onGoogleLogin={() => demoGoogleLogin()}
-                    onComplete={() => onSignIn()}
+                    onComplete={(profile) => onSignIn(profile)}
                   />
                   {demoAuthError && (
                     <p style={{ fontSize: 12, color: '#FF6B6B', textAlign: 'center', margin: 0 }}>{demoAuthError}</p>
                   )}
                 </>
               ) : env === 'Dev' ? (
-                <DevFlow onComplete={() => onSignIn()} />
+                <DevFlow onComplete={onSignIn} />
               ) : (
                 <>
                   <GoogleButton

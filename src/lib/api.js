@@ -6,11 +6,13 @@ export function apiFetch(path, opts) {
   return fetch(`${BASE}${path}`, opts)
 }
 
-// Reads the devToken stored after setup and attaches it as a header.
+// Reads stored tokens and attaches them as headers.
 export function apiHeaders(extra = {}) {
-  const devToken = localStorage.getItem('hear-dev-token')
+  const devToken      = localStorage.getItem('hear-dev-token')
+  const demoProfileId = localStorage.getItem('hear-demo-profile-id')
   return {
     ...extra,
-    ...(devToken ? { 'X-Dev-Token': devToken } : {}),
+    ...(devToken      ? { 'X-Dev-Token':        devToken      } : {}),
+    ...(demoProfileId ? { 'X-Demo-Profile-Id':  demoProfileId } : {}),
   }
 }

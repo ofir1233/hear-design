@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { groqChat, buildSystemPrompt } from '../services/llm.js'
-import { getToken } from '../db.js'
+import { getToken, getDemoProfile } from '../db.js'
 
 const router = Router()
 
@@ -8,12 +8,16 @@ router.post('/', async (req, res) => {
   try {
     const { messages } = req.body
 
-    // If the request carries a devToken, load that environment's config
-    const devToken = req.headers['x-dev-token']
+    // Load company config — dev token takes priority, then demo profile
+    const devToken       = req.headers['x-dev-token']
+    const demoProfileId  = req.headers['x-demo-profile-id']
     let config = null
     if (devToken) {
       const row = await getToken(devToken).catch(() => null)
       config = row?.config ?? null
+    } else if (demoProfileId) {
+      const profile = await getDemoProfile(demoProfileId).catch(() => null)
+      config = profile?.config ?? null
     }
 
     const systemPrompt = buildSystemPrompt(config)

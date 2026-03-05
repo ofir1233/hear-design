@@ -92,6 +92,82 @@ export function generateRows(schemaId, count = 2000) {
   })
 }
 
+// ── Company-personalised row generator ───────────────────────────────────────
+// Generates realistic call records from a company config extracted by the LLM.
+
+const INDUSTRY_CITIES = {
+  automotive: ['Stuttgart, Germany','Munich, Germany','Detroit, USA','Toyota City, Japan','Turin, Italy','Ingolstadt, Germany','Seoul, South Korea','Shanghai, China','Dearborn, USA','Wolfsburg, Germany'],
+  finance:    ['New York, USA','London, UK','Frankfurt, Germany','Zurich, Switzerland','Hong Kong','Singapore','Tokyo, Japan','Dubai, UAE','Chicago, USA','Sydney, Australia'],
+  healthcare: ['Boston, MA','Houston, TX','Chicago, IL','San Francisco, CA','New York, NY','Philadelphia, PA','Baltimore, MD','Seattle, WA','Atlanta, GA','Denver, CO'],
+  retail:     ['New York, USA','Los Angeles, USA','London, UK','Chicago, USA','Paris, France','Berlin, Germany','Toronto, Canada','Sydney, Australia','Tokyo, Japan','Dubai, UAE'],
+  default:    ['New York, USA','London, UK','Tokyo, Japan','Berlin, Germany','Sydney, Australia','Dubai, UAE','Singapore','Toronto, Canada','Paris, France','Amsterdam, NL'],
+}
+
+const COMPANY_AGENTS = [
+  { name: 'Alex Kim',     initials: 'AK', color: 'blue'    },
+  { name: 'Jordan Lee',   initials: 'JL', color: 'green'   },
+  { name: 'Sam Rivera',   initials: 'SR', color: 'peach'   },
+  { name: 'Taylor Chen',  initials: 'TC', color: 'lilac'   },
+  { name: 'Morgan Davis', initials: 'MD', color: 'teal'    },
+  { name: 'Casey Park',   initials: 'CP', color: 'horizon' },
+  { name: 'Riley Foster', initials: 'RF', color: 'blue'    },
+]
+
+const SUMMARY_TEMPLATES = [
+  (t, p) => `Customer inquiry regarding ${t} — ${p} portfolio discussed and follow-up scheduled.`,
+  (t, p) => `Inbound call about ${t}. Resolved with reference to ${p} documentation and service team.`,
+  (t, p) => `${p} — ${t} case follow-up. Action items confirmed and assigned to account manager.`,
+  (t, p) => `Outreach regarding ${t}. Client requested detailed breakdown of ${p} options and pricing.`,
+  (t, p) => `Account review focused on ${t}. ${p} performance discussed; renewal proposed for Q3.`,
+  (t)    => `Case flagged for ${t}. Compliance review triggered by automated monitoring alert.`,
+  (t, p) => `${t} — ${p} integration reviewed with technical team; escalation path documented.`,
+  (t)    => `Priority escalation regarding ${t}. SLA breach risk identified; manager loop initiated.`,
+  (t, p) => `Customer satisfaction survey follow-up for ${p}. ${t} cited as primary concern.`,
+  (t)    => `${t} resolution confirmed after multi-team alignment. Case closed with full notes.`,
+]
+
+const STATUSES   = ['IN PROGRESS', 'DONE', null, null, 'IN PROGRESS', 'DONE', 'DONE', null]
+const PRIORITIES = ['HIGH', 'MEDIUM', 'LOW', null, 'HIGH', 'MEDIUM', null, 'LOW']
+
+export function generateCompanyRows(config, count = 2000) {
+  if (!config?.commonTopics?.length) return generateRows('acme', count)
+
+  const topics   = config.commonTopics
+  const products = config.keyProducts?.length ? config.keyProducts : [config.companyName || 'product']
+
+  const industryKey = (config.industry || '').toLowerCase()
+  const cityPool = (
+    industryKey.includes('auto')                              ? INDUSTRY_CITIES.automotive :
+    industryKey.includes('financ') || industryKey.includes('bank') ? INDUSTRY_CITIES.finance :
+    industryKey.includes('health') || industryKey.includes('med')  ? INDUSTRY_CITIES.healthcare :
+    industryKey.includes('retail') || industryKey.includes('ecom') ? INDUSTRY_CITIES.retail :
+    INDUSTRY_CITIES.default
+  )
+
+  return Array.from({ length: count }, (_, i) => {
+    const topic      = topics[i % topics.length]
+    const product    = products[i % products.length]
+    const fn         = SUMMARY_TEMPLATES[i % SUMMARY_TEMPLATES.length]
+    const agentEntry = i % 4 !== 0 ? COMPANY_AGENTS[i % COMPANY_AGENTS.length] : null
+    const monthIdx   = (2 + Math.floor(i / 28)) % 12
+    const day        = (i % 28) + 1
+    const year       = 2023 + Math.floor(i / 336)
+
+    return {
+      id:            `${String(i + 1).padStart(8, '0')}-${(i * 7919 + 1337).toString(36)}-${i}`,
+      callDate:      `${MONTHS[monthIdx]} ${day}, ${year}`,
+      proposedPrice: 1000 + ((i * 1237 + 456) % 89000),
+      destination:   cityPool[i % cityPool.length],
+      summary:       fn(topic, product),
+      status:        STATUSES[i % STATUSES.length],
+      priority:      PRIORITIES[i % PRIORITIES.length],
+      assignedTo:    agentEntry,
+      hasWarning:    i % 7 === 0,
+      callType:      i % 2 === 0 ? 'inbound' : 'outbound',
+    }
+  })
+}
+
 // Status color map
 export const STATUS_COLORS = {
   flagged:  '#EF4444',

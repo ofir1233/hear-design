@@ -138,6 +138,14 @@ export async function getProfilesByEmail(email) {
   return rows
 }
 
+export async function getDemoProfile(id) {
+  const { rows } = await pool.query(
+    'SELECT * FROM demo_profiles WHERE id = $1',
+    [id]
+  )
+  return rows[0] ?? null
+}
+
 export async function createDemoProfile(email, { name, subtitle, color, config }) {
   const { rows } = await pool.query(
     `INSERT INTO demo_profiles (user_email, name, subtitle, color, config)

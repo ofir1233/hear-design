@@ -252,6 +252,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
   async function handleCreate() {
     if (!url.trim() && !description.trim() && !file) return
     setScreen(S.WAITING)
+    let resultProfile = null
     try {
       const body = new FormData()
       body.append('userEmail', googleUser?.email ?? '')
@@ -259,16 +260,24 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
       body.append('description', description.trim())
       if (file) body.append('file', file)
 
-      const res = await apiFetch('/api/demo/generate', { method: 'POST', body })
+      const res  = await apiFetch('/api/demo/generate', { method: 'POST', body })
       const data = await res.json().catch(() => ({}))
-      if (data.config?.suggestedPrompts) {
-        localStorage.setItem('hear-suggested-prompts', JSON.stringify(data.config.suggestedPrompts))
+
+      if (data.profile?.id) {
+        localStorage.setItem('hear-demo-profile-id', String(data.profile.id))
       }
+      if (data.config) {
+        localStorage.setItem('hear-demo-config', JSON.stringify(data.config))
+        if (data.config.suggestedPrompts) {
+          localStorage.setItem('hear-suggested-prompts', JSON.stringify(data.config.suggestedPrompts))
+        }
+      }
+      resultProfile = data.profile || null
     } catch {
       // even on error, proceed — stub environment
     }
     // brief pause to let the WAITING animation breathe, then complete
-    setTimeout(() => onComplete({ url, description, fileName: file?.name, user: googleUser }), 1200)
+    setTimeout(() => onComplete(resultProfile), 1200)
   }
 
   return (
@@ -305,7 +314,15 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
             Your demo environments
           </p>
           {profiles.map(p => (
-            <ProfileCard key={p.id} profile={p} onClick={() => onComplete(p)} />
+            <ProfileCard
+              key={p.id}
+              profile={p}
+              onClick={() => {
+                localStorage.setItem('hear-demo-profile-id', String(p.id))
+                if (p.config) localStorage.setItem('hear-demo-config', JSON.stringify(p.config))
+                onComplete(p)
+              }}
+            />
           ))}
           <button
             onClick={() => setScreen(S.CREATE)}

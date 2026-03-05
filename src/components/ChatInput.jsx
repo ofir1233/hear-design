@@ -14,13 +14,15 @@ const PROMPTS = [
   'How many escalations happened in the last 48 hours?',
 ]
 
-function useTypewriter(active) {
+function useTypewriter(active, prompts = PROMPTS) {
   const [display, setDisplay]   = useState('')
   const [blink,   setBlink]     = useState(true)
-  const promptIdx = useRef(0)
-  const charIdx   = useRef(0)
-  const phase     = useRef('typing') // typing | hold | deleting | gap
-  const timer     = useRef(null)
+  const promptIdx  = useRef(0)
+  const charIdx    = useRef(0)
+  const phase      = useRef('typing') // typing | hold | deleting | gap
+  const timer      = useRef(null)
+  const promptsRef = useRef(prompts)
+  promptsRef.current = prompts // always current without restarting the effect
 
   useEffect(() => {
     if (!active) {
@@ -32,7 +34,8 @@ function useTypewriter(active) {
     }
 
     function tick() {
-      const prompt = PROMPTS[promptIdx.current]
+      const pool   = promptsRef.current
+      const prompt = pool[promptIdx.current % pool.length]
       if (phase.current === 'typing') {
         charIdx.current++
         setDisplay(prompt.slice(0, charIdx.current))
@@ -52,7 +55,7 @@ function useTypewriter(active) {
         setDisplay(prompt.slice(0, charIdx.current))
         if (charIdx.current <= 0) {
           phase.current   = 'gap'
-          promptIdx.current = (promptIdx.current + 1) % PROMPTS.length
+          promptIdx.current = (promptIdx.current + 1) % promptsRef.current.length
           timer.current   = setTimeout(tick, 380)
         } else {
           timer.current = setTimeout(tick, 18)
@@ -127,7 +130,7 @@ function getActiveMention(text, cursorPos) {
   return { query: match[1], start: match.index }
 }
 
-export default function ChatInput({ onSubmit, onMentionChange, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null }) {
+export default function ChatInput({ onSubmit, onMentionChange, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
   const [text, setText]           = useState(defaultText)
   const [hovered, setHovered]     = useState(false)
   const [focused, setFocused]     = useState(false)
@@ -139,8 +142,9 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
   const textareaRef    = useRef(null)
   const recognitionRef = useRef(null)
 
+  const activePrompts    = (suggestedPrompts?.length >= 3) ? suggestedPrompts : PROMPTS
   const typewriterActive = !text && !focused && !settled && !loading
-  const { display: typedHint, blink } = useTypewriter(typewriterActive)
+  const { display: typedHint, blink } = useTypewriter(typewriterActive, activePrompts)
 
   function toggleListening() {
     if (listening) {

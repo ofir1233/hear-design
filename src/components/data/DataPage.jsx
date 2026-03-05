@@ -33,7 +33,7 @@ const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
   oddRowBackgroundColor:      '#242424',
   headerColumnResizeHandleColor: '#444444',
 })
-import { SCHEMAS, generateRows } from './mockData.js'
+import { SCHEMAS, generateRows, generateCompanyRows } from './mockData.js'
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
 import Modal from '../Modal.jsx'
@@ -379,7 +379,7 @@ function FilterPopover({ anchor, chip, onChange, onDone, onClose }) {
 
 // ── DataPage ──────────────────────────────────────────────────────────────────
 
-export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebarTransition }) {
+export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebarTransition, companyConfig = null }) {
   const [schemaId,       setSchemaId]       = useState('acme')
   const [customPresets,  setCustomPresets]  = useState([])
   const [selectedPreset, setSelectedPreset] = useState('')
@@ -418,8 +418,12 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
   const isDirty    = JSON.stringify(chips) !== JSON.stringify(appliedChips)
   const allPresets = useMemo(() => [...PRESETS, ...customPresets], [customPresets])
 
-  // Full row pool for current schema — 2 000 generated rows, virtualised by AG Grid
-  const rowPool      = useMemo(() => generateRows(schemaId),                                    [schemaId])
+  // Full row pool — use company data when config is available, otherwise schema mock data
+  const rowPool      = useMemo(() =>
+    companyConfig?.commonTopics?.length
+      ? generateCompanyRows(companyConfig)
+      : generateRows(schemaId),
+  [schemaId, companyConfig])
   const filteredPool = useMemo(() => runFilters(appliedChips, searchText, rowPool), [appliedChips, searchText, rowPool])
 
   // Infinite-row datasource — slices filteredPool on demand
@@ -514,6 +518,12 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Data</span>
+          {companyConfig?.companyName && (
+            <>
+              <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
+              <span style={{ fontSize: 'var(--type-p13)', color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>{companyConfig.companyName}</span>
+            </>
+          )}
           <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
           <Badge variant="tinted" color="teal" shape="pill">
             Total records&nbsp;{filteredPool.length}

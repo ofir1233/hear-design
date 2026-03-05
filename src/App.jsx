@@ -16,8 +16,24 @@ function getGreeting() {
 }
 
 const USER_NAME = 'John'
-
 const SIDEBAR_WIDTH = 272
+
+// Build request cards from company config, or fall back to generic ones
+function buildRequestCards(config) {
+  if (config?.suggestedPrompts?.length) {
+    const topics = config.commonTopics || []
+    return config.suggestedPrompts.slice(0, 8).map((prompt, i) => ({
+      id: `#${String(21195386 + i).slice(-8)}`,
+      tag: topics[i % Math.max(topics.length, 1)] || 'Analysis',
+      description: prompt,
+    }))
+  }
+  return Array(8).fill({
+    id: '#21195386',
+    tag: 'Signal Create',
+    description: 'Detect and categorize alien/UFO-related content in calls for monitoring and reporting.',
+  })
+}
 
 function ExternalLinkIcon() {
   return (
@@ -45,9 +61,10 @@ function useIsMobile() {
 }
 
 
-function MainApp({ isDark, onThemeToggle }) {
+function MainApp({ isDark, onThemeToggle, companyConfig }) {
   const greeting = getGreeting()
   const fullGreeting = `${greeting}, ${USER_NAME}.`
+  const requests = buildRequestCards(companyConfig)
   const isMobile = useIsMobile()
   const [activePage, setActivePage] = useState(() => window.__hearActivePage || 'dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -193,7 +210,7 @@ function MainApp({ isDark, onThemeToggle }) {
       )}
 
       {activePage === 'data' ? (
-        <DataPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+        <DataPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
       ) : activePage !== 'dashboard' ? (
         /* Placeholder for unimplemented pages */
         <div style={{
@@ -253,7 +270,10 @@ function MainApp({ isDark, onThemeToggle }) {
             className="mt-2 text-lg tracking-wide"
             style={{ color: 'var(--text-muted)' }}
           >
-            What would you like to explore today?
+            {companyConfig?.companyName
+            ? `What would you like to explore for ${companyConfig.companyName}?`
+            : 'What would you like to explore today?'
+          }
           </p>
         </div>
       </div>
@@ -306,7 +326,7 @@ function MainApp({ isDark, onThemeToggle }) {
           }
         }}
       >
-        <ChatInput onSubmit={(text) => handleSubmit(text)} onMentionChange={setMentionActive} loading={loading} settled={settled} />
+        <ChatInput onSubmit={(text) => handleSubmit(text)} onMentionChange={setMentionActive} loading={loading} settled={settled} suggestedPrompts={companyConfig?.suggestedPrompts} />
       </div>
 
       {/* Request cards — pre-submit */}
@@ -340,7 +360,7 @@ function MainApp({ isDark, onThemeToggle }) {
             paddingBottom: 40,
             paddingRight: 6,
           }}>
-            {REQUESTS.map((req, i) => (
+            {requests.map((req, i) => (
               <div
                 key={i}
                 className="request-card"
@@ -412,6 +432,9 @@ function MainApp({ isDark, onThemeToggle }) {
 
 export default function App() {
   const [signedIn, setSignedIn] = useState(false)
+  const [companyConfig, setCompanyConfig] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('hear-demo-config') || 'null') } catch { return null }
+  })
   const [isDark, setIsDark] = useState(() => {
     const dark = localStorage.getItem('hear-theme') !== 'light'
     document.documentElement.dataset.theme = dark ? 'dark' : 'light'
@@ -425,6 +448,16 @@ export default function App() {
 
   const toggleTheme = () => setIsDark(d => !d)
 
-  if (!signedIn) return <SignIn onSignIn={() => setSignedIn(true)} />
-  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} />
+  function handleSignIn(profile = null) {
+    // profile can be a demo profile { config, name, ... }, a dev config object, or null
+    const config = profile?.config ?? (profile?.companyName ? profile : null)
+    if (config?.companyName) {
+      setCompanyConfig(config)
+      localStorage.setItem('hear-demo-config', JSON.stringify(config))
+    }
+    setSignedIn(true)
+  }
+
+  if (!signedIn) return <SignIn onSignIn={handleSignIn} />
+  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} companyConfig={companyConfig} />
 }
