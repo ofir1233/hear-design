@@ -24,12 +24,11 @@ export default function GoogleButton({ onClick, loading = false, error = '' }) {
         onClick={onClick}
         disabled={loading}
         style={{
-          width: '100%',
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
-          padding: '11px 0',
+          padding: '11px 32px',
           border: '1px solid rgba(255,255,255,0.14)',
           borderRadius: 8,
           background: 'rgba(255,255,255,0.07)',

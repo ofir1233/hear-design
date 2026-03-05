@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { useGoogleLogin } from '@react-oauth/google'
 import SignInHero from './sign-in/SignInHero.jsx'
@@ -67,12 +67,28 @@ export default function SignIn({ onSignIn }) {
   })
 
   // ── Form entrance animation ──────────────────────────────────────
-  const formRef = useRef(null)
+  const formRef    = useRef(null)
+  const formReady  = useRef(false)
   useEffect(() => {
     const form = formRef.current
     gsap.set(form, { opacity: 0, y: 24, filter: 'blur(8px)' })
-    gsap.to(form, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6, ease: 'expo.out', delay: 0.66 })
+    gsap.to(form, {
+      opacity: 1, y: 0, filter: 'blur(0px)',
+      duration: 0.6, ease: 'expo.out', delay: 0.66,
+      onComplete: () => { formReady.current = true },
+    })
   }, [])
+
+  // ── Form re-entrance on tab switch ───────────────────────────────
+  useLayoutEffect(() => {
+    if (!formReady.current) return
+    const form = formRef.current
+    if (!form) return
+    gsap.fromTo(form,
+      { opacity: 0, y: 14, filter: 'blur(8px)' },
+      { opacity: 1, y: 0,  filter: 'blur(0px)', duration: 0.45, ease: 'expo.out' }
+    )
+  }, [env])
 
   // Reset demo auth error when switching away from Demo
   useEffect(() => {
@@ -125,15 +141,15 @@ export default function SignIn({ onSignIn }) {
 
       {/* ── Main content ── */}
       <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', width: '100%', maxWidth: 1160, padding: '0 60px', boxSizing: 'border-box', gap: 100 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%', maxWidth: 1160, padding: '0 60px', boxSizing: 'border-box', gap: 100 }}>
 
           {/* Left panel */}
-          <div style={{ flex: '0 0 340px', display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 24, paddingBottom: 24 }}>
+          <div style={{ flex: '0 0 340px', width: 340, display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 24, paddingBottom: 24 }}>
             <SignInHero env={env} onEnvChange={setEnv} />
 
             <div
               ref={formRef}
-              style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 10, overflow: 'hidden' }}
             >
               {env === 'Demo' ? (
                 <>
