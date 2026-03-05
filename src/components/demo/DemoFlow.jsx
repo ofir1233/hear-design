@@ -245,7 +245,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     if (!demoToken) return
     setScreen(S.CHECKING)
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 8000)
+    const timeout = setTimeout(() => controller.abort(), 3000)
     apiFetch(`/api/demo/token/${encodeURIComponent(demoToken)}`, { signal: controller.signal })
       .then(r => r.json())
       .then(data => {
@@ -274,7 +274,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     if (screen === S.GATE || screen === S.CHECKING) {
       setScreen(S.CHECKING)
       const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 8000)
+      const timeout = setTimeout(() => controller.abort(), 3000)
       apiFetch('/api/demo/profiles', {
         headers: { 'X-User-Email': googleUser.email },
         signal: controller.signal,
