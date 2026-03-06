@@ -200,6 +200,7 @@ export default function SignInHero({ env, onEnvChange }) {
           textTransform: 'uppercase',
           margin: 0,
           width: '100%',
+          minHeight: '3.24em',
         }}
       >
         {TITLES[displayEnv].map((line, i) => (
