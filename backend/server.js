@@ -216,9 +216,9 @@ function buildSystemPrompt(config) {
 Always respond with a JSON object in this exact format:
 {
   "reply": "your response here",
-  "related": ["follow-up topic 1", "follow-up topic 2", "follow-up topic 3", "follow-up topic 4"]
+  "related": ["specific follow-up question 1?", "specific follow-up question 2?", "specific follow-up question 3?", "specific follow-up question 4?"]
 }
-The "related" array must contain exactly 4 short, relevant follow-up topics.`
+The "related" array must contain exactly 4 follow-up questions. Each must be a complete, specific question the user could naturally ask next — directly tied to the topic of their message and the company context. Write them as a curious analyst would ask: concrete, actionable, and contextually grounded. Never use generic labels like "Agent performance metrics" — always phrase as a full question ending with "?".`
 }
 
 // ─────────────────────────────────────────────────────────────────

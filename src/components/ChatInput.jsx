@@ -173,6 +173,16 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
     setListening(true)
   }
 
+  // Sync externally-set defaultText (e.g. from Related click)
+  useEffect(() => {
+    if (!defaultText) return
+    setText(defaultText)
+    const el = textareaRef.current
+    if (!el) return
+    el.focus()
+    setTimeout(() => el.setSelectionRange(defaultText.length, defaultText.length), 0)
+  }, [defaultText])
+
   useEffect(() => {
     onMentionChange?.(mentionQuery !== null)
   }, [mentionQuery])

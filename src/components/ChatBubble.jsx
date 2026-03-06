@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 
@@ -47,11 +48,13 @@ export default function ChatBubble({
   showActions = false,
   onCopy,
   copied = false,
+  onRelatedClick,
   onMouseEnter,
   onMouseLeave,
 }) {
   const isAI       = role === 'ai'
   const isThinking = role === 'thinking'
+  const [hoveredRelated, setHoveredRelated] = useState(null)
 
   // ── Thinking indicator ──────────────────────────────────────────────────────
   if (isThinking) {
@@ -159,27 +162,44 @@ export default function ChatBubble({
       {isAI && related?.length > 0 && (
         <div style={{ marginTop: 20, width: '100%', maxWidth: '75%' }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 2px 0' }}>Related</p>
-          {related.map((topic, ri) => (
-            <div
-              key={ri}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '11px 0',
-                borderTop: '1px solid var(--border-default)',
-                cursor: 'pointer',
-                opacity: 0,
-                animation: `slideInRight 220ms cubic-bezier(0.22,1,0.36,1) forwards`,
-                animationDelay: `${ri * 60}ms`,
-              }}
-            >
-              <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{topic}</span>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginLeft: 12 }}>
-                <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke="#9ca3af" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-          ))}
+          {related.map((topic, ri) => {
+            const isHovered = hoveredRelated === ri
+            return (
+              <div
+                key={ri}
+                onClick={() => onRelatedClick?.(topic)}
+                onMouseEnter={() => setHoveredRelated(ri)}
+                onMouseLeave={() => setHoveredRelated(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '11px 8px',
+                  cursor: 'pointer',
+                  opacity: 0,
+                  animation: `slideInRight 220ms cubic-bezier(0.22,1,0.36,1) forwards`,
+                  animationDelay: `${ri * 60}ms`,
+                  borderBottom: isHovered ? '1px solid var(--text-secondary)' : '1px solid var(--border-default)',
+                  transition: 'border-color 220ms ease',
+                }}
+              >
+                <span style={{
+                  fontSize: 13,
+                  color: isHovered ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  lineHeight: 1.4,
+                  transition: 'color 180ms ease',
+                }}>{topic}</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{
+                  flexShrink: 0,
+                  marginLeft: 12,
+                  transform: isHovered ? 'translateX(4px)' : 'translateX(0)',
+                  transition: 'transform 200ms cubic-bezier(0.22,1,0.36,1)',
+                }}>
+                  <path d="M3 8H13M13 8L9 4M13 8L9 12" stroke={isHovered ? 'var(--text-primary)' : '#9ca3af'} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

@@ -112,6 +112,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
   const [uploadActive, setUploadActive]   = useState(false)
   const [hoveredMsg, setHoveredMsg] = useState(null)
   const [copiedIndex, setCopiedIndex] = useState(null)
+  const [chatDefaultText, setChatDefaultText] = useState('')
 
   // ── Session state ───────────────────────────────────────────────
   const [sessions, setSessions]           = useState([])
@@ -389,6 +390,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
   }
 
   function handleSubmit(text) {
+    setChatDefaultText('')
     const userMsg = { role: 'user', text }
     setMessages(prev => [...prev, userMsg])
 
@@ -615,7 +617,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
           }
         }}
       >
-        <ChatInput onSubmit={(text) => handleSubmit(text)} onMentionChange={setMentionActive} onUploadChange={setUploadActive} loading={loading} settled={settled} suggestedPrompts={companyConfig?.suggestedPrompts} />
+        <ChatInput onSubmit={(text) => handleSubmit(text)} onMentionChange={setMentionActive} onUploadChange={setUploadActive} loading={loading} settled={settled} suggestedPrompts={companyConfig?.suggestedPrompts} defaultText={chatDefaultText} />
       </div>
 
       {/* Request cards — pre-submit */}
@@ -712,6 +714,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
                     showActions={showActions}
                     onCopy={() => { navigator.clipboard.writeText(msg.text); setCopiedIndex(i); setTimeout(() => setCopiedIndex(null), 1500) }}
                     copied={copiedIndex === i}
+                    onRelatedClick={(topic) => setChatDefaultText(topic)}
                     onMouseEnter={() => isAI && setHoveredMsg(i)}
                     onMouseLeave={() => isAI && setHoveredMsg(null)}
                   />
