@@ -109,6 +109,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
   const [cardsScrolling, setCardsScrolling] = useState(false)
   const cardsScrollTimeout = useRef(null)
   const [mentionActive, setMentionActive] = useState(false)
+  const [uploadActive, setUploadActive]   = useState(false)
   const [hoveredMsg, setHoveredMsg] = useState(null)
   const [copiedIndex, setCopiedIndex] = useState(null)
 
@@ -356,7 +357,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
           }
         }}
       >
-        <ChatInput onSubmit={(text) => handleSubmit(text)} onMentionChange={setMentionActive} loading={loading} settled={settled} suggestedPrompts={companyConfig?.suggestedPrompts} />
+        <ChatInput onSubmit={(text) => handleSubmit(text)} onMentionChange={setMentionActive} onUploadChange={setUploadActive} loading={loading} settled={settled} suggestedPrompts={companyConfig?.suggestedPrompts} />
       </div>
 
       {/* Request cards — pre-submit */}
@@ -366,9 +367,9 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
           maxWidth: '42rem',
           marginTop: '1.5rem',
           position: 'relative',
-          opacity: mentionActive ? 0 : 1,
+          opacity: (mentionActive || uploadActive) ? 0 : 1,
           transition: 'opacity 200ms ease',
-          pointerEvents: mentionActive ? 'none' : 'auto',
+          pointerEvents: (mentionActive || uploadActive) ? 'none' : 'auto',
         }}>
           <div style={{
             position: 'absolute',

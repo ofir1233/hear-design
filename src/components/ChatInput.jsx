@@ -130,7 +130,7 @@ function getActiveMention(text, cursorPos) {
   return { query: match[1], start: match.index }
 }
 
-export default function ChatInput({ onSubmit, onMentionChange, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
+export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
   const [text, setText]           = useState(defaultText)
   const [hovered, setHovered]     = useState(false)
   const [focused, setFocused]     = useState(false)
@@ -176,6 +176,10 @@ export default function ChatInput({ onSubmit, onMentionChange, loading = false, 
   useEffect(() => {
     onMentionChange?.(mentionQuery !== null)
   }, [mentionQuery])
+
+  useEffect(() => {
+    onUploadChange?.(uploadOpen)
+  }, [uploadOpen])
 
   // Auto-resize textarea
   useEffect(() => {
