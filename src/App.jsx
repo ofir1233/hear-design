@@ -162,94 +162,137 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  // ── Session API helpers ─────────────────────────────────────────
+  // ── Session helpers — local-first, backend is background sync ───
+  const WELCOME_MSG_TEXT = `Welcome to Hear — your AI intelligence layer for customer conversations and operational data.
+
+Here's what I can help you explore:
+- **Call Analytics** — Trending topics, sentiment shifts, and resolution rates
+- **Agent Performance** — Handle time, CSAT scores, and coaching signals
+- **Customer Signals** — Churn risk, satisfaction drivers, and product feedback
+- **Compliance** — Flagged interactions and policy adherence
+
+Ask me anything about your operations, or explore a topic below to get started.`
+
+  const WELCOME_RELATED = [
+    "What's my call volume this week?",
+    "Show me top agent performers",
+    "Which customers are at risk of churn?",
+    "Give me a compliance summary",
+  ]
+
+  function lsGetSessions()          { try { return JSON.parse(localStorage.getItem(`hear-sessions-${userId}`) || '[]') } catch { return [] } }
+  function lsSetSessions(s)         { localStorage.setItem(`hear-sessions-${userId}`, JSON.stringify(s)) }
+  function lsGetMsgs(sid)           { try { return JSON.parse(localStorage.getItem(`hear-msgs-${sid}`) || '[]') } catch { return [] } }
+  function lsSetMsgs(sid, msgs)     { localStorage.setItem(`hear-msgs-${sid}`, JSON.stringify(msgs)) }
+  function lsDelMsgs(sid)           { localStorage.removeItem(`hear-msgs-${sid}`) }
+
   useEffect(() => {
     if (!userId) return
-    initSessions()
+    // Load from localStorage immediately — zero latency
+    let stored = lsGetSessions()
+    // Seed welcome session if this user has never had one
+    if (!stored.find(s => s.is_welcome)) {
+      const welcomeId = `welcome-${userId}`
+      const welcomeSession = { id: welcomeId, user_id: userId, title: 'Welcome to Hear', is_welcome: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+      const welcomeMsgs   = [{ role: 'ai', text: WELCOME_MSG_TEXT, related: WELCOME_RELATED }]
+      stored = [...stored, welcomeSession]
+      lsSetSessions(stored)
+      lsSetMsgs(welcomeId, welcomeMsgs)
+    }
+    setSessions(stored)
+    // Background: sync with backend (fire and forget)
+    syncWithBackend(stored)
   }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function initSessions() {
-    const ok = await runEnsureWelcome()
-    await loadSessions()
-    // If backend wasn't ready yet, retry once after 4s
-    if (!ok) {
-      setTimeout(async () => {
-        await runEnsureWelcome()
-        await loadSessions()
-      }, 4000)
-    }
-  }
-
-  async function loadSessions() {
+  async function syncWithBackend(localSessions) {
     try {
-      const r = await apiFetch('/api/sessions', {
-        headers: apiHeaders({ 'x-user-id': userId }),
-      })
-      if (!r.ok) {
-        console.error('[sessions] GET /api/sessions failed:', r.status, await r.text().catch(() => ''))
-        return false
-      }
-      const data = await r.json()
-      setSessions(data.sessions || [])
-      return true
-    } catch (err) {
-      console.error('[sessions] loadSessions error:', err.message)
-      return false
-    }
-  }
-
-  async function runEnsureWelcome() {
-    try {
-      const r = await apiFetch('/api/sessions/ensure-welcome', {
+      // Ensure welcome exists in DB
+      await apiFetch('/api/sessions/ensure-welcome', {
         method: 'POST',
         headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
-      })
-      if (!r.ok) {
-        console.error('[sessions] ensure-welcome failed:', r.status, await r.text().catch(() => ''))
-        return false
-      }
-      return true
-    } catch (err) {
-      console.error('[sessions] runEnsureWelcome error:', err.message)
-      return false
-    }
-  }
-
-  async function createNewSession() {
-    try {
-      const r = await apiFetch('/api/sessions', {
-        method: 'POST',
-        headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ title: 'New Conversation' }),
-      })
-      if (!r.ok) {
-        console.error('[sessions] create session failed:', r.status, await r.text().catch(() => ''))
-        return null
-      }
+      }).catch(() => {})
+      // Pull DB sessions and merge (DB is source of truth for IDs)
+      const r = await apiFetch('/api/sessions', { headers: apiHeaders({ 'x-user-id': userId }) })
+      if (!r.ok) return
       const data = await r.json()
-      if (data.session) {
-        setSessions(prev => {
-          const withoutNew = prev.filter(s => s.id !== data.session.id)
-          const nonWelcome = withoutNew.filter(s => !s.is_welcome)
-          const welcome = withoutNew.filter(s => s.is_welcome)
-          return [data.session, ...nonWelcome, ...welcome]
-        })
-        activeSessionRef.current = data.session.id
-        setActiveSessionId(data.session.id)
-        return data.session.id
+      const dbSessions = data.sessions || []
+      if (dbSessions.length === 0) return
+      // Replace local welcome session with DB welcome session
+      const dbWelcome = dbSessions.find(s => s.is_welcome)
+      const localWelcomeId = `welcome-${userId}`
+      if (dbWelcome && localSessions.find(s => s.id === localWelcomeId)) {
+        // Migrate messages from local welcome ID to DB welcome ID
+        const localMsgs = lsGetMsgs(localWelcomeId)
+        if (localMsgs.length) lsSetMsgs(dbWelcome.id, localMsgs)
+        lsDelMsgs(localWelcomeId)
+        // Rebuild sessions list replacing local placeholder with real DB sessions
+        const merged = [
+          ...dbSessions.filter(s => !s.is_welcome),
+          ...localSessions.filter(s => !s.is_welcome && !dbSessions.find(d => d.id === s.id)),
+          dbWelcome,
+        ].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+        lsSetSessions(merged)
+        setSessions(merged)
+        // Remap activeSessionId if pointing at old welcome placeholder
+        if (activeSessionRef.current === localWelcomeId) {
+          activeSessionRef.current = dbWelcome.id
+          setActiveSessionId(dbWelcome.id)
+        }
       }
-    } catch (err) {
-      console.error('[sessions] createNewSession error:', err.message)
-    }
-    return null
+    } catch { /* silent — backend is optional */ }
   }
 
-  function saveMessage(sessionId, role, content, related) {
+  function createNewSession() {
+    const id    = crypto.randomUUID()
+    const now   = new Date().toISOString()
+    const session = { id, user_id: userId, title: 'New Conversation', is_welcome: false, created_at: now, updated_at: now }
+    setSessions(prev => {
+      const next = [session, ...prev.filter(s => !s.is_welcome), ...prev.filter(s => s.is_welcome)]
+      lsSetSessions(next)
+      return next
+    })
+    activeSessionRef.current = id
+    setActiveSessionId(id)
+    // Background: persist to DB
+    apiFetch('/api/sessions', {
+      method: 'POST',
+      headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ title: 'New Conversation' }),
+    }).then(r => r.ok ? r.json() : null).then(data => {
+      if (!data?.session) return
+      // Replace local UUID with real DB ID everywhere
+      const dbId = data.session.id
+      setSessions(prev => {
+        const next = prev.map(s => s.id === id ? { ...data.session } : s)
+        lsSetSessions(next)
+        return next
+      })
+      const msgs = lsGetMsgs(id)
+      if (msgs.length) { lsSetMsgs(dbId, msgs); lsDelMsgs(id) }
+      if (activeSessionRef.current === id) {
+        activeSessionRef.current = dbId
+        setActiveSessionId(dbId)
+      }
+    }).catch(() => {})
+    return id
+  }
+
+  function saveMessage(sessionId, role, text, related) {
     if (!sessionId) return
+    const msg = { role, text, related: related || [] }
+    const msgs = [...lsGetMsgs(sessionId), msg]
+    lsSetMsgs(sessionId, msgs)
+    // Update session updated_at in local list
+    setSessions(prev => {
+      const next = prev.map(s => s.id === sessionId ? { ...s, updated_at: new Date().toISOString() } : s)
+      lsSetSessions(next)
+      return next
+    })
+    // Background: sync to DB (content, not just meta)
     apiFetch(`/api/sessions/${sessionId}/messages`, {
       method: 'POST',
       headers: apiHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ role, content, related }),
+      body: JSON.stringify({ role, content: text, related }),
     }).catch(() => {})
   }
 
@@ -260,44 +303,44 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
         headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
         body: JSON.stringify({ firstMessage }),
       })
+      if (!r.ok) return
       const data = await r.json()
       if (data.title) {
-        setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title: data.title } : s))
+        setSessions(prev => {
+          const next = prev.map(s => s.id === sessionId ? { ...s, title: data.title } : s)
+          lsSetSessions(next)
+          return next
+        })
         setNewlyNamedId(sessionId)
         setTimeout(() => setNewlyNamedId(null), 6000)
       }
     } catch { /* silent */ }
   }
 
-  async function handleSelectSession(sessionId) {
+  function handleSelectSession(sessionId) {
     if (sessionId === activeSessionRef.current) return
     activeSessionRef.current = sessionId
     setActiveSessionId(sessionId)
-    // Reset chat state while loading
     setMessages([])
     setSubmitted(false)
     setSettled(false)
     setFixedStart(null)
-    try {
-      const r = await apiFetch(`/api/sessions/${sessionId}/messages`, {
-        headers: apiHeaders(),
-      })
-      const data = await r.json()
-      const msgs = (data.messages || []).map(m => ({
-        role: m.role,
-        text: m.content,
-        related: Array.isArray(m.related) ? m.related : [],
-      }))
+    // Load from localStorage immediately
+    const msgs = lsGetMsgs(sessionId)
+    if (msgs.length) {
       setMessages(msgs)
-      if (msgs.length > 0) {
-        setSubmitted(true)
-        setSettled(true)
-      }
-    } catch { /* silent */ }
+      setSubmitted(true)
+      setSettled(true)
+    }
   }
 
-  async function handleDeleteSession(sessionId) {
-    setSessions(prev => prev.filter(s => s.id !== sessionId))
+  function handleDeleteSession(sessionId) {
+    setSessions(prev => {
+      const next = prev.filter(s => s.id !== sessionId)
+      lsSetSessions(next)
+      return next
+    })
+    lsDelMsgs(sessionId)
     if (activeSessionRef.current === sessionId) {
       activeSessionRef.current = null
       setActiveSessionId(null)
@@ -305,23 +348,23 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
       setSubmitted(false)
       setSettled(false)
     }
-    try {
-      await apiFetch(`/api/sessions/${sessionId}`, {
-        method: 'DELETE',
-        headers: apiHeaders({ 'x-user-id': userId }),
-      })
-    } catch { /* silent */ }
+    apiFetch(`/api/sessions/${sessionId}`, {
+      method: 'DELETE',
+      headers: apiHeaders({ 'x-user-id': userId }),
+    }).catch(() => {})
   }
 
-  async function handleRenameSession(sessionId, newTitle) {
-    setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title: newTitle } : s))
-    try {
-      await apiFetch(`/api/sessions/${sessionId}/title`, {
-        method: 'PATCH',
-        headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ title: newTitle }),
-      })
-    } catch { /* silent */ }
+  function handleRenameSession(sessionId, newTitle) {
+    setSessions(prev => {
+      const next = prev.map(s => s.id === sessionId ? { ...s, title: newTitle } : s)
+      lsSetSessions(next)
+      return next
+    })
+    apiFetch(`/api/sessions/${sessionId}/title`, {
+      method: 'PATCH',
+      headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ title: newTitle }),
+    }).catch(() => {})
   }
 
   function handleNewChat() {
@@ -333,7 +376,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
     setFixedStart(null)
   }
 
-  async function handleSubmit(text) {
+  function handleSubmit(text) {
     const userMsg = { role: 'user', text }
     setMessages(prev => [...prev, userMsg])
 
@@ -353,12 +396,12 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
 
     setLoading(true)
 
-    // Create session on first message
+    // Create session on first message (synchronous — no backend needed)
     let sessionId = activeSessionRef.current
     if (!sessionId) {
-      sessionId = await createNewSession()
+      sessionId = createNewSession()
     }
-    if (sessionId) saveMessage(sessionId, 'user', text, null)
+    saveMessage(sessionId, 'user', text, null)
 
     const history = [...messages, userMsg].map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
