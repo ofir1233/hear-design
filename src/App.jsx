@@ -444,8 +444,11 @@ Ask me anything about your operations, or explore a topic below to get started.`
         const aiText = data.reply || data.error || 'Something went wrong.'
         const aiRelated = data.related || []
         setMessages(prev => [...prev, { role: 'ai', text: aiText, related: aiRelated }])
-        if (sessionId) saveMessage(sessionId, 'ai', aiText, aiRelated)
-        if (isFirstMessage && sessionId) autoTitleSession(sessionId, text)
+        // Always use the ref — by the time this resolves, the session may have been
+        // remapped from a local UUID to its real DB UUID. The ref is always current.
+        const resolvedId = activeSessionRef.current || sessionId
+        if (resolvedId) saveMessage(resolvedId, 'ai', aiText, aiRelated)
+        if (isFirstMessage && resolvedId) autoTitleSession(resolvedId, text)
       })
       .catch(() => {
         setLoading(false)
