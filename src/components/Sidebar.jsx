@@ -332,6 +332,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
   const [historyAnim, setHistoryAnim]   = useState(null) // null | 'in' | 'out'
   const historyTimerRef = useRef(null)
   const [projectOpen, setProjectOpen]   = useState(false)
+  const [projectOpenKey, setProjectOpenKey] = useState(0)
   const projectRef = useRef(null)
 
   const isDemo = !!(userId?.includes('@') && companyConfig)
@@ -437,7 +438,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           <div style={{ padding: '0 24px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div ref={projectRef} style={{ flex: 1, position: 'relative' }}>
               <div
-                onClick={() => setProjectOpen(o => !o)}
+                onClick={() => { if (!projectOpen) setProjectOpenKey(k => k + 1); setProjectOpen(o => !o) }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -465,52 +466,66 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                 )}
                 <ChevronIcon open={projectOpen} />
               </div>
-              {projectOpen && (
-                <div style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 4px)',
-                  left: 0,
-                  right: 0,
-                  background: 'var(--bg-elevated)',
-                  border: '1px solid var(--border-default)',
-                  borderRadius: 8,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-                  zIndex: 200,
-                  overflow: 'hidden',
-                }}>
-                  {projects.map(project => {
-                    const isCurrent = project.id === selectedProject?.id
-                    return (
-                      <div
-                        key={project.id}
-                        onClick={() => { setProjectOpen(false); if (!isCurrent && project.profile) onProjectChange?.(project.profile) }}
-                        style={{
-                          padding: '9px 12px',
-                          fontSize: 13,
-                          color: isCurrent ? 'var(--text-primary)' : 'var(--text-secondary)',
-                          fontWeight: isCurrent ? 600 : 400,
-                          background: isCurrent ? 'var(--bg-active)' : 'transparent',
-                          cursor: isCurrent ? 'default' : 'pointer',
-                          transition: 'background 120ms ease',
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                        }}
-                        onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-active)' }}
-                        onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
-                      >
-                        <span>{project.label}</span>
-                        {isCurrent && isDemo && (
-                          <span style={{
-                            fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
-                            textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4,
-                            background: 'rgba(255,112,86,0.12)', color: 'var(--color-brand)',
-                            lineHeight: 1.4, flexShrink: 0,
-                          }}>Active</span>
-                        )}
-                      </div>
-                    )
-                  })}
+              {/* Dropdown — always mounted, animated in/out */}
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 4px)',
+                left: 0, right: 0,
+                zIndex: 200,
+                display: 'grid',
+                gridTemplateRows: projectOpen ? '1fr' : '0fr',
+                transition: 'grid-template-rows 260ms cubic-bezier(0.22, 1, 0.36, 1)',
+                pointerEvents: projectOpen ? 'auto' : 'none',
+              }}>
+                <div style={{ overflow: 'hidden' }}>
+                  <div style={{
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 8,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                    overflow: 'hidden',
+                    opacity: projectOpen ? 1 : 0,
+                    transform: projectOpen ? 'translateY(0)' : 'translateY(-8px)',
+                    transition: 'opacity 220ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)',
+                    transitionDelay: projectOpen ? '20ms' : '0ms',
+                  }}>
+                    <div key={projectOpenKey}>
+                      {projects.map((project, pi) => {
+                        const isCurrent = project.id === selectedProject?.id
+                        return (
+                          <div
+                            key={project.id}
+                            onClick={() => { setProjectOpen(false); if (!isCurrent && project.profile) onProjectChange?.(project.profile) }}
+                            style={{
+                              padding: '9px 12px',
+                              fontSize: 13,
+                              color: isCurrent ? 'var(--text-primary)' : 'var(--text-secondary)',
+                              fontWeight: isCurrent ? 600 : 400,
+                              background: isCurrent ? 'var(--bg-active)' : 'transparent',
+                              cursor: isCurrent ? 'default' : 'pointer',
+                              transition: 'background 120ms ease',
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                              animation: `dropdownItemIn 220ms cubic-bezier(0.22,1,0.36,1) ${40 + pi * 50}ms both`,
+                            }}
+                            onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-active)' }}
+                            onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
+                          >
+                            <span>{project.label}</span>
+                            {isCurrent && isDemo && (
+                              <span style={{
+                                fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                                textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4,
+                                background: 'rgba(255,112,86,0.12)', color: 'var(--color-brand)',
+                                lineHeight: 1.4, flexShrink: 0,
+                              }}>Active</span>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <button style={{
