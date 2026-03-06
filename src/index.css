@@ -245,6 +245,19 @@
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────────── */
+
+/* Prevent browser text-insertion cursor from appearing on non-interactive elements */
+*, *::before, *::after {
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Restore text selection only where it makes sense */
+input, textarea, [contenteditable] {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+
 body {
   font-family: 'Byrd', sans-serif;
   background-color: var(--bg-canvas);
