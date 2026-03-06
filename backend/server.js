@@ -471,6 +471,23 @@ app.post('/api/demo/generate', upload.single('file'), async (req, res) => {
 // Chat session routes
 // ─────────────────────────────────────────────────────────────────
 
+// POST /api/title — generate a short session title from a message
+app.post('/api/title', async (req, res) => {
+  try {
+    const { message } = req.body
+    if (!message) return res.status(400).json({ error: 'message required' })
+    const raw = await groqChat([
+      { role: 'system', content: 'Generate a short, descriptive conversation title (3–5 words) from the user message. Return ONLY the title — no punctuation at the end, no quotes, no explanation.' },
+      { role: 'user', content: message.slice(0, 300) },
+    ])
+    const title = raw.trim().replace(/^["']|["']$/g, '').replace(/[.!?]$/, '').slice(0, 60)
+    res.json({ title })
+  } catch (err) {
+    console.error('[/api/title]', err.message)
+    res.status(500).json({ error: 'Could not generate title.' })
+  }
+})
+
 // GET /api/sessions
 app.get('/api/sessions', async (req, res) => {
   try {

@@ -296,24 +296,35 @@ Ask me anything about your operations, or explore a topic below to get started.`
     }).catch(() => {})
   }
 
-  async function autoTitleSession(sessionId, firstMessage) {
+  async function autoTitleSession(localId, firstMessage) {
     try {
-      const r = await apiFetch(`/api/sessions/${sessionId}/auto-title`, {
+      const r = await apiFetch('/api/title', {
         method: 'POST',
-        headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ firstMessage }),
+        headers: apiHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ message: firstMessage }),
       })
       if (!r.ok) return
       const data = await r.json()
-      if (data.title) {
-        setSessions(prev => {
-          const next = prev.map(s => s.id === sessionId ? { ...s, title: data.title } : s)
-          lsSetSessions(next)
-          return next
-        })
-        setNewlyNamedId(sessionId)
-        setTimeout(() => setNewlyNamedId(null), 6000)
-      }
+      if (!data.title) return
+
+      // Use the current session ID (may have been remapped from local UUID to DB UUID by now)
+      const currentId = activeSessionRef.current || localId
+      setSessions(prev => {
+        const next = prev.map(s =>
+          (s.id === currentId || s.id === localId) ? { ...s, title: data.title } : s
+        )
+        lsSetSessions(next)
+        return next
+      })
+      setNewlyNamedId(currentId)
+      setTimeout(() => setNewlyNamedId(null), 6000)
+
+      // Background: persist title to DB
+      apiFetch(`/api/sessions/${currentId}/title`, {
+        method: 'PATCH',
+        headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ title: data.title }),
+      }).catch(() => {})
     } catch { /* silent */ }
   }
 
