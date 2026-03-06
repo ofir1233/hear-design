@@ -63,6 +63,7 @@ function useTypewriter(text, active, speed = 72) {
 function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRename }) {
   const [hovered, setHovered]       = useState(false)
   const [menuOpen, setMenuOpen]     = useState(false)
+  const [menuOpenKey, setMenuOpenKey] = useState(0)
   const [renaming, setRenaming]     = useState(false)
   const [renameVal, setRenameVal]   = useState(session.title)
   const menuRef  = useRef(null)
@@ -170,7 +171,7 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
       {!renaming && (hovered || menuOpen) && (
         <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
           <button
-            onClick={e => { e.stopPropagation(); setMenuOpen(o => !o) }}
+            onClick={e => { e.stopPropagation(); if (!menuOpen) setMenuOpenKey(k => k + 1); setMenuOpen(o => !o) }}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
               color: 'var(--text-muted)', padding: '2px 2px',
@@ -183,49 +184,64 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
             <DotsIcon />
           </button>
 
-          {/* Dropdown */}
-          {menuOpen && (
-            <div style={{
-              position:     'absolute',
-              top:          'calc(100% + 4px)',
-              right:        0,
-              background:   'var(--bg-elevated)',
-              border:       '1px solid var(--border-default)',
-              borderRadius: 8,
-              boxShadow:    '0 8px 24px rgba(0,0,0,0.18)',
-              minWidth:     130,
-              zIndex:       400,
-              overflow:     'hidden',
-            }}>
-              <button
-                onClick={e => { e.stopPropagation(); setMenuOpen(false); setRenaming(true) }}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '9px 12px', background: 'transparent', border: 'none',
-                  cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13,
-                  textAlign: 'left', transition: 'background 120ms ease',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-active)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <PencilIcon /> Rename
-              </button>
-              <div style={{ height: 1, background: 'var(--border-input)', margin: '0 8px' }} />
-              <button
-                onClick={e => { e.stopPropagation(); setMenuOpen(false); onDelete(session.id) }}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '9px 12px', background: 'transparent', border: 'none',
-                  cursor: 'pointer', color: '#e05252', fontSize: 13,
-                  textAlign: 'left', transition: 'background 120ms ease',
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(224,82,82,0.08)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <TrashIcon /> Delete
-              </button>
+          {/* Dropdown — always mounted, animated in/out */}
+          <div style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            right: 0,
+            zIndex: 400,
+            display: 'grid',
+            gridTemplateRows: menuOpen ? '1fr' : '0fr',
+            transition: 'grid-template-rows 160ms cubic-bezier(0.22, 1, 0.36, 1)',
+            pointerEvents: menuOpen ? 'auto' : 'none',
+          }}>
+            <div style={{ overflow: 'hidden' }}>
+              <div style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-default)',
+                borderRadius: 8,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                minWidth: 130,
+                overflow: 'hidden',
+                opacity: menuOpen ? 1 : 0,
+                transform: menuOpen ? 'translateY(0)' : 'translateY(-6px)',
+                transition: 'opacity 130ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1)',
+                transitionDelay: menuOpen ? '10ms' : '0ms',
+              }}>
+                <div key={menuOpenKey}>
+                  <button
+                    onClick={e => { e.stopPropagation(); setMenuOpen(false); setRenaming(true) }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '9px 12px', background: 'transparent', border: 'none',
+                      cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13,
+                      textAlign: 'left', transition: 'background 120ms ease',
+                      animation: `dropdownItemIn 140ms cubic-bezier(0.22,1,0.36,1) 20ms both`,
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-active)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <PencilIcon /> Rename
+                  </button>
+                  <div style={{ height: 1, background: 'var(--border-input)', margin: '0 8px' }} />
+                  <button
+                    onClick={e => { e.stopPropagation(); setMenuOpen(false); onDelete(session.id) }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '9px 12px', background: 'transparent', border: 'none',
+                      cursor: 'pointer', color: '#e05252', fontSize: 13,
+                      textAlign: 'left', transition: 'background 120ms ease',
+                      animation: `dropdownItemIn 140ms cubic-bezier(0.22,1,0.36,1) 50ms both`,
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(224,82,82,0.08)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <TrashIcon /> Delete
+                  </button>
+                </div>
+              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>
