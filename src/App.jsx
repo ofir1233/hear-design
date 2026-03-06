@@ -362,7 +362,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
           }} />
           <div ref={cardsRef} className="smooth-scroll" onScroll={e => setCardsScrolled(e.currentTarget.scrollTop > 0)} style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))',
             gap: 12,
             maxHeight: 320,
             overflowY: 'auto',
@@ -380,7 +380,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span className="card-title" style={{ fontSize: 13, fontWeight: 600 }}>Request {req.id}</span>
-                    <span className="card-tag" style={{ fontSize: 11, borderRadius: 999, border: '1px solid', padding: '2px 8px', whiteSpace: 'nowrap' }}>{req.tag}</span>
+                    <span className="card-tag" style={{ fontSize: 11, borderRadius: 999, border: '1px solid', padding: '2px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '12ch' }}>{req.tag}</span>
                   </div>
                   <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}><ExternalLinkIcon /></span>
                 </div>
