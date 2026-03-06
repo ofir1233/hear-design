@@ -654,7 +654,7 @@ export default function App() {
   })
 
   // Stable user identifier (email for demo users, anon UUID otherwise)
-  const [userId] = useState(() => {
+  const [userId, setUserId] = useState(() => {
     const stored = sessionStorage.getItem('hear-user-id')
     if (stored) return stored
     let anon = localStorage.getItem('hear-anon-id')
@@ -687,13 +687,16 @@ export default function App() {
 
     // Persist user identifier for session binding
     const email = profile?.user_email ?? profile?.email ?? ''
+    let finalId
     if (email) {
-      sessionStorage.setItem('hear-user-id', email)
+      finalId = email
     } else {
       let anon = localStorage.getItem('hear-anon-id')
       if (!anon) { anon = crypto.randomUUID(); localStorage.setItem('hear-anon-id', anon) }
-      sessionStorage.setItem('hear-user-id', anon)
+      finalId = anon
     }
+    sessionStorage.setItem('hear-user-id', finalId)
+    setUserId(finalId)
 
     sessionStorage.setItem('hear-signed-in', '1')
     setSignedIn(true)
