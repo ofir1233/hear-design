@@ -43,7 +43,7 @@ function TrashIcon() {
 }
 
 // Typewriter hook — types text character-by-character when active
-function useTypewriter(text, active, speed = 38) {
+function useTypewriter(text, active, speed = 72) {
   const [displayed, setDisplayed] = useState(active ? '' : text)
   useEffect(() => {
     if (!active) { setDisplayed(text); return }
@@ -68,7 +68,8 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
   const menuRef  = useRef(null)
   const inputRef = useRef(null)
 
-  const displayTitle = useTypewriter(session.title, isNewlyNamed)
+  const isPending    = !session.title  // empty title = waiting for LLM
+  const displayTitle = useTypewriter(session.title, isNewlyNamed && !isPending)
 
   // Close menu on outside click
   useEffect(() => {
@@ -139,6 +140,18 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
             WebkitUserSelect: 'text',
           }}
         />
+      ) : isPending ? (
+        /* Pulsing dots while waiting for LLM title */
+        <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 3 }}>
+          {[0, 1, 2].map(i => (
+            <span key={i} style={{
+              width: 4, height: 4, borderRadius: '50%',
+              background: 'var(--text-muted)',
+              display: 'inline-block',
+              animation: `pending-dot 1.2s ease-in-out ${i * 0.2}s infinite`,
+            }} />
+          ))}
+        </span>
       ) : (
         <span style={{
           flex: 1,

@@ -245,7 +245,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
   function createNewSession() {
     const id    = crypto.randomUUID()
     const now   = new Date().toISOString()
-    const session = { id, user_id: userId, title: 'New Conversation', is_welcome: false, created_at: now, updated_at: now }
+    const session = { id, user_id: userId, title: '', is_welcome: false, created_at: now, updated_at: now }
     setSessions(prev => {
       const next = [session, ...prev.filter(s => !s.is_welcome), ...prev.filter(s => s.is_welcome)]
       lsSetSessions(next)
@@ -257,7 +257,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
     apiFetch('/api/sessions', {
       method: 'POST',
       headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ title: 'New Conversation' }),
+      body: JSON.stringify({ title: '' }),
     }).then(r => r.ok ? r.json() : null).then(data => {
       if (!data?.session) return
       // Replace local UUID with real DB ID everywhere
@@ -309,6 +309,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
 
       // Use the current session ID (may have been remapped from local UUID to DB UUID by now)
       const currentId = activeSessionRef.current || localId
+      // Set newlyNamedId first so typewriter starts from empty string
+      setNewlyNamedId(currentId)
       setSessions(prev => {
         const next = prev.map(s =>
           (s.id === currentId || s.id === localId) ? { ...s, title: data.title } : s
@@ -316,8 +318,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
         lsSetSessions(next)
         return next
       })
-      setNewlyNamedId(currentId)
-      setTimeout(() => setNewlyNamedId(null), 6000)
+      setTimeout(() => setNewlyNamedId(null), 8000)
 
       // Background: persist title to DB
       apiFetch(`/api/sessions/${currentId}/title`, {
