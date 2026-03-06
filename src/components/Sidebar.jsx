@@ -511,13 +511,14 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                             onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
                           >
                             <span>{project.label}</span>
-                            {isCurrent && isDemo && (
+                            {isDemo && (
                               <span style={{
                                 fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
                                 textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4,
-                                background: 'rgba(255,112,86,0.12)', color: 'var(--color-brand)',
+                                background: isCurrent ? 'rgba(255,112,86,0.12)' : 'var(--bg-active)',
+                                color: isCurrent ? 'var(--color-brand)' : 'var(--text-muted)',
                                 lineHeight: 1.4, flexShrink: 0,
-                              }}>Active</span>
+                              }}>{isCurrent ? 'Active' : 'Demo'}</span>
                             )}
                           </div>
                         )
