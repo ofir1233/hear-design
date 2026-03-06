@@ -71,7 +71,7 @@ function useIsMobile() {
 }
 
 
-function MainApp({ isDark, onThemeToggle, companyConfig }) {
+function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
   const greeting = getGreeting()
   const fullGreeting = `${greeting}, ${USER_NAME}.`
   const requests = buildRequestCards(companyConfig)
@@ -191,6 +191,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig }) {
         onNavChange={setActivePage}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+        onSignOut={onSignOut}
       />
 
       {/* Mobile hamburger button */}
@@ -441,8 +442,10 @@ function MainApp({ isDark, onThemeToggle, companyConfig }) {
 }
 
 export default function App() {
-  const [signedIn, setSignedIn] = useState(false)
-  const [companyConfig, setCompanyConfig] = useState(null)
+  const [signedIn, setSignedIn] = useState(() => sessionStorage.getItem('hear-signed-in') === '1')
+  const [companyConfig, setCompanyConfig] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('hear-session-config') || 'null') } catch { return null }
+  })
   const [isDark, setIsDark] = useState(() => {
     const dark = localStorage.getItem('hear-theme') !== 'light'
     document.documentElement.dataset.theme = dark ? 'dark' : 'light'
@@ -457,15 +460,26 @@ export default function App() {
   const toggleTheme = () => setIsDark(d => !d)
 
   function handleSignIn(profile = null) {
-    // profile can be a demo profile { config, name, ... }, a dev config object, or null
     const config = profile?.config ?? (profile?.companyName ? profile : null)
     if (config?.companyName) {
       setCompanyConfig(config)
+      sessionStorage.setItem('hear-session-config', JSON.stringify(config))
       localStorage.setItem('hear-demo-config', JSON.stringify(config))
+    } else {
+      setCompanyConfig(null)
+      sessionStorage.removeItem('hear-session-config')
     }
+    sessionStorage.setItem('hear-signed-in', '1')
     setSignedIn(true)
   }
 
+  function handleSignOut() {
+    sessionStorage.removeItem('hear-signed-in')
+    sessionStorage.removeItem('hear-session-config')
+    setCompanyConfig(null)
+    setSignedIn(false)
+  }
+
   if (!signedIn) return <SignIn onSignIn={handleSignIn} />
-  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} companyConfig={companyConfig} />
+  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} companyConfig={companyConfig} onSignOut={handleSignOut} />
 }

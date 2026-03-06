@@ -123,7 +123,7 @@ const PROJECTS = [
   { id: 3, label: 'Gamma Solutions' },
 ]
 
-export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse }) {
+export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
   const [hoveredHistory, setHoveredHistory] = useState(null)
   const [projectOpen, setProjectOpen]   = useState(false)
@@ -452,7 +452,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               {[
                 { Icon: isDark ? SunIcon : MoonIcon, onClick: onThemeToggle },
                 { Icon: AccessibilityIcon,            onClick: null },
-                { Icon: LogoutIcon,                   onClick: null },
+                { Icon: LogoutIcon,                   onClick: onSignOut },
               ].map(({ Icon, onClick }, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                   {i > 0 && <div style={{ width: 1, height: 20, background: 'var(--border-input)', flexShrink: 0 }} />}
