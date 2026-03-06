@@ -78,6 +78,36 @@ export async function initDb() {
     );
   `)
 
+  // Migrate existing demo_profiles table — add deleted_at if absent
+  await pool.query(`
+    ALTER TABLE demo_profiles ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+  `).catch(() => {})
+
+  // Session tables — safe to run on every deploy
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chat_sessions (
+      id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id    TEXT        NOT NULL,
+      title      TEXT        NOT NULL DEFAULT 'New Conversation',
+      is_welcome BOOLEAN     DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW(),
+      deleted_at TIMESTAMPTZ
+    );
+
+    CREATE TABLE IF NOT EXISTS chat_messages (
+      id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      session_id UUID        NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
+      role       TEXT        NOT NULL,
+      content    TEXT        NOT NULL,
+      related    JSONB,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS chat_sessions_user_idx     ON chat_sessions (user_id);
+    CREATE INDEX IF NOT EXISTS chat_messages_session_idx  ON chat_messages (session_id);
+  `)
+
   console.log('[db] schema ready')
 }
 
@@ -131,7 +161,7 @@ export async function markTokenUsed(token) {
 export async function getProfilesByEmail(email) {
   const { rows } = await pool.query(
     `SELECT * FROM demo_profiles
-     WHERE user_email = $1
+     WHERE user_email = $1 AND deleted_at IS NULL
      ORDER BY created_at DESC`,
     [email]
   )
@@ -140,6 +170,15 @@ export async function getProfilesByEmail(email) {
 
 export async function deleteDemoProfile(id) {
   await pool.query('DELETE FROM demo_profiles WHERE id = $1', [id])
+}
+
+export async function softDeleteProfile(id, email) {
+  const { rowCount } = await pool.query(
+    `UPDATE demo_profiles SET deleted_at = NOW()
+     WHERE id = $1 AND user_email = $2 AND deleted_at IS NULL`,
+    [id, email]
+  )
+  return rowCount > 0
 }
 
 export async function getDemoProfile(id) {
@@ -188,4 +227,94 @@ export async function getProfilesByDemoToken(token) {
   )
   if (!rows[0]) return null
   return getProfilesByEmail(rows[0].email)
+}
+
+// ─────────────────────────────────────────────────────────────────
+// chat_sessions helpers
+// ─────────────────────────────────────────────────────────────────
+
+const WELCOME_CONTENT = `Welcome to Hear — your AI intelligence layer for customer conversations and operational data.
+
+Here's what I can help you explore:
+- **Call Analytics** — Trending topics, sentiment shifts, and resolution rates
+- **Agent Performance** — Handle time, CSAT scores, and coaching signals
+- **Customer Signals** — Churn risk, satisfaction drivers, and product feedback
+- **Compliance** — Flagged interactions and policy adherence
+
+Ask me anything about your operations, or explore a topic below to get started.`
+
+const WELCOME_RELATED = [
+  "What's my call volume this week?",
+  "Show me top agent performers",
+  "Which customers are at risk of churn?",
+  "Give me a compliance summary",
+]
+
+export async function ensureWelcomeSession(userId) {
+  const { rows } = await pool.query(
+    `SELECT * FROM chat_sessions WHERE user_id = $1 AND is_welcome = TRUE AND deleted_at IS NULL`,
+    [userId]
+  )
+  if (rows[0]) return { session: rows[0], created: false }
+
+  const { rows: sessions } = await pool.query(
+    `INSERT INTO chat_sessions (user_id, title, is_welcome) VALUES ($1, 'Welcome to Hear', TRUE) RETURNING *`,
+    [userId]
+  )
+  const session = sessions[0]
+  await pool.query(
+    `INSERT INTO chat_messages (session_id, role, content, related) VALUES ($1, 'ai', $2, $3)`,
+    [session.id, WELCOME_CONTENT, JSON.stringify(WELCOME_RELATED)]
+  )
+  return { session, created: true }
+}
+
+export async function getSessionsByUser(userId) {
+  const { rows } = await pool.query(
+    `SELECT * FROM chat_sessions WHERE user_id = $1 AND deleted_at IS NULL ORDER BY updated_at DESC`,
+    [userId]
+  )
+  return rows
+}
+
+export async function createSession(userId, title = 'New Conversation') {
+  const { rows } = await pool.query(
+    `INSERT INTO chat_sessions (user_id, title) VALUES ($1, $2) RETURNING *`,
+    [userId, title]
+  )
+  return rows[0]
+}
+
+export async function updateSessionTitle(id, userId, title) {
+  const { rows } = await pool.query(
+    `UPDATE chat_sessions SET title = $1, updated_at = NOW()
+     WHERE id = $2 AND user_id = $3 AND deleted_at IS NULL RETURNING *`,
+    [title, id, userId]
+  )
+  return rows[0] ?? null
+}
+
+export async function softDeleteSession(id, userId) {
+  const { rowCount } = await pool.query(
+    `UPDATE chat_sessions SET deleted_at = NOW() WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+    [id, userId]
+  )
+  return rowCount > 0
+}
+
+export async function getSessionMessages(sessionId) {
+  const { rows } = await pool.query(
+    `SELECT * FROM chat_messages WHERE session_id = $1 ORDER BY created_at ASC`,
+    [sessionId]
+  )
+  return rows
+}
+
+export async function addSessionMessage(sessionId, { role, content, related }) {
+  const { rows } = await pool.query(
+    `INSERT INTO chat_messages (session_id, role, content, related) VALUES ($1, $2, $3, $4) RETURNING *`,
+    [sessionId, role, content, related ? JSON.stringify(related) : null]
+  )
+  await pool.query(`UPDATE chat_sessions SET updated_at = NOW() WHERE id = $1`, [sessionId])
+  return rows[0]
 }

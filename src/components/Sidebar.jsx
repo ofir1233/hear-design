@@ -17,6 +17,208 @@ function SunIcon() {
   )
 }
 
+function PlusIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <path d="M7 2v10M2 7h10"/>
+    </svg>
+  )
+}
+
+function PencilIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </svg>
+  )
+}
+
+function TrashIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+    </svg>
+  )
+}
+
+// Typewriter hook — types text character-by-character when active
+function useTypewriter(text, active, speed = 38) {
+  const [displayed, setDisplayed] = useState(active ? '' : text)
+  useEffect(() => {
+    if (!active) { setDisplayed(text); return }
+    setDisplayed('')
+    let i = 0
+    const id = setInterval(() => {
+      i++
+      setDisplayed(text.slice(0, i))
+      if (i >= text.length) clearInterval(id)
+    }, speed)
+    return () => clearInterval(id)
+  }, [text, active, speed])
+  return displayed
+}
+
+// Single session history item with 3-dot menu + rename
+function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRename }) {
+  const [hovered, setHovered]       = useState(false)
+  const [menuOpen, setMenuOpen]     = useState(false)
+  const [renaming, setRenaming]     = useState(false)
+  const [renameVal, setRenameVal]   = useState(session.title)
+  const menuRef  = useRef(null)
+  const inputRef = useRef(null)
+
+  const displayTitle = useTypewriter(session.title, isNewlyNamed)
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return
+    function handler(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [menuOpen])
+
+  // Focus rename input
+  useEffect(() => {
+    if (renaming) {
+      setRenameVal(session.title)
+      setTimeout(() => { inputRef.current?.select() }, 0)
+    }
+  }, [renaming, session.title])
+
+  function commitRename() {
+    const trimmed = renameVal.trim()
+    if (trimmed && trimmed !== session.title) onRename(session.id, trimmed)
+    setRenaming(false)
+  }
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { setHovered(false); setMenuOpen(false) }}
+      style={{
+        position:   'relative',
+        display:    'flex',
+        alignItems: 'center',
+        padding:    '7px 12px',
+        borderRadius: 8,
+        background: isActive
+          ? 'var(--bg-active)'
+          : hovered ? 'var(--bg-active)' : 'transparent',
+        cursor: 'pointer',
+        marginBottom: 1,
+        transition: 'background 150ms ease',
+        gap: 6,
+      }}
+      onClick={() => { if (!renaming) onSelect(session.id) }}
+    >
+      {/* Title or rename input */}
+      {renaming ? (
+        <input
+          ref={inputRef}
+          value={renameVal}
+          onChange={e => setRenameVal(e.target.value)}
+          onBlur={commitRename}
+          onKeyDown={e => {
+            if (e.key === 'Enter') commitRename()
+            if (e.key === 'Escape') setRenaming(false)
+          }}
+          onClick={e => e.stopPropagation()}
+          style={{
+            flex: 1,
+            fontSize: 13,
+            color: 'var(--text-primary)',
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--color-brand)',
+            borderRadius: 4,
+            padding: '2px 6px',
+            outline: 'none',
+            userSelect: 'text',
+            WebkitUserSelect: 'text',
+          }}
+        />
+      ) : (
+        <span style={{
+          flex: 1,
+          fontSize: 13,
+          color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          fontWeight: session.is_welcome ? 500 : 400,
+        }}>
+          {displayTitle}
+        </span>
+      )}
+
+      {/* 3-dot button — shows on hover or when menu open */}
+      {!renaming && (hovered || menuOpen) && (
+        <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
+          <button
+            onClick={e => { e.stopPropagation(); setMenuOpen(o => !o) }}
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: 'var(--text-muted)', padding: '2px 2px',
+              display: 'flex', alignItems: 'center', borderRadius: 4,
+              transition: 'color 120ms ease',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
+          >
+            <DotsIcon />
+          </button>
+
+          {/* Dropdown */}
+          {menuOpen && (
+            <div style={{
+              position:     'absolute',
+              top:          'calc(100% + 4px)',
+              right:        0,
+              background:   'var(--bg-elevated)',
+              border:       '1px solid var(--border-default)',
+              borderRadius: 8,
+              boxShadow:    '0 8px 24px rgba(0,0,0,0.18)',
+              minWidth:     130,
+              zIndex:       400,
+              overflow:     'hidden',
+            }}>
+              <button
+                onClick={e => { e.stopPropagation(); setMenuOpen(false); setRenaming(true) }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '9px 12px', background: 'transparent', border: 'none',
+                  cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13,
+                  textAlign: 'left', transition: 'background 120ms ease',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-active)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <PencilIcon /> Rename
+              </button>
+              <div style={{ height: 1, background: 'var(--border-input)', margin: '0 8px' }} />
+              <button
+                onClick={e => { e.stopPropagation(); setMenuOpen(false); onDelete(session.id) }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '9px 12px', background: 'transparent', border: 'none',
+                  cursor: 'pointer', color: '#e05252', fontSize: 13,
+                  textAlign: 'left', transition: 'background 120ms ease',
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(224,82,82,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <TrashIcon /> Delete
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function StorybookDisabledButton() {
   const [hovered, setHovered] = useState(false)
 
@@ -110,22 +312,14 @@ const NAV_ITEMS = [
   { id: 'settings',    label: 'Settings',          Icon: SettingsIcon   },
 ]
 
-const HISTORY_ITEMS = [
-  { id: 1, label: 'Improving on average handle...',       active: false },
-  { id: 2, label: 'Another conversation about bad...',    active: false },
-  { id: 3, label: 'Reasons for bad handling time',        active: false },
-  { id: 4, label: 'Something else that has somethi...',   active: false },
-]
-
 const PROJECTS = [
   { id: 1, label: 'Acme Corp' },
   { id: 2, label: 'Beta Industries' },
   { id: 3, label: 'Gamma Solutions' },
 ]
 
-export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut }) {
+export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onNewChat }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
-  const [hoveredHistory, setHoveredHistory] = useState(null)
   const [projectOpen, setProjectOpen]   = useState(false)
   const [selectedProject, setSelectedProject] = useState(PROJECTS[0])
   const projectRef = useRef(null)
@@ -332,76 +526,71 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           {activeNav === 'dashboard' && <div style={{ height: 1, background: 'var(--border-input)', margin: '8px 24px' }} />}
 
           {/* History section — dashboard only */}
-          {activeNav === 'dashboard' && <div style={{ padding: '0 24px 8px' }}>
-            <button
-              onClick={() => setHistoryOpen(o => !o)}
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '6px 12px',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'var(--text-muted)',
-                fontSize: 12,
-                fontWeight: 600,
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                marginBottom: 4,
-              }}
-            >
-              History
-              <ChevronIcon open={historyOpen} />
-            </button>
-
-            {historyOpen && HISTORY_ITEMS.map((item) => (
-              <div
-                key={item.id}
-                onMouseEnter={() => setHoveredHistory(item.id)}
-                onMouseLeave={() => setHoveredHistory(null)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '7px 12px',
-                  borderRadius: 8,
-                  background: item.active ? 'rgba(185,28,28,0.08)' : hoveredHistory === item.id ? 'var(--bg-active)' : 'transparent',
-                  cursor: 'pointer',
-                  marginBottom: 1,
-                  transition: 'background 150ms ease',
-                }}
-              >
-                <span style={{
-                  fontSize: 13,
-                  color: item.active ? '#b91c1c' : 'var(--text-secondary)',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  flex: 1,
-                }}>
-                  {item.label}
-                </span>
-                {(item.active || hoveredHistory === item.id) && (
-                  <button style={{
+          {activeNav === 'dashboard' && (
+            <div style={{ padding: '0 24px 8px' }}>
+              {/* Header row: label + collapse chevron + new-chat button */}
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+                <button
+                  onClick={() => setHistoryOpen(o => !o)}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '6px 12px',
                     background: 'transparent',
                     border: 'none',
                     cursor: 'pointer',
-                    color: item.active ? '#b91c1c' : 'var(--text-muted)',
-                    padding: '0 0 0 6px',
-                    display: 'flex',
-                    alignItems: 'center',
+                    color: 'var(--text-muted)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  History
+                  <ChevronIcon open={historyOpen} />
+                </button>
+                <button
+                  onClick={onNewChat}
+                  title="New chat"
+                  style={{
                     flexShrink: 0,
-                  }}>
-                    <DotsIcon />
-                  </button>
-                )}
+                    width: 28, height: 28,
+                    background: 'transparent',
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'color 150ms ease, background 150ms ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
+                >
+                  <PlusIcon />
+                </button>
               </div>
-            ))}
-          </div>
 
-          }
+              {historyOpen && sessions.length === 0 && (
+                <div style={{ padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                  No conversations yet
+                </div>
+              )}
+
+              {historyOpen && sessions.map(session => (
+                <SessionItem
+                  key={session.id}
+                  session={session}
+                  isActive={session.id === activeSessionId}
+                  isNewlyNamed={session.id === newlyNamedId}
+                  onSelect={onSelectSession}
+                  onDelete={onDeleteSession}
+                  onRename={onRenameSession}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Spacer */}
           <div style={{ flex: 1 }} />

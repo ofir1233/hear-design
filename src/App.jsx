@@ -88,7 +88,7 @@ function useIsMobile() {
 }
 
 
-function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
+function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
   const greeting = getGreeting()
   const fullGreeting = `${greeting}, ${USER_NAME}.`
   const requests = buildRequestCards(companyConfig)
@@ -112,6 +112,12 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
   const [uploadActive, setUploadActive]   = useState(false)
   const [hoveredMsg, setHoveredMsg] = useState(null)
   const [copiedIndex, setCopiedIndex] = useState(null)
+
+  // ── Session state ───────────────────────────────────────────────
+  const [sessions, setSessions]           = useState([])
+  const [activeSessionId, setActiveSessionId] = useState(null)
+  const [newlyNamedId, setNewlyNamedId]   = useState(null)
+  const activeSessionRef                  = useRef(null)
 
   const logoRef     = useRef(null)
   const subtitleRef = useRef(null)
@@ -156,9 +162,152 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  function handleSubmit(text) {
+  // ── Session API helpers ─────────────────────────────────────────
+  useEffect(() => {
+    if (!userId) return
+    // Ensure welcome exists first, then load all sessions
+    ;(async () => {
+      await runEnsureWelcome()
+      await loadSessions()
+    })()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function loadSessions() {
+    try {
+      const r = await apiFetch('/api/sessions', {
+        headers: apiHeaders({ 'x-user-id': userId }),
+      })
+      const data = await r.json()
+      setSessions(data.sessions || [])
+    } catch { /* silent */ }
+  }
+
+  async function runEnsureWelcome() {
+    try {
+      await apiFetch('/api/sessions/ensure-welcome', {
+        method: 'POST',
+        headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
+      })
+    } catch { /* silent */ }
+  }
+
+  async function createNewSession() {
+    try {
+      const r = await apiFetch('/api/sessions', {
+        method: 'POST',
+        headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ title: 'New Conversation' }),
+      })
+      const data = await r.json()
+      if (data.session) {
+        setSessions(prev => {
+          const withoutNew = prev.filter(s => s.id !== data.session.id)
+          const nonWelcome = withoutNew.filter(s => !s.is_welcome)
+          const welcome = withoutNew.filter(s => s.is_welcome)
+          return [data.session, ...nonWelcome, ...welcome]
+        })
+        activeSessionRef.current = data.session.id
+        setActiveSessionId(data.session.id)
+        return data.session.id
+      }
+    } catch { /* silent */ }
+    return null
+  }
+
+  function saveMessage(sessionId, role, content, related) {
+    if (!sessionId) return
+    apiFetch(`/api/sessions/${sessionId}/messages`, {
+      method: 'POST',
+      headers: apiHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ role, content, related }),
+    }).catch(() => {})
+  }
+
+  async function autoTitleSession(sessionId, firstMessage) {
+    try {
+      const r = await apiFetch(`/api/sessions/${sessionId}/auto-title`, {
+        method: 'POST',
+        headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ firstMessage }),
+      })
+      const data = await r.json()
+      if (data.title) {
+        setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title: data.title } : s))
+        setNewlyNamedId(sessionId)
+        setTimeout(() => setNewlyNamedId(null), 6000)
+      }
+    } catch { /* silent */ }
+  }
+
+  async function handleSelectSession(sessionId) {
+    if (sessionId === activeSessionRef.current) return
+    activeSessionRef.current = sessionId
+    setActiveSessionId(sessionId)
+    // Reset chat state while loading
+    setMessages([])
+    setSubmitted(false)
+    setSettled(false)
+    setFixedStart(null)
+    try {
+      const r = await apiFetch(`/api/sessions/${sessionId}/messages`, {
+        headers: apiHeaders(),
+      })
+      const data = await r.json()
+      const msgs = (data.messages || []).map(m => ({
+        role: m.role,
+        text: m.content,
+        related: Array.isArray(m.related) ? m.related : [],
+      }))
+      setMessages(msgs)
+      if (msgs.length > 0) {
+        setSubmitted(true)
+        setSettled(true)
+      }
+    } catch { /* silent */ }
+  }
+
+  async function handleDeleteSession(sessionId) {
+    setSessions(prev => prev.filter(s => s.id !== sessionId))
+    if (activeSessionRef.current === sessionId) {
+      activeSessionRef.current = null
+      setActiveSessionId(null)
+      setMessages([])
+      setSubmitted(false)
+      setSettled(false)
+    }
+    try {
+      await apiFetch(`/api/sessions/${sessionId}`, {
+        method: 'DELETE',
+        headers: apiHeaders({ 'x-user-id': userId }),
+      })
+    } catch { /* silent */ }
+  }
+
+  async function handleRenameSession(sessionId, newTitle) {
+    setSessions(prev => prev.map(s => s.id === sessionId ? { ...s, title: newTitle } : s))
+    try {
+      await apiFetch(`/api/sessions/${sessionId}/title`, {
+        method: 'PATCH',
+        headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ title: newTitle }),
+      })
+    } catch { /* silent */ }
+  }
+
+  function handleNewChat() {
+    activeSessionRef.current = null
+    setActiveSessionId(null)
+    setMessages([])
+    setSubmitted(false)
+    setSettled(false)
+    setFixedStart(null)
+  }
+
+  async function handleSubmit(text) {
     const userMsg = { role: 'user', text }
     setMessages(prev => [...prev, userMsg])
+
+    const isFirstMessage = !activeSessionRef.current
 
     if (!submitted) {
       if (!inputRef.current) return
@@ -174,6 +323,13 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
 
     setLoading(true)
 
+    // Create session on first message
+    let sessionId = activeSessionRef.current
+    if (!sessionId) {
+      sessionId = await createNewSession()
+    }
+    if (sessionId) saveMessage(sessionId, 'user', text, null)
+
     const history = [...messages, userMsg].map(m => ({
       role: m.role === 'user' ? 'user' : 'model',
       content: m.text,
@@ -187,7 +343,11 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
       .then(r => r.json())
       .then(data => {
         setLoading(false)
-        setMessages(prev => [...prev, { role: 'ai', text: data.reply || data.error || 'Something went wrong.', related: data.related || [] }])
+        const aiText = data.reply || data.error || 'Something went wrong.'
+        const aiRelated = data.related || []
+        setMessages(prev => [...prev, { role: 'ai', text: aiText, related: aiRelated }])
+        if (sessionId) saveMessage(sessionId, 'ai', aiText, aiRelated)
+        if (isFirstMessage && sessionId) autoTitleSession(sessionId, text)
       })
       .catch(() => {
         setLoading(false)
@@ -208,10 +368,23 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
         isDark={isDark}
         onThemeToggle={onThemeToggle}
         activeNav={activePage}
-        onNavChange={setActivePage}
+        onNavChange={(page) => {
+          if (page === 'dashboard' && activePage === 'dashboard') {
+            handleNewChat()
+          } else {
+            setActivePage(page)
+          }
+        }}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(c => !c)}
         onSignOut={onSignOut}
+        sessions={sessions}
+        activeSessionId={activeSessionId}
+        newlyNamedId={newlyNamedId}
+        onSelectSession={handleSelectSession}
+        onDeleteSession={handleDeleteSession}
+        onRenameSession={handleRenameSession}
+        onNewChat={handleNewChat}
       />
 
       {/* Mobile hamburger button */}
@@ -479,6 +652,15 @@ export default function App() {
   const [companyConfig, setCompanyConfig] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('hear-session-config') || 'null') } catch { return null }
   })
+
+  // Stable user identifier (email for demo users, anon UUID otherwise)
+  const [userId] = useState(() => {
+    const stored = sessionStorage.getItem('hear-user-id')
+    if (stored) return stored
+    let anon = localStorage.getItem('hear-anon-id')
+    if (!anon) { anon = crypto.randomUUID(); localStorage.setItem('hear-anon-id', anon) }
+    return anon
+  })
   const [isDark, setIsDark] = useState(() => {
     const dark = localStorage.getItem('hear-theme') !== 'light'
     document.documentElement.dataset.theme = dark ? 'dark' : 'light'
@@ -502,6 +684,17 @@ export default function App() {
       setCompanyConfig(null)
       sessionStorage.removeItem('hear-session-config')
     }
+
+    // Persist user identifier for session binding
+    const email = profile?.user_email ?? profile?.email ?? ''
+    if (email) {
+      sessionStorage.setItem('hear-user-id', email)
+    } else {
+      let anon = localStorage.getItem('hear-anon-id')
+      if (!anon) { anon = crypto.randomUUID(); localStorage.setItem('hear-anon-id', anon) }
+      sessionStorage.setItem('hear-user-id', anon)
+    }
+
     sessionStorage.setItem('hear-signed-in', '1')
     setSignedIn(true)
   }
@@ -514,5 +707,5 @@ export default function App() {
   }
 
   if (!signedIn) return <SignIn onSignIn={handleSignIn} />
-  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} companyConfig={companyConfig} onSignOut={handleSignOut} />
+  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} companyConfig={companyConfig} onSignOut={handleSignOut} userId={userId} />
 }

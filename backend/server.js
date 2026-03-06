@@ -18,6 +18,13 @@ import {
   getProfilesByEmail,
   createDemoProfile,
   softDeleteProfile,
+  ensureWelcomeSession,
+  getSessionsByUser,
+  createSession,
+  updateSessionTitle,
+  softDeleteSession,
+  getSessionMessages,
+  addSessionMessage,
 } from './db.js'
 
 // ─────────────────────────────────────────────────────────────────
@@ -457,6 +464,125 @@ app.post('/api/demo/generate', upload.single('file'), async (req, res) => {
   } catch (err) {
     console.error('[/api/demo/generate]', err.message)
     res.status(500).json({ error: 'Generation failed.' })
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────
+// Chat session routes
+// ─────────────────────────────────────────────────────────────────
+
+// GET /api/sessions
+app.get('/api/sessions', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id']
+    if (!userId) return res.status(400).json({ error: 'x-user-id header required' })
+    const sessions = await getSessionsByUser(userId)
+    res.json({ sessions })
+  } catch (err) {
+    console.error('[/api/sessions GET]', err.message)
+    res.status(500).json({ error: 'Could not fetch sessions.' })
+  }
+})
+
+// POST /api/sessions/ensure-welcome  (must be before /:id routes)
+app.post('/api/sessions/ensure-welcome', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id']
+    if (!userId) return res.status(400).json({ error: 'x-user-id header required' })
+    const result = await ensureWelcomeSession(userId)
+    res.json(result)
+  } catch (err) {
+    console.error('[/api/sessions/ensure-welcome]', err.message)
+    res.status(500).json({ error: 'Could not ensure welcome session.' })
+  }
+})
+
+// POST /api/sessions
+app.post('/api/sessions', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id']
+    if (!userId) return res.status(400).json({ error: 'x-user-id header required' })
+    const { title } = req.body
+    const session = await createSession(userId, title)
+    res.json({ session })
+  } catch (err) {
+    console.error('[/api/sessions POST]', err.message)
+    res.status(500).json({ error: 'Could not create session.' })
+  }
+})
+
+// PATCH /api/sessions/:id/title
+app.patch('/api/sessions/:id/title', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id']
+    if (!userId) return res.status(400).json({ error: 'x-user-id header required' })
+    const { title } = req.body
+    if (!title?.trim()) return res.status(400).json({ error: 'title required' })
+    const session = await updateSessionTitle(req.params.id, userId, title.trim())
+    if (!session) return res.status(404).json({ error: 'Session not found.' })
+    res.json({ session })
+  } catch (err) {
+    console.error('[/api/sessions PATCH title]', err.message)
+    res.status(500).json({ error: 'Could not rename session.' })
+  }
+})
+
+// DELETE /api/sessions/:id
+app.delete('/api/sessions/:id', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id']
+    if (!userId) return res.status(400).json({ error: 'x-user-id header required' })
+    const deleted = await softDeleteSession(req.params.id, userId)
+    if (!deleted) return res.status(404).json({ error: 'Session not found.' })
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[/api/sessions DELETE]', err.message)
+    res.status(500).json({ error: 'Could not delete session.' })
+  }
+})
+
+// GET /api/sessions/:id/messages
+app.get('/api/sessions/:id/messages', async (req, res) => {
+  try {
+    const messages = await getSessionMessages(req.params.id)
+    res.json({ messages })
+  } catch (err) {
+    console.error('[/api/sessions messages GET]', err.message)
+    res.status(500).json({ error: 'Could not fetch messages.' })
+  }
+})
+
+// POST /api/sessions/:id/messages
+app.post('/api/sessions/:id/messages', async (req, res) => {
+  try {
+    const { role, content, related } = req.body
+    if (!role || !content) return res.status(400).json({ error: 'role and content required' })
+    const message = await addSessionMessage(req.params.id, { role, content, related })
+    res.json({ message })
+  } catch (err) {
+    console.error('[/api/sessions messages POST]', err.message)
+    res.status(500).json({ error: 'Could not save message.' })
+  }
+})
+
+// POST /api/sessions/:id/auto-title
+app.post('/api/sessions/:id/auto-title', async (req, res) => {
+  try {
+    const userId = req.headers['x-user-id']
+    if (!userId) return res.status(400).json({ error: 'x-user-id header required' })
+    const { firstMessage } = req.body
+    if (!firstMessage) return res.status(400).json({ error: 'firstMessage required' })
+
+    const raw = await groqChat([
+      { role: 'system', content: 'Generate a short, descriptive conversation title (4-7 words max) based on the user message. Return ONLY the title text — no punctuation at the end, no quotes, no markdown.' },
+      { role: 'user', content: firstMessage.slice(0, 300) },
+    ])
+    const title = raw.trim().replace(/^["']|["']$/g, '').replace(/[.!?]$/, '').slice(0, 60)
+    const session = await updateSessionTitle(req.params.id, userId, title)
+    res.json({ title, session })
+  } catch (err) {
+    console.error('[/api/sessions auto-title]', err.message)
+    res.status(500).json({ error: 'Could not auto-title session.' })
   }
 })
 
