@@ -474,7 +474,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                 zIndex: 200,
                 display: 'grid',
                 gridTemplateRows: projectOpen ? '1fr' : '0fr',
-                transition: 'grid-template-rows 260ms cubic-bezier(0.22, 1, 0.36, 1)',
+                transition: 'grid-template-rows 160ms cubic-bezier(0.22, 1, 0.36, 1)',
                 pointerEvents: projectOpen ? 'auto' : 'none',
               }}>
                 <div style={{ overflow: 'hidden' }}>
@@ -485,9 +485,9 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                     boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
                     overflow: 'hidden',
                     opacity: projectOpen ? 1 : 0,
-                    transform: projectOpen ? 'translateY(0)' : 'translateY(-8px)',
-                    transition: 'opacity 220ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)',
-                    transitionDelay: projectOpen ? '20ms' : '0ms',
+                    transform: projectOpen ? 'translateY(0)' : 'translateY(-6px)',
+                    transition: 'opacity 130ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1)',
+                    transitionDelay: projectOpen ? '10ms' : '0ms',
                   }}>
                     <div key={projectOpenKey}>
                       {projects.map((project, pi) => {
@@ -505,7 +505,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                               cursor: isCurrent ? 'default' : 'pointer',
                               transition: 'background 120ms ease',
                               display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                              animation: `dropdownItemIn 220ms cubic-bezier(0.22,1,0.36,1) ${40 + pi * 50}ms both`,
+                              animation: `dropdownItemIn 140ms cubic-bezier(0.22,1,0.36,1) ${20 + pi * 30}ms both`,
                             }}
                             onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-active)' }}
                             onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
