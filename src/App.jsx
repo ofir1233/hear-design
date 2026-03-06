@@ -409,6 +409,15 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
               </div>
             ))}
           </div>
+          {/* Gradient veil — fixed to the container viewport, dissolves the half-row into the canvas */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0, left: 0, right: 0,
+            height: 96,
+            background: 'linear-gradient(to bottom, transparent 0%, var(--bg-canvas) 100%)',
+            pointerEvents: 'none',
+            zIndex: 3,
+          }} />
         </div>
       )}
 
