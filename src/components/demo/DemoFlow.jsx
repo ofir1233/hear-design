@@ -466,8 +466,16 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
       }
     }
 
-    // Brief pause to let the WAITING animation breathe, then complete
-    setTimeout(() => onComplete(resultProfile), 1200)
+    // Brief pause to let the WAITING animation breathe, then show SELECT screen
+    setTimeout(() => {
+      if (resultProfile) {
+        setProfiles(prev => {
+          const deduped = [...prev.filter(p => p.id !== resultProfile.id), resultProfile]
+          return deduped
+        })
+      }
+      setScreen(S.SELECT)
+    }, 1200)
   }
 
   return (
