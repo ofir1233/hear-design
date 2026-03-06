@@ -93,8 +93,10 @@ export async function initDb() {
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW(),
       deleted_at TIMESTAMPTZ
-    );
+    )
+  `).catch(err => console.warn('[db] chat_sessions table:', err.message))
 
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS chat_messages (
       id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
       session_id UUID        NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
@@ -102,11 +104,13 @@ export async function initDb() {
       content    TEXT        NOT NULL,
       related    JSONB,
       created_at TIMESTAMPTZ DEFAULT NOW()
-    );
+    )
+  `).catch(err => console.warn('[db] chat_messages table:', err.message))
 
-    CREATE INDEX IF NOT EXISTS chat_sessions_user_idx     ON chat_sessions (user_id);
-    CREATE INDEX IF NOT EXISTS chat_messages_session_idx  ON chat_messages (session_id);
-  `)
+  await pool.query(`CREATE INDEX IF NOT EXISTS chat_sessions_user_idx ON chat_sessions (user_id)`)
+    .catch(() => {})
+  await pool.query(`CREATE INDEX IF NOT EXISTS chat_messages_session_idx ON chat_messages (session_id)`)
+    .catch(() => {})
 
   console.log('[db] schema ready')
 }
