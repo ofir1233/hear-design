@@ -339,9 +339,45 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
             setScreen(S.CREATE)
           }
         })
+        .then(data => {
+          // After fresh backend list is loaded, attempt to sync any pending local profiles
+          syncPendingProfiles(googleUser.email)
+        })
         .catch(() => { clearTimeout(timeout); if (cached.length === 0) setScreen(S.CREATE) })
     }
   }, [googleUser]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync local-fallback profiles that were created while the backend was unreachable
+  async function syncPendingProfiles(email) {
+    const pendingKey = `hear-demo-pending-${email}`
+    const cacheKey  = `hear-demo-profiles-${email}`
+    const pending   = JSON.parse(localStorage.getItem(pendingKey) || '[]')
+    if (!pending.length) return
+
+    const synced = []
+    for (const p of pending) {
+      try {
+        const body = new FormData()
+        body.append('userEmail', email)
+        body.append('url', p.url || '')
+        body.append('description', p.description || '')
+        const res  = await apiFetch('/api/demo/generate', { method: 'POST', body })
+        const data = await res.json().catch(() => ({}))
+        if (data.profile?.id) {
+          // Replace the local profile in cache with the real DB one
+          const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
+          const updated = cached.filter(x => x.id !== p.localId).concat(data.profile)
+          localStorage.setItem(cacheKey, JSON.stringify(updated))
+          setProfiles(prev => prev.filter(x => x.id !== p.localId).concat(data.profile))
+          synced.push(p.localId)
+        }
+      } catch { /* will retry next session */ }
+    }
+    if (synced.length) {
+      const remaining = pending.filter(p => !synced.includes(p.localId))
+      localStorage.setItem(pendingKey, JSON.stringify(remaining))
+    }
+  }
 
   function markDeleted(email, id) {
     const key = `hear-demo-deleted-${email}`
@@ -361,7 +397,10 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     // Mark as deleted client-side immediately so it never comes back from backend
     if (googleUser?.email) markDeleted(googleUser.email, id)
     try {
-      await apiFetch(`/api/demo/profiles/${id}`, { method: 'DELETE' })
+      await apiFetch(`/api/demo/profiles/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-User-Email': googleUser?.email ?? '' },
+      })
     } catch { /* silent */ }
     setTimeout(() => {
       setProfiles(prev => {
@@ -405,19 +444,23 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
       resultProfile = data.profile || null
     } catch {
       clearTimeout(timeout)
-      // Backend unreachable — synthesize a local profile from the URL so the
-      // user isn't stranded and return visits still show their company
+      // Backend unreachable — synthesize a local profile so the user isn't stranded.
+      // Mark it as pending sync so next load retries saving it to the DB.
       resultProfile = makeLocalProfile(url.trim(), googleUser?.email)
+      if (googleUser?.email) {
+        const pendingKey = `hear-demo-pending-${googleUser.email}`
+        const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]')
+        pending.push({ url: url.trim(), description: description.trim(), localId: resultProfile.id })
+        localStorage.setItem(pendingKey, JSON.stringify(pending))
+      }
     }
 
     // Always cache — whether the profile came from the backend or is a local fallback.
-    // This guarantees return visits show SELECT instantly without waiting for Render.
     if (resultProfile && googleUser?.email) {
       const cacheKey = `hear-demo-profiles-${googleUser.email}`
       const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
       const updated = [...cached.filter(p => p.id !== resultProfile.id), resultProfile]
       localStorage.setItem(cacheKey, JSON.stringify(updated))
-      // Persist config so the platform personalises immediately on next load
       if (resultProfile.config?.companyName) {
         localStorage.setItem('hear-demo-config', JSON.stringify(resultProfile.config))
       }

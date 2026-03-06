@@ -28,10 +28,11 @@ export async function initDb() {
       id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       user_email TEXT NOT NULL,
       name       TEXT NOT NULL,
-      subtitle   TEXT,
+      subtitle   TEXT DEFAULT '',
       color      TEXT DEFAULT '#FF7056',
       config     JSONB,
-      created_at TIMESTAMPTZ DEFAULT NOW()
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      deleted_at TIMESTAMPTZ
     );
 
     CREATE TABLE IF NOT EXISTS env_configs (
@@ -45,6 +46,12 @@ export async function initDb() {
       created_at    TIMESTAMPTZ DEFAULT NOW()
     );
   `)
+
+  // Ensure deleted_at column exists on older DBs (safe to run repeatedly)
+  await pool.query(`
+    ALTER TABLE demo_profiles ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+  `).catch(() => {})
+
   console.log('[db] tables ready')
 }
 
@@ -80,10 +87,18 @@ export async function saveTokenConfig(token, config) {
 
 export async function getProfilesByEmail(email) {
   const { rows } = await pool.query(
-    'SELECT * FROM demo_profiles WHERE user_email = $1 ORDER BY created_at DESC',
+    'SELECT * FROM demo_profiles WHERE user_email = $1 AND deleted_at IS NULL ORDER BY created_at DESC',
     [email]
   )
   return rows
+}
+
+export async function softDeleteProfile(id, email) {
+  const { rowCount } = await pool.query(
+    'UPDATE demo_profiles SET deleted_at = NOW() WHERE id = $1 AND user_email = $2 AND deleted_at IS NULL',
+    [id, email]
+  )
+  return rowCount > 0
 }
 
 export async function createDemoProfile(email, { name, subtitle, color, config }) {

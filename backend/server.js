@@ -17,6 +17,7 @@ import {
   saveTokenConfig,
   getProfilesByEmail,
   createDemoProfile,
+  softDeleteProfile,
 } from './db.js'
 
 // ─────────────────────────────────────────────────────────────────
@@ -389,6 +390,20 @@ app.post('/api/dev/activate', upload.single('file'), async (req, res) => {
   } catch (err) {
     console.error('[/api/dev/activate]', err.message)
     res.status(500).json({ error: 'Activation failed.' })
+  }
+})
+
+// ── DELETE /api/demo/profiles/:id ────────────────────────────────
+app.delete('/api/demo/profiles/:id', async (req, res) => {
+  try {
+    const email = req.headers['x-user-email']
+    if (!email) return res.status(400).json({ error: 'x-user-email header required' })
+    const deleted = await softDeleteProfile(req.params.id, email)
+    if (!deleted) return res.status(404).json({ error: 'Profile not found.' })
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[/api/demo/profiles DELETE]', err.message)
+    res.status(500).json({ error: 'Could not delete profile.' })
   }
 })
 
