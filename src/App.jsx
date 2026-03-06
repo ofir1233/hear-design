@@ -366,7 +366,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
           maxWidth: '42rem',
           marginTop: '1.5rem',
           position: 'relative',
-          opacity: mentionActive ? 0.3 : 1,
+          opacity: mentionActive ? 0 : 1,
           transition: 'opacity 200ms ease',
           pointerEvents: mentionActive ? 'none' : 'auto',
         }}>
