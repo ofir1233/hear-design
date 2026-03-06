@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import HearLogo from './HearLogo.jsx'
 import {
   HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon, ComplianceIcon,
@@ -64,10 +65,12 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
   const [hovered, setHovered]       = useState(false)
   const [menuOpen, setMenuOpen]     = useState(false)
   const [menuOpenKey, setMenuOpenKey] = useState(0)
+  const [menuPos, setMenuPos]       = useState({ top: 0, right: 0 })
   const [renaming, setRenaming]     = useState(false)
   const [renameVal, setRenameVal]   = useState(session.title)
-  const menuRef  = useRef(null)
-  const inputRef = useRef(null)
+  const dotsRef     = useRef(null)
+  const dropdownRef = useRef(null)
+  const inputRef    = useRef(null)
 
   const isPending    = !session.title  // empty title = waiting for LLM
   const displayTitle = useTypewriter(session.title, isNewlyNamed && !isPending)
@@ -76,11 +79,24 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
   useEffect(() => {
     if (!menuOpen) return
     function handler(e) {
-      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false)
+      if (
+        dotsRef.current && !dotsRef.current.contains(e.target) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target)
+      ) setMenuOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [menuOpen])
+
+  function openMenu(e) {
+    e.stopPropagation()
+    if (!menuOpen) {
+      setMenuOpenKey(k => k + 1)
+      const rect = dotsRef.current?.getBoundingClientRect()
+      if (rect) setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    }
+    setMenuOpen(o => !o)
+  }
 
   // Focus rename input
   useEffect(() => {
@@ -169,9 +185,10 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
 
       {/* 3-dot button — shows on hover or when menu open */}
       {!renaming && (hovered || menuOpen) && (
-        <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
           <button
-            onClick={e => { e.stopPropagation(); if (!menuOpen) setMenuOpenKey(k => k + 1); setMenuOpen(o => !o) }}
+            ref={dotsRef}
+            onClick={openMenu}
             style={{
               background: 'transparent', border: 'none', cursor: 'pointer',
               color: 'var(--text-muted)', padding: '2px 2px',
@@ -184,18 +201,18 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
             <DotsIcon />
           </button>
 
-          {/* Dropdown — always mounted, animated in/out */}
-          <div style={{
-            position: 'absolute',
-            top: 'calc(100% + 4px)',
-            right: 0,
-            zIndex: 400,
-            display: 'grid',
-            gridTemplateRows: menuOpen ? '1fr' : '0fr',
-            transition: 'grid-template-rows 160ms cubic-bezier(0.22, 1, 0.36, 1)',
-            pointerEvents: menuOpen ? 'auto' : 'none',
-          }}>
-            <div style={{ overflow: 'hidden' }}>
+          {/* Dropdown — portaled to body to escape overflow clipping */}
+          {createPortal(
+            <div
+              ref={dropdownRef}
+              style={{
+                position: 'fixed',
+                top: menuPos.top,
+                right: menuPos.right,
+                zIndex: 9999,
+                pointerEvents: menuOpen ? 'auto' : 'none',
+              }}
+            >
               <div style={{
                 background: 'var(--bg-elevated)',
                 border: '1px solid var(--border-default)',
@@ -240,8 +257,9 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
+            </div>,
+            document.body
+          )}
         </div>
       )}
     </div>
