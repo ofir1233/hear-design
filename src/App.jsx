@@ -371,14 +371,16 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
           transition: 'opacity 200ms ease',
           pointerEvents: (mentionActive || uploadActive) ? 'none' : 'auto',
         }}>
+          {/* Top gradient veil — mirrors the bottom, appears only once scrolled */}
           <div style={{
             position: 'absolute',
-            top: 0, left: 0, right: 6,
-            height: 1,
-            background: 'var(--border-default)',
-            zIndex: 2,
+            top: 0, left: 0, right: 0,
+            height: 72,
+            background: 'linear-gradient(to bottom, var(--bg-canvas) 0%, transparent 100%)',
+            pointerEvents: 'none',
+            zIndex: 3,
             opacity: cardsScrolled ? 1 : 0,
-            transition: 'opacity 200ms ease',
+            transition: 'opacity 350ms ease',
           }} />
           <div ref={cardsRef} className="cards-scroll" data-scrolling={cardsScrolling} onScroll={e => {
             setCardsScrolled(e.currentTarget.scrollTop > 0)
