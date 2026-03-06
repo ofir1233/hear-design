@@ -88,7 +88,7 @@ function useIsMobile() {
 }
 
 
-function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
+function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectChange, userId }) {
   const greeting = getGreeting()
   const fullGreeting = `${greeting}, ${USER_NAME}.`
   const requests = buildRequestCards(companyConfig)
@@ -389,6 +389,17 @@ Ask me anything about your operations, or explore a topic below to get started.`
     setFixedStart(null)
   }
 
+  function handleProjectSwitch(profile) {
+    onProjectChange?.(profile)
+    activeSessionRef.current = null
+    setActiveSessionId(null)
+    setMessages([])
+    setSubmitted(false)
+    setSettled(false)
+    setFixedStart(null)
+    setInputOffset(0)
+  }
+
   function handleSubmit(text) {
     setChatDefaultText('')
     const userMsg = { role: 'user', text }
@@ -467,6 +478,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
         onSignOut={onSignOut}
         companyConfig={companyConfig}
         userId={userId}
+        onProjectChange={handleProjectSwitch}
         sessions={sessions}
         activeSessionId={activeSessionId}
         newlyNamedId={newlyNamedId}
@@ -792,6 +804,15 @@ export default function App() {
     setSignedIn(true)
   }
 
+  function handleProjectChange(profile) {
+    const config = profile?.config ?? null
+    if (config?.companyName) {
+      setCompanyConfig(config)
+      sessionStorage.setItem('hear-session-config', JSON.stringify(config))
+      localStorage.setItem('hear-demo-config', JSON.stringify(config))
+    }
+  }
+
   function handleSignOut() {
     sessionStorage.removeItem('hear-signed-in')
     sessionStorage.removeItem('hear-session-config')
@@ -800,5 +821,5 @@ export default function App() {
   }
 
   if (!signedIn) return <SignIn onSignIn={handleSignIn} />
-  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} companyConfig={companyConfig} onSignOut={handleSignOut} userId={userId} />
+  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} companyConfig={companyConfig} onSignOut={handleSignOut} onProjectChange={handleProjectChange} userId={userId} />
 }

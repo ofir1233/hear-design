@@ -327,7 +327,7 @@ const NAV_ITEMS = [
 
 const DESIGN_LAB = { id: '__design_lab__', label: 'Design Lab' }
 
-export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onNewChat }) {
+export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', onProjectChange, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onNewChat }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
   const [historyAnim, setHistoryAnim]   = useState(null) // null | 'in' | 'out'
   const historyTimerRef = useRef(null)
@@ -341,7 +341,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
     if (isDemo) {
       try {
         const cached = JSON.parse(localStorage.getItem(`hear-demo-profiles-${userId}`) || '[]')
-        if (cached.length > 0) return cached.map(p => ({ id: p.id, label: p.name }))
+        if (cached.length > 0) return cached.map(p => ({ id: p.id, label: p.name, profile: p }))
       } catch { /* fall through */ }
     }
     return [DESIGN_LAB]
@@ -483,14 +483,14 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                     return (
                       <div
                         key={project.id}
-                        onClick={() => setProjectOpen(false)}
+                        onClick={() => { setProjectOpen(false); if (!isCurrent && project.profile) onProjectChange?.(project.profile) }}
                         style={{
                           padding: '9px 12px',
                           fontSize: 13,
                           color: isCurrent ? 'var(--text-primary)' : 'var(--text-secondary)',
                           fontWeight: isCurrent ? 600 : 400,
                           background: isCurrent ? 'var(--bg-active)' : 'transparent',
-                          cursor: 'default',
+                          cursor: isCurrent ? 'default' : 'pointer',
                           transition: 'background 120ms ease',
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
                         }}
