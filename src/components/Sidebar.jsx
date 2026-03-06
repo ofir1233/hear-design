@@ -510,7 +510,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                             onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-active)' }}
                             onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
                           >
-                            <span>{project.label}</span>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{project.label}</span>
                             {isDemo && (
                               <span style={{
                                 fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
