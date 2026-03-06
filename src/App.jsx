@@ -442,9 +442,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig }) {
 
 export default function App() {
   const [signedIn, setSignedIn] = useState(false)
-  const [companyConfig, setCompanyConfig] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('hear-demo-config') || 'null') } catch { return null }
-  })
+  const [companyConfig, setCompanyConfig] = useState(null)
   const [isDark, setIsDark] = useState(() => {
     const dark = localStorage.getItem('hear-theme') !== 'light'
     document.documentElement.dataset.theme = dark ? 'dark' : 'light'
