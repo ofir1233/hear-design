@@ -40,6 +40,16 @@
   50%       { height: 34px; opacity: 1;   }
 }
 
+@keyframes historyItemIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes historyItemOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-6px); }
+}
+
 /* ── Font Faces ────────────────────────────────────────────────────────────── */
 @font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-Light.woff2') format('woff2'); font-weight: 300; font-style: normal; }
 @font-face { font-family: 'Byrd'; src: url('/fonts/Byrd-LightItalic.woff2') format('woff2'); font-weight: 300; font-style: italic; }

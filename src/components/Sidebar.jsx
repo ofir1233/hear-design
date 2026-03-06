@@ -333,6 +333,8 @@ const PROJECTS = [
 
 export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onNewChat }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
+  const [historyAnim, setHistoryAnim]   = useState(null) // null | 'in' | 'out'
+  const historyTimerRef = useRef(null)
   const [projectOpen, setProjectOpen]   = useState(false)
   const [selectedProject, setSelectedProject] = useState(PROJECTS[0])
   const projectRef = useRef(null)
@@ -347,6 +349,20 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [projectOpen])
+
+  function toggleHistory() {
+    clearTimeout(historyTimerRef.current)
+    if (historyOpen) {
+      setHistoryAnim('out')
+      const exitMs = Math.min(sessions.length * 35, 180) + 180
+      historyTimerRef.current = setTimeout(() => { setHistoryOpen(false); setHistoryAnim(null) }, exitMs)
+    } else {
+      setHistoryOpen(true)
+      setHistoryAnim('in')
+      const enterMs = Math.min(sessions.length * 40, 200) + 220
+      historyTimerRef.current = setTimeout(() => setHistoryAnim(null), enterMs)
+    }
+  }
 
   const isOpen = isMobile ? mobileOpen : !collapsed
 
@@ -544,7 +560,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               {/* Header row: label + collapse chevron + new-chat button */}
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
                 <button
-                  onClick={() => setHistoryOpen(o => !o)}
+                  onClick={toggleHistory}
                   style={{
                     flex: 1,
                     display: 'flex',
@@ -586,22 +602,38 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               </div>
 
               {historyOpen && sessions.length === 0 && (
-                <div style={{ padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                <div style={{
+                  padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic',
+                  animation: historyAnim === 'in' ? 'historyItemIn 220ms cubic-bezier(0.22,1,0.36,1) both' : undefined,
+                }}>
                   No conversations yet
                 </div>
               )}
 
-              {historyOpen && sessions.map(session => (
-                <SessionItem
-                  key={session.id}
-                  session={session}
-                  isActive={session.id === activeSessionId}
-                  isNewlyNamed={session.id === newlyNamedId}
-                  onSelect={onSelectSession}
-                  onDelete={onDeleteSession}
-                  onRename={onRenameSession}
-                />
-              ))}
+              {historyOpen && sessions.map((session, i) => {
+                const delay = historyAnim === 'in'
+                  ? `${i * 40}ms`
+                  : historyAnim === 'out'
+                  ? `${(sessions.length - 1 - i) * 35}ms`
+                  : '0ms'
+                const anim = historyAnim === 'in'
+                  ? `historyItemIn 220ms cubic-bezier(0.22,1,0.36,1) ${delay} both`
+                  : historyAnim === 'out'
+                  ? `historyItemOut 160ms ease ${delay} both`
+                  : undefined
+                return (
+                  <div key={session.id} style={{ animation: anim }}>
+                    <SessionItem
+                      session={session}
+                      isActive={session.id === activeSessionId}
+                      isNewlyNamed={session.id === newlyNamedId}
+                      onSelect={onSelectSession}
+                      onDelete={onDeleteSession}
+                      onRename={onRenameSession}
+                    />
+                  </div>
+                )
+              })}
             </div>
           )}
 
