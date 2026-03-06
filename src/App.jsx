@@ -100,6 +100,8 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
   const cardsRef = useRef(null)
   const messagesEndRef = useRef(null)
   const [cardsScrolled, setCardsScrolled] = useState(false)
+  const [cardsScrolling, setCardsScrolling] = useState(false)
+  const cardsScrollTimeout = useRef(null)
   const [mentionActive, setMentionActive] = useState(false)
   const [hoveredMsg, setHoveredMsg] = useState(null)
   const [copiedIndex, setCopiedIndex] = useState(null)
@@ -371,7 +373,12 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
             opacity: cardsScrolled ? 1 : 0,
             transition: 'opacity 200ms ease',
           }} />
-          <div ref={cardsRef} className="cards-scroll" onScroll={e => setCardsScrolled(e.currentTarget.scrollTop > 0)} style={{
+          <div ref={cardsRef} className="cards-scroll" data-scrolling={cardsScrolling} onScroll={e => {
+            setCardsScrolled(e.currentTarget.scrollTop > 0)
+            setCardsScrolling(true)
+            clearTimeout(cardsScrollTimeout.current)
+            cardsScrollTimeout.current = setTimeout(() => setCardsScrolling(false), 800)
+          }} style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))',
             gap: 12,

@@ -286,10 +286,15 @@ input::placeholder {
 .cards-scroll::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.08);
   border-radius: 99px;
-  transition: background 300ms ease;
+  transition: background 400ms ease;
 }
 .cards-scroll:hover::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.18);
+}
+/* Actively scrolling: scrollbar becomes clearly visible then fades out */
+.cards-scroll[data-scrolling="true"]::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.45);
+  transition: background 80ms ease;
 }
 /* Overlay mode: scrollbar floats above content, zero layout impact */
 @supports (overflow-y: overlay) {
