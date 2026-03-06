@@ -26,7 +26,18 @@ function buildRequestCards(config) {
     : ['Trending Topics', 'Agent Performance', 'Customer Sentiment', 'Escalations', 'Call Volume', 'Product Mentions', 'Churn Risk', 'Satisfaction']
 
   if (config?.suggestedPrompts?.length) {
-    return config.suggestedPrompts.slice(0, 8).map((prompt, i) => ({
+    const prompts = config.suggestedPrompts.slice(0, 8)
+    // Pad to at least 6 using fallback pool if needed
+    const fallback = [
+      `Show me trending topics from ${name} customer calls this week`,
+      `Which agents handled ${name} inquiries best this month?`,
+      `What are the top complaints from ${name} customers?`,
+      `Summarize sentiment trends for ${name} support calls`,
+      `Which ${name} topics are driving the most escalations?`,
+      `Show me call volume patterns for ${name} over the last 30 days`,
+    ]
+    while (prompts.length < 6) prompts.push(fallback[prompts.length])
+    return prompts.map((prompt, i) => ({
       id: `#${String(21195386 + i).slice(-8)}`,
       tag: topics[i % topics.length],
       description: prompt,
@@ -360,16 +371,15 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
             opacity: cardsScrolled ? 1 : 0,
             transition: 'opacity 200ms ease',
           }} />
-          <div ref={cardsRef} className="smooth-scroll" onScroll={e => setCardsScrolled(e.currentTarget.scrollTop > 0)} style={{
+          <div ref={cardsRef} className="cards-scroll" onScroll={e => setCardsScrolled(e.currentTarget.scrollTop > 0)} style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))',
             gap: 12,
-            maxHeight: 320,
+            maxHeight: 420,
             overflowY: 'auto',
-            maskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 80%, transparent 100%)',
+            maskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
             paddingBottom: 40,
-            paddingRight: 6,
           }}>
             {requests.map((req, i) => (
               <div

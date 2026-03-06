@@ -272,6 +272,30 @@ input::placeholder {
 .hear-inspector .smooth-scroll:hover::-webkit-scrollbar-thumb { background: #30363d; }
 .hear-inspector .smooth-scroll::-webkit-scrollbar-thumb:hover { background: #484f58; }
 
+/* ── Cards grid scroll — overlay scrollbar floats on top, never takes layout space ── */
+.cards-scroll {
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox: hide native, we show on hover via webkit only */
+}
+.cards-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+.cards-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cards-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  transition: background 300ms ease;
+}
+.cards-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+/* Overlay mode: scrollbar floats above content, zero layout impact */
+@supports (overflow-y: overlay) {
+  .cards-scroll { overflow-y: overlay; }
+}
+
 /* ── Request Cards ──────────────────────────────────────────────────────────── */
 .request-card { background: transparent; border: 1px solid var(--border-default); transition: background 150ms ease; }
 .request-card:hover { background: var(--bg-card); }
