@@ -144,7 +144,7 @@ export default function SignIn({ onSignIn }) {
         <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%', maxWidth: 1160, padding: '0 60px', boxSizing: 'border-box', gap: 100 }}>
 
           {/* Left panel */}
-          <div style={{ flex: '0 0 340px', width: 340, display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 24, paddingBottom: 24 }}>
+          <div style={{ flex: '0 0 340px', width: 340, display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 24, paddingBottom: 24, minHeight: 'clamp(420px, 65vh, 540px)' }}>
             <SignInHero env={env} onEnvChange={setEnv} />
 
             <div
