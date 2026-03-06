@@ -165,30 +165,54 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
   // ── Session API helpers ─────────────────────────────────────────
   useEffect(() => {
     if (!userId) return
-    // Ensure welcome exists first, then load all sessions
-    ;(async () => {
-      await runEnsureWelcome()
-      await loadSessions()
-    })()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    initSessions()
+  }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function initSessions() {
+    const ok = await runEnsureWelcome()
+    await loadSessions()
+    // If backend wasn't ready yet, retry once after 4s
+    if (!ok) {
+      setTimeout(async () => {
+        await runEnsureWelcome()
+        await loadSessions()
+      }, 4000)
+    }
+  }
 
   async function loadSessions() {
     try {
       const r = await apiFetch('/api/sessions', {
         headers: apiHeaders({ 'x-user-id': userId }),
       })
+      if (!r.ok) {
+        console.error('[sessions] GET /api/sessions failed:', r.status, await r.text().catch(() => ''))
+        return false
+      }
       const data = await r.json()
       setSessions(data.sessions || [])
-    } catch { /* silent */ }
+      return true
+    } catch (err) {
+      console.error('[sessions] loadSessions error:', err.message)
+      return false
+    }
   }
 
   async function runEnsureWelcome() {
     try {
-      await apiFetch('/api/sessions/ensure-welcome', {
+      const r = await apiFetch('/api/sessions/ensure-welcome', {
         method: 'POST',
         headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
       })
-    } catch { /* silent */ }
+      if (!r.ok) {
+        console.error('[sessions] ensure-welcome failed:', r.status, await r.text().catch(() => ''))
+        return false
+      }
+      return true
+    } catch (err) {
+      console.error('[sessions] runEnsureWelcome error:', err.message)
+      return false
+    }
   }
 
   async function createNewSession() {
@@ -198,6 +222,10 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
         headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
         body: JSON.stringify({ title: 'New Conversation' }),
       })
+      if (!r.ok) {
+        console.error('[sessions] create session failed:', r.status, await r.text().catch(() => ''))
+        return null
+      }
       const data = await r.json()
       if (data.session) {
         setSessions(prev => {
@@ -210,7 +238,9 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, userId }) {
         setActiveSessionId(data.session.id)
         return data.session.id
       }
-    } catch { /* silent */ }
+    } catch (err) {
+      console.error('[sessions] createNewSession error:', err.message)
+    }
     return null
   }
 
