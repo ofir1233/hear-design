@@ -26,8 +26,8 @@ function buildRequestCards(config) {
     : ['Trending Topics', 'Agent Performance', 'Customer Sentiment', 'Escalations', 'Call Volume', 'Product Mentions', 'Churn Risk', 'Satisfaction']
 
   if (config?.suggestedPrompts?.length) {
-    const prompts = config.suggestedPrompts.slice(0, 8)
-    // Pad to at least 6 using fallback pool if needed
+    const prompts = config.suggestedPrompts.slice(0, 10)
+    // Pad to at least 10 using fallback pool if needed
     const fallback = [
       `Show me trending topics from ${name} customer calls this week`,
       `Which agents handled ${name} inquiries best this month?`,
@@ -35,8 +35,12 @@ function buildRequestCards(config) {
       `Summarize sentiment trends for ${name} support calls`,
       `Which ${name} topics are driving the most escalations?`,
       `Show me call volume patterns for ${name} over the last 30 days`,
+      `What products are ${name} customers mentioning most?`,
+      `Identify churn risk signals in recent ${name} conversations`,
+      `Compare ${name} customer satisfaction scores across regions`,
+      `What are the most common reasons ${name} customers call in?`,
     ]
-    while (prompts.length < 6) prompts.push(fallback[prompts.length])
+    while (prompts.length < 10) prompts.push(fallback[prompts.length % fallback.length])
     return prompts.map((prompt, i) => ({
       id: `#${String(21195386 + i).slice(-8)}`,
       tag: topics[i % topics.length],
@@ -53,6 +57,8 @@ function buildRequestCards(config) {
     `Show me call volume patterns for ${name} over the last 30 days`,
     `What products are ${name} customers mentioning most?`,
     `Identify churn risk signals in recent ${name} conversations`,
+    `Compare ${name} customer satisfaction scores across regions`,
+    `What are the most common reasons ${name} customers call in?`,
   ]
   return fallbackPrompts.map((prompt, i) => ({
     id: `#${String(21195386 + i).slice(-8)}`,
