@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import HearLogo from './HearLogo.jsx'
 import {
   HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon, ComplianceIcon,
@@ -325,19 +325,30 @@ const NAV_ITEMS = [
   { id: 'settings',    label: 'Settings',          Icon: SettingsIcon   },
 ]
 
-const PROJECTS = [
-  { id: 1, label: 'Acme Corp' },
-  { id: 2, label: 'Beta Industries' },
-  { id: 3, label: 'Gamma Solutions' },
-]
+const DESIGN_LAB = { id: '__design_lab__', label: 'Design Lab' }
 
-export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onNewChat }) {
+export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onNewChat }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
   const [historyAnim, setHistoryAnim]   = useState(null) // null | 'in' | 'out'
   const historyTimerRef = useRef(null)
   const [projectOpen, setProjectOpen]   = useState(false)
-  const [selectedProject, setSelectedProject] = useState(PROJECTS[0])
   const projectRef = useRef(null)
+
+  const isDemo = !!(userId?.includes('@') && companyConfig)
+
+  // Build project list from localStorage demo profiles, or fallback to Design Lab
+  const projects = useMemo(() => {
+    if (isDemo) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(`hear-demo-profiles-${userId}`) || '[]')
+        if (cached.length > 0) return cached.map(p => ({ id: p.id, label: p.name }))
+      } catch { /* fall through */ }
+    }
+    return [DESIGN_LAB]
+  }, [isDemo, userId])
+
+  const currentLabel = companyConfig?.companyName || 'Design Lab'
+  const selectedProject = projects.find(p => p.label === currentLabel) ?? projects[0]
 
   useEffect(() => {
     if (!projectOpen) return
@@ -440,9 +451,18 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                   fontSize: 13,
                   color: 'var(--text-secondary)',
                   userSelect: 'none',
+                  gap: 6,
                 }}
               >
-                <span>{selectedProject.label}</span>
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedProject?.label}</span>
+                {isDemo && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                    textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4,
+                    background: 'rgba(255,112,86,0.12)', color: 'var(--color-brand)',
+                    lineHeight: 1.4, flexShrink: 0,
+                  }}>Demo</span>
+                )}
                 <ChevronIcon open={projectOpen} />
               </div>
               {projectOpen && (
@@ -458,25 +478,37 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                   zIndex: 200,
                   overflow: 'hidden',
                 }}>
-                  {PROJECTS.map(project => (
-                    <div
-                      key={project.id}
-                      onClick={() => { setSelectedProject(project); setProjectOpen(false) }}
-                      style={{
-                        padding: '9px 12px',
-                        fontSize: 13,
-                        color: project.id === selectedProject.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-                        fontWeight: project.id === selectedProject.id ? 600 : 400,
-                        background: project.id === selectedProject.id ? 'var(--bg-active)' : 'transparent',
-                        cursor: 'pointer',
-                        transition: 'background 120ms ease',
-                      }}
-                      onMouseEnter={e => { if (project.id !== selectedProject.id) e.currentTarget.style.background = 'var(--bg-active)' }}
-                      onMouseLeave={e => { if (project.id !== selectedProject.id) e.currentTarget.style.background = 'transparent' }}
-                    >
-                      {project.label}
-                    </div>
-                  ))}
+                  {projects.map(project => {
+                    const isCurrent = project.id === selectedProject?.id
+                    return (
+                      <div
+                        key={project.id}
+                        onClick={() => setProjectOpen(false)}
+                        style={{
+                          padding: '9px 12px',
+                          fontSize: 13,
+                          color: isCurrent ? 'var(--text-primary)' : 'var(--text-secondary)',
+                          fontWeight: isCurrent ? 600 : 400,
+                          background: isCurrent ? 'var(--bg-active)' : 'transparent',
+                          cursor: 'default',
+                          transition: 'background 120ms ease',
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                        }}
+                        onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-active)' }}
+                        onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
+                      >
+                        <span>{project.label}</span>
+                        {isCurrent && isDemo && (
+                          <span style={{
+                            fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                            textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4,
+                            background: 'rgba(255,112,86,0.12)', color: 'var(--color-brand)',
+                            lineHeight: 1.4, flexShrink: 0,
+                          }}>Active</span>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>

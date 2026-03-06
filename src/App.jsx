@@ -465,6 +465,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(c => !c)}
         onSignOut={onSignOut}
+        companyConfig={companyConfig}
+        userId={userId}
         sessions={sessions}
         activeSessionId={activeSessionId}
         newlyNamedId={newlyNamedId}
