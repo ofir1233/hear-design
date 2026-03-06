@@ -436,7 +436,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
 
           {/* Project selector + bell */}
           <div style={{ padding: '0 24px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div ref={projectRef} style={{ flex: 1, position: 'relative' }}>
+            <div ref={projectRef} style={{ flex: 1, minWidth: 0, position: 'relative' }}>
               <div
                 onClick={() => { if (!projectOpen) setProjectOpenKey(k => k + 1); setProjectOpen(o => !o) }}
                 style={{
