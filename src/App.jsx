@@ -382,10 +382,8 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut }) {
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))',
             gap: 12,
-            maxHeight: 420,
+            maxHeight: 280,
             overflowY: 'auto',
-            maskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
-            WebkitMaskImage: 'linear-gradient(to bottom, black 85%, transparent 100%)',
             paddingBottom: 40,
           }}>
             {requests.map((req, i) => (
