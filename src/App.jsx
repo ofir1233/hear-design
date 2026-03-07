@@ -585,8 +585,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         </div>
       ) : (
       <div
-        className="min-h-screen flex flex-col items-center px-6"
-        style={{ paddingLeft, paddingTop: 'max(14vh, 80px)', transition: sidebarTransition }}
+        className="flex flex-col items-center px-6"
+        style={{ paddingLeft, paddingTop: 'max(14vh, 80px)', transition: sidebarTransition, height: '100vh', overflow: 'hidden' }}
       >
 
       {/* Header */}
