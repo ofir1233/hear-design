@@ -15,7 +15,6 @@ function getGreeting() {
   return 'Good evening'
 }
 
-const USER_NAME = 'John'
 const SIDEBAR_WIDTH = 272
 
 // Build request cards from company config, or fall back to generic ones
@@ -90,7 +89,8 @@ function useIsMobile() {
 
 function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectChange, userId, profileId }) {
   const greeting = getGreeting()
-  const fullGreeting = `${greeting}, ${USER_NAME}.`
+  const userName = localStorage.getItem('hear-user-name') || 'there'
+  const fullGreeting = `${greeting}, ${userName}.`
   const requests = buildRequestCards(companyConfig)
   const isMobile = useIsMobile()
   const [activePage, setActivePage] = useState(() => window.__hearActivePage || 'dashboard')

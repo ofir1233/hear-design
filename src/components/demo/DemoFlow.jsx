@@ -3,7 +3,7 @@ import { gsap } from 'gsap'
 import { apiFetch } from '../../lib/api.js'
 
 // ── Screen IDs ────────────────────────────────────────────────────
-const S = { GATE: 'GATE', CHECKING: 'CHECKING', SELECT: 'SELECT', CREATE: 'CREATE', WAITING: 'WAITING' }
+const S = { GATE: 'GATE', CHECKING: 'CHECKING', NAME: 'NAME', SELECT: 'SELECT', CREATE: 'CREATE', WAITING: 'WAITING' }
 
 // ── Local fallback profile (when backend is unreachable) ───────────
 function makeLocalProfile(url, email) {
@@ -269,10 +269,27 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
   const [screen, setScreen] = useState(googleUser ? S.CHECKING : S.GATE)
   const [profiles, setProfiles] = useState([])
   const [error, setError] = useState('')
+  const [firstName, setFirstName] = useState(() => localStorage.getItem('hear-user-name') || '')
   // Create form
   const [url, setUrl] = useState('')
   const [description, setDescription] = useState('')
   const [file, setFile] = useState(null)
+
+  // Goes to SELECT, but inserts the NAME step if the user hasn't given their name yet
+  function goToSelect() {
+    if (!localStorage.getItem('hear-user-name')) {
+      setScreen(S.NAME)
+    } else {
+      setScreen(S.SELECT)
+    }
+  }
+
+  function handleNameSubmit() {
+    const name = firstName.trim()
+    if (!name) return
+    localStorage.setItem('hear-user-name', name)
+    setScreen(S.SELECT)
+  }
 
   const containerRef = useRef(null)
 
@@ -290,7 +307,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
         clearTimeout(timeout)
         const list = filterDeleted('token', data.profiles || [])
         setProfiles(list)
-        setScreen(list.length > 0 ? S.SELECT : S.GATE)
+        if (list.length > 0) { goToSelect() } else { setScreen(S.GATE) }
         window.history.replaceState({}, '', window.location.pathname)
       })
       .catch(() => { clearTimeout(timeout); setScreen(S.GATE) })
@@ -315,7 +332,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
       const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
       if (cached.length > 0) {
         setProfiles(cached)
-        setScreen(S.SELECT)
+        goToSelect()
       } else {
         setScreen(S.CHECKING)
       }
@@ -334,7 +351,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
           if (list.length > 0) {
             localStorage.setItem(cacheKey, JSON.stringify(list))
             setProfiles(list)
-            setScreen(S.SELECT)
+            goToSelect()
           } else if (cached.length === 0) {
             setScreen(S.CREATE)
           }
@@ -474,7 +491,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
           return deduped
         })
       }
-      setScreen(S.SELECT)
+      goToSelect()
     }, 1200)
   }
 
@@ -500,6 +517,52 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
           <Spinner size={30} />
           <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>Checking your demo workspace…</span>
         </div>
+      )}
+
+      {/* ── NAME ── */}
+      {screen === S.NAME && (
+        <>
+          <div style={{ marginBottom: 4 }}>
+            <p style={{ fontSize: 15, fontWeight: 600, color: '#fff', margin: '0 0 4px' }}>
+              What should we call you?
+            </p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', margin: 0 }}>
+              We'll use this to personalize your experience.
+            </p>
+          </div>
+
+          <input
+            autoFocus
+            type="text"
+            placeholder="Your first name"
+            value={firstName}
+            onChange={e => setFirstName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleNameSubmit() }}
+            style={inputStyle}
+            onFocus={e => e.target.style.borderColor = 'rgba(255,112,86,0.55)'}
+            onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.12)'}
+          />
+
+          <button
+            onClick={handleNameSubmit}
+            disabled={!firstName.trim()}
+            style={{
+              width: '100%',
+              padding: '12px 20px',
+              background: firstName.trim() ? '#FF7056' : 'rgba(255,255,255,0.07)',
+              border: 'none',
+              borderRadius: 10,
+              color: firstName.trim() ? '#fff' : 'rgba(255,255,255,0.22)',
+              fontSize: 14, fontWeight: 600,
+              fontFamily: "'Byrd', sans-serif",
+              cursor: firstName.trim() ? 'pointer' : 'not-allowed',
+              transition: 'background 200ms ease, color 200ms ease',
+              letterSpacing: '0.01em',
+            }}
+          >
+            Continue →
+          </button>
+        </>
       )}
 
       {/* ── SELECT ── */}
