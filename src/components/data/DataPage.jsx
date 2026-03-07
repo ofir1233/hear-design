@@ -13,7 +13,7 @@ const lightTheme = themeQuartz.withPart(colorSchemeLight).withParams({
   ...THEME_PARAMS,
   backgroundColor:            '#FFFFFF',
   foregroundColor:            '#181818',
-  headerBackgroundColor:      '#EFEFED',
+  headerBackgroundColor:      '#FFFFFF',
   headerTextColor:            '#606060',
   borderColor:                '#E5E7EB',
   rowHoverColor:              '#E8E8E6',
