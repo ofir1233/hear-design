@@ -117,7 +117,7 @@ function ChevronDown({ open }) {
 
 // ── Custom styled preset dropdown ─────────────────────────────────────────────
 
-function PresetSelect({ options, value, onChange }) {
+function PresetSelect({ options, value, onChange, fullWidth }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -131,7 +131,7 @@ function PresetSelect({ options, value, onChange }) {
   const selected = options.find(o => o.value === value)
 
   return (
-    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0, width: fullWidth ? '100%' : undefined }}>
       <button
         onClick={() => setOpen(o => !o)}
         style={{
@@ -140,9 +140,12 @@ function PresetSelect({ options, value, onChange }) {
           background: open ? 'var(--bg-active)' : 'var(--bg-canvas)',
           border: `1px solid ${open ? 'var(--border-default)' : 'var(--border-input)'}`,
           borderRadius: 6,
-          fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
+          fontSize: 'var(--type-p14)', color: open ? 'var(--text-primary)' : selected?.value ? 'var(--text-primary)' : 'var(--text-muted)',
           fontFamily: "'Byrd', sans-serif",
-          cursor: 'pointer', whiteSpace: 'nowrap', minWidth: 100,
+          cursor: 'pointer', whiteSpace: 'nowrap',
+          width: fullWidth ? '100%' : undefined,
+          minWidth: fullWidth ? undefined : 100,
+          boxSizing: 'border-box',
           transition: 'background 150ms ease, border-color 150ms ease',
         }}
       >
@@ -438,23 +441,19 @@ function FilterPopover({ anchor, chip, onChange, onDone, onClose }) {
       display: 'flex', flexDirection: 'column', gap: 8,
       width: 250,
     }}>
-      <select
+      <PresetSelect
+        fullWidth
+        options={[{ value: '', label: 'Field…' }, ...FILTER_FIELDS.map(f => ({ value: f.value, label: f.label }))]}
         value={chip.field}
-        onChange={e => onChange({ ...chip, field: e.target.value })}
-        style={SEL}
-        autoFocus
-      >
-        <option value="">Field…</option>
-        {FILTER_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-      </select>
+        onChange={v => onChange({ ...chip, field: v })}
+      />
 
-      <select
+      <PresetSelect
+        fullWidth
+        options={OPERATORS.map(op => ({ value: op.value, label: op.label }))}
         value={chip.operator}
-        onChange={e => onChange({ ...chip, operator: e.target.value })}
-        style={SEL}
-      >
-        {OPERATORS.map(op => <option key={op.value} value={op.value}>{op.label}</option>)}
-      </select>
+        onChange={v => onChange({ ...chip, operator: v })}
+      />
 
       <input
         value={chip.value}
