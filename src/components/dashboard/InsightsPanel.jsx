@@ -5,6 +5,7 @@
  * so the numbers feel real and are consistent across page reloads.
  * All colours use design-system tokens so it works in light + dark mode.
  */
+import { useState } from 'react'
 
 // ── Deterministic seed helpers ────────────────────────────────────────────────
 
@@ -190,19 +191,27 @@ function LiveDot() {
 // Single accent — coral at descending opacity gives hierarchy without rainbow noise
 const TOPIC_ALPHAS = [1, 0.6, 0.38, 0.22]
 
-function Widget({ children, wide = false, delay = 0 }) {
+function Widget({ children, wide = false, delay = 0, color = '#FF7056' }) {
+  const [hovered, setHovered] = useState(false)
   return (
-    <div style={{
-      background:   'var(--bg-card)',
-      border:       '1px solid var(--border-default)',
-      borderRadius: 14,
-      padding:      '16px 18px',
-      display:      'flex',
-      flexDirection:'column',
-      gap:          12,
-      gridColumn:   wide ? 'span 2' : undefined,
-      animation:    `widgetIn 0.48s cubic-bezier(0.34,1.56,0.64,1) ${delay}s both`,
-    }}>
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background:    hovered ? `${color}0d` : 'var(--bg-card)',
+        border:        '1px solid var(--border-default)',
+        borderRadius:  14,
+        padding:       '16px 18px',
+        display:       'flex',
+        flexDirection: 'column',
+        gap:           12,
+        gridColumn:    wide ? 'span 2' : undefined,
+        animation:     `widgetIn 0.48s cubic-bezier(0.34,1.56,0.64,1) ${delay}s both`,
+        boxShadow:     hovered ? `inset 3px 0 0 ${color}` : 'none',
+        transition:    'box-shadow 200ms ease, background 200ms ease',
+        cursor:        'default',
+      }}
+    >
       {children}
     </div>
   )
@@ -306,7 +315,7 @@ export default function InsightsPanel({ config }) {
       }}>
 
         {/* ── 1 · Call Volume ──────────────────────────────────────── */}
-        <Widget delay={0}>
+        <Widget delay={0} color="#FF7056">
           <WLabel icon={<PhoneIcon />} right={<LiveDot />}>Call Volume · 24h</WLabel>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
             <div>
@@ -323,7 +332,7 @@ export default function InsightsPanel({ config }) {
         </Widget>
 
         {/* ── 2 · CSAT ─────────────────────────────────────────────── */}
-        <Widget delay={0.06}>
+        <Widget delay={0.06} color="#4BA373">
           <WLabel icon={<SmileyIcon />}>CSAT Score · 7-day avg</WLabel>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
             <div>
@@ -343,7 +352,7 @@ export default function InsightsPanel({ config }) {
         </Widget>
 
         {/* ── 3 · Trending Topics ──────────────────────────────────── */}
-        <Widget wide delay={0.12}>
+        <Widget wide delay={0.12} color="#1779F7">
           <WLabel icon={<TrendingIcon />}>Trending Topics · Last 24 hours</WLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {d.topTopics.map((t, i) => (
@@ -377,7 +386,7 @@ export default function InsightsPanel({ config }) {
         </Widget>
 
         {/* ── 4 · Top Agent ────────────────────────────────────────── */}
-        <Widget delay={0.18}>
+        <Widget delay={0.18} color="#D799E2">
           <WLabel icon={<StarIcon />}>Top Performer · This week</WLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
@@ -408,7 +417,7 @@ export default function InsightsPanel({ config }) {
         </Widget>
 
         {/* ── 5 · Escalations ──────────────────────────────────────── */}
-        <Widget delay={0.22}>
+        <Widget delay={0.22} color="#455F61">
           <WLabel icon={<WarnIcon />}>Open Escalations</WLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{
@@ -436,7 +445,7 @@ export default function InsightsPanel({ config }) {
         </Widget>
 
         {/* ── 6 · Churn Risk ───────────────────────────────────────── */}
-        <Widget wide delay={0.27}>
+        <Widget wide delay={0.27} color="#6E95A0">
           <WLabel icon={<ChurnIcon />}>Churn Risk · Flagged this week</WLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <div style={{ flexShrink: 0 }}>
