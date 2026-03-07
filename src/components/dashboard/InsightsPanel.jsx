@@ -399,9 +399,8 @@ export default function InsightsPanel({ config }) {
               <div style={{ fontSize: 30, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em' }}>
                 {d.callVol.toLocaleString()}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 6 }}>
-                {d.callYest.toLocaleString()} yesterday &nbsp;
-                <Trend val={d.callDelta} />
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 5 }}>
+                {d.callYest.toLocaleString()} yesterday
               </div>
             </div>
             <Sparkline data={d.sparkline} w={100} h={40} gid="spk-vol" />
@@ -417,9 +416,8 @@ export default function InsightsPanel({ config }) {
                 {d.csat}
                 <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', marginLeft: 3 }}>/100</span>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 6 }}>
-                vs last week &nbsp;
-                <Trend val={d.csatDelta} />
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 5 }}>
+                vs last week
               </div>
             </div>
             <div style={{ minWidth: 90 }}>
@@ -514,9 +512,8 @@ export default function InsightsPanel({ config }) {
                 {d.churnCount}
                 <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', marginLeft: 6 }}>customers</span>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 5, display: 'flex', alignItems: 'center', gap: 6 }}>
-                {d.churnPct}% of active base &nbsp;
-                <Trend val={d.churnDelta} invert />
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 5 }}>
+                {d.churnPct}% of active base
               </div>
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
