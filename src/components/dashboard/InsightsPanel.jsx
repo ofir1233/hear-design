@@ -7,7 +7,8 @@
  */
 import { useState, createContext, useContext } from 'react'
 
-const WidgetCtx = createContext({ hovered: false, color: '#FF7056' })
+const HOVER_COLOR = '#FF7056'
+const WidgetCtx = createContext({ hovered: false, color: HOVER_COLOR })
 
 // ── Deterministic seed helpers ────────────────────────────────────────────────
 
@@ -266,10 +267,10 @@ function hexToRgb(hex) {
   return `${r},${g},${b}`
 }
 
-function Widget({ children, wide = false, delay = 0, color = '#FF7056' }) {
+function Widget({ children, wide = false, delay = 0 }) {
   const [hovered, setHovered] = useState(false)
   return (
-    <WidgetCtx.Provider value={{ hovered, color }}>
+    <WidgetCtx.Provider value={{ hovered, color: HOVER_COLOR }}>
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -392,7 +393,7 @@ export default function InsightsPanel({ config }) {
       }}>
 
         {/* ── 1 · Call Volume ──────────────────────────────────────── */}
-        <Widget delay={0} color="#FF7056">
+        <Widget delay={0}>
           <WLabel icon={<PhoneIcon />} right={<LiveDot />}>Call Volume · 24h</WLabel>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
             <div>
@@ -408,7 +409,7 @@ export default function InsightsPanel({ config }) {
         </Widget>
 
         {/* ── 2 · CSAT ─────────────────────────────────────────────── */}
-        <Widget delay={0.06} color="#4BA373">
+        <Widget delay={0.06}>
           <WLabel icon={<SmileyIcon />}>CSAT Score · 7-day avg</WLabel>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 8 }}>
             <div>
@@ -427,7 +428,7 @@ export default function InsightsPanel({ config }) {
         </Widget>
 
         {/* ── 3 · Trending Topics ──────────────────────────────────── */}
-        <Widget wide delay={0.12} color="#1779F7">
+        <Widget wide delay={0.12}>
           <WLabel icon={<TrendingIcon />}>Trending Topics · Last 24 hours</WLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {d.topTopics.map((t, i) => (
@@ -452,63 +453,69 @@ export default function InsightsPanel({ config }) {
         </Widget>
 
         {/* ── 4 · Top Agent ────────────────────────────────────────── */}
-        <Widget delay={0.18} color="#D799E2">
+        <Widget delay={0.18}>
           <WLabel icon={<StarIcon />}>Top Performer · This week</WLabel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
             <AgentAvatar initials={d.agentInit} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {d.topAgent}
-              </div>
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-                {d.agentCalls} calls · {d.agentTime} avg handle
-              </div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {d.topAgent}
             </div>
-            <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em' }}>
-                {d.agentCsat}
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[
+              { label: 'CSAT',       value: d.agentCsat },
+              { label: 'Calls',      value: d.agentCalls },
+              { label: 'Avg Handle', value: d.agentTime },
+            ].map(({ label, value }) => (
+              <div key={label} style={{
+                flex: 1, background: 'var(--bg-active)', borderRadius: 8,
+                padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 3,
+              }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{value}</span>
+                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
               </div>
-              <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 2 }}>
-                CSAT
-              </div>
-            </div>
+            ))}
           </div>
         </Widget>
 
         {/* ── 5 · Escalations ──────────────────────────────────────── */}
-        <Widget delay={0.22} color="#455F61">
+        <Widget delay={0.22}>
           <WLabel icon={<WarnIcon />}>Open Escalations</WLabel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{
-              fontSize: 36, fontWeight: 800, lineHeight: 1,
-              letterSpacing: '-0.03em',
-              color: 'var(--text-primary)',
-              flexShrink: 0,
-            }}>
-              {d.escalations}
-            </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-              {[
-                { label: 'Critical', count: d.critical },
-                { label: 'Medium',   count: d.medium   },
-                { label: 'Low',      count: d.low      },
-              ].map(({ label, count }) => (
-                <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0, opacity: 0.6 }} />
-                  <span style={{ fontSize: 11, color: 'var(--text-muted)', flex: 1 }}>{label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{count}</span>
-                </div>
-              ))}
-            </div>
+          <div style={{ fontSize: 36, fontWeight: 800, lineHeight: 1, letterSpacing: '-0.03em', color: 'var(--text-primary)', marginBottom: 4 }}>
+            {d.escalations}
+          </div>
+          <div style={{ display: 'flex', gap: 4, borderRadius: 6, overflow: 'hidden', height: 6 }}>
+            {[d.critical, d.medium, d.low].map((n, i) => (
+              <div key={i} style={{
+                flex: n, background: ['var(--text-secondary)', 'var(--text-muted)', 'var(--border-default)'][i],
+                opacity: [0.9, 0.55, 0.3][i],
+                transition: 'background 250ms ease',
+              }} />
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 4, marginTop: 6 }}>
+            {[
+              { label: 'Critical', count: d.critical },
+              { label: 'Medium',   count: d.medium   },
+              { label: 'Low',      count: d.low      },
+            ].map(({ label, count }) => (
+              <div key={label} style={{
+                flex: 1, background: 'var(--bg-active)', borderRadius: 8,
+                padding: '7px 10px', display: 'flex', flexDirection: 'column', gap: 2,
+              }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1 }}>{count}</span>
+                <span style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
+              </div>
+            ))}
           </div>
         </Widget>
 
         {/* ── 6 · Churn Risk ───────────────────────────────────────── */}
-        <Widget wide delay={0.27} color="#6E95A0">
+        <Widget wide delay={0.27}>
           <WLabel icon={<ChurnIcon />}>Churn Risk · Flagged this week</WLabel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
             <div style={{ flexShrink: 0 }}>
-              <div style={{ fontSize: 30, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em' }}>
                 {d.churnCount}
                 <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-muted)', marginLeft: 6 }}>customers</span>
               </div>
@@ -516,13 +523,8 @@ export default function InsightsPanel({ config }) {
                 {d.churnPct}% of active base
               </div>
             </div>
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+            <div style={{ flex: 1 }}>
               <ChurnBar pct={churnBarW} />
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>0%</span>
-                <ChurnPctLabel>{d.churnPct}%</ChurnPctLabel>
-                <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>25%</span>
-              </div>
             </div>
           </div>
         </Widget>
