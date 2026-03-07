@@ -106,6 +106,101 @@ function SearchIcon() {
   )
 }
 
+function ChevronDown({ open }) {
+  return (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none"
+      style={{ flexShrink: 0, transition: 'transform 160ms ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+      <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+// ── Custom styled preset dropdown ─────────────────────────────────────────────
+
+function PresetSelect({ options, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [open])
+
+  const selected = options.find(o => o.value === value)
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          height: 30, padding: '0 10px',
+          background: open ? 'var(--bg-active)' : 'var(--bg-canvas)',
+          border: `1px solid ${open ? 'var(--border-default)' : 'var(--border-input)'}`,
+          borderRadius: 6,
+          fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
+          fontFamily: "'Byrd', sans-serif",
+          cursor: 'pointer', whiteSpace: 'nowrap', minWidth: 100,
+          transition: 'background 150ms ease, border-color 150ms ease',
+        }}
+      >
+        <span style={{ flex: 1, textAlign: 'left' }}>{selected?.label ?? 'None'}</span>
+        <ChevronDown open={open} />
+      </button>
+
+      <div style={{
+        position: 'absolute',
+        top: 'calc(100% + 4px)',
+        left: 0,
+        zIndex: 600,
+        background: 'var(--bg-elevated)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 8,
+        boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+        minWidth: '100%',
+        overflow: 'hidden',
+        pointerEvents: open ? 'auto' : 'none',
+        opacity: open ? 1 : 0,
+        transform: open ? 'translateY(0)' : 'translateY(-6px)',
+        transition: 'opacity 130ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }}>
+        {options.map(opt => {
+          const isActive = opt.value === value
+          return (
+            <div
+              key={opt.value}
+              onClick={() => { onChange(opt.value); setOpen(false) }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                padding: '8px 12px',
+                fontSize: 'var(--type-p14)',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                fontWeight: isActive ? 600 : 400,
+                fontFamily: "'Byrd', sans-serif",
+                cursor: 'pointer',
+                background: isActive ? 'var(--bg-active)' : 'transparent',
+                transition: 'background 120ms ease',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-active)' }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+            >
+              {opt.label}
+              {isActive && (
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M2 6l3 3 5-5" stroke="var(--color-brand)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function WarningIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 29 28" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -550,22 +645,11 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
             fontSize: 'var(--type-p14)', fontWeight: 500, color: 'var(--text-secondary)',
             fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
           }}>Preset:</span>
-          <select
+          <PresetSelect
+            options={[{ value: '', label: 'None' }, ...allPresets.map(p => ({ value: p.id, label: p.label }))]}
             value={selectedPreset}
-            onChange={e => loadPreset(e.target.value)}
-            style={{
-              height: 30, padding: '0 8px',
-              background: 'var(--bg-canvas)',
-              border: '1px solid var(--border-input)',
-              borderRadius: 6, fontSize: 'var(--type-p14)',
-              color: 'var(--text-primary)',
-              fontFamily: "'Byrd', sans-serif",
-              outline: 'none', cursor: 'pointer', maxWidth: 160,
-            }}
-          >
-            <option value="">None</option>
-            {allPresets.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
-          </select>
+            onChange={loadPreset}
+          />
         </div>
 
         {/* Divider */}
