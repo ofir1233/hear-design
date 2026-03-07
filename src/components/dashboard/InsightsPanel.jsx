@@ -169,8 +169,8 @@ function Trend({ val, unit = '%', invert = false }) {
   const isGood = invert ? !isPos : isPos
   return (
     <span style={{
-      fontSize: 11, fontWeight: 700,
-      color: isGood ? '#4BA373' : '#EF4444',
+      fontSize: 10, fontWeight: 600,
+      color: isGood ? 'rgba(75,163,115,0.9)' : 'rgba(239,68,68,0.85)',
       display: 'inline-flex', alignItems: 'center', gap: 1,
     }}>
       {isPos ? '↑' : '↓'} {Math.abs(val)}{unit}
@@ -187,7 +187,8 @@ function LiveDot() {
   )
 }
 
-const TOPIC_COLORS = ['#FF7056', '#1779F7', '#4BA373', '#D799E2']
+// Single accent — coral at descending opacity gives hierarchy without rainbow noise
+const TOPIC_ALPHAS = [1, 0.6, 0.38, 0.22]
 
 function Widget({ children, wide = false, delay = 0 }) {
   return (
@@ -272,10 +273,7 @@ const ChurnIcon = () => (
 export default function InsightsPanel({ config }) {
   const d = buildInsights(config)
 
-  // Churn bar width capped at 100%, severity-coded colour
-  const churnBarW   = Math.min(Math.round(d.churnPct * 6), 100)
-  const churnColor  = d.churnPct > 10 ? '#EF4444' : d.churnPct > 6 ? '#F59E0B' : '#4BA373'
-  const escColor    = d.critical > 8 ? '#EF4444' : d.critical > 3 ? '#F59E0B' : 'var(--text-primary)'
+  const churnBarW = Math.min(Math.round(d.churnPct * 6), 100)
 
   return (
     <>
@@ -350,27 +348,24 @@ export default function InsightsPanel({ config }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {d.topTopics.map((t, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{
-                  width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                  background: TOPIC_COLORS[i],
-                }} />
                 <span style={{
-                  fontSize: 12, color: 'var(--text-secondary)',
+                  fontSize: 12, color: i === 0 ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  fontWeight: i === 0 ? 600 : 400,
                   minWidth: 130, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                 }}>
                   {t.label}
                 </span>
                 <div style={{
-                  flex: 1, height: 5, background: 'var(--border-default)',
+                  flex: 1, height: 4, background: 'var(--border-default)',
                   borderRadius: 99, overflow: 'hidden',
                 }}>
                   <div style={{
                     height: '100%', width: `${t.pct}%`, borderRadius: 99,
-                    background: TOPIC_COLORS[i],
+                    background: `rgba(255,112,86,${TOPIC_ALPHAS[i]})`,
                     animation: `topicBar 0.8s cubic-bezier(0.34,1.56,0.64,1) ${0.18 + i * 0.09}s both`,
                   }} />
                 </div>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', minWidth: 30, textAlign: 'right' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', minWidth: 30, textAlign: 'right' }}>
                   {t.pct}%
                 </span>
                 <span style={{ fontSize: 10, color: 'var(--text-muted)', minWidth: 38, textAlign: 'right' }}>
@@ -387,10 +382,9 @@ export default function InsightsPanel({ config }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
               width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-              background: 'linear-gradient(135deg, #FF7056 0%, #FF9A8B 100%)',
+              background: '#FF7056',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 14, fontWeight: 800, color: '#fff',
-              boxShadow: '0 4px 12px rgba(255,112,86,0.35)',
             }}>
               {d.agentInit}
             </div>
@@ -403,7 +397,7 @@ export default function InsightsPanel({ config }) {
               </div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontSize: 22, fontWeight: 800, color: '#4BA373', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, letterSpacing: '-0.02em' }}>
                 {d.agentCsat}
               </div>
               <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 2 }}>
@@ -420,21 +414,21 @@ export default function InsightsPanel({ config }) {
             <div style={{
               fontSize: 36, fontWeight: 800, lineHeight: 1,
               letterSpacing: '-0.03em',
-              color: escColor,
+              color: 'var(--text-primary)',
               flexShrink: 0,
             }}>
               {d.escalations}
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
               {[
-                { label: 'Critical', count: d.critical, color: '#EF4444' },
-                { label: 'Medium',   count: d.medium,   color: '#F59E0B' },
-                { label: 'Low',      count: d.low,      color: '#4BA373' },
-              ].map(({ label, count, color }) => (
+                { label: 'Critical', count: d.critical },
+                { label: 'Medium',   count: d.medium   },
+                { label: 'Low',      count: d.low      },
+              ].map(({ label, count }) => (
                 <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                  <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', flexShrink: 0, opacity: 0.6 }} />
                   <span style={{ fontSize: 11, color: 'var(--text-muted)', flex: 1 }}>{label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>{count}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>{count}</span>
                 </div>
               ))}
             </div>
@@ -459,13 +453,13 @@ export default function InsightsPanel({ config }) {
               <div style={{ height: 8, background: 'var(--border-default)', borderRadius: 99, overflow: 'hidden' }}>
                 <div style={{
                   height: '100%', width: `${churnBarW}%`, borderRadius: 99,
-                  background: churnColor,
+                  background: '#FF7056',
                   animation: 'topicBar 1s cubic-bezier(0.34,1.56,0.64,1) 0.35s both',
                 }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>0%</span>
-                <span style={{ fontSize: 9, fontWeight: 600, color: churnColor }}>{d.churnPct}%</span>
+                <span style={{ fontSize: 9, fontWeight: 600, color: '#FF7056' }}>{d.churnPct}%</span>
                 <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>25%</span>
               </div>
             </div>
