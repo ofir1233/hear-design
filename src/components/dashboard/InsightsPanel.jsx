@@ -5,7 +5,9 @@
  * so the numbers feel real and are consistent across page reloads.
  * All colours use design-system tokens so it works in light + dark mode.
  */
-import { useState } from 'react'
+import { useState, createContext, useContext } from 'react'
+
+const WidgetCtx = createContext({ hovered: false, color: '#FF7056' })
 
 // ── Deterministic seed helpers ────────────────────────────────────────────────
 
@@ -99,7 +101,9 @@ function buildInsights(config) {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function Sparkline({ data, color = '#FF7056', w = 110, h = 40, gid = 'spk' }) {
+function Sparkline({ data, w = 110, h = 40, gid = 'spk' }) {
+  const { hovered, color } = useContext(WidgetCtx)
+  const c    = hovered ? color : 'var(--text-muted)'
   const min  = Math.min(...data)
   const max  = Math.max(...data)
   const span = max - min || 1
@@ -115,24 +119,26 @@ function Sparkline({ data, color = '#FF7056', w = 110, h = 40, gid = 'spk' }) {
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ display: 'block', overflow: 'visible', flexShrink: 0 }}>
       <defs>
         <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%"   stopColor={color} stopOpacity="0.22" />
-          <stop offset="100%" stopColor={color} stopOpacity="0"    />
+          <stop offset="0%"   stopColor={c} stopOpacity={hovered ? 0.22 : 0.1} />
+          <stop offset="100%" stopColor={c} stopOpacity="0" />
         </linearGradient>
       </defs>
       <polygon points={area} fill={`url(#${gid})`} />
       <polyline
         points={poly} fill="none"
-        stroke={color} strokeWidth="1.8"
+        stroke={c} strokeWidth="1.8"
         strokeLinecap="round" strokeLinejoin="round"
+        style={{ transition: 'stroke 250ms ease' }}
       />
-      <circle cx={last[0]} cy={last[1]} r="3" fill={color} />
-      <circle cx={last[0]} cy={last[1]} r="3" fill={color} opacity="0.35"
-        style={{ animation: 'dotPulse 2s ease infinite' }} />
+      <circle cx={last[0]} cy={last[1]} r="3" fill={c} style={{ transition: 'fill 250ms ease' }} />
+      <circle cx={last[0]} cy={last[1]} r="3" fill={c} opacity={hovered ? 0.35 : 0}
+        style={{ animation: hovered ? 'dotPulse 2s ease infinite' : 'none', transition: 'fill 250ms ease' }} />
     </svg>
   )
 }
 
-function WeekBars({ data, color = '#4BA373', minV = 80, maxV = 100 }) {
+function WeekBars({ data, minV = 80, maxV = 100 }) {
+  const { hovered, color } = useContext(WidgetCtx)
   const days   = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
   const todayI = (new Date().getDay() + 6) % 7
   return (
@@ -140,21 +146,26 @@ function WeekBars({ data, color = '#4BA373', minV = 80, maxV = 100 }) {
       {data.map((v, i) => {
         const pct     = Math.max(10, ((v - minV) / (maxV - minV)) * 100)
         const isToday = i === todayI
+        const barColor = hovered
+          ? (isToday ? color : `${color}55`)
+          : 'var(--border-default)'
         return (
           <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, flex: 1 }}>
             <div style={{ width: '100%', height: 28, display: 'flex', alignItems: 'flex-end' }}>
               <div style={{
                 width: '100%',
-                height:     `${pct}%`,
+                height:       `${pct}%`,
                 borderRadius: '3px 3px 2px 2px',
-                background:   isToday ? color : 'var(--border-default)',
-                transition:   `height 0.65s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.055}s`,
+                background:   barColor,
+                transition:   `height 0.65s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.055}s, background 250ms ease`,
                 animation:    `barRise 0.65s cubic-bezier(0.34,1.56,0.64,1) ${i * 0.055}s both`,
               }} />
             </div>
             <span style={{
-              fontSize: 8, fontWeight: isToday ? 700 : 400,
-              color: isToday ? color : 'var(--text-muted)',
+              fontSize: 8,
+              fontWeight: isToday ? 700 : 400,
+              color: hovered && isToday ? color : 'var(--text-muted)',
+              transition: 'color 250ms ease',
             }}>
               {days[i]}
             </span>
@@ -191,29 +202,95 @@ function LiveDot() {
 // Single accent — coral at descending opacity gives hierarchy without rainbow noise
 const TOPIC_ALPHAS = [1, 0.6, 0.38, 0.22]
 
+function TopicBar({ pct, alpha, delay }) {
+  const { hovered, color } = useContext(WidgetCtx)
+  return (
+    <div style={{ flex: 1, height: 4, background: 'var(--border-default)', borderRadius: 99, overflow: 'hidden' }}>
+      <div style={{
+        height: '100%', width: `${pct}%`, borderRadius: 99,
+        background: hovered ? `rgba(${hexToRgb(color)},${alpha})` : 'var(--text-muted)',
+        opacity: hovered ? 1 : 0.3,
+        animation: `topicBar 0.8s cubic-bezier(0.34,1.56,0.64,1) ${delay}s both`,
+        transition: 'background 250ms ease, opacity 250ms ease',
+      }} />
+    </div>
+  )
+}
+
+function ChurnBar({ pct }) {
+  const { hovered, color } = useContext(WidgetCtx)
+  return (
+    <div style={{ height: 8, background: 'var(--border-default)', borderRadius: 99, overflow: 'hidden' }}>
+      <div style={{
+        height: '100%', width: `${pct}%`, borderRadius: 99,
+        background: hovered ? color : 'var(--text-muted)',
+        opacity: hovered ? 1 : 0.35,
+        animation: 'topicBar 1s cubic-bezier(0.34,1.56,0.64,1) 0.35s both',
+        transition: 'background 250ms ease, opacity 250ms ease',
+      }} />
+    </div>
+  )
+}
+
+function AgentAvatar({ initials }) {
+  const { hovered, color } = useContext(WidgetCtx)
+  return (
+    <div style={{
+      width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+      background: hovered ? color : 'var(--border-default)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: 14, fontWeight: 800,
+      color: hovered ? '#fff' : 'var(--text-muted)',
+      transition: 'background 250ms ease, color 250ms ease',
+    }}>
+      {initials}
+    </div>
+  )
+}
+
+function ChurnPctLabel({ children }) {
+  const { hovered, color } = useContext(WidgetCtx)
+  return (
+    <span style={{ fontSize: 9, fontWeight: 600, color: hovered ? color : 'var(--text-muted)', transition: 'color 250ms ease' }}>
+      {children}
+    </span>
+  )
+}
+
+// Convert hex color to "r,g,b" string for rgba()
+function hexToRgb(hex) {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return `${r},${g},${b}`
+}
+
 function Widget({ children, wide = false, delay = 0, color = '#FF7056' }) {
   const [hovered, setHovered] = useState(false)
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background:    hovered ? `${color}0d` : 'var(--bg-card)',
-        border:        '1px solid var(--border-default)',
-        borderRadius:  14,
-        padding:       '16px 18px',
-        display:       'flex',
-        flexDirection: 'column',
-        gap:           12,
-        gridColumn:    wide ? 'span 2' : undefined,
-        animation:     `widgetIn 0.48s cubic-bezier(0.34,1.56,0.64,1) ${delay}s both`,
-        boxShadow:     hovered ? `inset 3px 0 0 ${color}` : 'none',
-        transition:    'box-shadow 200ms ease, background 200ms ease',
-        cursor:        'default',
-      }}
-    >
-      {children}
-    </div>
+    <WidgetCtx.Provider value={{ hovered, color }}>
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          background:    hovered ? `${color}0d` : 'var(--bg-card)',
+          border:        '1px solid var(--border-default)',
+          borderRadius:  14,
+          padding:       '16px 18px',
+          display:       'flex',
+          flexDirection: 'column',
+          gap:           12,
+          gridColumn:    wide ? 'span 2' : undefined,
+          animation:     `widgetIn 0.48s cubic-bezier(0.34,1.56,0.64,1) ${delay}s both`,
+          boxShadow:     hovered ? `inset 3px 0 0 ${color}` : 'none',
+          transition:    'box-shadow 200ms ease, background 200ms ease',
+          cursor:        'default',
+        }}
+      >
+        {children}
+      </div>
+    </WidgetCtx.Provider>
   )
 }
 
@@ -327,7 +404,7 @@ export default function InsightsPanel({ config }) {
                 <Trend val={d.callDelta} />
               </div>
             </div>
-            <Sparkline data={d.sparkline} color="#FF7056" w={100} h={40} gid="spk-vol" />
+            <Sparkline data={d.sparkline} w={100} h={40} gid="spk-vol" />
           </div>
         </Widget>
 
@@ -346,7 +423,7 @@ export default function InsightsPanel({ config }) {
               </div>
             </div>
             <div style={{ minWidth: 90 }}>
-              <WeekBars data={d.csatWeek} color="#4BA373" minV={80} maxV={100} />
+              <WeekBars data={d.csatWeek} minV={80} maxV={100} />
             </div>
           </div>
         </Widget>
@@ -364,16 +441,7 @@ export default function InsightsPanel({ config }) {
                 }}>
                   {t.label}
                 </span>
-                <div style={{
-                  flex: 1, height: 4, background: 'var(--border-default)',
-                  borderRadius: 99, overflow: 'hidden',
-                }}>
-                  <div style={{
-                    height: '100%', width: `${t.pct}%`, borderRadius: 99,
-                    background: `rgba(255,112,86,${TOPIC_ALPHAS[i]})`,
-                    animation: `topicBar 0.8s cubic-bezier(0.34,1.56,0.64,1) ${0.18 + i * 0.09}s both`,
-                  }} />
-                </div>
+                <TopicBar pct={t.pct} alpha={TOPIC_ALPHAS[i]} delay={0.18 + i * 0.09} />
                 <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', minWidth: 30, textAlign: 'right' }}>
                   {t.pct}%
                 </span>
@@ -389,14 +457,7 @@ export default function InsightsPanel({ config }) {
         <Widget delay={0.18} color="#D799E2">
           <WLabel icon={<StarIcon />}>Top Performer · This week</WLabel>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-              background: '#FF7056',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, fontWeight: 800, color: '#fff',
-            }}>
-              {d.agentInit}
-            </div>
+            <AgentAvatar initials={d.agentInit} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {d.topAgent}
@@ -459,16 +520,10 @@ export default function InsightsPanel({ config }) {
               </div>
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <div style={{ height: 8, background: 'var(--border-default)', borderRadius: 99, overflow: 'hidden' }}>
-                <div style={{
-                  height: '100%', width: `${churnBarW}%`, borderRadius: 99,
-                  background: '#FF7056',
-                  animation: 'topicBar 1s cubic-bezier(0.34,1.56,0.64,1) 0.35s both',
-                }} />
-              </div>
+              <ChurnBar pct={churnBarW} />
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>0%</span>
-                <span style={{ fontSize: 9, fontWeight: 600, color: '#FF7056' }}>{d.churnPct}%</span>
+                <ChurnPctLabel>{d.churnPct}%</ChurnPctLabel>
                 <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>25%</span>
               </div>
             </div>
