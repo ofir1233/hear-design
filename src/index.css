@@ -204,6 +204,37 @@
   --color-brand:       var(--c100);
   --color-interactive: var(--b100);
 
+  /* ── Tinted badge tokens — light mode ───────────────────────────────────
+     Very low-opacity bg so the table doesn't turn into a rainbow.
+     Text uses darkened versions of each hue for contrast + sophistication. */
+  --badge-cobalt-bg:    rgba(23,  121, 247, 0.07);
+  --badge-cobalt-bd:    rgba(23,  121, 247, 0.18);
+  --badge-cobalt-text:  #0d5dd6;
+
+  --badge-green-bg:     rgba(75,  163, 115, 0.07);
+  --badge-green-bd:     rgba(75,  163, 115, 0.18);
+  --badge-green-text:   #2d6b4a;
+
+  --badge-coral-bg:     rgba(255, 112,  86, 0.07);
+  --badge-coral-bd:     rgba(255, 112,  86, 0.18);
+  --badge-coral-text:   #c43d28;
+
+  --badge-lilac-bg:     rgba(215, 153, 226, 0.07);
+  --badge-lilac-bd:     rgba(215, 153, 226, 0.18);
+  --badge-lilac-text:   #8b44a8;
+
+  --badge-teal-bg:      rgba(69,  95,  97, 0.07);
+  --badge-teal-bd:      rgba(69,  95,  97, 0.18);
+  --badge-teal-text:    #2a4445;
+
+  --badge-horizon-bg:   rgba(110, 149, 160, 0.07);
+  --badge-horizon-bd:   rgba(110, 149, 160, 0.18);
+  --badge-horizon-text: #3d677a;
+
+  --badge-sage-bg:      rgba(176, 148, 149, 0.07);
+  --badge-sage-bd:      rgba(176, 148, 149, 0.18);
+  --badge-sage-text:    #6e5a5b;
+
   /* ── Typography Scale ── */
   /* Titles */
   --type-h1: 140px; --type-h1-lh: 160px;
@@ -252,9 +283,7 @@
   --color-interactive: var(--b80);
 
   /* ── Tinted badge fills — dark-mode overrides ────────────────────────────
-     Light-mode uses pastel scales (--b20/#D1E4FD etc.) which are unreadable
-     on dark surfaces. Replace with semi-transparent rgba tints so the 100-
-     weight text stays crisp against any dark background.                   */
+     Dark surfaces: vivid tinted bg + full-chroma text looks intentional.  */
   --b20: rgba(23,  121, 247, 0.14);   --b30: rgba(23,  121, 247, 0.30);
   --g20: rgba(75,  163, 115, 0.14);   --g30: rgba(75,  163, 115, 0.30);
   --c20: rgba(255, 112,  86, 0.14);   --c30: rgba(255, 112,  86, 0.30);
@@ -262,6 +291,35 @@
   --t20: rgba(110, 149, 160, 0.14);   --t30: rgba(110, 149, 160, 0.30);
   --h20: rgba(110, 149, 160, 0.14);   --h30: rgba(110, 149, 160, 0.30);
   --s20: rgba(176, 148, 149, 0.14);   --s30: rgba(176, 148, 149, 0.30);
+
+  /* Badge tokens — dark: vivid fills, full-chroma text */
+  --badge-cobalt-bg:    rgba(23,  121, 247, 0.14);
+  --badge-cobalt-bd:    rgba(23,  121, 247, 0.30);
+  --badge-cobalt-text:  var(--b100);
+
+  --badge-green-bg:     rgba(75,  163, 115, 0.14);
+  --badge-green-bd:     rgba(75,  163, 115, 0.30);
+  --badge-green-text:   var(--g100);
+
+  --badge-coral-bg:     rgba(255, 112,  86, 0.14);
+  --badge-coral-bd:     rgba(255, 112,  86, 0.30);
+  --badge-coral-text:   var(--c100);
+
+  --badge-lilac-bg:     rgba(215, 153, 226, 0.14);
+  --badge-lilac-bd:     rgba(215, 153, 226, 0.30);
+  --badge-lilac-text:   var(--l100);
+
+  --badge-teal-bg:      rgba(110, 149, 160, 0.14);
+  --badge-teal-bd:      rgba(110, 149, 160, 0.30);
+  --badge-teal-text:    var(--t100);
+
+  --badge-horizon-bg:   rgba(110, 149, 160, 0.14);
+  --badge-horizon-bd:   rgba(110, 149, 160, 0.30);
+  --badge-horizon-text: var(--h100);
+
+  --badge-sage-bg:      rgba(176, 148, 149, 0.14);
+  --badge-sage-bd:      rgba(176, 148, 149, 0.30);
+  --badge-sage-text:    var(--s100);
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────────── */

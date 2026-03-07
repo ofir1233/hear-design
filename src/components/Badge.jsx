@@ -59,6 +59,9 @@ const COLOR_PREFIXES = {
   sage:    's',
 }
 
+// Maps color name → badge-specific tokens (theme-adaptive via CSS vars)
+const BADGE_NAMES = ['cobalt', 'green', 'coral', 'lilac', 'teal', 'horizon', 'sage']
+
 const SHAPES = {
   pill: 999,
   rect: 4,
@@ -77,11 +80,11 @@ export default function Badge({
   let V = VARIANTS[variant] ?? VARIANTS.outline
 
   if (variant === 'tinted') {
-    const p = COLOR_PREFIXES[color] ?? 'b'
+    const name = BADGE_NAMES.includes(color) ? color : 'cobalt'
     V = {
-      bg:               `var(--${p}20)`,
-      border:           `1px solid var(--${p}30)`,
-      color:            `var(--${p}100)`,
+      bg:               `var(--badge-${name}-bg)`,
+      border:           `1px solid var(--badge-${name}-bd)`,
+      color:            `var(--badge-${name}-text)`,
       fontSize:         11,
       fontWeight:       600,
       paddingH:         8,
