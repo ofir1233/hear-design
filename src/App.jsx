@@ -839,6 +839,9 @@ export default function App() {
       localStorage.setItem('hear-demo-config', JSON.stringify(config))
     }
     const pid = profile?.id ? String(profile.id) : null
+    // Keep localStorage in sync so apiHeaders() sends the correct x-demo-profile-id
+    if (pid) localStorage.setItem('hear-demo-profile-id', pid)
+    else localStorage.removeItem('hear-demo-profile-id')
     setProfileId(pid)
   }
 
