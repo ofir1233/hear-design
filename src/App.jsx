@@ -7,6 +7,7 @@ import ChatInput from './components/ChatInput.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import SignIn from './components/SignIn.jsx'
 import DataPage from './components/data/DataPage.jsx'
+import InsightsPanel from './components/dashboard/InsightsPanel.jsx'
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -113,6 +114,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
   const [hoveredMsg, setHoveredMsg] = useState(null)
   const [copiedIndex, setCopiedIndex] = useState(null)
   const [chatDefaultText, setChatDefaultText] = useState('')
+  const [dashTab, setDashTab] = useState('suggestions')
 
   // ── Session state ───────────────────────────────────────────────
   const [sessions, setSessions]           = useState([])
@@ -661,61 +663,95 @@ Ask me anything about your operations, or explore a topic below to get started.`
           width: '100%',
           maxWidth: '42rem',
           marginTop: '1.5rem',
-          position: 'relative',
           opacity: (mentionActive || uploadActive) ? 0 : 1,
           transition: 'opacity 200ms ease',
           pointerEvents: (mentionActive || uploadActive) ? 'none' : 'auto',
         }}>
-          {/* Top gradient veil — mirrors the bottom, appears only once scrolled */}
+          {/* ── Tab toggle ── */}
           <div style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0,
-            height: 72,
-            background: 'linear-gradient(to bottom, var(--bg-canvas) 0%, transparent 100%)',
-            pointerEvents: 'none',
-            zIndex: 3,
-            opacity: cardsScrolled ? 1 : 0,
-            transition: 'opacity 350ms ease',
-          }} />
-          <div ref={cardsRef} className="cards-scroll" data-scrolling={cardsScrolling} onScroll={e => {
-            setCardsScrolled(e.currentTarget.scrollTop > 0)
-            setCardsScrolling(true)
-            clearTimeout(cardsScrollTimeout.current)
-            cardsScrollTimeout.current = setTimeout(() => setCardsScrolling(false), 800)
-          }} style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))',
-            gap: 12,
-            maxHeight: 280,
-            overflowY: 'auto',
-            paddingBottom: 40,
+            display: 'inline-flex',
+            background: 'var(--bg-active)',
+            borderRadius: 10,
+            padding: 3,
+            gap: 2,
+            marginBottom: 14,
           }}>
-            {requests.map((req, i) => (
-              <div
-                key={i}
-                className="request-card"
-                style={{ borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer' }}
+            {[
+              { id: 'suggestions', label: 'AI Suggestions' },
+              { id: 'insights',    label: '✦ Insights'     },
+            ].map(({ id, label }) => (
+              <button
+                key={id}
+                onClick={() => setDashTab(id)}
+                style={{
+                  padding: '6px 18px',
+                  borderRadius: 7,
+                  border: 'none',
+                  background: dashTab === id ? 'var(--bg-card)' : 'transparent',
+                  color: dashTab === id ? 'var(--text-primary)' : 'var(--text-muted)',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  fontFamily: "'Byrd', sans-serif",
+                  cursor: 'pointer',
+                  transition: 'background 200ms ease, color 200ms ease, box-shadow 200ms ease',
+                  boxShadow: dashTab === id ? '0 1px 4px rgba(0,0,0,0.14)' : 'none',
+                  whiteSpace: 'nowrap',
+                }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className="card-title" style={{ fontSize: 13, fontWeight: 600 }}>Request {req.id}</span>
-                    <span className="card-tag" style={{ fontSize: 11, borderRadius: 999, border: '1px solid', padding: '2px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '12ch' }}>{req.tag}</span>
-                  </div>
-                  <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}><ExternalLinkIcon /></span>
-                </div>
-                <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{req.description}</p>
-              </div>
+                {label}
+              </button>
             ))}
           </div>
-          {/* Gradient veil — fixed to the container viewport, dissolves the half-row into the canvas */}
-          <div style={{
-            position: 'absolute',
-            bottom: 0, left: 0, right: 0,
-            height: 96,
-            background: 'linear-gradient(to bottom, transparent 0%, var(--bg-canvas) 100%)',
-            pointerEvents: 'none',
-            zIndex: 3,
-          }} />
+
+          {dashTab === 'suggestions' ? (
+            /* ── AI Suggestions cards ── */
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, height: 72,
+                background: 'linear-gradient(to bottom, var(--bg-canvas) 0%, transparent 100%)',
+                pointerEvents: 'none', zIndex: 3,
+                opacity: cardsScrolled ? 1 : 0, transition: 'opacity 350ms ease',
+              }} />
+              <div ref={cardsRef} className="cards-scroll" data-scrolling={cardsScrolling} onScroll={e => {
+                setCardsScrolled(e.currentTarget.scrollTop > 0)
+                setCardsScrolling(true)
+                clearTimeout(cardsScrollTimeout.current)
+                cardsScrollTimeout.current = setTimeout(() => setCardsScrolling(false), 800)
+              }} style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))',
+                gap: 12,
+                maxHeight: 280,
+                overflowY: 'auto',
+                paddingBottom: 40,
+              }}>
+                {requests.map((req, i) => (
+                  <div
+                    key={i}
+                    className="request-card"
+                    style={{ borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer' }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className="card-title" style={{ fontSize: 13, fontWeight: 600 }}>Request {req.id}</span>
+                        <span className="card-tag" style={{ fontSize: 11, borderRadius: 999, border: '1px solid', padding: '2px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '12ch' }}>{req.tag}</span>
+                      </div>
+                      <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}><ExternalLinkIcon /></span>
+                    </div>
+                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{req.description}</p>
+                  </div>
+                ))}
+              </div>
+              <div style={{
+                position: 'absolute', bottom: 0, left: 0, right: 0, height: 96,
+                background: 'linear-gradient(to bottom, transparent 0%, var(--bg-canvas) 100%)',
+                pointerEvents: 'none', zIndex: 3,
+              }} />
+            </div>
+          ) : (
+            /* ── Insights panel ── */
+            <InsightsPanel config={companyConfig} />
+          )}
         </div>
       )}
 
