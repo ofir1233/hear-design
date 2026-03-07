@@ -569,8 +569,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         </div>
       ) : (
       <div
-        className="min-h-screen flex flex-col items-center justify-center px-6"
-        style={{ paddingLeft, transition: sidebarTransition }}
+        className="min-h-screen flex flex-col items-center px-6"
+        style={{ paddingLeft, paddingTop: 'max(14vh, 80px)', transition: sidebarTransition }}
       >
 
       {/* Header */}
@@ -676,9 +676,6 @@ Ask me anything about your operations, or explore a topic below to get started.`
           width: '100%',
           maxWidth: '42rem',
           marginTop: '1.5rem',
-          // Fixed height prevents the flex-centered column from jumping when
-          // switching between the short Suggestions panel and tall Insights panel.
-          minHeight: 580,
           opacity: (mentionActive || uploadActive) ? 0 : 1,
           transition: 'opacity 200ms ease',
           pointerEvents: (mentionActive || uploadActive) ? 'none' : 'auto',
