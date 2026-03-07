@@ -115,8 +115,27 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
   const [copiedIndex, setCopiedIndex] = useState(null)
   const [chatDefaultText, setChatDefaultText] = useState('')
   const [dashTab, setDashTab] = useState('suggestions')
+  const [hoveredCardIdx, setHoveredCardIdx] = useState(null)
   const dashTabContentRef = useRef(null)
   const dashTabReady = useRef(false)
+  const dashTabSwitching = useRef(false)
+
+  const CARD_COLORS = ['#FF7056', '#1779F7', '#4BA373', '#D799E2', '#455F61', '#6E95A0']
+
+  function handleTabSwitch(id) {
+    if (id === dashTab || dashTabSwitching.current) return
+    const el = dashTabContentRef.current
+    if (!el) { setDashTab(id); return }
+    dashTabSwitching.current = true
+    gsap.to(el, {
+      opacity: 0, y: -10, filter: 'blur(6px)', duration: 0.22, ease: 'expo.in',
+      onComplete: () => {
+        gsap.set(el, { opacity: 0, y: 14, filter: 'blur(8px)' })
+        setDashTab(id)
+        dashTabSwitching.current = false
+      },
+    })
+  }
 
   // ── Session state ───────────────────────────────────────────────
   const [sessions, setSessions]           = useState([])
@@ -695,7 +714,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
             ].map(({ id, label }) => (
               <button
                 key={id}
-                onClick={() => setDashTab(id)}
+                onClick={() => handleTabSwitch(id)}
                 style={{
                   padding: '6px 18px',
                   borderRadius: 7,
@@ -739,22 +758,40 @@ Ask me anything about your operations, or explore a topic below to get started.`
                 overflowY: 'auto',
                 paddingBottom: 40,
               }}>
-                {requests.map((req, i) => (
-                  <div
-                    key={i}
-                    className="request-card"
-                    style={{ borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer' }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className="card-title" style={{ fontSize: 13, fontWeight: 600 }}>Request {req.id}</span>
-                        <span className="card-tag" style={{ fontSize: 11, borderRadius: 999, border: '1px solid', padding: '2px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '12ch' }}>{req.tag}</span>
-                      </div>
-                      <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}><ExternalLinkIcon /></span>
+                {requests.map((req, i) => {
+                  const accent = CARD_COLORS[i % CARD_COLORS.length]
+                  const isHovered = hoveredCardIdx === i
+                  return (
+                    <div
+                      key={i}
+                      className="request-card"
+                      onMouseEnter={() => setHoveredCardIdx(i)}
+                      onMouseLeave={() => setHoveredCardIdx(null)}
+                      onClick={() => { setChatDefaultText(req.description); handleSubmit(req.description) }}
+                      style={{
+                        borderRadius: 10,
+                        padding: '12px 14px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 6,
+                        cursor: 'pointer',
+                        transition: 'box-shadow 200ms ease, background 200ms ease',
+                        boxShadow: isHovered ? `inset 3px 0 0 ${accent}` : 'none',
+                        background: isHovered ? `${accent}0d` : 'var(--bg-card)',
+                      }}
+                    >
+                      <span style={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        letterSpacing: '0.06em',
+                        textTransform: 'uppercase',
+                        color: isHovered ? accent : 'var(--text-muted)',
+                        transition: 'color 200ms ease',
+                      }}>{req.tag}</span>
+                      <p style={{ fontSize: 13, color: 'var(--text-primary)', margin: 0, lineHeight: 1.5, fontWeight: 450 }}>{req.description}</p>
                     </div>
-                    <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{req.description}</p>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
               <div style={{
                 position: 'absolute', bottom: 0, left: 0, right: 0, height: 96,
