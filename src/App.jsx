@@ -115,6 +115,8 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
   const [copiedIndex, setCopiedIndex] = useState(null)
   const [chatDefaultText, setChatDefaultText] = useState('')
   const [dashTab, setDashTab] = useState('suggestions')
+  const dashTabContentRef = useRef(null)
+  const dashTabReady = useRef(false)
 
   // ── Session state ───────────────────────────────────────────────
   const [sessions, setSessions]           = useState([])
@@ -159,7 +161,18 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
     tl.to(subtitle, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.55 },                   0.48)
     tl.to(input,    { opacity: 1, y: 0, duration: 0.55 },                                        0.62)
     tl.to(cards,    { opacity: 1, y: 0, duration: 0.42, stagger: 0.045 },                        0.78)
+    dashTabReady.current = true
   }, [activePage])
+
+  // ── Tab-switch animation (same as SignIn env toggle) ────────────────────────
+  useEffect(() => {
+    const el = dashTabContentRef.current
+    if (!el || !dashTabReady.current) return
+    gsap.fromTo(el,
+      { opacity: 0, y: 14, filter: 'blur(8px)' },
+      { opacity: 1, y: 0,  filter: 'blur(0px)', duration: 0.42, ease: 'expo.out' }
+    )
+  }, [dashTab])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -703,6 +716,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
             ))}
           </div>
 
+          <div ref={dashTabContentRef}>
           {dashTab === 'suggestions' ? (
             /* ── AI Suggestions cards ── */
             <div style={{ position: 'relative' }}>
@@ -752,6 +766,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
             /* ── Insights panel ── */
             <InsightsPanel config={companyConfig} />
           )}
+          </div>
         </div>
       )}
 
