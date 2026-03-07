@@ -18,6 +18,208 @@ function SunIcon() {
   )
 }
 
+const MOCK_USERS = [
+  { id: 'u1', name: 'Sarah Chen',    email: 'sarah.chen@acmecorp.com',    avatar: 'SC', role: 'Admin' },
+  { id: 'u2', name: 'Marcus Reid',   email: 'marcus.reid@acmecorp.com',   avatar: 'MR', role: 'Agent' },
+  { id: 'u3', name: 'Priya Nair',    email: 'priya.nair@globalbank.io',   avatar: 'PN', role: 'Manager' },
+  { id: 'u4', name: 'Tom Okafor',    email: 'tom.okafor@globalbank.io',   avatar: 'TO', role: 'Agent' },
+  { id: 'u5', name: 'Lisa Yamamoto', email: 'lisa.y@medco.health',        avatar: 'LY', role: 'Admin' },
+  { id: 'u6', name: 'Dev Kapoor',    email: 'dev.kapoor@medco.health',    avatar: 'DK', role: 'Agent' },
+]
+
+const AVATAR_COLORS = ['#FF7056', '#1779F7', '#4BA373', '#D799E2', '#455F61', '#6E95A0']
+
+function ImpersonateButton() {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [active, setActive] = useState(null)
+  const btnRef = useRef(null)
+  const dropRef = useRef(null)
+  const searchRef = useRef(null)
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    const handler = (e) => {
+      if (
+        !btnRef.current?.contains(e.target) &&
+        !dropRef.current?.contains(e.target)
+      ) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  // Focus search on open
+  useEffect(() => {
+    if (open) setTimeout(() => searchRef.current?.focus(), 50)
+    else setSearch('')
+  }, [open])
+
+  const filtered = MOCK_USERS.filter(u =>
+    u.name.toLowerCase().includes(search.toLowerCase()) ||
+    u.email.toLowerCase().includes(search.toLowerCase())
+  )
+
+  // Position dropdown above the button
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 })
+  useEffect(() => {
+    if (!open || !btnRef.current) return
+    const r = btnRef.current.getBoundingClientRect()
+    setPos({ top: r.top - 8, left: r.left, width: Math.max(r.width, 240) })
+  }, [open])
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        onClick={() => setOpen(v => !v)}
+        title={active ? `Impersonating: ${active.name}` : 'Impersonate user'}
+        style={{
+          flex: 1,
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          color: active ? 'var(--color-brand)' : open ? 'var(--text-primary)' : 'var(--text-muted)',
+          padding: '6px 0',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'color 150ms ease',
+          position: 'relative',
+        }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text-primary)' }}
+        onMouseLeave={e => { if (!active) e.currentTarget.style.color = open ? 'var(--text-primary)' : 'var(--text-muted)' }}
+      >
+        <AccessibilityIcon />
+        {active && (
+          <span style={{
+            position: 'absolute', top: 2, right: 6,
+            width: 7, height: 7, borderRadius: '50%',
+            background: 'var(--color-brand)',
+            border: '1.5px solid var(--bg-sidebar)',
+          }} />
+        )}
+      </button>
+
+      {open && createPortal(
+        <div
+          ref={dropRef}
+          style={{
+            position: 'fixed',
+            bottom: `calc(100vh - ${pos.top}px)`,
+            left: pos.left,
+            width: 260,
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            zIndex: 9999,
+            overflow: 'hidden',
+            transform: 'translateY(0)',
+            animation: 'dropIn 150ms ease',
+          }}
+        >
+          <style>{`@keyframes dropIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }`}</style>
+
+          {/* Header */}
+          <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid var(--border-default)' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              Impersonate User
+            </div>
+            {/* Search */}
+            <div style={{ position: 'relative' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round"
+                style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                ref={searchRef}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search users…"
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  paddingLeft: 30, paddingRight: 10, paddingTop: 7, paddingBottom: 7,
+                  background: 'var(--bg-canvas)',
+                  border: '1px solid var(--border-input, var(--border-default))',
+                  borderRadius: 8,
+                  color: 'var(--text-primary)',
+                  fontSize: 13,
+                  outline: 'none',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* User list */}
+          <div style={{ maxHeight: 220, overflowY: 'auto', padding: '6px 0' }}>
+            {active && (
+              <button
+                onClick={() => { setActive(null); setOpen(false) }}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '7px 14px', background: 'transparent', border: 'none',
+                  cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12,
+                  borderBottom: '1px solid var(--border-default)', marginBottom: 4,
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-canvas)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <span style={{ fontSize: 16 }}>↩</span>
+                <span>Exit impersonation</span>
+              </button>
+            )}
+            {filtered.length === 0 && (
+              <div style={{ padding: '10px 14px', color: 'var(--text-muted)', fontSize: 13 }}>No users found</div>
+            )}
+            {filtered.map((u, i) => {
+              const isActive = active?.id === u.id
+              return (
+                <button
+                  key={u.id}
+                  onClick={() => { setActive(u); setOpen(false) }}
+                  style={{
+                    width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 14px', background: isActive ? 'color-mix(in srgb, var(--color-brand) 12%, transparent)' : 'transparent',
+                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                    transition: 'background 100ms',
+                  }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-canvas)' }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+                >
+                  <div style={{
+                    width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                    background: AVATAR_COLORS[i % AVATAR_COLORS.length],
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 700, color: '#fff',
+                    outline: isActive ? `2px solid var(--color-brand)` : 'none',
+                    outlineOffset: 1,
+                  }}>
+                    {u.avatar}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: isActive ? 'var(--color-brand)' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {u.name}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {u.role} · {u.email}
+                    </div>
+                  </div>
+                  {isActive && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 'auto', flexShrink: 0 }}>
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  )
+}
+
 function PlusIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -763,34 +965,48 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               </div>
             </div>
 
-            {/* Bottom action icons — Moon/Sun toggle + Accessibility + Logout */}
+            {/* Bottom action icons — Moon/Sun toggle + Impersonate + Logout */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {[
-                { Icon: isDark ? SunIcon : MoonIcon, onClick: onThemeToggle },
-                { Icon: AccessibilityIcon,            onClick: null },
-                { Icon: LogoutIcon,                   onClick: onSignOut },
-              ].map(({ Icon, onClick }, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-                  {i > 0 && <div style={{ width: 1, height: 20, background: 'var(--border-input)', flexShrink: 0 }} />}
-                  <button
-                    onClick={onClick ?? undefined}
-                    style={{
-                      flex: 1,
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: onClick ? 'pointer' : 'default',
-                      color: 'var(--text-muted)',
-                      padding: '6px 0',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'color 150ms ease',
-                    }}
-                    onMouseEnter={e => { if (onClick) e.currentTarget.style.color = 'var(--text-primary)' }}
-                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)' }}
-                  >
-                    <Icon />
-                  </button>
-                </div>
-              ))}
+              {/* Theme toggle */}
+              <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <button
+                  onClick={onThemeToggle}
+                  style={{
+                    flex: 1, background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: 'var(--text-muted)', padding: '6px 0',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'color 150ms ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)' }}
+                >
+                  {isDark ? <SunIcon /> : <MoonIcon />}
+                </button>
+              </div>
+
+              {/* Impersonate */}
+              <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <div style={{ width: 1, height: 20, background: 'var(--border-input)', flexShrink: 0 }} />
+                <ImpersonateButton />
+              </div>
+
+              {/* Logout */}
+              <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <div style={{ width: 1, height: 20, background: 'var(--border-input)', flexShrink: 0 }} />
+                <button
+                  onClick={onSignOut}
+                  style={{
+                    flex: 1, background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: 'var(--text-muted)', padding: '6px 0',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'color 150ms ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)' }}
+                >
+                  <LogoutIcon />
+                </button>
+              </div>
             </div>
           </div>
 
