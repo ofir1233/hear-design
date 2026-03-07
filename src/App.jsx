@@ -732,6 +732,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
             ))}
           </div>
 
+          <div style={{ maxHeight: 480, overflowY: 'auto', overflowX: 'hidden' }}>
           <div ref={dashTabContentRef}>
           {dashTab === 'suggestions' ? (
             /* ── AI Suggestions cards ── */
@@ -782,6 +783,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
             /* ── Insights panel ── */
             <InsightsPanel config={companyConfig} />
           )}
+          </div>
           </div>
         </div>
       )}
