@@ -112,6 +112,10 @@ export async function initDb() {
   await pool.query(`CREATE INDEX IF NOT EXISTS chat_messages_session_idx ON chat_messages (session_id)`)
     .catch(() => {})
 
+  // Add profile_id column for per-profile session scoping (safe on re-deploy)
+  await pool.query(`ALTER TABLE chat_sessions ADD COLUMN IF NOT EXISTS profile_id TEXT`)
+    .catch(() => {})
+
   console.log('[db] schema ready')
 }
 
@@ -254,16 +258,18 @@ const WELCOME_RELATED = [
   "Give me a compliance summary",
 ]
 
-export async function ensureWelcomeSession(userId) {
+export async function ensureWelcomeSession(userId, profileId = null) {
   const { rows } = await pool.query(
-    `SELECT * FROM chat_sessions WHERE user_id = $1 AND is_welcome = TRUE AND deleted_at IS NULL`,
-    [userId]
+    `SELECT * FROM chat_sessions
+     WHERE user_id = $1 AND is_welcome = TRUE AND deleted_at IS NULL
+       AND COALESCE(profile_id, '') = COALESCE($2, '')`,
+    [userId, profileId]
   )
   if (rows[0]) return { session: rows[0], created: false }
 
   const { rows: sessions } = await pool.query(
-    `INSERT INTO chat_sessions (user_id, title, is_welcome) VALUES ($1, 'Welcome to Hear', TRUE) RETURNING *`,
-    [userId]
+    `INSERT INTO chat_sessions (user_id, profile_id, title, is_welcome) VALUES ($1, $2, 'Welcome to Hear', TRUE) RETURNING *`,
+    [userId, profileId]
   )
   const session = sessions[0]
   await pool.query(
@@ -273,18 +279,21 @@ export async function ensureWelcomeSession(userId) {
   return { session, created: true }
 }
 
-export async function getSessionsByUser(userId) {
+export async function getSessionsByUser(userId, profileId = null) {
   const { rows } = await pool.query(
-    `SELECT * FROM chat_sessions WHERE user_id = $1 AND deleted_at IS NULL ORDER BY updated_at DESC`,
-    [userId]
+    `SELECT * FROM chat_sessions
+     WHERE user_id = $1 AND deleted_at IS NULL
+       AND COALESCE(profile_id, '') = COALESCE($2, '')
+     ORDER BY updated_at DESC`,
+    [userId, profileId]
   )
   return rows
 }
 
-export async function createSession(userId, title = 'New Conversation') {
+export async function createSession(userId, title = 'New Conversation', profileId = null) {
   const { rows } = await pool.query(
-    `INSERT INTO chat_sessions (user_id, title) VALUES ($1, $2) RETURNING *`,
-    [userId, title]
+    `INSERT INTO chat_sessions (user_id, profile_id, title) VALUES ($1, $2, $3) RETURNING *`,
+    [userId, profileId, title]
   )
   return rows[0]
 }

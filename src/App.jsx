@@ -88,7 +88,7 @@ function useIsMobile() {
 }
 
 
-function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectChange, userId }) {
+function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectChange, userId, profileId }) {
   const greeting = getGreeting()
   const fullGreeting = `${greeting}, ${USER_NAME}.`
   const requests = buildRequestCards(companyConfig)
@@ -181,8 +181,9 @@ Ask me anything about your operations, or explore a topic below to get started.`
     "Give me a compliance summary",
   ]
 
-  function lsGetSessions()          { try { return JSON.parse(localStorage.getItem(`hear-sessions-${userId}`) || '[]') } catch { return [] } }
-  function lsSetSessions(s)         { localStorage.setItem(`hear-sessions-${userId}`, JSON.stringify(s)) }
+  const sessionNs = profileId ? `hear-sessions-${userId}:${profileId}` : `hear-sessions-${userId}`
+  function lsGetSessions()          { try { return JSON.parse(localStorage.getItem(sessionNs) || '[]') } catch { return [] } }
+  function lsSetSessions(s)         { localStorage.setItem(sessionNs, JSON.stringify(s)) }
   function lsGetMsgs(sid)           { try { return JSON.parse(localStorage.getItem(`hear-msgs-${sid}`) || '[]') } catch { return [] } }
   function lsSetMsgs(sid, msgs)     { localStorage.setItem(`hear-msgs-${sid}`, JSON.stringify(msgs)) }
   function lsDelMsgs(sid)           { localStorage.removeItem(`hear-msgs-${sid}`) }
@@ -193,7 +194,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
     let stored = lsGetSessions()
     // Seed welcome session if this user has never had one
     if (!stored.find(s => s.is_welcome)) {
-      const welcomeId = `welcome-${userId}`
+      const welcomeId = `welcome-${userId}${profileId ? `-${profileId}` : ''}`
       const welcomeSession = { id: welcomeId, user_id: userId, title: 'Welcome to Hear', is_welcome: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
       const welcomeMsgs   = [{ role: 'ai', text: WELCOME_MSG_TEXT, related: WELCOME_RELATED }]
       stored = [...stored, welcomeSession]
@@ -203,7 +204,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
     setSessions(stored)
     // Background: sync with backend (fire and forget)
     syncWithBackend(stored)
-  }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [userId, profileId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function syncWithBackend(localSessions) {
     try {
@@ -393,6 +394,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
     onProjectChange?.(profile)
     activeSessionRef.current = null
     setActiveSessionId(null)
+    setSessions([])
     setMessages([])
     setSubmitted(false)
     setSettled(false)
@@ -758,6 +760,8 @@ export default function App() {
     try { return JSON.parse(sessionStorage.getItem('hear-session-config') || 'null') } catch { return null }
   })
 
+  const [profileId, setProfileId] = useState(() => localStorage.getItem('hear-demo-profile-id') || null)
+
   // Stable user identifier (email for demo users, anon UUID otherwise)
   const [userId, setUserId] = useState(() => {
     const stored = sessionStorage.getItem('hear-user-id')
@@ -803,6 +807,10 @@ export default function App() {
     sessionStorage.setItem('hear-user-id', finalId)
     setUserId(finalId)
 
+    // Scope sessions to the selected profile
+    const pid = profile?.id ? String(profile.id) : null
+    setProfileId(pid)
+
     sessionStorage.setItem('hear-signed-in', '1')
     setSignedIn(true)
   }
@@ -814,6 +822,8 @@ export default function App() {
       sessionStorage.setItem('hear-session-config', JSON.stringify(config))
       localStorage.setItem('hear-demo-config', JSON.stringify(config))
     }
+    const pid = profile?.id ? String(profile.id) : null
+    setProfileId(pid)
   }
 
   function handleSignOut() {
@@ -824,5 +834,5 @@ export default function App() {
   }
 
   if (!signedIn) return <SignIn onSignIn={handleSignIn} />
-  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} companyConfig={companyConfig} onSignOut={handleSignOut} onProjectChange={handleProjectChange} userId={userId} />
+  return <MainApp isDark={isDark} onThemeToggle={toggleTheme} companyConfig={companyConfig} onSignOut={handleSignOut} onProjectChange={handleProjectChange} userId={userId} profileId={profileId} />
 }

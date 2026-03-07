@@ -491,9 +491,10 @@ app.post('/api/title', async (req, res) => {
 // GET /api/sessions
 app.get('/api/sessions', async (req, res) => {
   try {
-    const userId = req.headers['x-user-id']
+    const userId    = req.headers['x-user-id']
+    const profileId = req.headers['x-demo-profile-id'] || null
     if (!userId) return res.status(400).json({ error: 'x-user-id header required' })
-    const sessions = await getSessionsByUser(userId)
+    const sessions = await getSessionsByUser(userId, profileId)
     res.json({ sessions })
   } catch (err) {
     console.error('[/api/sessions GET]', err.message)
@@ -504,9 +505,10 @@ app.get('/api/sessions', async (req, res) => {
 // POST /api/sessions/ensure-welcome  (must be before /:id routes)
 app.post('/api/sessions/ensure-welcome', async (req, res) => {
   try {
-    const userId = req.headers['x-user-id']
+    const userId    = req.headers['x-user-id']
+    const profileId = req.headers['x-demo-profile-id'] || null
     if (!userId) return res.status(400).json({ error: 'x-user-id header required' })
-    const result = await ensureWelcomeSession(userId)
+    const result = await ensureWelcomeSession(userId, profileId)
     res.json(result)
   } catch (err) {
     console.error('[/api/sessions/ensure-welcome]', err.message)
@@ -517,10 +519,11 @@ app.post('/api/sessions/ensure-welcome', async (req, res) => {
 // POST /api/sessions
 app.post('/api/sessions', async (req, res) => {
   try {
-    const userId = req.headers['x-user-id']
+    const userId    = req.headers['x-user-id']
+    const profileId = req.headers['x-demo-profile-id'] || null
     if (!userId) return res.status(400).json({ error: 'x-user-id header required' })
     const { title } = req.body
-    const session = await createSession(userId, title)
+    const session = await createSession(userId, title, profileId)
     res.json({ session })
   } catch (err) {
     console.error('[/api/sessions POST]', err.message)
