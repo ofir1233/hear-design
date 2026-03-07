@@ -955,8 +955,8 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                 fontWeight: 700,
                 flexShrink: 0,
                 outline: '2px solid rgba(0,0,0,0.15)',
-              }}>RG</div>
-              <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>John Smith</span>
+              }}>{(localStorage.getItem('hear-user-name') || 'U').slice(0, 2).toUpperCase()}</div>
+              <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{localStorage.getItem('hear-user-name') || 'You'}</span>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
