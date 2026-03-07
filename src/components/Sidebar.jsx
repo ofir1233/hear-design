@@ -118,7 +118,7 @@ function ImpersonateButton() {
             animation: 'dropIn 150ms ease',
           }}
         >
-          <style>{`@keyframes dropIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }`}</style>
+          <style>{`@keyframes dropIn { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } } .imp-list::-webkit-scrollbar { display: none }`}</style>
 
           {/* Header */}
           <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid var(--border-default)' }}>
@@ -151,7 +151,16 @@ function ImpersonateButton() {
           </div>
 
           {/* User list */}
-          <div style={{ maxHeight: 220, overflowY: 'auto', padding: '6px 0' }}>
+          <div style={{
+            position: 'relative',
+            maxHeight: 220,
+            overflowY: 'auto',
+            padding: '6px 0',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            maskImage: 'linear-gradient(to bottom, transparent 0%, black 18px, black calc(100% - 18px), transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 18px, black calc(100% - 18px), transparent 100%)',
+          }} className="imp-list">
             {active && (
               <button
                 onClick={() => { setActive(null); setOpen(false) }}
