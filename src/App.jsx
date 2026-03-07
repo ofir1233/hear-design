@@ -299,36 +299,52 @@ Ask me anything about your operations, or explore a topic below to get started.`
   }
 
   async function autoTitleSession(localId, firstMessage) {
+    // Always have a fallback so the session never stays stuck on "..."
+    const fallbackTitle = firstMessage.trim().replace(/\s+/g, ' ').slice(0, 50) || 'New conversation'
+
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
+
+    function applyTitle(title) {
+      const currentId = activeSessionRef.current || localId
+      setSessions(prev => {
+        const next = prev.map(s =>
+          (s.id === currentId || s.id === localId) ? { ...s, title } : s
+        )
+        lsSetSessions(next)
+        return next
+      })
+      apiFetch(`/api/sessions/${currentId}/title`, {
+        method: 'PATCH',
+        headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ title }),
+      }).catch(() => {})
+      return currentId
+    }
+
     try {
       const r = await apiFetch('/api/title', {
         method: 'POST',
         headers: apiHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ message: firstMessage }),
+        signal: controller.signal,
       })
-      if (!r.ok) return
+      clearTimeout(timeout)
+
+      if (!r.ok) throw new Error('title api failed')
       const data = await r.json()
-      if (!data.title) return
+      if (!data.title) throw new Error('no title in response')
 
       // Use the current session ID (may have been remapped from local UUID to DB UUID by now)
-      const currentId = activeSessionRef.current || localId
-      // Set newlyNamedId first so typewriter starts from empty string
+      const currentId = applyTitle(data.title)
+      // Trigger typewriter only on success
       setNewlyNamedId(currentId)
-      setSessions(prev => {
-        const next = prev.map(s =>
-          (s.id === currentId || s.id === localId) ? { ...s, title: data.title } : s
-        )
-        lsSetSessions(next)
-        return next
-      })
       setTimeout(() => setNewlyNamedId(null), 8000)
-
-      // Background: persist title to DB
-      apiFetch(`/api/sessions/${currentId}/title`, {
-        method: 'PATCH',
-        headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ title: data.title }),
-      }).catch(() => {})
-    } catch { /* silent */ }
+    } catch {
+      clearTimeout(timeout)
+      // API failed or timed out — apply fallback so dots never stay stuck
+      applyTitle(fallbackTitle)
+    }
   }
 
   function handleSelectSession(sessionId) {
