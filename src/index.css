@@ -401,6 +401,7 @@ input::placeholder {
 .request-card:hover .card-title { color: var(--text-primary); }
 
 /* ── AG Grid — hear-grid theme ───────────────────────────────────────────── */
+.hear-grid .ag-root-wrapper { border-top: none !important; border-left: none !important; border-right: none !important; }
 .hear-grid.ag-theme-quartz {
   --ag-font-family: 'Byrd', sans-serif;
   --ag-font-size: 13px;
