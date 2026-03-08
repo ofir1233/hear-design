@@ -560,12 +560,12 @@ export const COMPONENT_DEFS = {
       { name: 'badge', type: 'string', default: "'Design Lab'" },
     ],
     states: [
-      { label: 'Default',     props: {} },
-      { label: 'Custom badge', props: { badge: 'Beta' } },
+      { label: 'Design Lab', props: { env: 'Design Lab', onEnvChange: () => {} } },
+      { label: 'Demo',       props: { env: 'Demo',       onEnvChange: () => {} } },
     ],
     render: (p) => (
       <div style={{ background: '#000', padding: '28px 24px', minHeight: 80 }}>
-        <SignInHero {...p} />
+        <SignInHero env={p.env ?? 'Design Lab'} onEnvChange={p.onEnvChange ?? (() => {})} />
       </div>
     ),
     snippet: (p) => `<SignInHero${p.badge && p.badge !== 'Design Lab' ? ` badge="${p.badge}"` : ''} />`,
