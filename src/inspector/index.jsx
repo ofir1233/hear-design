@@ -8,7 +8,7 @@ import FAB              from './FAB.jsx'
 import InspectorDrawer  from './InspectorDrawer.jsx'
 
 export default function Inspector() {
-  const [open, setOpen] = useState(() => window.location.pathname.startsWith('/storybook'))
+  const [open, setOpen] = useState(false)
 
   return (
     <>
