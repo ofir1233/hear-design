@@ -263,7 +263,7 @@ function ReportRow({ report, index }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         display: 'flex', alignItems: 'center',
-        height: 52, position: 'relative',
+        height: 52, minHeight: 52, flexShrink: 0, position: 'relative',
         borderBottom: '1px solid var(--border-input)',
         borderLeft: `3px solid ${hovered ? cfg.border : 'transparent'}`,
         background: hovered ? 'var(--bg-active)' : 'transparent',
@@ -426,7 +426,7 @@ function EmptyState() {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flex: 1, flexDirection: 'column', gap: 6,
+      padding: '60px 0', flexDirection: 'column', gap: 6,
     }}>
       <span style={{ fontSize: 14, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>No reports found</span>
       <span style={{ fontSize: 12, color: 'var(--text-muted)', opacity: 0.6, fontFamily: "'Byrd', sans-serif" }}>Try adjusting your filters</span>
@@ -574,7 +574,7 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
       {view === 'list' ? (
         <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <TableHeader />
-          <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto' }}>
             {filtered.length === 0
               ? <EmptyState />
               : filtered.map((r, i) => <ReportRow key={r.id} report={r} index={i} />)
