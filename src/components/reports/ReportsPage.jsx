@@ -353,7 +353,6 @@ function ReportCard({ report }) {
       style={{
         background: 'var(--bg-card)',
         border: `1px solid ${hovered ? cfg.border : 'var(--border-input)'}`,
-        borderTop: `3px solid ${cfg.border}`,
         borderRadius: 12,
         padding: '16px',
         cursor: 'pointer',
