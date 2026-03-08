@@ -733,7 +733,7 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
       </div>
 
       {/* ── AG Grid ──────────────────────────────────────────────────────── */}
-      <div data-inspector="DataGrid" style={{ flex: 1, overflow: 'hidden', padding: '20px 20px 0' }}>
+      <div data-inspector="DataGrid" style={{ flex: 1, overflow: 'hidden', padding: 0 }}>
         <AgGridReact
           ref={gridRef}
           theme={isDark ? darkTheme : lightTheme}
