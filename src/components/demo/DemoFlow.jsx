@@ -326,6 +326,11 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
   // When googleUser arrives (from GATE), start checking
   useEffect(() => {
     if (!googleUser) return
+    // Persist name from Google profile so the NAME step is never shown again
+    if (!localStorage.getItem('hear-user-name')) {
+      const name = googleUser.given_name || googleUser.name?.split(' ')[0] || ''
+      if (name) localStorage.setItem('hear-user-name', name)
+    }
     if (screen === S.GATE || screen === S.CHECKING) {
       // Show cached profiles instantly if available
       const cacheKey = `hear-demo-profiles-${googleUser.email}`
