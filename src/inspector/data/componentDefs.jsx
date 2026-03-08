@@ -495,16 +495,17 @@ export const COMPONENT_DEFS = {
     states: [
       { label: 'Default', props: {} },
     ],
-    render: (_p) => containedPreview(
-      <div style={{
-        position: 'absolute', top: 0, left: 0,
-        transform: 'scale(0.2)', transformOrigin: 'top left',
-        width: '100vw', height: '100vh',
-        pointerEvents: 'none',
-      }}>
-        <SignIn onSignIn={() => {}} />
-      </div>,
-      148,
+    render: (_p) => (
+      <div style={{ height: 148, width: '100%', overflow: 'hidden', position: 'relative', contain: 'strict' }}>
+        <div style={{
+          position: 'absolute', top: 0, left: 0,
+          transform: 'scale(0.2)', transformOrigin: 'top left',
+          width: 2400, height: 1400,
+          pointerEvents: 'none',
+        }}>
+          <SignIn onSignIn={() => {}} />
+        </div>
+      </div>
     ),
     snippet: () => `<SignIn onSignIn={handleSignIn} />`,
     source: SignInSrc,
