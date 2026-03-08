@@ -25,6 +25,7 @@ import EventCard    from '../../components/data/EventCard.jsx'
 import OmniBar      from '../../components/data/OmniBar.jsx'
 import FilterDrawer from '../../components/data/FilterDrawer.jsx'
 import DataPage     from '../../components/data/DataPage.jsx'
+import ReportsPage  from '../../components/reports/ReportsPage.jsx'
 import { SCHEMAS }  from '../../components/data/mockData.js'
 
 // Raw source imports — Vite ?raw gives the file content as a plain string.
@@ -47,6 +48,7 @@ import OmniBarSrc       from '../../components/data/OmniBar.jsx?raw'
 import FilterDrawerSrc  from '../../components/data/FilterDrawer.jsx?raw'
 import DataPageSrc      from '../../components/data/DataPage.jsx?raw'
 import MockDataSrc      from '../../components/data/mockData.js?raw'
+import ReportsPageSrc   from '../../components/reports/ReportsPage.jsx?raw'
 
 // ─── Shared preview wrapper helpers ──────────────────────────────────────────
 
@@ -841,6 +843,51 @@ export const COMPONENT_DEFS = {
         'Preset system: built-in PRESETS[] + customPresets state (save-as-preset modal)',
         'Cell renderers: IdCell, StatusCell, PriorityCell, AssignedToCell (Badge-based)',
         'Alert warning: AlertTooltip uses position:fixed + getBoundingClientRect',
+      ],
+    },
+  },
+
+  // ── ReportsPage ────────────────────────────────────────────────────────────
+
+  ReportsPage: {
+    tier: 'Organism',
+    description: 'Full Reports page. Header + status filter tabs + search. List view (rows with status-colored left border) and grid view (cards). 22 mock reports across AI Generated, Running, Completed, Failed, and Not Executed states.',
+    props: [
+      { name: 'isMobile',     type: 'boolean', default: 'false' },
+      { name: 'sidebarWidth', type: 'number',  default: '272'   },
+    ],
+    states: [
+      { label: 'List view',  props: { isMobile: false, sidebarWidth: 0 } },
+    ],
+    render: () => containedPreview(
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        transform: 'scale(0.55)', transformOrigin: 'top left',
+        width: '182%', height: '182%',
+        pointerEvents: 'none',
+      }}>
+        <ReportsPage isMobile={false} sidebarWidth={0} />
+      </div>,
+      220,
+    ),
+    snippet: () => `<ReportsPage isMobile={isMobile} sidebarWidth={SIDEBAR_WIDTH} />`,
+    source: ReportsPageSrc,
+    files: [
+      { path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc },
+    ],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'AI Generated border', hex: '#FF7056' },
+        { name: 'Running / Completed', hex: '#4BA373' },
+        { name: 'Failed border',       hex: '#DC2626' },
+      ],
+      subComponents: ['Badge', 'Button', 'StatusBadge', 'ReportRow', 'ReportCard', 'StatusTabs'],
+      notes: [
+        'List view: 3px left border animates in on hover, colored by status',
+        'Grid view: borderTop 3px status color + glow box-shadow on hover',
+        'Status filter tabs with per-status counts',
+        'Search filters across name, ID, and trend fields',
       ],
     },
   },
