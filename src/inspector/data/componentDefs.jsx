@@ -496,14 +496,31 @@ export const COMPONENT_DEFS = {
       { label: 'Default', props: {} },
     ],
     render: (_p) => (
-      <div style={{ height: 148, width: '100%', overflow: 'hidden', position: 'relative', contain: 'strict' }}>
-        <div style={{
-          position: 'absolute', top: 0, left: 0,
-          transform: 'scale(0.2)', transformOrigin: 'top left',
-          width: 2400, height: 1400,
-          pointerEvents: 'none',
-        }}>
-          <SignIn onSignIn={() => {}} />
+      <div style={{ height: 148, background: '#000', overflow: 'hidden', position: 'relative', display: 'flex' }}>
+        {/* Static snapshot — avoids position:fixed grain SVG + GSAP + OAuth hooks firing in preview */}
+        <div style={{ flex: '0 0 42%', padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10, justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 18, height: 18, background: 'var(--c100)', borderRadius: 4 }} />
+            <span style={{ color: '#fff', fontSize: 11, fontWeight: 700, fontFamily: "'Byrd', sans-serif" }}>Hear</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ height: 7, width: '90%', background: 'rgba(255,255,255,0.85)', borderRadius: 2 }} />
+            <div style={{ height: 7, width: '70%', background: 'rgba(255,255,255,0.85)', borderRadius: 2 }} />
+            <div style={{ height: 7, width: '80%', background: 'rgba(255,255,255,0.85)', borderRadius: 2 }} />
+          </div>
+          <div style={{ height: 22, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px' }}>
+            <div style={{ width: 10, height: 10, background: 'rgba(255,255,255,0.4)', borderRadius: '50%' }} />
+            <div style={{ height: 4, width: 80, background: 'rgba(255,255,255,0.3)', borderRadius: 2 }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.12)' }} />
+            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', fontFamily: "'Byrd', sans-serif" }}>or</span>
+            <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.12)' }} />
+          </div>
+          <div style={{ height: 18, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4 }} />
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}>
+          <div style={{ width: 80, height: 100, background: 'linear-gradient(135deg, rgba(255,112,86,0.3), rgba(23,121,247,0.2))', borderRadius: 8 }} />
         </div>
       </div>
     ),
