@@ -112,7 +112,7 @@ const MOCK_REPORTS = [
 
 function AIBadge() {
   return (
-    <span style={{
+    <span data-inspector="ReportStatusBadge" style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
       height: 20, padding: '0 8px', borderRadius: 999,
       background: 'rgba(255,112,86,0.12)', border: '1px solid rgba(255,112,86,0.28)',
@@ -167,7 +167,7 @@ function StatusBadge({ status }) {
 
 function SchedulePill({ label }) {
   return (
-    <span style={{
+    <span data-inspector="SchedulePill" style={{
       display: 'inline-flex', alignItems: 'center',
       height: 20, padding: '0 8px', borderRadius: 4,
       background: 'var(--bg-active)', border: '1px solid var(--border-input)',
@@ -184,7 +184,7 @@ function SchedulePill({ label }) {
 
 function StatusTabs({ active, onChange, counts }) {
   return (
-    <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+    <div data-inspector="ReportStatusTabs" style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
       {STATUS_FILTERS.map(f => {
         const isActive = active === f.value
         const count = counts[f.value]
@@ -259,6 +259,7 @@ function ReportRow({ report, index }) {
 
   return (
     <div
+      data-inspector="ReportRow"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -346,6 +347,7 @@ function ReportCard({ report }) {
 
   return (
     <div
+      data-inspector="ReportCard"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{

@@ -892,6 +892,200 @@ export const COMPONENT_DEFS = {
     },
   },
 
+  // ── ReportRow ───────────────────────────────────────────────────────────────
+
+  ReportRow: {
+    tier: 'Molecule',
+    description: 'Single row in the Reports list view. Status badge + truncated ID + name + trend snippet + schedule pill. 3px left border slides in on hover, colored by status.',
+    props: [
+      { name: 'report', type: 'Report', default: 'required' },
+      { name: 'index',  type: 'number', default: 'required' },
+    ],
+    states: [
+      { label: 'AI Generated', props: {} },
+      { label: 'Completed',    props: {} },
+      { label: 'Failed',       props: {} },
+      { label: 'Running',      props: {} },
+      { label: 'Not Executed', props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, transform: 'scale(0.55)', transformOrigin: 'top left', width: '182%', height: '182%', pointerEvents: 'none' }}>
+        <ReportsPage isMobile={false} sidebarWidth={0} />
+      </div>,
+      180,
+    ),
+    snippet: () => `<ReportRow report={report} index={index} />`,
+    source: ReportsPageSrc,
+    files: [{ path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'AI Generated', hex: '#FF7056' },
+        { name: 'Failed',       hex: '#DC2626' },
+        { name: 'Running/Done', hex: '#4BA373' },
+      ],
+      subComponents: ['ReportStatusBadge', 'SchedulePill'],
+      notes: [
+        'borderLeft color transitions transparent → status color on hover',
+        'More button fades in (opacity 0→1) on hover',
+        'Defined inline in ReportsPage.jsx',
+      ],
+    },
+  },
+
+  // ── ReportCard ──────────────────────────────────────────────────────────────
+
+  ReportCard: {
+    tier: 'Molecule',
+    description: 'Grid view card for a single report. Status-colored top border, glow box-shadow on hover, 2-line clamped trend text.',
+    props: [
+      { name: 'report', type: 'Report', default: 'required' },
+    ],
+    states: [
+      { label: 'Default', props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, transform: 'scale(0.55)', transformOrigin: 'top left', width: '182%', height: '182%', pointerEvents: 'none' }}>
+        <ReportsPage isMobile={false} sidebarWidth={0} />
+      </div>,
+      180,
+    ),
+    snippet: () => `<ReportCard report={report} />`,
+    source: ReportsPageSrc,
+    files: [{ path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'AI Generated', hex: '#FF7056' },
+        { name: 'Failed',       hex: '#DC2626' },
+        { name: 'Running/Done', hex: '#4BA373' },
+      ],
+      subComponents: ['ReportStatusBadge', 'SchedulePill'],
+      notes: [
+        'borderTop always shows status color',
+        'border-color + box-shadow glow transitions on hover',
+        'trend text clamped to 2 lines via -webkit-line-clamp',
+        'Defined inline in ReportsPage.jsx',
+      ],
+    },
+  },
+
+  // ── ReportStatusBadge ───────────────────────────────────────────────────────
+
+  ReportStatusBadge: {
+    tier: 'Atom',
+    description: '5-state report status badge. AI Generated (coral + sparkle icon), Running / Completed (green tinted), Failed (red), Not Executed (muted).',
+    props: [
+      { name: 'status', type: "'ai-generated'|'running'|'completed'|'failed'|'not-executed'", default: 'required' },
+    ],
+    states: [
+      { label: 'AI Generated', props: { status: 'ai-generated' } },
+      { label: 'Running',      props: { status: 'running'      } },
+      { label: 'Completed',    props: { status: 'completed'    } },
+      { label: 'Failed',       props: { status: 'failed'       } },
+      { label: 'Not Executed', props: { status: 'not-executed' } },
+    ],
+    render: (p) => center((() => {
+      const STATUS_STYLES = {
+        'ai-generated': { bg: 'rgba(255,112,86,0.12)', border: 'rgba(255,112,86,0.28)', color: 'var(--c100)', label: '✦ AI Generated' },
+        'running':      null,
+        'completed':    null,
+        'failed':       { bg: 'rgba(220,38,38,0.10)',  border: 'rgba(220,38,38,0.28)',  color: '#DC2626',      label: 'FAILED' },
+        'not-executed': { bg: 'var(--bg-active)',       border: 'var(--border-input)',   color: 'var(--text-muted)', label: 'NOT EXECUTED' },
+      }
+      const s = STATUS_STYLES[p.status]
+      if (!s) return <Badge variant="tinted" color={p.status === 'running' ? 'green' : 'green'}>{p.status === 'running' ? 'Running' : 'Completed'}</Badge>
+      return (
+        <span style={{ display: 'inline-flex', alignItems: 'center', height: 20, padding: '0 8px', borderRadius: 999, background: s.bg, border: `1px solid ${s.border}`, color: s.color, fontSize: 11, fontWeight: 600, fontFamily: "'Byrd', sans-serif", letterSpacing: '0.07em', whiteSpace: 'nowrap' }}>
+          {s.label}
+        </span>
+      )
+    })()),
+    snippet: (p) => `<StatusBadge status="${p.status}" />`,
+    source: ReportsPageSrc,
+    files: [{ path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'AI Generated bg', hex: 'rgba(255,112,86,0.12)' },
+        { name: 'Failed bg',       hex: 'rgba(220,38,38,0.10)'  },
+        { name: 'Failed text',     hex: '#DC2626'               },
+      ],
+      subComponents: [],
+      notes: ['Defined inline in ReportsPage.jsx — not a standalone file'],
+    },
+  },
+
+  // ── SchedulePill ────────────────────────────────────────────────────────────
+
+  SchedulePill: {
+    tier: 'Atom',
+    description: 'Small uppercase rect pill showing report recurrence. Daily / Weekly / Monthly / On demand.',
+    props: [
+      { name: 'label', type: 'string', default: "'Daily'" },
+    ],
+    states: [
+      { label: 'Daily',     props: { label: 'Daily'     } },
+      { label: 'Weekly',    props: { label: 'Weekly'    } },
+      { label: 'Monthly',   props: { label: 'Monthly'   } },
+      { label: 'On demand', props: { label: 'On demand' } },
+    ],
+    render: (p) => center(
+      <span style={{ display: 'inline-flex', alignItems: 'center', height: 20, padding: '0 8px', borderRadius: 4, background: 'var(--bg-active)', border: '1px solid var(--border-input)', color: 'var(--text-muted)', fontSize: 10, fontWeight: 600, fontFamily: "'Byrd', sans-serif", letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+        {p.label}
+      </span>
+    ),
+    snippet: (p) => `<SchedulePill label="${p.label}" />`,
+    source: ReportsPageSrc,
+    files: [{ path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [],
+      subComponents: [],
+      notes: ['Defined inline in ReportsPage.jsx — not a standalone file'],
+    },
+  },
+
+  // ── ReportStatusTabs ────────────────────────────────────────────────────────
+
+  ReportStatusTabs: {
+    tier: 'Molecule',
+    description: 'Filter tab bar for the Reports page. All / AI Generated / Running / Completed / Failed / Not Executed — each with a live count badge.',
+    props: [
+      { name: 'active',   type: 'string',     default: "'all'" },
+      { name: 'onChange', type: '() => void', default: 'required' },
+      { name: 'counts',   type: 'object',     default: 'required' },
+    ],
+    states: [
+      { label: 'All active',    props: { active: 'all',    onChange: () => {}, counts: { all: 22, 'ai-generated': 3, running: 1, completed: 5, failed: 7, 'not-executed': 6 } } },
+      { label: 'Failed active', props: { active: 'failed', onChange: () => {}, counts: { all: 22, 'ai-generated': 3, running: 1, completed: 5, failed: 7, 'not-executed': 6 } } },
+    ],
+    render: (p) => center(
+      <div style={{ background: 'var(--bg-sidebar)', padding: '10px 16px', borderRadius: 8, border: '1px solid var(--border-input)', display: 'flex', gap: 2 }}>
+        {['All', 'AI Generated', 'Running', 'Completed', 'Failed', 'Not Executed'].map(label => {
+          const key = label.toLowerCase().replace(/ /g, '-')
+          const isActive = p.active === (key === 'all' ? 'all' : key)
+          const count = p.counts[key === 'all' ? 'all' : key]
+          return (
+            <button key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 6, background: isActive ? 'var(--bg-active)' : 'transparent', border: isActive ? '1px solid var(--border-default)' : '1px solid transparent', color: isActive ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: 12, fontWeight: isActive ? 600 : 400, fontFamily: "'Byrd', sans-serif", cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              {label}
+              {count > 0 && <span style={{ minWidth: 16, height: 16, padding: '0 4px', borderRadius: 99, background: isActive ? 'var(--border-default)' : 'var(--bg-active)', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>{count}</span>}
+            </button>
+          )
+        })}
+      </div>
+    ),
+    snippet: () => `<StatusTabs active={statusFilter} onChange={setStatus} counts={counts} />`,
+    source: ReportsPageSrc,
+    files: [{ path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [],
+      subComponents: [],
+      notes: ['Count badge hidden when count is 0', 'Active tab: bg-active + border-default'],
+    },
+  },
+
   // ── FilterChip ─────────────────────────────────────────────────────────────
 
   FilterChip: {
