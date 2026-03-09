@@ -897,6 +897,16 @@ function TranscriptionSection() {
 
 // ── Customer Section ──────────────────────────────────────────────────────────
 
+const MOCK_CUSTOMER = {
+  name: 'Jordan Elliot',
+  company: 'Acme Corp',
+  initials: 'JE',
+  color: '#9B5EE4',
+  since: 'Oct 2022',
+  totalCalls: 5,
+  avgSentiment: 'Positive',
+}
+
 const CUSTOMER_HISTORY = [
   { agent: { name: 'Sarah Chen',    initials: 'SC', color: '#418FF4' }, sentiment: 'Positive', topic: 'Enterprise renewal — Q2',        date: 'Mar 15, 2023', current: true  },
   { agent: { name: 'Marcus Webb',   initials: 'MW', color: '#6AB18A' }, sentiment: 'Neutral',  topic: 'Onboarding follow-up',           date: 'Jan 22, 2023', current: false },
@@ -906,9 +916,17 @@ const CUSTOMER_HISTORY = [
 ]
 
 const SENTIMENT_STYLE = {
-  Positive: { color: GREEN,  bg: `${GREEN}15`,  label: 'Positive' },
-  Negative: { color: RED,    bg: `${RED}12`,    label: 'Negative' },
-  Neutral:  { color: 'var(--text-secondary)', bg: 'var(--bg-active)', label: 'Neutral' },
+  Positive: { color: GREEN,  bg: `${GREEN}15`,  border: 'none',                              label: 'Positive' },
+  Negative: { color: RED,    bg: `${RED}12`,    border: 'none',                              label: 'Negative' },
+  Neutral:  { color: 'var(--text-secondary)', bg: 'transparent', border: '1px solid var(--border-default)', label: 'Neutral' },
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+      <path d="M7 2h3v3M10 2L6 6M5 3H2.5A.5.5 0 002 3.5v6a.5.5 0 00.5.5h6a.5.5 0 00.5-.5V7" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
 }
 
 function CustomerSection() {
@@ -933,88 +951,200 @@ function CustomerSection() {
         onCollapse={() => setCollapsed(c => !c)}
         collapsed={collapsed}
       />
+
       {!collapsed && (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                {['Agent', 'Sentiment', 'Topic', 'Call Date', 'Call'].map(h => (
-                  <th key={h} style={thStyle}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {CUSTOMER_HISTORY.map((row, i) => {
-                const sent = SENTIMENT_STYLE[row.sentiment] || SENTIMENT_STYLE.Natural
-                const isHovered = hoveredRow === i
-                return (
-                  <tr
-                    key={i}
-                    onMouseEnter={() => setHoveredRow(i)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                    style={{
-                      background: row.current
-                        ? `${COBALT}07`
-                        : isHovered ? 'var(--bg-active)' : 'transparent',
-                      transition: 'background 120ms ease',
-                    }}
-                  >
-                    {/* Agent */}
-                    <td style={{ padding: '10px 14px', fontSize: 13, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", borderBottom: '1px solid var(--border-default)', whiteSpace: 'nowrap' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                        <div style={{
-                          width: 27, height: 27, borderRadius: '50%',
-                          background: row.agent.color,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 9.5, fontWeight: 700, color: '#fff',
-                          fontFamily: "'Byrd', sans-serif", flexShrink: 0,
-                          boxShadow: `0 0 0 2px ${row.agent.color}30`,
-                        }}>
-                          {row.agent.initials}
-                        </div>
-                        <span style={{ color: row.current ? COBALT : 'var(--text-secondary)', fontWeight: row.current ? 500 : 400 }}>
-                          {row.agent.name}
-                        </span>
-                      </div>
-                    </td>
-                    {/* Sentiment badge */}
-                    <td style={{ padding: '10px 14px', borderBottom: '1px solid var(--border-default)', whiteSpace: 'nowrap' }}>
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center',
-                        height: 22, padding: '0 9px', borderRadius: 99,
-                        fontSize: 11.5, fontWeight: 500, fontFamily: "'Byrd', sans-serif",
-                        background: sent.bg, color: sent.color,
-                      }}>
-                        {sent.label}
-                      </span>
-                    </td>
-                    {/* Topic */}
-                    <td style={{ padding: '10px 14px', fontSize: 13, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", borderBottom: '1px solid var(--border-default)', whiteSpace: 'nowrap' }}>
-                      {row.topic}
-                    </td>
-                    {/* Date */}
-                    <td style={{ padding: '10px 14px', fontSize: 13, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", borderBottom: '1px solid var(--border-default)', whiteSpace: 'nowrap' }}>
-                      {row.date}
-                    </td>
-                    {/* Call link */}
-                    <td style={{ padding: '10px 14px', borderBottom: '1px solid var(--border-default)', whiteSpace: 'nowrap' }}>
-                      <span style={{
-                        fontSize: 12.5, fontWeight: row.current ? 600 : 400,
-                        color: row.current ? COBALT : 'var(--text-muted)',
-                        cursor: row.current ? 'pointer' : 'default',
-                        textDecoration: row.current ? 'underline' : 'none',
-                        textDecorationColor: `${COBALT}60`,
+        <>
+          {/* ── Customer identity strip ── */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            padding: '14px 20px',
+            borderBottom: '1px solid var(--border-default)',
+          }}>
+            {/* Avatar */}
+            <div style={{
+              width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+              background: MOCK_CUSTOMER.color,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, fontWeight: 700, color: '#fff',
+              fontFamily: "'Byrd', sans-serif",
+              boxShadow: `0 0 0 3px ${MOCK_CUSTOMER.color}28`,
+            }}>
+              {MOCK_CUSTOMER.initials}
+            </div>
+
+            {/* Name + company */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 14, fontWeight: 600,
+                color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+                lineHeight: 1.3,
+              }}>
+                {MOCK_CUSTOMER.name}
+              </div>
+              <div style={{
+                fontSize: 12, color: 'var(--text-muted)',
+                fontFamily: "'Byrd', sans-serif", marginTop: 1,
+              }}>
+                {MOCK_CUSTOMER.company}
+              </div>
+            </div>
+
+            {/* Stat chips */}
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              {[
+                `${MOCK_CUSTOMER.totalCalls} calls`,
+                `Avg: ${MOCK_CUSTOMER.avgSentiment}`,
+                `Since ${MOCK_CUSTOMER.since}`,
+              ].map(label => (
+                <span key={label} style={{
+                  display: 'inline-flex', alignItems: 'center',
+                  height: 22, padding: '0 9px', borderRadius: 99,
+                  fontSize: 11, fontWeight: 500,
+                  fontFamily: "'Byrd', sans-serif",
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-default)',
+                  background: 'transparent',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* ── History table ── */}
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  {['Agent', 'Sentiment', 'Topic', 'Call Date', ''].map((h, i) => (
+                    <th key={i} style={thStyle}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {CUSTOMER_HISTORY.map((row, i) => {
+                  const sent = SENTIMENT_STYLE[row.sentiment] || SENTIMENT_STYLE.Neutral
+                  const isHovered = hoveredRow === i
+                  const isLast = i === CUSTOMER_HISTORY.length - 1
+                  const bdBottom = isLast ? 'none' : '1px solid var(--border-default)'
+                  return (
+                    <tr
+                      key={i}
+                      onMouseEnter={() => setHoveredRow(i)}
+                      onMouseLeave={() => setHoveredRow(null)}
+                      style={{
+                        background: row.current
+                          ? `${COBALT}0D`
+                          : isHovered ? 'var(--bg-active)' : 'transparent',
+                        transition: 'background 120ms ease',
+                      }}
+                    >
+                      {/* Agent — carries the current-row left accent */}
+                      <td style={{
+                        padding: '10px 14px',
+                        paddingLeft: row.current ? 11 : 14,
+                        borderLeft: row.current ? `3px solid ${COBALT}` : '3px solid transparent',
+                        fontSize: 13, color: 'var(--text-secondary)',
                         fontFamily: "'Byrd', sans-serif",
+                        borderBottom: bdBottom, whiteSpace: 'nowrap',
                       }}>
-                        Open
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                          <div style={{
+                            width: 27, height: 27, borderRadius: '50%',
+                            background: row.agent.color,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 9.5, fontWeight: 700, color: '#fff',
+                            fontFamily: "'Byrd', sans-serif", flexShrink: 0,
+                            boxShadow: `0 0 0 2px ${row.agent.color}30`,
+                          }}>
+                            {row.agent.initials}
+                          </div>
+                          <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>
+                            {row.agent.name}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Sentiment badge */}
+                      <td style={{ padding: '10px 14px', borderBottom: bdBottom, whiteSpace: 'nowrap' }}>
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center',
+                          height: 22, padding: '0 9px', borderRadius: 99,
+                          fontSize: 11.5, fontWeight: 500, fontFamily: "'Byrd', sans-serif",
+                          background: sent.bg, color: sent.color,
+                          border: sent.border, boxSizing: 'border-box',
+                        }}>
+                          {sent.label}
+                        </span>
+                      </td>
+
+                      {/* Topic + "Viewing" badge on current row */}
+                      <td style={{
+                        padding: '10px 14px', fontSize: 13,
+                        color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
+                        borderBottom: bdBottom, whiteSpace: 'nowrap',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          {row.topic}
+                          {row.current && (
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center',
+                              height: 18, padding: '0 7px', borderRadius: 99,
+                              fontSize: 10, fontWeight: 600,
+                              fontFamily: "'Byrd', sans-serif",
+                              background: `${COBALT}18`, color: COBALT,
+                              letterSpacing: '0.02em',
+                            }}>
+                              Viewing
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Date */}
+                      <td style={{
+                        padding: '10px 14px', fontSize: 13,
+                        color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+                        borderBottom: bdBottom, whiteSpace: 'nowrap',
+                      }}>
+                        {row.date}
+                      </td>
+
+                      {/* Open icon button */}
+                      <td style={{ padding: '10px 14px', borderBottom: bdBottom, whiteSpace: 'nowrap' }}>
+                        <button
+                          title="Open call"
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                            width: 26, height: 26, borderRadius: 6,
+                            background: 'none',
+                            border: '1px solid var(--border-default)',
+                            cursor: 'pointer',
+                            color: row.current ? COBALT : 'var(--text-muted)',
+                            transition: 'background 120ms ease, color 120ms ease, border-color 120ms ease',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = 'var(--bg-active)'
+                            e.currentTarget.style.color = COBALT
+                            e.currentTarget.style.borderColor = `${COBALT}50`
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = 'none'
+                            e.currentTarget.style.color = row.current ? COBALT : 'var(--text-muted)'
+                            e.currentTarget.style.borderColor = 'var(--border-default)'
+                          }}
+                        >
+                          <ExternalLinkIcon />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </SectionCard>
   )
