@@ -219,11 +219,12 @@ function Chip({ children, color, bg }) {
 // ── Call Summary ──────────────────────────────────────────────────────────────
 
 const MOCK_TAGS = [
-  { key: 'Call_Type',  value: 'The Type of call' },
-  { key: 'Call_Type',  value: 'The Type of call' },
-  { key: 'Agent_Code', value: 'The agent code in the value' },
-  { key: 'Agent_Name', value: 'The agent code in the value' },
-  { key: 'Agent_Name', value: 'The agent code in the value' },
+  { key: 'Call_Type',        value: 'Renewal Inquiry'     },
+  { key: 'Account_Tier',     value: 'Enterprise'          },
+  { key: 'Region',           value: 'EMEA'                },
+  { key: 'Renewal_Quarter',  value: 'Q2 2023'             },
+  { key: 'Upsell_Flag',      value: 'Premium Analytics'   },
+  { key: 'Escalation',       value: 'Sales Manager'       },
 ]
 
 function TagPill({ text, variant }) {
@@ -249,7 +250,7 @@ function CallSummarySection({ call }) {
   const [showTags, setShowTags] = useState(false)
   const [expanded, setExpanded] = useState(false)
 
-  const summaryText = call.summary || 'The customer reached out to customer service due to login problems. The agent apologized for the inconvenience and promptly requested the necessary account details to address the issue effectively, ensuring a swift resolution to the problem at hand.'
+  const summaryText = call.summary || 'The customer contacted enterprise support ahead of their Q2 contract renewal to discuss volume discount tiers for a 500+ seat license expansion. The agent reviewed current tier pricing, confirmed eligibility for a 15% volume discount, and identified an upsell opportunity for the Premium Analytics add-on. The call was escalated to the regional sales manager to approve a custom pricing package. A follow-up proposal is scheduled for next Wednesday. The customer expressed strong intent to expand across two additional subsidiaries by Q3.'
   const truncated = summaryText.length > 200 && !expanded
 
   return (
@@ -381,7 +382,7 @@ function QuickStatsRow({ call }) {
     {
       icon: <StopwatchIcon />,
       label: 'Handle Time',
-      value: '14 mins',
+      value: '22 mins',
       color: COBALT,
       bg: `${COBALT}0E`,
     },
@@ -395,16 +396,16 @@ function QuickStatsRow({ call }) {
     {
       icon: <ShieldIcon />,
       label: 'Compliance',
-      value: '—',
-      color: 'var(--text-muted)',
-      bg: 'var(--bg-active)',
+      value: '91/100',
+      color: GREEN,
+      bg: `${GREEN}0E`,
     },
     {
       icon: <StarIcon />,
       label: 'Agent Score',
-      value: '82/100',
-      color: GREEN,
-      bg: `${GREEN}0E`,
+      value: '76/100',
+      color: AMBER,
+      bg: `${AMBER}0E`,
     },
   ]
 
@@ -542,18 +543,20 @@ function CallMetricsSection({ call }) {
   const [showMore, setShowMore] = useState(false)
 
   const primaryMetrics = [
-    { label: 'Relevant call?',               value: 'Yes',                                                tooltip: 'Whether this call was relevant to an active opportunity or case' },
-    { label: 'Requested Service',            value: 'Professional advice',                                tooltip: 'The type of service the customer requested during this call' },
-    { label: 'Relevant status lead',         value: 'Lose lead',                                          tooltip: 'The lead status outcome associated with this call' },
-    { label: 'Direction',                    value: call.callType === 'inbound' ? 'Inbound' : 'Outbound', tooltip: 'Whether the call was initiated by the customer or the agent' },
-    { label: 'Reason for losing opportunity',value: 'No open calendar for doctor',                        tooltip: 'The primary reason the opportunity was not converted' },
-    { label: 'Handle time',                  value: '14 mins',                                            tooltip: 'Total duration from call start to resolution, including hold and wrap-up time' },
+    { label: 'Relevant call?',        value: 'Yes',                                                tooltip: 'Whether this call was relevant to an active opportunity or case' },
+    { label: 'Requested Service',     value: 'Volume discount & renewal',                          tooltip: 'The type of service the customer requested during this call' },
+    { label: 'Lead status',           value: 'Active negotiation',                                 tooltip: 'The lead status outcome associated with this call' },
+    { label: 'Direction',             value: call.callType === 'inbound' ? 'Inbound' : 'Outbound', tooltip: 'Whether the call was initiated by the customer or the agent' },
+    { label: 'Deal size',             value: call.proposedPrice ? `$${call.proposedPrice.toLocaleString()}` : '$5,364', tooltip: 'Estimated deal value associated with this opportunity' },
+    { label: 'Handle time',           value: '22 mins',                                            tooltip: 'Total duration from call start to resolution, including hold and wrap-up time' },
   ]
   const extraMetrics = [
-    { label: 'Call date',   value: call.callDate,          tooltip: 'The date this call took place' },
-    { label: 'Destination', value: call.destination,       tooltip: 'Location or region associated with this call' },
-    { label: 'Priority',    value: call.priority || 'N/A', tooltip: 'Urgency level assigned to this call record' },
-    { label: 'Status',      value: call.status || 'N/A',   tooltip: 'Current processing status of this call record' },
+    { label: 'Call date',        value: call.callDate,          tooltip: 'The date this call took place' },
+    { label: 'Account region',   value: call.destination || 'EMEA', tooltip: 'Location or region associated with this account' },
+    { label: 'Priority',         value: call.priority || 'N/A', tooltip: 'Urgency level assigned to this call record' },
+    { label: 'Status',           value: call.status || 'N/A',   tooltip: 'Current processing status of this call record' },
+    { label: 'Next action',      value: 'Send pricing proposal', tooltip: 'Agreed follow-up action coming out of this call' },
+    { label: 'Follow-up date',   value: 'March 22, 2023',       tooltip: 'Scheduled date for the next touchpoint with this account' },
   ]
 
   const visibleMetrics = showMore ? [...primaryMetrics, ...extraMetrics] : primaryMetrics
@@ -597,16 +600,16 @@ function CallMetricsSection({ call }) {
 // ── Agent Evaluation ──────────────────────────────────────────────────────────
 
 const SALES_METRICS = [
-  { label: 'Identifying Sales Opportunities',      score: 89 },
-  { label: 'Handling Objections',                  score: 89 },
-  { label: 'Persuasion and Solution Presentation', score: 89 },
-  { label: 'Creating a Sense of Urgency',          score: 33 },
+  { label: 'Identifying Sales Opportunities',      score: 91 },
+  { label: 'Handling Objections',                  score: 78 },
+  { label: 'Persuasion and Solution Presentation', score: 84 },
+  { label: 'Creating a Sense of Urgency',          score: 52 },
 ]
 const PROF_METRICS = [
-  { label: 'Customer Needs Assessment',  score: 89 },
-  { label: 'Self-Introduction',          score: 89 },
-  { label: 'Positive Engagement',        score: 89 },
-  { label: 'Call Summary and Reflection',score: 89 },
+  { label: 'Customer Needs Assessment',  score: 88 },
+  { label: 'Self-Introduction',          score: 95 },
+  { label: 'Positive Engagement',        score: 81 },
+  { label: 'Call Summary and Reflection',score: 44 },
 ]
 
 function ScoreBar({ label, score }) {
@@ -738,9 +741,9 @@ function AgentEvaluationSection({ call }) {
 // ── Monitored Events ──────────────────────────────────────────────────────────
 
 const MOCK_EVENTS = [
-  { text: 'Agent not following playbook.',       severity: 'warning' },
-  { text: 'Agent not following playbook.',       severity: 'warning' },
-  { text: 'Sentiment score below 2.0 detected.', severity: 'alert'   },
+  { text: 'Agent did not confirm next steps before closing the call.',     severity: 'warning' },
+  { text: 'Customer mentioned a competitor — CompetitorAlert triggered.',  severity: 'warning' },
+  { text: 'Call duration exceeded 20-minute SLA threshold.',               severity: 'alert'   },
 ]
 
 const SEV = {
@@ -797,13 +800,15 @@ function MonitoredEventsSection() {
 // ── Transcription ─────────────────────────────────────────────────────────────
 
 const TRANSCRIPT_LINES = [
-  { speaker: 'Agent',    time: '0:05', text: 'Thank you for calling, how can I help you today?' },
-  { speaker: 'Customer', time: '0:12', text: "Hi, I'm calling because I'm having trouble logging into my account." },
-  { speaker: 'Agent',    time: '0:18', text: "I'm sorry to hear that. Let me pull up your account information. Could you please provide your email address?" },
-  { speaker: 'Customer', time: '0:28', text: 'Sure, my email is michael.johnson@email.com' },
-  { speaker: 'Agent',    time: '0:35', text: 'Thank you. I can see your account here. Let me check what seems to be the issue.' },
-  { speaker: 'Customer', time: '0:42', text: "I've been trying to reset my password but the email isn't arriving." },
-  { speaker: 'Agent',    time: '0:49', text: "I can see your email was flagged. I'll send a new reset link right now and whitelist your domain." },
+  { speaker: 'Agent',    time: '0:08',  text: "Good morning, this is Sarah from enterprise support. How can I help you today?" },
+  { speaker: 'Customer', time: '0:15',  text: "Hi Sarah, I'm calling about our upcoming renewal. We're looking to expand to 500 seats and wanted to understand what discount tiers are available." },
+  { speaker: 'Agent',    time: '0:38',  text: "Absolutely, congratulations on the growth. For 500+ seats you'd qualify for our Enterprise tier — that includes a 15% volume discount off the standard rate and priority SLA coverage." },
+  { speaker: 'Customer', time: '1:02',  text: "That's helpful. We've also been looking at your Premium Analytics add-on — what does that run at enterprise pricing?" },
+  { speaker: 'Agent',    time: '1:18',  text: "Premium Analytics at your tier is $12 per seat per month. Given the volume, I can flag this to your account manager to bundle it into the renewal proposal." },
+  { speaker: 'Customer', time: '1:44',  text: "One thing — we've been evaluating a competitor as well. Their bundle pricing is coming in around 20% lower." },
+  { speaker: 'Agent',    time: '2:01',  text: "I appreciate you sharing that. I want to make sure we're putting together something compelling. Let me escalate this to our regional sales manager so we can put together a custom package for you." },
+  { speaker: 'Customer', time: '2:28',  text: "That sounds good. We'd need the proposal by end of next week to stay on our procurement timeline." },
+  { speaker: 'Agent',    time: '2:42',  text: "Noted — I'll get that across by Wednesday. I'll also include a case study on the analytics ROI from a similar EMEA account." },
 ]
 
 function TranscriptionSection() {
@@ -875,10 +880,11 @@ function TranscriptionSection() {
 // ── Customer Section ──────────────────────────────────────────────────────────
 
 const CUSTOMER_HISTORY = [
-  { agent: { name: 'Michael Johns.',  initials: 'EC', color: '#6B7280' }, sentiment: 'Natural',  topic: 'Credit card payment',  date: '11/11/12', current: false },
-  { agent: { name: 'Michael Johns.',  initials: 'MJ', color: GREEN     }, sentiment: 'Negative', topic: 'Payment problems',     date: '11/11/10', current: true  },
-  { agent: { name: 'Sarah Williams',  initials: 'SW', color: '#D799E2' }, sentiment: 'Natural',  topic: 'Fixing issue',         date: '11/11/9',  current: false },
-  { agent: { name: 'David Martinez',  initials: 'DM', color: AMBER     }, sentiment: 'Positive', topic: 'Vacation order',       date: '11/11/8',  current: false },
+  { agent: { name: 'Sarah Chen',    initials: 'SC', color: '#418FF4' }, sentiment: 'Positive', topic: 'Enterprise renewal — Q2',        date: 'Mar 15, 2023', current: true  },
+  { agent: { name: 'Marcus Webb',   initials: 'MW', color: '#6AB18A' }, sentiment: 'Neutral',  topic: 'Onboarding follow-up',           date: 'Jan 22, 2023', current: false },
+  { agent: { name: 'Sarah Chen',    initials: 'SC', color: '#418FF4' }, sentiment: 'Positive', topic: 'Q1 business review',             date: 'Jan 05, 2023', current: false },
+  { agent: { name: 'Layla Torres',  initials: 'LT', color: '#F3AC9E' }, sentiment: 'Negative', topic: 'SSO integration escalation',     date: 'Nov 18, 2022', current: false },
+  { agent: { name: 'Marcus Webb',   initials: 'MW', color: '#6AB18A' }, sentiment: 'Positive', topic: 'Initial contract signing',       date: 'Oct 03, 2022', current: false },
 ]
 
 const SENTIMENT_STYLE = {
@@ -1010,7 +1016,8 @@ const PRIORITY_META = {
 
 export default function ExplorePage({ call, onBack, isMobile = false, sidebarWidth = 272, sidebarTransition }) {
   const left = isMobile ? 0 : sidebarWidth
-  const topic = call.destination?.toUpperCase() || 'AUTO ACCIDENT CLAIM'
+  const topicWords = call.summary ? call.summary.split(' ').slice(0, 6).join(' ').replace(/[.,]/g, '') : 'Enterprise Licensing Inquiry — Q2 Renewal'
+  const topic = topicWords
   const statusMeta   = STATUS_META[call.status]
   const priorityMeta = PRIORITY_META[call.priority]
 
@@ -1070,13 +1077,12 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
             borderRadius: 14,
             overflow: 'hidden',
             boxShadow: SHADOW,
-            borderTop: `3px solid ${CORAL}`,
           }}>
             <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em',
-                  color: CORAL, fontFamily: "'Byrd', sans-serif",
+                  color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
                   textTransform: 'uppercase', marginBottom: 6,
                 }}>
                   TOPIC
