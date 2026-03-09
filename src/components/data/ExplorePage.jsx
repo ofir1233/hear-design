@@ -545,7 +545,7 @@ function AgentEvaluationSection({ call }) {
             {/* Agent card */}
             <div style={{
               flexShrink: 0, width: 118,
-              background: `linear-gradient(160deg, ${avatarColor}18 0%, var(--bg-canvas) 60%)`,
+              background: 'var(--bg-canvas)',
               border: '1px solid var(--border-default)',
               borderRadius: 10,
               display: 'flex', flexDirection: 'column', alignItems: 'center',
