@@ -13,5 +13,7 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+    // Serve index.html for all non-asset routes (SPA fallback)
+    historyApiFallback: true,
   },
 })

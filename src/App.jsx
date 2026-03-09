@@ -89,14 +89,55 @@ function useIsMobile() {
 }
 
 
+// ── URL-based router helpers ────────────────────────────────────────────────
+
+function parsePath() {
+  // pathname looks like: /dashboard, /data, /data/explore/call-id, /reports, etc.
+  const parts = window.location.pathname.replace(/^\//, '').split('/')
+  const page = parts[0] || 'dashboard'
+  const sub  = parts[1] || null   // e.g. 'explore'
+  const id   = parts[2] || null   // e.g. call-id
+  return { page, sub, id }
+}
+
+function navigate(path, state = {}) {
+  window.history.pushState(state, '', path)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
 function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectChange, userId, profileId }) {
   const greeting = getGreeting()
   const userName = localStorage.getItem('hear-user-name') || 'there'
   const fullGreeting = `${greeting}, ${userName}.`
   const requests = buildRequestCards(companyConfig)
   const isMobile = useIsMobile()
-  const [activePage, setActivePage] = useState(() => window.__hearActivePage || 'dashboard')
-  const [selectedCall, setSelectedCall] = useState(null)
+
+  // ── URL-driven page state ────────────────────────────────────────
+  const [route, setRoute] = useState(parsePath)
+  const activePage   = route.page
+  const selectedCall = route.sub === 'explore' && route.id
+    ? JSON.parse(sessionStorage.getItem(`hear-call-${route.id}`) || 'null')
+    : null
+
+  useEffect(() => {
+    function onPop() { setRoute(parsePath()) }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
+  function setActivePage(page) {
+    navigate(`/${page}`)
+  }
+
+  function openCall(call) {
+    // Persist call data in sessionStorage keyed by id so refresh works
+    sessionStorage.setItem(`hear-call-${call.id}`, JSON.stringify(call))
+    navigate(`/data/explore/${call.id}`, { call })
+  }
+
+  function closeExplore() {
+    navigate('/data')
+  }
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [submitted, setSubmitted]     = useState(false)
@@ -134,7 +175,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
     window.dispatchEvent(new CustomEvent('hear:nav-changed', { detail: activePage }))
   }, [activePage])
   useEffect(() => {
-    function onInspectorNav(e) { setActivePage(e.detail) }
+    function onInspectorNav(e) { navigate(`/${e.detail}`) }
     window.addEventListener('hear:nav', onInspectorNav)
     return () => window.removeEventListener('hear:nav', onInspectorNav)
   }, [])
@@ -422,6 +463,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
     setSettled(false)
     setFixedStart(null)
     setInputOffset(0)
+    navigate('/dashboard')
   }
 
   function handleSubmit(text) {
@@ -497,8 +539,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
           if (page === 'dashboard' && activePage === 'dashboard') {
             handleNewChat()
           } else {
-            setActivePage(page)
-            if (page !== 'data') setSelectedCall(null)
+            navigate(`/${page}`)
           }
         }}
         collapsed={sidebarCollapsed}
@@ -545,7 +586,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
       {activePage === 'data' && selectedCall ? (
         <ExplorePage
           call={selectedCall}
-          onBack={() => setSelectedCall(null)}
+          onBack={closeExplore}
           isMobile={isMobile}
           sidebarWidth={effectiveSidebarWidth}
           sidebarTransition={sidebarTransition}
@@ -556,7 +597,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
           sidebarWidth={effectiveSidebarWidth}
           sidebarTransition={sidebarTransition}
           companyConfig={companyConfig}
-          onOpenCall={(call) => setSelectedCall(call)}
+          onOpenCall={openCall}
         />
       ) : activePage === 'reports' ? (
         <ReportsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
