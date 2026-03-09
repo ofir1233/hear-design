@@ -330,6 +330,128 @@ function CallSummarySection({ call }) {
   )
 }
 
+// ── Quick Stats Row ───────────────────────────────────────────────────────────
+
+function StopwatchIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <circle cx="11" cy="12.5" r="7.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M11 8.5V12.5l2.5 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8.5 2.5h5M11 2.5V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function SentimentIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <circle cx="11" cy="11" r="8.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M7.5 13.5c.8 1.5 5.7 1.5 7 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="8.5" cy="9.5" r="1" fill="currentColor" />
+      <circle cx="13.5" cy="9.5" r="1" fill="currentColor" />
+    </svg>
+  )
+}
+
+function ShieldIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <path d="M11 2.5L3.5 5.5v5c0 4.5 3.5 7.5 7.5 8.5 4-1 7.5-4 7.5-8.5v-5L11 2.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M7.5 11l2.5 2.5 4.5-4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function StarIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+      <path d="M11 3l2.09 4.26L18 8.07l-3.5 3.41.83 4.82L11 14l-4.33 2.3.83-4.82L4 8.07l4.91-.81L11 3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+const SENTIMENT_COLOR = {
+  Positive: GREEN, Negative: RED, Neutral: 'var(--text-secondary)', Natural: 'var(--text-secondary)',
+}
+
+function QuickStatsRow({ call }) {
+  const sentimentColor = SENTIMENT_COLOR['Neutral'] // mock
+
+  const stats = [
+    {
+      icon: <StopwatchIcon />,
+      label: 'Handle Time',
+      value: '14 mins',
+      color: COBALT,
+      bg: `${COBALT}0E`,
+    },
+    {
+      icon: <SentimentIcon />,
+      label: 'Overall Sentiment',
+      value: 'Neutral',
+      color: sentimentColor,
+      bg: 'var(--bg-active)',
+    },
+    {
+      icon: <ShieldIcon />,
+      label: 'Compliance',
+      value: '—',
+      color: 'var(--text-muted)',
+      bg: 'var(--bg-active)',
+    },
+    {
+      icon: <StarIcon />,
+      label: 'Agent Score',
+      value: '82/100',
+      color: GREEN,
+      bg: `${GREEN}0E`,
+    },
+  ]
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+      {stats.map((s, i) => (
+        <div key={i} style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 12,
+          boxShadow: SHADOW,
+          padding: '16px 18px',
+          display: 'flex', flexDirection: 'column', gap: 10,
+        }}>
+          {/* Icon bubble */}
+          <div style={{
+            width: 38, height: 38, borderRadius: 10,
+            background: s.bg,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: s.color === 'var(--text-secondary)' || s.color === 'var(--text-muted)' ? 'var(--text-secondary)' : s.color,
+          }}>
+            {s.icon}
+          </div>
+          {/* Label */}
+          <div>
+            <div style={{
+              fontSize: 9.5, fontWeight: 700, letterSpacing: '0.09em',
+              color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+              textTransform: 'uppercase', marginBottom: 4,
+            }}>
+              {s.label}
+            </div>
+            <div style={{
+              fontSize: 18, fontWeight: 700,
+              color: s.color,
+              fontFamily: "'Byrd', sans-serif",
+              lineHeight: 1,
+            }}>
+              {s.value}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── Call Metrics ──────────────────────────────────────────────────────────────
 
 function MetricTooltip({ text }) {
@@ -1024,6 +1146,7 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
           </div>
 
           <CallSummarySection call={call} />
+          <QuickStatsRow call={call} />
           <CallMetricsSection call={call} />
           <AgentEvaluationSection call={call} />
           <MonitoredEventsSection />
