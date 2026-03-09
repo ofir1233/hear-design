@@ -647,8 +647,6 @@ function CallMetricsSection({ call }) {
     { label: 'Follow-up date',   value: 'March 22, 2023',       tooltip: 'Scheduled date for the next touchpoint with this account' },
   ]
 
-  const visibleMetrics = showMore ? [...primaryMetrics, ...extraMetrics] : primaryMetrics
-
   return (
     <SectionCard data-inspector="CallMetricsSection">
       <SectionHeader
@@ -659,16 +657,39 @@ function CallMetricsSection({ call }) {
       />
       {!collapsed && (
         <div style={{ padding: '16px 20px 18px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-            {visibleMetrics.map((m, i) => (
+          {/* Primary metrics — always visible */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {primaryMetrics.map((m, i) => (
               <MetricCell key={i} label={m.label} value={m.value} tooltip={m.tooltip} />
             ))}
           </div>
+
+          {/* Extra metrics — animated reveal */}
+          <div style={{
+            display: 'grid',
+            gridTemplateRows: showMore ? '1fr' : '0fr',
+            transition: 'grid-template-rows 340ms cubic-bezier(0.22,1,0.36,1)',
+          }}>
+            <div style={{ overflow: 'hidden' }}>
+              <div style={{
+                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8,
+                paddingTop: 8,
+                opacity: showMore ? 1 : 0,
+                transform: showMore ? 'translateY(0)' : 'translateY(-6px)',
+                transition: 'opacity 260ms ease, transform 340ms cubic-bezier(0.22,1,0.36,1)',
+              }}>
+                {extraMetrics.map((m, i) => (
+                  <MetricCell key={i} label={m.label} value={m.value} tooltip={m.tooltip} />
+                ))}
+              </div>
+            </div>
+          </div>
+
           <button
             onClick={() => setShowMore(s => !s)}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-              width: '100%', height: 32,
+              width: '100%', height: 32, marginTop: 10,
               background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
               borderRadius: 8, cursor: 'pointer',
               fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
