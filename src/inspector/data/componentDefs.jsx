@@ -900,7 +900,7 @@ export const COMPONENT_DEFS = {
         { name: 'Red (alert events, negative sentiment, low scores)', hex: '#EF4444' },
         { name: 'Coral (brand, comments badge)', hex: '#FF7056' },
       ],
-      subComponents: ['CallSummarySection', 'QuickStatsRow', 'MetricCell', 'CallMetricsSection', 'AgentEvaluationSection', 'MonitoredEventsSection', 'TranscriptionSection', 'CustomerSection', 'SectionCard', 'SectionHeader', 'OutlineBtn', 'IconBtn'],
+      subComponents: ['CallSummarySection', 'QuickStatsRow', 'CallMetricsSection', 'MetricCell', 'AgentEvaluationSection', 'ScoreBar', 'MonitoredEventsSection', 'TranscriptionSection', 'CustomerSection', 'SectionCard', 'SectionHeader', 'OutlineBtn', 'IconBtn'],
       notes: [
         'Topic title derived from first 6 words of call.summary',
         'URL routing: /data/explore/:id — App.jsx saves call to sessionStorage on navigate',
@@ -913,7 +913,7 @@ export const COMPONENT_DEFS = {
 
   CallSummarySection: {
     tier: 'Molecule',
-    description: 'AI-generated summary of the call with a Show/Hide tags toggle revealing key→value tag pairs. Four action icons: Comment, Like, Copy, Edit. Text truncates at 200 chars with "Show all" expand.',
+    description: 'AI-generated call summary with an animated Show/Hide tags toggle (grid-template-rows expand + opacity/translateY fade). Four ChatBubble-style action icons (no border/bg, hover → bg-active): Comment, Like, Copy, Edit. Text truncates at 200 chars with an inline "Show all / Show less" toggle.',
     props: [
       { name: 'call', type: 'object', default: '{ summary: string, …}' },
     ],
@@ -926,6 +926,37 @@ export const COMPONENT_DEFS = {
           </div>, 500,
         ),
       },
+      {
+        label: 'Tags visible',
+        preview: () => center(
+          <div style={{ width: 500, background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px' }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>Call summary</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 26, padding: '0 10px', background: 'rgba(23,121,247,0.08)', border: '1px solid rgba(23,121,247,0.3)', borderRadius: 7, fontSize: 11, color: '#1779F7', fontFamily: "'Byrd',sans-serif" }}>
+                  Hide tags ▲
+                </div>
+              </div>
+            </div>
+            <div style={{ padding: '0 20px 16px' }}>
+              <p style={{ margin: '0 0 12px', fontSize: 13.5, lineHeight: 1.7, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>
+                Customer contacted enterprise support ahead of Q2 renewal…
+              </p>
+              <div style={{ paddingTop: 12, borderTop: '1px solid var(--border-default)' }}>
+                <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.1em', color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif", textTransform: 'uppercase', marginBottom: 9 }}>TAGS</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                  {[['Call_Type','Renewal Inquiry'],['Account_Tier','Enterprise'],['Region','EMEA'],['Renewal_Quarter','Q2 2023'],['Upsell_Flag','Premium Analytics']].map(([k,v],i) => (
+                    <div key={i} style={{ display: 'inline-flex' }}>
+                      <span style={{ height: 24, padding: '0 9px', borderRadius: '6px 0 0 6px', fontSize: 11, fontFamily: "'Byrd',sans-serif", border: '1px solid var(--border-default)', background: 'transparent', color: 'var(--text-secondary)', fontWeight: 500, display: 'inline-flex', alignItems: 'center' }}>{k}</span>
+                      <span style={{ height: 24, padding: '0 9px', borderRadius: '0 6px 6px 0', fontSize: 11, fontFamily: "'Byrd',sans-serif", border: '1px solid rgba(23,121,247,0.25)', background: 'rgba(23,121,247,0.07)', color: '#1779F7', display: 'inline-flex', alignItems: 'center' }}>{v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ),
+      },
     ],
     snippet: () => `// Internal to ExplorePage — no standalone usage
 // Tags toggled via showTags state (useState)
@@ -936,9 +967,11 @@ export const COMPONENT_DEFS = {
       colors: [{ name: 'Cobalt (Show tags active, Show all link)', hex: '#1779F7' }],
       subComponents: ['SectionCard', 'SectionHeader', 'IconBtn', 'TagPill'],
       notes: [
-        'Tags: key pill (neutral bg) + value pill (blue tint) rendered as adjacent spans',
-        'Truncation threshold: 200 chars — controlled by expanded state',
-        '"Show all" / "Show less" inline toggle at end of paragraph',
+        'Tags panel: animated via grid-template-rows 0fr↔1fr (280ms spring) + opacity/translateY(-6px→0) fade',
+        'Key pills: transparent bg + border only; value pills: cobalt tint at 7% opacity',
+        'Action buttons (Comment/Like/Copy/Edit): ChatBubble style — background:none, border:none, padding:4px, hover→bg-active',
+        'Truncation threshold: 200 chars — controlled by expanded state (separate from showTags)',
+        '"Show all" / "Show less" inline toggle rendered at end of paragraph in cobalt',
       ],
     },
   },
@@ -1025,6 +1058,101 @@ export const COMPONENT_DEFS = {
         'Hover: background → --bg-active + box-shadow 0 1px 4px rgba(0,0,0,0.07)',
         'Tooltip: position:fixed anchored to ⓘ icon via getBoundingClientRect',
         'data-inspector="MetricCell"',
+      ],
+    },
+  },
+
+  CallMetricsSection: {
+    tier: 'Molecule',
+    description: '2-column grid of MetricCells. Shows 6 primary metrics by default; "Show more" expands to 12. Collapsible via section header chevron. "Edit metrics" outline button in header.',
+    props: [
+      { name: 'call', type: 'object', default: 'row data from DataPage grid' },
+    ],
+    states: [
+      {
+        label: 'Default (6 metrics)',
+        preview: () => center(
+          <div style={{ width: 440 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {[
+                ['Relevant call?', 'Yes'],
+                ['Requested Service', 'Volume discount & renewal'],
+                ['Lead status', 'Active negotiation'],
+                ['Direction', 'Inbound'],
+                ['Deal size', '$5,364'],
+                ['Handle time', '22 mins'],
+              ].map(([l, v], i) => (
+                <div key={i} style={{ padding: '12px 14px', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)', borderRadius: 9 }}>
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 5, fontFamily: "'Byrd',sans-serif" }}>{l}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif", lineHeight: 1 }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 8, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)', borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif", gap: 5 }}>
+              Show more ▼
+            </div>
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `// Internal to ExplorePage\n// data-inspector="CallMetricsSection"\n<CallMetricsSection call={call} />`,
+    source: ExplorePageSrc,
+    files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
+    breakdown: {
+      subComponents: ['SectionCard', 'SectionHeader', 'MetricCell', 'MetricTooltip', 'OutlineBtn'],
+      notes: [
+        'primaryMetrics (6 items) always shown; extraMetrics (6 more) revealed by "Show more"',
+        '"Show more/less" button at bottom — no animation (no height transition currently)',
+        'data-inspector="CallMetricsSection" on SectionCard root',
+        'All metric values are static mock — wire to call.metrics object per call.id in production',
+      ],
+    },
+  },
+
+  ScoreBar: {
+    tier: 'Atom',
+    description: 'Labeled progress bar for a scored evaluation metric. Color-coded by threshold: ≥70 = cobalt, ≥40 = amber, <40 = red. Track uses matching color at low opacity. Width animates on mount.',
+    props: [
+      { name: 'label', type: 'string', default: '"Handling Objections"' },
+      { name: 'score', type: 'number', default: '78' },
+    ],
+    states: [
+      {
+        label: 'All 3 thresholds',
+        preview: () => center(
+          <div style={{ width: 300 }}>
+            {[['Identifying Opportunities', 91], ['Handling Objections', 78], ['Creating Urgency', 52], ['Call Reflection', 28]].map(([l, s]) => (
+              <div key={l} style={{ marginBottom: 11 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 5 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>{l}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: s >= 70 ? '#1779F7' : s >= 40 ? '#F59E0B' : '#EF4444', fontFamily: "'Byrd',sans-serif", flexShrink: 0, marginLeft: 8 }}>
+                    {s}<span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 10 }}>/100</span>
+                  </span>
+                </div>
+                <div style={{ height: 5, background: s >= 70 ? 'rgba(23,121,247,0.1)' : s >= 40 ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.1)', borderRadius: 99, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${s}%`, background: s >= 70 ? '#1779F7' : s >= 40 ? '#F59E0B' : '#EF4444', borderRadius: 99 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `<ScoreBar label="Identifying Sales Opportunities" score={91} />`,
+    source: ExplorePageSrc,
+    files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Cobalt (score ≥70)', hex: '#1779F7' },
+        { name: 'Amber (score ≥40)',  hex: '#F59E0B' },
+        { name: 'Red (score <40)',    hex: '#EF4444' },
+      ],
+      subComponents: [],
+      notes: [
+        'Bar width animates to score% on mount: 700ms cubic-bezier(0.22,1,0.36,1)',
+        'Track bg: matching color at ~10–12% opacity',
+        'Score suffix "/100" uses smaller muted text next to the colored score value',
+        'Used in AgentEvaluationSection — SALES_METRICS and PROF_METRICS columns',
       ],
     },
   },
@@ -1237,7 +1365,8 @@ export const COMPONENT_DEFS = {
       subComponents: ['SectionCard', 'SectionHeader', 'OutlineBtn'],
       notes: [
         'current: true row → blue highlight bg + blue agent name + underlined Open link',
-        'Sentiment badge: colored pill — Positive (green), Negative (red), Neutral (grey)',
+        'Sentiment badge: colored pill — Positive (green), Negative (red), Neutral (grey/muted)',
+        'SENTIMENT_STYLE keys: Positive | Negative | Neutral — fallback not needed',
         'Row hover: background → --bg-active via onMouseEnter/Leave',
         'CUSTOMER_HISTORY is a module constant — replace with API customer call history',
       ],

@@ -893,7 +893,7 @@ const CUSTOMER_HISTORY = [
 const SENTIMENT_STYLE = {
   Positive: { color: GREEN,  bg: `${GREEN}15`,  label: 'Positive' },
   Negative: { color: RED,    bg: `${RED}12`,    label: 'Negative' },
-  Natural:  { color: 'var(--text-muted)', bg: 'var(--bg-active)', label: 'Natural' },
+  Neutral:  { color: 'var(--text-secondary)', bg: 'var(--bg-active)', label: 'Neutral' },
 }
 
 function CustomerSection() {
