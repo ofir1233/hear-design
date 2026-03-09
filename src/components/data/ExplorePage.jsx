@@ -26,6 +26,14 @@ function BackIcon() {
   )
 }
 
+function CommentIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M4 4.5A1.5 1.5 0 015.5 3h13A1.5 1.5 0 0120 4.5v10A1.5 1.5 0 0118.5 16H13l-4 4v-4H5.5A1.5 1.5 0 014 14.5v-10z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function ThumbDownIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
