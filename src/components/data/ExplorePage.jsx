@@ -256,7 +256,7 @@ function TagPill({ text, variant }) {
   )
 }
 
-function CallSummarySection({ call }) {
+function HeroCard({ call, topic, statusMeta, priorityMeta }) {
   const [showTags, setShowTags] = useState(false)
   const [expanded, setExpanded] = useState(false)
 
@@ -264,7 +264,79 @@ function CallSummarySection({ call }) {
   const truncated = summaryText.length > 200 && !expanded
 
   return (
-    <SectionCard data-inspector="CallSummarySection">
+    <SectionCard data-inspector="HeroCard">
+      {/* ── Topic + actions ── */}
+      <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em',
+            color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+            textTransform: 'uppercase', marginBottom: 6,
+          }}>
+            TOPIC
+          </div>
+          <h1 style={{
+            margin: '0 0 12px', fontSize: 20, fontWeight: 700,
+            color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+            lineHeight: 1.2, letterSpacing: '-0.02em',
+          }}>
+            {topic}
+          </h1>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {statusMeta && (
+              <Chip color={statusMeta.color} bg={statusMeta.bg}>{statusMeta.label}</Chip>
+            )}
+            {priorityMeta && call.priority && (
+              <Chip color={priorityMeta.color} bg={priorityMeta.bg}>{call.priority}</Chip>
+            )}
+            {call.callDate && <Chip>{call.callDate}</Chip>}
+            {call.callType && (
+              <Chip>{call.callType === 'inbound' ? '↙ Inbound' : '↗ Outbound'}</Chip>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0, paddingTop: 2 }}>
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            height: 32, padding: '0 13px',
+            background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
+            borderRadius: 8, cursor: 'pointer',
+            fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
+            position: 'relative', transition: 'background 130ms ease',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-canvas)' }}
+          >
+            <CommentIcon /> Comments
+            <span style={{
+              position: 'absolute', top: -7, right: -7,
+              width: 17, height: 17, borderRadius: '50%',
+              background: CORAL, color: '#fff',
+              fontSize: 9, fontWeight: 700, fontFamily: "'Byrd', sans-serif",
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>3</span>
+          </button>
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            height: 32, padding: '0 13px',
+            background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
+            borderRadius: 8, cursor: 'pointer',
+            fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
+            transition: 'background 130ms ease',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-canvas)' }}
+          >
+            <ShareIcon /> Share
+          </button>
+        </div>
+      </div>
+
+      {/* ── Divider ── */}
+      <div style={{ borderTop: '1px solid var(--border-default)' }} />
+
+      {/* ── Call summary ── */}
       <SectionHeader
         title="Call summary"
         divider={false}
@@ -280,8 +352,7 @@ function CallSummarySection({ call }) {
                 borderRadius: 7,
                 fontSize: 11, color: showTags ? COBALT : 'var(--text-secondary)',
                 fontFamily: "'Byrd', sans-serif",
-                cursor: 'pointer',
-                transition: 'all 150ms ease',
+                cursor: 'pointer', transition: 'all 150ms ease',
               }}
             >
               {showTags ? 'Hide tags' : 'Show tags'}
@@ -318,8 +389,7 @@ function CallSummarySection({ call }) {
         }}>
           <div style={{ overflow: 'hidden' }}>
             <div style={{
-              marginTop: 10,
-              paddingTop: 12,
+              marginTop: 10, paddingTop: 12,
               borderTop: '1px solid var(--border-default)',
               opacity: showTags ? 1 : 0,
               transform: showTags ? 'translateY(0)' : 'translateY(-6px)',
@@ -1218,88 +1288,7 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
       <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '22px 28px 48px' }}>
         <div style={{ maxWidth: 780, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-          {/* ── Hero topic card ────────────────────────────────────────── */}
-          <div style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-default)',
-            borderRadius: 14,
-            overflow: 'hidden',
-            boxShadow: SHADOW,
-          }}>
-            <div style={{ padding: '20px 24px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{
-                  fontSize: 9.5, fontWeight: 700, letterSpacing: '0.12em',
-                  color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
-                  textTransform: 'uppercase', marginBottom: 6,
-                }}>
-                  TOPIC
-                </div>
-                <h1 style={{
-                  margin: '0 0 12px', fontSize: 20, fontWeight: 700,
-                  color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
-                  lineHeight: 1.2, letterSpacing: '-0.02em',
-                }}>
-                  {topic}
-                </h1>
-                {/* Meta chips row */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {statusMeta && (
-                    <Chip color={statusMeta.color} bg={statusMeta.bg}>{statusMeta.label}</Chip>
-                  )}
-                  {priorityMeta && call.priority && (
-                    <Chip color={priorityMeta.color} bg={priorityMeta.bg}>{call.priority}</Chip>
-                  )}
-                  {call.callDate && (
-                    <Chip>{call.callDate}</Chip>
-                  )}
-                  {call.callType && (
-                    <Chip>{call.callType === 'inbound' ? '↙ Inbound' : '↗ Outbound'}</Chip>
-                  )}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0, paddingTop: 2 }}>
-                <button style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  height: 32, padding: '0 13px',
-                  background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
-                  borderRadius: 8, cursor: 'pointer',
-                  fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
-                  position: 'relative',
-                  transition: 'background 130ms ease',
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-canvas)' }}
-                >
-                  <CommentIcon /> Comments
-                  <span style={{
-                    position: 'absolute', top: -7, right: -7,
-                    width: 17, height: 17, borderRadius: '50%',
-                    background: CORAL, color: '#fff',
-                    fontSize: 9, fontWeight: 700, fontFamily: "'Byrd', sans-serif",
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>3</span>
-                </button>
-                <button style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  height: 32, padding: '0 13px',
-                  background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
-                  borderRadius: 8, cursor: 'pointer',
-                  fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
-                  transition: 'background 130ms ease',
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-canvas)' }}
-                >
-                  <ShareIcon /> Share
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <CallSummarySection call={call} />
+          <HeroCard call={call} topic={topic} statusMeta={statusMeta} priorityMeta={priorityMeta} />
           <QuickStatsRow call={call} />
           <CallMetricsSection call={call} />
           <AgentEvaluationSection call={call} />
