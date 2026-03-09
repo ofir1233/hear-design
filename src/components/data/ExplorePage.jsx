@@ -207,13 +207,16 @@ function IconBtn({ children, title, onClick }) {
 }
 
 function Chip({ children, color, bg }) {
+  const isPlain = !bg
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center',
       height: 22, padding: '0 9px',
       borderRadius: 99,
       fontSize: 11, fontWeight: 500, fontFamily: "'Byrd', sans-serif",
-      background: bg || 'var(--bg-active)',
+      background: bg || 'transparent',
+      border: isPlain ? '1px solid var(--border-default)' : 'none',
+      boxSizing: 'border-box',
       color: color || 'var(--text-secondary)',
       whiteSpace: 'nowrap',
       letterSpacing: '0.01em',
@@ -1031,7 +1034,7 @@ const PRIORITY_META = {
 
 export default function ExplorePage({ call, onBack, isMobile = false, sidebarWidth = 272, sidebarTransition }) {
   const left = isMobile ? 0 : sidebarWidth
-  const topicWords = call.summary ? call.summary.split(' ').slice(0, 6).join(' ').replace(/[.,]/g, '') : 'Enterprise Licensing Inquiry — Q2 Renewal'
+  const topicWords = call.summary ? call.summary.split(' ').slice(0, 6).join(' ').replace(/[.,\u2014\u2013-]+$/, '').trim() : 'Enterprise Licensing Inquiry — Q2 Renewal'
   const topic = topicWords
   const statusMeta   = STATUS_META[call.status]
   const priorityMeta = PRIORITY_META[call.priority]
