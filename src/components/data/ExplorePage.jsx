@@ -28,33 +28,28 @@ function BackIcon() {
 
 function CommentIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-      <path d="M2 2.5A1 1 0 013 1.5h9a1 1 0 011 1v6.5a1 1 0 01-1 1H8.5L6 12V10H3a1 1 0 01-1-1V2.5z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M4 4.5A1.5 1.5 0 015.5 3h13A1.5 1.5 0 0120 4.5v10A1.5 1.5 0 0118.5 16H13l-4 4v-4H5.5A1.5 1.5 0 014 14.5v-10z" stroke="#9ca3af" strokeWidth="1.4" strokeLinejoin="round" />
     </svg>
   )
 }
 
 function ThumbUpIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-      <path d="M4.5 8l2-5c.55 0 1.5.4 1.5 1.5V6.5h3c.6 0 1 .5.9 1.1l-.65 3.5c-.1.5-.5.9-1 .9H4.5m0-4V12m0-4H3a1 1 0 00-1 1V11a1 1 0 001 1h1.5" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M13.0637 6.63346C13.3964 6.14544 14.0445 5.85642 14.6917 6.07286L14.8305 6.12727L15.0219 6.22141C15.9547 6.72081 16.5166 7.64658 16.5166 8.74691L16.5087 8.98533C16.4917 9.23887 16.4467 9.48335 16.384 9.71773C17.8917 9.79833 18.999 11.1995 18.704 12.7011L18.1129 15.7102C17.9398 16.5906 17.1676 17.2263 16.2696 17.2263L11.5084 17.2263C11.0742 17.2263 10.6754 17.0776 10.3573 16.8302C10.0222 17.1412 9.57489 17.3331 9.08198 17.3333L7.12627 17.3333C6.12119 17.3333 5.30103 16.5438 5.25064 15.5519L5.2482 15.4553L5.2482 10.9349C5.2482 9.8977 6.08904 9.05686 7.12627 9.05686L9.08198 9.05686C9.71988 9.05717 10.2832 9.37624 10.6226 9.86323C11.4507 9.43874 11.7342 9.04471 11.9627 8.60507L11.9706 8.58918L11.9792 8.57389L12.9977 6.74106L13.0637 6.63346ZM7.12627 10.3089C6.78052 10.3089 6.50024 10.5892 6.50024 10.9349L6.50024 15.4553C6.5004 15.8009 6.78062 16.0813 7.12627 16.0813L9.08137 16.0813C9.42687 16.0811 9.70724 15.8008 9.70739 15.4553L9.70739 10.9349C9.70739 10.5893 9.42697 10.3091 9.08137 10.3089L7.12627 10.3089ZM14.317 7.26927C14.2332 7.2316 14.1366 7.26908 14.092 7.34936L13.0735 9.18219C12.6916 9.91696 12.1654 10.5415 10.8824 11.1293L10.8824 15.3483C10.8825 15.6939 11.1627 15.9743 11.5084 15.9743L16.2696 15.9743C16.5688 15.9743 16.8263 15.7622 16.884 15.4687L17.4752 12.4596C17.6272 11.6862 17.0352 10.9663 16.247 10.9661L14.298 10.9661C14.7923 10.3875 15.2644 9.58937 15.2646 8.74691C15.2646 8.06638 14.9146 7.53815 14.317 7.26927Z" fill="#9ca3af"/></svg>
   )
 }
 
 function CopyIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-      <rect x="4.5" y="4.5" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.25" />
-      <path d="M10.5 4.5V3.5A1 1 0 009.5 2.5h-6a1 1 0 00-1 1v6a1 1 0 001 1h1" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
-    </svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M11.8665 9.33332C12.2289 9.33332 12.5411 9.3326 12.7969 9.3535C13.0604 9.37504 13.3227 9.42292 13.5749 9.55141C13.9506 9.74295 14.2567 10.0486 14.4486 10.4251C14.577 10.6772 14.625 10.9392 14.6465 11.2025C14.6674 11.458 14.6667 11.7698 14.6667 12.1315V15.8685C14.6667 16.23 14.6673 16.5415 14.6465 16.7969C14.625 17.0601 14.577 17.3221 14.4486 17.5742C14.257 17.9502 13.9512 18.2567 13.5749 18.4486C13.3228 18.577 13.0607 18.6249 12.7975 18.6465C12.5421 18.6673 12.2307 18.6666 11.8691 18.6666H8.13151C7.76987 18.6666 7.45799 18.6673 7.20247 18.6465C6.93925 18.6249 6.6772 18.577 6.42513 18.4486C6.0486 18.2567 5.74297 17.9506 5.55143 17.5749C5.42294 17.3227 5.37506 17.0604 5.35351 16.7969C5.34306 16.669 5.33842 16.5269 5.33594 16.3717L5.33333 15.8665V12.1334C5.33333 11.7711 5.33262 11.4589 5.35351 11.2031C5.37505 10.9396 5.42291 10.6773 5.55143 10.4251C5.74316 10.0489 6.04889 9.74315 6.42513 9.55141C6.67736 9.4229 6.93961 9.37503 7.20312 9.3535C7.45896 9.3326 7.77109 9.33332 8.13346 9.33332H11.8665ZM8.13346 10.6666C7.7491 10.6666 7.50082 10.6675 7.31185 10.6829C7.13065 10.6977 7.06352 10.7228 7.0306 10.7396C6.90519 10.8035 6.80349 10.9052 6.73958 11.0306C6.72281 11.0635 6.69774 11.1306 6.68294 11.3118C6.66751 11.5008 6.66666 11.7491 6.66666 12.1334V15.8665L6.66862 16.3509C6.67068 16.4845 6.67523 16.5937 6.68294 16.6881C6.69773 16.8691 6.72277 16.9364 6.73958 16.9694C6.80369 17.0951 6.9056 17.1974 7.0306 17.2611C7.06346 17.2778 7.13063 17.3029 7.3112 17.3177C7.49982 17.3331 7.74788 17.3333 8.13151 17.3333H11.8691C12.2527 17.3333 12.5003 17.3331 12.6888 17.3177C12.8694 17.3029 12.9365 17.2778 12.9694 17.2611C13.0946 17.1972 13.197 17.0944 13.2611 16.9687C13.2778 16.9358 13.303 16.8686 13.3177 16.6888C13.3331 16.5003 13.3333 16.2521 13.3333 15.8685V12.1315C13.3333 11.7479 13.3331 11.4998 13.3177 11.3112C13.3029 11.1306 13.2778 11.0635 13.2611 11.0306C13.1974 10.9056 13.0951 10.8037 12.9694 10.7396C12.9364 10.7228 12.8691 10.6977 12.6881 10.6829C12.4993 10.6675 12.2509 10.6666 11.8665 10.6666H8.13346ZM15.8665 5.33332C16.2289 5.33332 16.5411 5.3326 16.7969 5.3535C17.0604 5.37504 17.3227 5.42292 17.5749 5.55141C17.9506 5.74295 18.2567 6.04858 18.4486 6.42511C18.5771 6.67735 18.6249 6.93956 18.6465 7.20311C18.6674 7.45889 18.6667 7.77108 18.6667 8.13345V11.8665C18.6667 12.2289 18.6674 12.5411 18.6465 12.7969C18.6249 13.0603 18.577 13.3221 18.4486 13.5742C18.2567 13.9507 17.9504 14.2569 17.5742 14.4486C17.3222 14.577 17.0601 14.6249 16.7969 14.6465C16.755 14.6499 16.7117 14.6527 16.6668 14.655C16.299 14.6741 16 14.3672 16 13.9989C16 13.6309 16.2989 13.3463 16.6659 13.3195C16.6737 13.3189 16.6813 13.3183 16.6888 13.3177C16.8687 13.303 16.9358 13.2778 16.9687 13.2611C17.0943 13.1971 17.1972 13.0947 17.2611 12.9694C17.2779 12.9364 17.3029 12.8691 17.3177 12.6881C17.3331 12.4992 17.3333 12.2509 17.3333 11.8665V8.13345C17.3333 7.74916 17.3331 7.50071 17.3177 7.31183C17.3029 7.13102 17.2779 7.0636 17.2611 7.03058C17.1974 6.90559 17.0951 6.80368 16.9694 6.73957C16.9364 6.72276 16.8691 6.69772 16.6881 6.68293C16.4993 6.66749 16.2509 6.66665 15.8665 6.66665H12.1335C11.7491 6.66665 11.5008 6.66749 11.3118 6.68293C11.1307 6.69773 11.0635 6.72279 11.0306 6.73957C10.9052 6.80348 10.8035 6.90518 10.7396 7.03058C10.7228 7.0635 10.6977 7.13063 10.6829 7.31183C10.6823 7.31924 10.6818 7.32673 10.6812 7.33432C10.6542 7.70122 10.3691 7.99998 10.0012 7.99998C9.63288 7.99998 9.3259 7.70097 9.34495 7.33315C9.34728 7.28831 9.3501 7.24496 9.35351 7.20311C9.37505 6.93959 9.42291 6.67735 9.55143 6.42511C9.74316 6.04887 10.0489 5.74315 10.4251 5.55141C10.6774 5.4229 10.9396 5.37503 11.2031 5.3535C11.459 5.3326 11.7711 5.33332 12.1335 5.33332H15.8665Z" fill="#9ca3af"/></svg>
   )
 }
 
 function EditIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-      <path d="M9.5 2.5l3 3L5 13H2v-3L9.5 2.5z" stroke="currentColor" strokeWidth="1.25" strokeLinejoin="round" strokeLinecap="round" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path d="M15.5 4.5l4 4L8 20H4v-4L15.5 4.5z" stroke="#9ca3af" strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   )
 }
@@ -186,13 +181,13 @@ function IconBtn({ children, title, onClick }) {
       onClick={onClick}
       style={{
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        width: 30, height: 30, borderRadius: 7,
-        background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
-        cursor: 'pointer', color: 'var(--text-muted)',
-        transition: 'background 130ms ease, color 130ms ease, border-color 130ms ease',
+        padding: 4, borderRadius: 6,
+        background: 'none', border: 'none',
+        cursor: 'pointer',
+        transition: 'background 120ms ease',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-canvas)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
     >
       {children}
     </button>
@@ -236,7 +231,7 @@ function TagPill({ text, variant }) {
       borderRadius: isKey ? '6px 0 0 6px' : '0 6px 6px 0',
       fontSize: 11, fontFamily: "'Byrd', sans-serif",
       border: `1px solid ${isKey ? 'var(--border-default)' : 'rgba(23,121,247,0.25)'}`,
-      background: isKey ? 'var(--bg-active)' : 'rgba(23,121,247,0.07)',
+      background: isKey ? 'transparent' : 'rgba(23,121,247,0.07)',
       color: isKey ? 'var(--text-secondary)' : COBALT,
       fontWeight: isKey ? 500 : 400,
       whiteSpace: 'nowrap',
@@ -301,31 +296,38 @@ function CallSummarySection({ call }) {
           </span>
         </p>
 
-        {showTags && (
-          <div style={{
-            marginTop: 14,
-            padding: '12px 14px',
-            background: 'var(--bg-canvas)',
-            border: '1px solid var(--border-default)',
-            borderRadius: 9,
-          }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateRows: showTags ? '1fr' : '0fr',
+          transition: 'grid-template-rows 280ms cubic-bezier(0.22,1,0.36,1)',
+        }}>
+          <div style={{ overflow: 'hidden' }}>
             <div style={{
-              fontSize: 9.5, fontWeight: 700, letterSpacing: '0.1em',
-              color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
-              textTransform: 'uppercase', marginBottom: 9,
+              marginTop: 10,
+              paddingTop: 12,
+              borderTop: '1px solid var(--border-default)',
+              opacity: showTags ? 1 : 0,
+              transform: showTags ? 'translateY(0)' : 'translateY(-6px)',
+              transition: 'opacity 220ms ease, transform 280ms cubic-bezier(0.22,1,0.36,1)',
             }}>
-              TAGS
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-              {MOCK_TAGS.map((tag, i) => (
-                <div key={i} style={{ display: 'inline-flex' }}>
-                  <TagPill text={tag.key} variant="key" />
-                  <TagPill text={tag.value} variant="value" />
-                </div>
-              ))}
+              <div style={{
+                fontSize: 9.5, fontWeight: 700, letterSpacing: '0.1em',
+                color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+                textTransform: 'uppercase', marginBottom: 9,
+              }}>
+                TAGS
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                {MOCK_TAGS.map((tag, i) => (
+                  <div key={i} style={{ display: 'inline-flex' }}>
+                    <TagPill text={tag.key} variant="key" />
+                    <TagPill text={tag.value} variant="value" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </SectionCard>
   )
