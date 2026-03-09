@@ -270,11 +270,23 @@ function AlertTooltip() {
 
 // ── Cell renderers ────────────────────────────────────────────────────────────
 
-function IdCell({ value, data }) {
+function IdCell({ value, data, context }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
       {data?.hasWarning && <AlertTooltip />}
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{value}</span>
+      <span
+        onClick={() => data && context?.onOpenCall?.(data)}
+        style={{
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          color: 'var(--b100)', cursor: 'pointer', textDecoration: 'underline',
+          textDecorationColor: 'transparent',
+          transition: 'text-decoration-color 150ms ease',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.textDecorationColor = 'var(--b100)' }}
+        onMouseLeave={e => { e.currentTarget.style.textDecorationColor = 'transparent' }}
+      >
+        {value}
+      </span>
     </div>
   )
 }
@@ -473,7 +485,7 @@ function FilterPopover({ anchor, chip, onChange, onDone, onClose }) {
 
 // ── DataPage ──────────────────────────────────────────────────────────────────
 
-export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebarTransition, companyConfig = null }) {
+export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebarTransition, companyConfig = null, onOpenCall }) {
   const [schemaId,       setSchemaId]       = useState('acme')
   const [customPresets,  setCustomPresets]  = useState([])
   const [selectedPreset, setSelectedPreset] = useState('')
@@ -748,6 +760,7 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
           rowHeight={44}
           headerHeight={38}
           suppressCellFocus={false}
+          context={{ onOpenCall }}
         />
       </div>
 

@@ -25,6 +25,7 @@ import EventCard    from '../../components/data/EventCard.jsx'
 import OmniBar      from '../../components/data/OmniBar.jsx'
 import FilterDrawer from '../../components/data/FilterDrawer.jsx'
 import DataPage     from '../../components/data/DataPage.jsx'
+import ExplorePage  from '../../components/data/ExplorePage.jsx'
 import ReportsPage  from '../../components/reports/ReportsPage.jsx'
 import { SCHEMAS }  from '../../components/data/mockData.js'
 
@@ -47,6 +48,7 @@ import EventCardSrc     from '../../components/data/EventCard.jsx?raw'
 import OmniBarSrc       from '../../components/data/OmniBar.jsx?raw'
 import FilterDrawerSrc  from '../../components/data/FilterDrawer.jsx?raw'
 import DataPageSrc      from '../../components/data/DataPage.jsx?raw'
+import ExplorePageSrc   from '../../components/data/ExplorePage.jsx?raw'
 import MockDataSrc      from '../../components/data/mockData.js?raw'
 import ReportsPageSrc   from '../../components/reports/ReportsPage.jsx?raw'
 
@@ -845,6 +847,37 @@ export const COMPONENT_DEFS = {
         'Alert warning: AlertTooltip uses position:fixed + getBoundingClientRect',
       ],
     },
+  },
+
+  // ── ExplorePage ────────────────────────────────────────────────────────────
+
+  ExplorePage: {
+    tier: 'Organism',
+    description: 'Call detail/explore page. Reached by clicking an ID in the Data grid. Shows topic header, call summary (with tag toggle), call metrics grid, agent evaluation with scored progress bars, monitored events, transcription, and customer history table.',
+    props: [
+      { name: 'call',            type: 'object',  default: 'row data object' },
+      { name: 'onBack',          type: 'function', default: '() => {}' },
+      { name: 'isMobile',        type: 'boolean', default: 'false' },
+      { name: 'sidebarWidth',    type: 'number',  default: '272'   },
+      { name: 'sidebarTransition', type: 'string', default: '' },
+    ],
+    states: [
+      {
+        label: 'Default',
+        preview: () => containedPreview(
+          <ExplorePage
+            call={{ id: '170254bf-b236-4a1e-9c3d-8f2e1a0b5c6d', callDate: 'March 15, 2023', destination: 'AUTO ACCIDENT CLAIM', summary: 'Customer inquired about enterprise licensing options.', status: 'IN PROGRESS', priority: 'HIGH', callType: 'inbound', assignedTo: { name: 'John Smith', initials: 'JS', color: 'orange' } }}
+            onBack={() => {}}
+            isMobile={false}
+            sidebarWidth={0}
+          />,
+          480,
+        ),
+      },
+    ],
+    snippet: () => `<ExplorePage call={selectedCall} onBack={() => setSelectedCall(null)} isMobile={isMobile} sidebarWidth={SIDEBAR_WIDTH} />`,
+    source: ExplorePageSrc,
+    files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
   },
 
   // ── ReportsPage ────────────────────────────────────────────────────────────

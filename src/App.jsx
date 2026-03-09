@@ -7,6 +7,7 @@ import ChatInput from './components/ChatInput.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import SignIn from './components/SignIn.jsx'
 import DataPage from './components/data/DataPage.jsx'
+import ExplorePage from './components/data/ExplorePage.jsx'
 import ReportsPage from './components/reports/ReportsPage.jsx'
 
 function getGreeting() {
@@ -95,6 +96,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
   const requests = buildRequestCards(companyConfig)
   const isMobile = useIsMobile()
   const [activePage, setActivePage] = useState(() => window.__hearActivePage || 'dashboard')
+  const [selectedCall, setSelectedCall] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [submitted, setSubmitted]     = useState(false)
@@ -496,6 +498,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
             handleNewChat()
           } else {
             setActivePage(page)
+            if (page !== 'data') setSelectedCall(null)
           }
         }}
         collapsed={sidebarCollapsed}
@@ -539,8 +542,22 @@ Ask me anything about your operations, or explore a topic below to get started.`
         </button>
       )}
 
-      {activePage === 'data' ? (
-        <DataPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
+      {activePage === 'data' && selectedCall ? (
+        <ExplorePage
+          call={selectedCall}
+          onBack={() => setSelectedCall(null)}
+          isMobile={isMobile}
+          sidebarWidth={effectiveSidebarWidth}
+          sidebarTransition={sidebarTransition}
+        />
+      ) : activePage === 'data' ? (
+        <DataPage
+          isMobile={isMobile}
+          sidebarWidth={effectiveSidebarWidth}
+          sidebarTransition={sidebarTransition}
+          companyConfig={companyConfig}
+          onOpenCall={(call) => setSelectedCall(call)}
+        />
       ) : activePage === 'reports' ? (
         <ReportsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
       ) : activePage !== 'dashboard' ? (
