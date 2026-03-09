@@ -849,35 +849,399 @@ export const COMPONENT_DEFS = {
     },
   },
 
-  // ── ExplorePage ────────────────────────────────────────────────────────────
+  // ── ExplorePage & sub-components ───────────────────────────────────────────
 
   ExplorePage: {
     tier: 'Organism',
-    description: 'Call detail/explore page. Reached by clicking an ID in the Data grid. Shows topic header, call summary (with tag toggle), call metrics grid, agent evaluation with scored progress bars, monitored events, transcription, and customer history table.',
+    description: 'Full call detail page — navigated to via /data/explore/:id. Stacks: topic hero card, CallSummarySection, QuickStatsRow, CallMetricsSection, AgentEvaluationSection, MonitoredEventsSection, TranscriptionSection, CustomerSection. URL persists on refresh via sessionStorage.',
     props: [
-      { name: 'call',            type: 'object',  default: 'row data object' },
-      { name: 'onBack',          type: 'function', default: '() => {}' },
-      { name: 'isMobile',        type: 'boolean', default: 'false' },
-      { name: 'sidebarWidth',    type: 'number',  default: '272'   },
-      { name: 'sidebarTransition', type: 'string', default: '' },
+      { name: 'call',              type: 'object',   default: 'row data from DataPage grid' },
+      { name: 'onBack',            type: 'function', default: '() => navigate("/data")' },
+      { name: 'isMobile',          type: 'boolean',  default: 'false' },
+      { name: 'sidebarWidth',      type: 'number',   default: '272'   },
+      { name: 'sidebarTransition', type: 'string',   default: '""'    },
+    ],
+    states: [
+      {
+        label: 'In Progress — High priority',
+        preview: () => containedPreview(
+          <ExplorePage
+            call={{ id: '170254bf', callDate: 'March 15, 2023', destination: 'Paris, France', summary: 'Customer inquired about enterprise licensing options and volume discount tiers for Q2 renewal.', status: 'IN PROGRESS', priority: 'HIGH', callType: 'inbound', proposedPrice: 5364, assignedTo: { name: 'Sarah Chen', initials: 'SC', color: 'blue' } }}
+            onBack={() => {}} isMobile={false} sidebarWidth={0}
+          />, 500,
+        ),
+      },
+      {
+        label: 'Done — No agent',
+        preview: () => containedPreview(
+          <ExplorePage
+            call={{ id: 'gb-b2c3d4e5', callDate: 'January 11, 2023', destination: 'London, UK', summary: 'PCI DSS Level 1 audit preparation. Reviewed card tokenization and vault access control procedures.', status: 'DONE', priority: 'MEDIUM', callType: 'outbound', proposedPrice: 18900, assignedTo: null }}
+            onBack={() => {}} isMobile={false} sidebarWidth={0}
+          />, 500,
+        ),
+      },
+    ],
+    snippet: () => `// Navigated to automatically via openCall() in App.jsx
+// URL: /data/explore/:id — call data persisted in sessionStorage
+<ExplorePage
+  call={selectedCall}
+  onBack={() => navigate('/data')}
+  isMobile={isMobile}
+  sidebarWidth={SIDEBAR_WIDTH}
+/>`,
+    source: ExplorePageSrc,
+    files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'Cobalt (handle time, inbound, score bars)', hex: '#1779F7' },
+        { name: 'Green (compliance, done, positive sentiment)', hex: '#4BA373' },
+        { name: 'Amber (warning events, medium priority, low scores)', hex: '#F59E0B' },
+        { name: 'Red (alert events, negative sentiment, low scores)', hex: '#EF4444' },
+        { name: 'Coral (brand, comments badge)', hex: '#FF7056' },
+      ],
+      subComponents: ['CallSummarySection', 'QuickStatsRow', 'MetricCell', 'CallMetricsSection', 'AgentEvaluationSection', 'MonitoredEventsSection', 'TranscriptionSection', 'CustomerSection', 'SectionCard', 'SectionHeader', 'OutlineBtn', 'IconBtn'],
+      notes: [
+        'Topic title derived from first 6 words of call.summary',
+        'URL routing: /data/explore/:id — App.jsx saves call to sessionStorage on navigate',
+        'Back button calls onBack() → navigate("/data") via history.pushState',
+        'All sections are independently collapsible',
+        'Tags, transcript, metrics, events — all static mock; connect to API per call.id',
+      ],
+    },
+  },
+
+  CallSummarySection: {
+    tier: 'Molecule',
+    description: 'AI-generated summary of the call with a Show/Hide tags toggle revealing key→value tag pairs. Four action icons: Comment, Like, Copy, Edit. Text truncates at 200 chars with "Show all" expand.',
+    props: [
+      { name: 'call', type: 'object', default: '{ summary: string, …}' },
+    ],
+    states: [
+      {
+        label: 'Tags hidden',
+        preview: () => containedPreview(
+          <div style={{ padding: 16, background: 'var(--bg-canvas)' }}>
+            <ExplorePage call={{ id: 'x', callDate: 'Mar 15, 2023', summary: 'Customer contacted enterprise support ahead of Q2 renewal to discuss volume discount tiers.', status: 'IN PROGRESS', priority: 'HIGH', callType: 'inbound', assignedTo: { name: 'Sarah Chen', initials: 'SC', color: 'blue' } }} onBack={() => {}} isMobile={false} sidebarWidth={0} />
+          </div>, 500,
+        ),
+      },
+    ],
+    snippet: () => `// Internal to ExplorePage — no standalone usage
+// Tags toggled via showTags state (useState)
+// data-inspector="CallSummarySection"`,
+    source: ExplorePageSrc,
+    files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
+    breakdown: {
+      colors: [{ name: 'Cobalt (Show tags active, Show all link)', hex: '#1779F7' }],
+      subComponents: ['SectionCard', 'SectionHeader', 'IconBtn', 'TagPill'],
+      notes: [
+        'Tags: key pill (neutral bg) + value pill (blue tint) rendered as adjacent spans',
+        'Truncation threshold: 200 chars — controlled by expanded state',
+        '"Show all" / "Show less" inline toggle at end of paragraph',
+      ],
+    },
+  },
+
+  QuickStatsRow: {
+    tier: 'Molecule',
+    description: '4-up stat card strip sitting between CallSummarySection and CallMetricsSection. Cards: Handle Time (blue), Overall Sentiment (neutral), Compliance (green), Agent Score (amber/green). Each has a colored icon bubble, uppercase label, bold value.',
+    props: [
+      { name: 'call', type: 'object', default: 'row data' },
     ],
     states: [
       {
         label: 'Default',
-        preview: () => containedPreview(
-          <ExplorePage
-            call={{ id: '170254bf-b236-4a1e-9c3d-8f2e1a0b5c6d', callDate: 'March 15, 2023', destination: 'AUTO ACCIDENT CLAIM', summary: 'Customer inquired about enterprise licensing options.', status: 'IN PROGRESS', priority: 'HIGH', callType: 'inbound', assignedTo: { name: 'John Smith', initials: 'JS', color: 'orange' } }}
-            onBack={() => {}}
-            isMobile={false}
-            sidebarWidth={0}
-          />,
-          480,
+        preview: () => center(
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, width: 440 }}>
+            {[
+              { icon: '⏱', label: 'Handle Time',      value: '22 mins',  color: '#1779F7', bg: 'rgba(23,121,247,0.08)' },
+              { icon: '🙂', label: 'Overall Sentiment',value: 'Neutral',  color: '#606060', bg: 'var(--bg-active)' },
+              { icon: '🛡', label: 'Compliance',       value: '91/100',   color: '#4BA373', bg: 'rgba(75,163,115,0.08)' },
+              { icon: '⭐', label: 'Agent Score',      value: '76/100',   color: '#F59E0B', bg: 'rgba(245,158,11,0.08)' },
+            ].map((s, i) => (
+              <div key={i} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 9, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{s.icon}</div>
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4, fontFamily: "'Byrd',sans-serif" }}>{s.label}</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: s.color, fontFamily: "'Byrd',sans-serif", lineHeight: 1 }}>{s.value}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         ),
       },
     ],
-    snippet: () => `<ExplorePage call={selectedCall} onBack={() => setSelectedCall(null)} isMobile={isMobile} sidebarWidth={SIDEBAR_WIDTH} />`,
+    snippet: () => `// Internal to ExplorePage
+// data-inspector="QuickStatsRow"
+<QuickStatsRow call={call} />`,
     source: ExplorePageSrc,
     files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Cobalt (handle time)',    hex: '#1779F7' },
+        { name: 'Green (compliance)',      hex: '#4BA373' },
+        { name: 'Amber (agent score mid)', hex: '#F59E0B' },
+      ],
+      subComponents: [],
+      notes: ['Icon bubble tint matches value color at 8% opacity', 'Values are static mock — wire to call.metrics in production'],
+    },
+  },
+
+  MetricCell: {
+    tier: 'Atom',
+    description: 'Single metric cell used inside CallMetricsSection. Uppercase label, bold value, info ⓘ icon with a fixed-position tooltip. Hover fades background to --bg-active with a subtle box-shadow lift.',
+    props: [
+      { name: 'label',   type: 'string', default: '"Handle time"' },
+      { name: 'value',   type: 'string', default: '"22 mins"'     },
+      { name: 'tooltip', type: 'string', default: '"Description…"'},
+    ],
+    states: [
+      {
+        label: 'Default',
+        preview: () => center(
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, width: 340 }}>
+            {[
+              { label: 'Relevant call?',   value: 'Yes',                   tip: 'Whether this call was relevant to an active opportunity' },
+              { label: 'Requested Service',value: 'Volume discount',        tip: 'The type of service the customer requested' },
+              { label: 'Lead status',      value: 'Active negotiation',     tip: 'The lead status outcome associated with this call' },
+              { label: 'Handle time',      value: '22 mins',                tip: 'Total duration from call start to resolution' },
+            ].map((m, i) => (
+              <div key={i} style={{ padding: '12px 14px', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)', borderRadius: 9 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 5, fontFamily: "'Byrd',sans-serif" }}>{m.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>{m.value}</div>
+              </div>
+            ))}
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `<MetricCell label="Handle time" value="22 mins" tooltip="Total duration from call start to resolution" />`,
+    source: ExplorePageSrc,
+    files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
+    breakdown: {
+      subComponents: ['MetricTooltip'],
+      notes: [
+        'Hover: background → --bg-active + box-shadow 0 1px 4px rgba(0,0,0,0.07)',
+        'Tooltip: position:fixed anchored to ⓘ icon via getBoundingClientRect',
+        'data-inspector="MetricCell"',
+      ],
+    },
+  },
+
+  AgentEvaluationSection: {
+    tier: 'Molecule',
+    description: 'Agent card (avatar, name, role, avg score pill) flanked by two columns of ScoreBars — Sales Techniques and Professionalism. Bars use color-tinted tracks: blue ≥70, amber ≥40, red <40. Score shown in matching color.',
+    props: [
+      { name: 'call', type: 'object', default: '{ assignedTo: { name, initials, color } }' },
+    ],
+    states: [
+      {
+        label: 'High scores',
+        preview: () => center(
+          <div style={{ display: 'flex', gap: 14, width: 440, padding: 4 }}>
+            <div style={{ width: 100, background: 'var(--bg-canvas)', border: '1px solid var(--border-default)', borderRadius: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px 10px' }}>
+              <div style={{ width: 46, height: 46, borderRadius: '50%', background: '#418FF4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: "'Byrd',sans-serif", boxShadow: '0 0 0 3px #418FF430' }}>SC</div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>Sarah Chen</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif", marginTop: 2 }}>Agent operating</div>
+              </div>
+              <div style={{ padding: '2px 9px', borderRadius: 99, background: 'rgba(75,163,115,0.15)', border: '1px solid rgba(75,163,115,0.35)', fontSize: 11, fontWeight: 700, color: '#4BA373', fontFamily: "'Byrd',sans-serif" }}>82/100</div>
+            </div>
+            <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+              {[['Identifying Opps', 91], ['Handling Objections', 78], ['Persuasion', 84], ['Sense of Urgency', 52]].map(([l, s]) => (
+                <div key={l} style={{ marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>{l}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: s >= 70 ? '#1779F7' : s >= 40 ? '#F59E0B' : '#EF4444', fontFamily: "'Byrd',sans-serif" }}>{s}</span>
+                  </div>
+                  <div style={{ height: 5, background: s >= 70 ? 'rgba(23,121,247,0.1)' : 'rgba(245,158,11,0.12)', borderRadius: 99 }}>
+                    <div style={{ height: '100%', width: `${s}%`, background: s >= 70 ? '#1779F7' : '#F59E0B', borderRadius: 99 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `// Internal to ExplorePage
+// data-inspector="AgentEvaluationSection"
+<AgentEvaluationSection call={call} />`,
+    source: ExplorePageSrc,
+    files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Cobalt (score ≥70)', hex: '#1779F7' },
+        { name: 'Amber (score ≥40)',  hex: '#F59E0B' },
+        { name: 'Red (score <40)',    hex: '#EF4444' },
+      ],
+      subComponents: ['SectionCard', 'SectionHeader', 'ScoreBar', 'OutlineBtn'],
+      notes: [
+        'Average score computed from all 8 metrics — shown as pill in agent card',
+        'Agent card bg: flat --bg-canvas (gradient was removed)',
+        'SALES_METRICS and PROF_METRICS are module-level constants — replace with API data',
+      ],
+    },
+  },
+
+  MonitoredEventsSection: {
+    tier: 'Molecule',
+    description: 'List of AI-detected alert events for the call. Each row has a severity-coded left border (amber = warning, red = alert), icon, description text, and a "Give feedback" button. Collapsible.',
+    props: [],
+    states: [
+      {
+        label: 'Default (3 events)',
+        preview: () => center(
+          <div style={{ width: 440, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {[
+              { text: 'Agent did not confirm next steps before closing the call.', sev: 'warning' },
+              { text: 'Customer mentioned a competitor — CompetitorAlert triggered.', sev: 'warning' },
+              { text: 'Call duration exceeded 20-minute SLA threshold.', sev: 'alert' },
+            ].map((ev, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: ev.sev === 'alert' ? 'rgba(239,68,68,0.06)' : 'rgba(245,158,11,0.06)', border: `1px solid ${ev.sev === 'alert' ? 'rgba(239,68,68,0.22)' : 'rgba(245,158,11,0.22)'}`, borderLeft: `3px solid ${ev.sev === 'alert' ? '#EF4444' : '#F59E0B'}`, borderRadius: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                  <span style={{ fontSize: 13 }}>⚠</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>{ev.text}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `// Internal to ExplorePage
+// data-inspector="MonitoredEventsSection"
+<MonitoredEventsSection />`,
+    source: ExplorePageSrc,
+    files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Amber (warning severity)', hex: '#F59E0B' },
+        { name: 'Red (alert severity)',     hex: '#EF4444' },
+      ],
+      subComponents: ['SectionCard', 'SectionHeader', 'OutlineBtn'],
+      notes: [
+        'severity: "warning" → amber left-border + amber bg tint',
+        'severity: "alert" → red left-border + red bg tint',
+        'MOCK_EVENTS is a module constant — replace with call.events from API',
+      ],
+    },
+  },
+
+  TranscriptionSection: {
+    tier: 'Molecule',
+    description: 'Chat-bubble transcript view. Agent lines align left (neutral bg), customer lines align right (blue-tinted bg). Mini avatar dots distinguish speakers. Timestamps shown below each bubble. Scrollable, max-height 300px.',
+    props: [],
+    states: [
+      {
+        label: 'Default',
+        preview: () => center(
+          <div style={{ width: 420, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { speaker: 'Agent',    time: '0:08', text: 'Good morning, this is Sarah from enterprise support. How can I help you?' },
+              { speaker: 'Customer', time: '0:15', text: "Hi, I'm calling about our Q2 renewal — we're looking to expand to 500 seats." },
+              { speaker: 'Agent',    time: '0:38', text: 'Congratulations on the growth! For 500+ seats you qualify for the Enterprise tier with a 15% volume discount.' },
+            ].map((line, i) => {
+              const isAgent = line.speaker === 'Agent'
+              return (
+                <div key={i} style={{ display: 'flex', flexDirection: isAgent ? 'row' : 'row-reverse', gap: 9, alignItems: 'flex-end' }}>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', flexShrink: 0, background: isAgent ? '#1779F7' : 'var(--bg-active)', border: `1px solid ${isAgent ? 'transparent' : 'var(--border-default)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: isAgent ? '#fff' : 'var(--text-muted)', fontFamily: "'Byrd',sans-serif" }}>{isAgent ? 'A' : 'C'}</div>
+                  <div style={{ maxWidth: '75%' }}>
+                    <div style={{ padding: '8px 12px', background: isAgent ? 'var(--bg-active)' : 'rgba(23,121,247,0.07)', border: `1px solid ${isAgent ? 'var(--border-default)' : 'rgba(23,121,247,0.2)'}`, borderRadius: isAgent ? '11px 11px 11px 3px' : '11px 11px 3px 11px', fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif", lineHeight: 1.5 }}>{line.text}</div>
+                    <div style={{ fontSize: 9.5, color: 'var(--text-muted)', marginTop: 3, textAlign: isAgent ? 'left' : 'right', paddingLeft: isAgent ? 4 : 0, paddingRight: isAgent ? 0 : 4, fontFamily: "'Byrd',sans-serif" }}>{line.time}</div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `// Internal to ExplorePage
+// data-inspector="TranscriptionSection"
+<TranscriptionSection />`,
+    source: ExplorePageSrc,
+    files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
+    breakdown: {
+      colors: [{ name: 'Cobalt (customer bubble tint)', hex: '#1779F7' }],
+      subComponents: ['SectionCard', 'SectionHeader'],
+      notes: [
+        'Agent: left-aligned, neutral bg, blue avatar dot',
+        'Customer: right-aligned, blue-tinted bg, grey avatar dot',
+        'Border radius: tail corner is 3px, rest 11–12px to create chat-bubble shape',
+        'TRANSCRIPT_LINES is a module constant — replace with call.transcript from API',
+      ],
+    },
+  },
+
+  CustomerSection: {
+    tier: 'Molecule',
+    description: 'Call history table for the customer. Columns: Agent (avatar + name), Sentiment (colored badge), Topic, Call Date, Call (Open link). Current call highlighted in blue. Rows have hover background. Collapsible.',
+    props: [],
+    states: [
+      {
+        label: 'Default',
+        preview: () => center(
+          <div style={{ width: 460, background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ padding: '13px 18px', borderBottom: '1px solid var(--border-default)' }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>Customer</span>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  {['Agent', 'Sentiment', 'Topic', 'Date', 'Call'].map(h => (
+                    <th key={h} style={{ padding: '8px 12px', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', textAlign: 'left', borderBottom: '1px solid var(--border-default)', background: 'var(--bg-canvas)', fontFamily: "'Byrd',sans-serif", whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { name: 'Sarah Chen', initials: 'SC', color: '#418FF4', sentiment: 'Positive', sentColor: '#4BA373', sentBg: 'rgba(75,163,115,0.12)', topic: 'Enterprise renewal — Q2', date: 'Mar 15', current: true },
+                  { name: 'Marcus Webb', initials: 'MW', color: '#6AB18A', sentiment: 'Neutral', sentColor: '#606060', sentBg: 'var(--bg-active)', topic: 'Onboarding follow-up', date: 'Jan 22', current: false },
+                ].map((row, i) => (
+                  <tr key={i} style={{ background: row.current ? 'rgba(23,121,247,0.05)' : 'transparent' }}>
+                    <td style={{ padding: '9px 12px', borderBottom: '1px solid var(--border-default)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 25, height: 25, borderRadius: '50%', background: row.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: '#fff', fontFamily: "'Byrd',sans-serif" }}>{row.initials}</div>
+                        <span style={{ fontSize: 12, color: row.current ? '#1779F7' : 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>{row.name}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '9px 12px', borderBottom: '1px solid var(--border-default)' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', height: 20, padding: '0 8px', borderRadius: 99, fontSize: 11, fontWeight: 500, background: row.sentBg, color: row.sentColor, fontFamily: "'Byrd',sans-serif" }}>{row.sentiment}</span>
+                    </td>
+                    <td style={{ padding: '9px 12px', fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif", borderBottom: '1px solid var(--border-default)', whiteSpace: 'nowrap' }}>{row.topic}</td>
+                    <td style={{ padding: '9px 12px', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif", borderBottom: '1px solid var(--border-default)' }}>{row.date}</td>
+                    <td style={{ padding: '9px 12px', borderBottom: '1px solid var(--border-default)' }}>
+                      <span style={{ fontSize: 12, fontWeight: row.current ? 600 : 400, color: row.current ? '#1779F7' : 'var(--text-muted)', textDecoration: row.current ? 'underline' : 'none', fontFamily: "'Byrd',sans-serif" }}>Open</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `// Internal to ExplorePage
+// data-inspector="CustomerSection"
+<CustomerSection />`,
+    source: ExplorePageSrc,
+    files: [{ path: 'src/components/data/ExplorePage.jsx', src: ExplorePageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Cobalt (current row, Open link)', hex: '#1779F7' },
+        { name: 'Green (positive sentiment)',      hex: '#4BA373' },
+        { name: 'Red (negative sentiment)',        hex: '#EF4444' },
+      ],
+      subComponents: ['SectionCard', 'SectionHeader', 'OutlineBtn'],
+      notes: [
+        'current: true row → blue highlight bg + blue agent name + underlined Open link',
+        'Sentiment badge: colored pill — Positive (green), Negative (red), Neutral (grey)',
+        'Row hover: background → --bg-active via onMouseEnter/Leave',
+        'CUSTOMER_HISTORY is a module constant — replace with API customer call history',
+      ],
+    },
   },
 
   // ── ReportsPage ────────────────────────────────────────────────────────────

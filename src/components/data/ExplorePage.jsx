@@ -102,9 +102,9 @@ const RED = '#EF4444'
 
 // ── Shared primitives ─────────────────────────────────────────────────────────
 
-function SectionCard({ children, style, accentColor }) {
+function SectionCard({ children, style, accentColor, ...rest }) {
   return (
-    <div style={{
+    <div {...rest} style={{
       background: 'var(--bg-card)',
       border: '1px solid var(--border-default)',
       borderRadius: 14,
@@ -254,7 +254,7 @@ function CallSummarySection({ call }) {
   const truncated = summaryText.length > 200 && !expanded
 
   return (
-    <SectionCard>
+    <SectionCard data-inspector="CallSummarySection">
       <SectionHeader
         title="Call summary"
         divider={false}
@@ -410,7 +410,7 @@ function QuickStatsRow({ call }) {
   ]
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+    <div data-inspector="QuickStatsRow" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
       {stats.map((s, i) => (
         <div key={i} style={{
           background: 'var(--bg-card)',
@@ -505,6 +505,7 @@ function MetricCell({ label, value, tooltip }) {
 
   return (
     <div
+      data-inspector="MetricCell"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -562,7 +563,7 @@ function CallMetricsSection({ call }) {
   const visibleMetrics = showMore ? [...primaryMetrics, ...extraMetrics] : primaryMetrics
 
   return (
-    <SectionCard>
+    <SectionCard data-inspector="CallMetricsSection">
       <SectionHeader
         title="Call metrics"
         right={<OutlineBtn>Edit metrics</OutlineBtn>}
@@ -657,7 +658,7 @@ function AgentEvaluationSection({ call }) {
   const avgColor = avg >= 70 ? GREEN : avg >= 40 ? AMBER : RED
 
   return (
-    <SectionCard>
+    <SectionCard data-inspector="AgentEvaluationSection">
       <SectionHeader
         title="Agent evaluation"
         right={<OutlineBtn>Edit metrics</OutlineBtn>}
@@ -755,7 +756,7 @@ function MonitoredEventsSection() {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <SectionCard>
+    <SectionCard data-inspector="MonitoredEventsSection">
       <SectionHeader
         title="Monitored events detected"
         right={
@@ -815,7 +816,7 @@ function TranscriptionSection() {
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <SectionCard>
+    <SectionCard data-inspector="TranscriptionSection">
       <SectionHeader
         title="Transcription"
         onCollapse={() => setCollapsed(c => !c)}
@@ -908,7 +909,7 @@ function CustomerSection() {
   }
 
   return (
-    <SectionCard>
+    <SectionCard data-inspector="CustomerSection">
       <SectionHeader
         title="Customer"
         right={<OutlineBtn>Go to Customer page</OutlineBtn>}
