@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -301,14 +301,65 @@ function CallSummarySection({ call }) {
 
 // ── Call Metrics ──────────────────────────────────────────────────────────────
 
-function MetricCell({ label, value, muted }) {
+function MetricTooltip({ text }) {
+  const [pos, setPos] = useState(null)
+  const ref = useRef(null)
+
   return (
-    <div style={{
-      padding: '12px 14px',
-      background: muted ? 'var(--bg-active)' : 'var(--bg-canvas)',
-      border: '1px solid var(--border-default)',
-      borderRadius: 8,
-    }}>
+    <>
+      <span
+        ref={ref}
+        onMouseEnter={() => {
+          const r = ref.current?.getBoundingClientRect()
+          if (r) setPos({ x: r.left + r.width / 2, y: r.top })
+        }}
+        onMouseLeave={() => setPos(null)}
+        style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', cursor: 'default' }}
+      >
+        <InfoIcon />
+      </span>
+      {pos && (
+        <div style={{
+          position: 'fixed', left: pos.x, top: pos.y - 8,
+          transform: 'translate(-50%, -100%)',
+          background: 'var(--d100)', color: 'var(--p100)',
+          fontSize: 11, fontWeight: 500, fontFamily: "'Byrd', sans-serif",
+          lineHeight: 1.45, padding: '6px 10px', borderRadius: 6,
+          whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 9999,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.22)',
+          maxWidth: 220, whiteSpaceCollapse: 'preserve',
+        }}>
+          {text}
+          <div style={{
+            position: 'absolute', top: '100%', left: '50%',
+            transform: 'translateX(-50%)',
+            width: 0, height: 0,
+            borderLeft: '5px solid transparent',
+            borderRight: '5px solid transparent',
+            borderTop: '5px solid var(--d100)',
+          }} />
+        </div>
+      )}
+    </>
+  )
+}
+
+function MetricCell({ label, value, tooltip }) {
+  const [hovered, setHovered] = useState(false)
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: '12px 14px',
+        background: hovered ? 'var(--bg-active)' : 'var(--bg-canvas)',
+        border: `1px solid ${hovered ? 'var(--border-default)' : 'var(--border-default)'}`,
+        borderRadius: 8,
+        transition: 'background 140ms ease',
+        cursor: 'default',
+      }}
+    >
       <div style={{
         fontSize: 10, fontWeight: 600, letterSpacing: '0.07em',
         color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
@@ -323,9 +374,7 @@ function MetricCell({ label, value, muted }) {
         }}>
           {value}
         </span>
-        <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}>
-          <InfoIcon />
-        </span>
+        <MetricTooltip text={tooltip} />
       </div>
     </div>
   )
@@ -336,19 +385,19 @@ function CallMetricsSection({ call }) {
   const [showMore, setShowMore] = useState(false)
 
   const primaryMetrics = [
-    { label: 'Relevant call?',              value: 'Yes',                          muted: false },
-    { label: 'Requested Service',           value: 'Professional advice',          muted: false },
-    { label: 'Relevant status lead',        value: 'Lose lead',                    muted: false },
-    { label: 'Direction',                   value: call.callType === 'inbound' ? 'Inbound' : 'Outbound', muted: true },
-    { label: 'Reason for losing opportunity', value: 'No open calendar for doctor', muted: false },
-    { label: 'Handle time',                 value: '14 mins',                      muted: true },
+    { label: 'Relevant call?',              value: 'Yes',                                                    tooltip: 'Whether this call was relevant to an active opportunity or case' },
+    { label: 'Requested Service',           value: 'Professional advice',                                    tooltip: 'The type of service the customer requested during this call' },
+    { label: 'Relevant status lead',        value: 'Lose lead',                                              tooltip: 'The lead status outcome associated with this call' },
+    { label: 'Direction',                   value: call.callType === 'inbound' ? 'Inbound' : 'Outbound',     tooltip: 'Whether the call was initiated by the customer (inbound) or the agent (outbound)' },
+    { label: 'Reason for losing opportunity', value: 'No open calendar for doctor',                          tooltip: 'The primary reason the opportunity was not converted' },
+    { label: 'Handle time',                 value: '14 mins',                                                tooltip: 'Total duration from call start to resolution, including hold and wrap-up time' },
   ]
 
   const extraMetrics = [
-    { label: 'Call date',   value: call.callDate,  muted: false },
-    { label: 'Destination', value: call.destination, muted: false },
-    { label: 'Priority',    value: call.priority || 'N/A', muted: false },
-    { label: 'Status',      value: call.status || 'N/A',   muted: false },
+    { label: 'Call date',   value: call.callDate,          tooltip: 'The date this call took place' },
+    { label: 'Destination', value: call.destination,       tooltip: 'Location or region associated with this call' },
+    { label: 'Priority',    value: call.priority || 'N/A', tooltip: 'Urgency level assigned to this call record' },
+    { label: 'Status',      value: call.status || 'N/A',   tooltip: 'Current processing status of this call record' },
   ]
 
   const visibleMetrics = showMore ? [...primaryMetrics, ...extraMetrics] : primaryMetrics
@@ -365,7 +414,7 @@ function CallMetricsSection({ call }) {
         <div style={{ padding: '0 20px 16px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
             {visibleMetrics.map((m, i) => (
-              <MetricCell key={i} label={m.label} value={m.value} muted={m.muted} />
+              <MetricCell key={i} label={m.label} value={m.value} tooltip={m.tooltip} />
             ))}
           </div>
           <button
