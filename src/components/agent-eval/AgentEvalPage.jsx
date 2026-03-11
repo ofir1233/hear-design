@@ -988,7 +988,6 @@ function FeedbackModal({ agent, onClose }) {
     borderRadius: 7, fontSize: 13, color: 'var(--text-primary)',
     fontFamily: "'Byrd', sans-serif", outline: 'none',
     transition: 'border-color 150ms ease',
-    colorScheme: 'dark',
   }
 
   // build alphabetically grouped agent list
@@ -1105,7 +1104,7 @@ function FeedbackModal({ agent, onClose }) {
                       {/* checkbox */}
                       <div style={{
                         width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-                        border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--n60, #888)'}`,
+                        border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--n100, #606060)'}`,
                         background: checked ? 'var(--b100)' : 'transparent',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         transition: 'all 120ms ease',
@@ -1140,7 +1139,7 @@ function FeedbackModal({ agent, onClose }) {
           >
             <div style={{
               width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-              border: `1.5px solid ${notifyByMail ? 'var(--b100)' : 'var(--n60, #888)'}`,
+              border: `1.5px solid ${notifyByMail ? 'var(--b100)' : 'var(--n100, #606060)'}`,
               background: notifyByMail ? 'var(--b100)' : 'transparent',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 120ms ease',

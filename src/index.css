@@ -450,3 +450,7 @@ input::placeholder {
 .hear-grid:hover ::-webkit-scrollbar-thumb { background: var(--border-default); }
 .hear-grid ::-webkit-scrollbar-thumb:hover { background: var(--n60); }
 
+
+/* Date input — native calendar icon matches theme */
+input[type="date"] { color-scheme: light; }
+[data-theme="dark"] input[type="date"] { color-scheme: dark; }
