@@ -814,9 +814,9 @@ function EntityTable({ title, rows, onRowClick }) {
 function InsightCard({ agent }) {
   return (
     <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '24px' }}>
-      <div style={{ display: 'flex', gap: 28 }}>
+      <div style={{ display: 'flex', gap: 28, alignItems: 'stretch' }}>
         {/* Left: avatar + role + rating + score */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, minWidth: 108 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, minWidth: 108 }}>
           <Avatar name={agent.name} size={56} />
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
