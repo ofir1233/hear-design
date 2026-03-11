@@ -1,4 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from 'recharts'
 import Button from '../Button.jsx'
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -116,9 +119,9 @@ const CHART_LABELS = ['1/1','2/1','3/1','4/1','5/1','6/1','7/1','8/1','9/1','10/
 function genChartData(seed = 75) {
   const pts = []
   let v = seed
-  for (let i = 0; i < 40; i++) {
-    v = Math.max(55, Math.min(95, v + Math.sin(i * 0.7) * 3 + (i % 7 === 0 ? 3 : -0.5)))
-    pts.push(Math.round(v))
+  for (let i = 0; i < CHART_LABELS.length; i++) {
+    v = Math.max(58, Math.min(94, v + Math.sin(i * 1.2) * 5 + (i % 5 === 0 ? 4 : -1)))
+    pts.push({ date: CHART_LABELS[i], score: Math.round(v) })
   }
   return pts
 }
@@ -235,55 +238,76 @@ function TotalScoreBar({ score, max = 100 }) {
 
 // ── Performance chart (SVG) ───────────────────────────────────────────────────
 
-function PerformanceChart({ data }) {
-  const W = 820, H = 200
-  const pad = { top: 12, right: 12, bottom: 32, left: 38 }
-  const cW = W - pad.left - pad.right
-  const cH = H - pad.top - pad.bottom
-  const n = data.length
-
-  const pts = data.map((v, i) => ({
-    x: pad.left + (i / (n - 1)) * cW,
-    y: pad.top + (1 - v / 100) * cH,
-  }))
-
-  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
-  const areaPath = `${linePath} L${pts[n - 1].x.toFixed(1)},${(pad.top + cH).toFixed(1)} L${pad.left},${(pad.top + cH).toFixed(1)} Z`
-
+function ChartTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+    <div style={{
+      background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+      borderRadius: 8, padding: '8px 14px',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+    }}>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2, fontFamily: "'Byrd', sans-serif" }}>
+        {payload[0]?.payload?.date}
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: '#1779F7', lineHeight: 1.2, fontFamily: "'Byrd', sans-serif" }}>
+        {payload[0]?.value}
+      </div>
+      <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>score</div>
+    </div>
+  )
+}
+
+function PerformanceChart({ data }) {
+  return (
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px 12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Agent's Performance by score</span>
         <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>(Time Unit :Day)</span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', display: 'block' }}>
-        <defs>
-          <linearGradient id="evalAreaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#1779F7" stopOpacity="0.22" />
-            <stop offset="100%" stopColor="#1779F7" stopOpacity="0.02" />
-          </linearGradient>
-        </defs>
-        {[0, 20, 40, 60, 80, 100].map(v => {
-          const y = pad.top + (1 - v / 100) * cH
-          return (
-            <g key={v}>
-              <line x1={pad.left} y1={y} x2={pad.left + cW} y2={y} stroke="var(--border-default)" strokeWidth="0.6" />
-              <text x={pad.left - 6} y={y + 4} textAnchor="end" fontSize="10" fill="#9B9B9B" fontFamily="inherit">{v}</text>
-            </g>
-          )
-        })}
-        <path d={areaPath} fill="url(#evalAreaGrad)" />
-        <path d={linePath} fill="none" stroke="#1779F7" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
-        {pts.filter((_, i) => i % 4 === 0).map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="2.5" fill="#1779F7" />
-        ))}
-        {CHART_LABELS.map((lbl, i) => {
-          const x = pad.left + (i / (CHART_LABELS.length - 1)) * cW
-          return (
-            <text key={lbl} x={x} y={H - 4} textAnchor="middle" fontSize="10" fill="#9B9B9B" fontFamily="inherit">{lbl}</text>
-          )
-        })}
-      </svg>
+      <ResponsiveContainer width="100%" height={210}>
+        <AreaChart data={data} margin={{ top: 5, right: 8, bottom: 0, left: -10 }}>
+          <defs>
+            <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor="#1779F7" stopOpacity={0.28} />
+              <stop offset="100%" stopColor="#1779F7" stopOpacity={0.01} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid
+            strokeDasharray="0"
+            stroke="var(--border-default)"
+            strokeOpacity={0.6}
+            vertical={false}
+          />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 11, fill: '#9B9B9B', fontFamily: "'Byrd', sans-serif" }}
+            axisLine={false}
+            tickLine={false}
+            dy={8}
+          />
+          <YAxis
+            domain={[50, 100]}
+            ticks={[60, 70, 80, 90, 100]}
+            tick={{ fontSize: 11, fill: '#9B9B9B', fontFamily: "'Byrd', sans-serif" }}
+            axisLine={false}
+            tickLine={false}
+            width={30}
+          />
+          <Tooltip
+            content={<ChartTooltip />}
+            cursor={{ stroke: '#1779F7', strokeWidth: 1.5, strokeDasharray: '5 4', strokeOpacity: 0.5 }}
+          />
+          <Area
+            type="monotone"
+            dataKey="score"
+            stroke="#1779F7"
+            strokeWidth={2.5}
+            fill="url(#scoreGrad)"
+            dot={false}
+            activeDot={{ r: 5, fill: '#1779F7', stroke: 'var(--bg-card)', strokeWidth: 2.5 }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   )
 }
