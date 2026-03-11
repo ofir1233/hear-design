@@ -1105,7 +1105,7 @@ function FeedbackModal({ agent, onClose }) {
                       {/* checkbox */}
                       <div style={{
                         width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-                        border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--border-default)'}`,
+                        border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--n60, #888)'}`,
                         background: checked ? 'var(--b100)' : 'transparent',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         transition: 'all 120ms ease',
@@ -1129,14 +1129,18 @@ function FeedbackModal({ agent, onClose }) {
           </div>
 
           {/* Notify by mail */}
-          <div style={{ borderTop: '1px solid var(--border-default)', marginTop: 4, paddingTop: 10 }}>
           <div
             onClick={() => setNotifyByMail(v => !v)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              marginTop: 10, paddingTop: 10,
+              borderTop: '1px solid var(--border-default)',
+              cursor: 'pointer', userSelect: 'none',
+            }}
           >
             <div style={{
               width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-              border: `1.5px solid ${notifyByMail ? 'var(--b100)' : 'var(--border-default)'}`,
+              border: `1.5px solid ${notifyByMail ? 'var(--b100)' : 'var(--n60, #888)'}`,
               background: notifyByMail ? 'var(--b100)' : 'transparent',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 120ms ease',
@@ -1147,8 +1151,7 @@ function FeedbackModal({ agent, onClose }) {
                 </svg>
               )}
             </div>
-            <span style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-secondary)' }}>Notify by mail</span>
-          </div>
+            <span style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)' }}>Notify by mail</span>
           </div>
         </div>
 
