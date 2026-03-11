@@ -988,6 +988,7 @@ function FeedbackModal({ agent, onClose }) {
     borderRadius: 7, fontSize: 13, color: 'var(--text-primary)',
     fontFamily: "'Byrd', sans-serif", outline: 'none',
     transition: 'border-color 150ms ease',
+    colorScheme: 'dark',
   }
 
   // build alphabetically grouped agent list
@@ -1014,7 +1015,7 @@ function FeedbackModal({ agent, onClose }) {
         </>
       }
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         {/* Recipient picker */}
         <div>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>
@@ -1087,7 +1088,7 @@ function FeedbackModal({ agent, onClose }) {
                       style={{
                         display: 'flex', alignItems: 'center', gap: 10,
                         padding: '8px 12px', cursor: 'pointer',
-                        borderTop: i > 0 ? '1px solid var(--border-default)' : 'none',
+                        borderTop: '1px solid var(--border-default)',
                         background: checked ? 'var(--bg-active)' : 'transparent',
                         transition: 'background 120ms ease',
                       }}
@@ -1128,9 +1129,10 @@ function FeedbackModal({ agent, onClose }) {
           </div>
 
           {/* Notify by mail */}
+          <div style={{ borderTop: '1px solid var(--border-default)', marginTop: 4, paddingTop: 10 }}>
           <div
             onClick={() => setNotifyByMail(v => !v)}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, cursor: 'pointer', userSelect: 'none' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', userSelect: 'none' }}
           >
             <div style={{
               width: 16, height: 16, borderRadius: 4, flexShrink: 0,
@@ -1147,22 +1149,29 @@ function FeedbackModal({ agent, onClose }) {
             </div>
             <span style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-secondary)' }}>Notify by mail</span>
           </div>
+          </div>
         </div>
 
-        {/* Schedule type */}
+        {/* Schedule type — segmented control */}
         <div>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Schedule</label>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{
+            display: 'flex', gap: 3, padding: 3,
+            background: 'var(--bg-active)', border: '1px solid var(--border-default)',
+            borderRadius: 9,
+          }}>
             {[
               { id: 'one-time',  label: 'One-time' },
               { id: 'recurring', label: 'Recurring' },
             ].map(opt => (
               <button key={opt.id} onClick={() => setSchedType(opt.id)} style={{
-                flex: 1, height: 32, borderRadius: 7, fontSize: 12,
+                flex: 1, height: 30, borderRadius: 6, fontSize: 12,
                 fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
-                border: `1.5px solid ${schedType === opt.id ? 'var(--b100)' : 'var(--border-default)'}`,
-                background: schedType === opt.id ? 'var(--b20)' : 'var(--bg-canvas)',
-                color: schedType === opt.id ? 'var(--b100)' : 'var(--text-secondary)',
+                border: 'none',
+                background: schedType === opt.id ? 'var(--bg-card)' : 'transparent',
+                color: schedType === opt.id ? 'var(--text-primary)' : 'var(--text-muted)',
+                fontWeight: schedType === opt.id ? 500 : 400,
+                boxShadow: schedType === opt.id ? '0 1px 3px rgba(0,0,0,0.18)' : 'none',
                 transition: 'all 150ms ease',
               }}>{opt.label}</button>
             ))}
