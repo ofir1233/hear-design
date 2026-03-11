@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import Button from '../Button.jsx'
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -312,89 +312,173 @@ function ScorePanel({ totalScore = 90, title = 'Overall score', collapsible = fa
   )
 }
 
-// ── Filter bar ────────────────────────────────────────────────────────────────
+// ── Preset dropdown — exact copy of DataPage PresetSelect ────────────────────
+
+function ChevronDown({ open }) {
+  return (
+    <svg width="11" height="11" viewBox="0 0 12 12" fill="none"
+      style={{ flexShrink: 0, transition: 'transform 160ms ease', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+      <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function PresetSelect({ options, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [open])
+
+  const selected = options.find(o => o.value === value)
+
+  return (
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          height: 30, padding: '0 10px',
+          background: open ? 'var(--bg-active)' : 'var(--bg-canvas)',
+          border: `1px solid ${open ? 'var(--border-default)' : 'var(--border-input)'}`,
+          borderRadius: 6,
+          fontSize: 'var(--type-p14)',
+          color: selected?.value ? 'var(--text-primary)' : 'var(--text-muted)',
+          fontFamily: "'Byrd', sans-serif",
+          cursor: 'pointer', whiteSpace: 'nowrap', minWidth: 100,
+          transition: 'background 150ms ease, border-color 150ms ease',
+        }}
+      >
+        <span style={{ flex: 1, textAlign: 'left' }}>{selected?.label ?? 'None'}</span>
+        <ChevronDown open={open} />
+      </button>
+
+      <div style={{
+        position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 600,
+        background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+        borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+        minWidth: '100%', overflow: 'hidden',
+        pointerEvents: open ? 'auto' : 'none',
+        opacity: open ? 1 : 0,
+        transform: open ? 'translateY(0)' : 'translateY(-6px)',
+        transition: 'opacity 130ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1)',
+      }}>
+        {options.map(opt => {
+          const isActive = opt.value === value
+          return (
+            <div
+              key={opt.value}
+              onClick={() => { onChange(opt.value); setOpen(false) }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                padding: '8px 12px',
+                fontSize: 'var(--type-p14)',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                fontWeight: isActive ? 600 : 400,
+                fontFamily: "'Byrd', sans-serif",
+                cursor: 'pointer',
+                background: isActive ? 'var(--bg-active)' : 'transparent',
+                transition: 'background 120ms ease',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--bg-active)' }}
+              onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+            >
+              {opt.label}
+              {isActive && (
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M2 6l3 3 5-5" stroke="var(--color-brand)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// ── Filter bar — matches DataPage filter bar layout ───────────────────────────
 
 function FilterBar() {
-  const [presetId, setPresetId] = useState(PRESETS[0].id)
-  const [presetOpen, setPresetOpen] = useState(false)
+  const [preset, setPreset] = useState(PRESETS[0].id)
   const [chips, setChips] = useState([
-    { label: 'Call Date : Not Equal : 18/25/8', color: '#1779F7' },
-    { label: 'Agent name : Shlomo', color: '#4BA373' },
+    { id: 1, label: 'Call Date : Not Equal : 18/25/8' },
+    { id: 2, label: 'Agent name : Shlomo' },
   ])
 
   return (
     <div style={{
-      display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-      padding: '8px 24px', background: 'var(--bg-canvas)',
-      borderBottom: '1px solid var(--border-default)', flexShrink: 0,
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '0 20px', height: 48, flexShrink: 0,
+      borderBottom: '1px solid var(--border-input)',
+      background: 'var(--bg-sidebar)',
     }}>
-      <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 500 }}>Preset:</span>
-
-      <div style={{ position: 'relative' }}>
-        <button
-          onClick={() => setPresetOpen(o => !o)}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '5px 10px', borderRadius: 8,
-            border: '1px solid var(--border-default)', background: 'var(--bg-card)',
-            fontSize: 12, color: 'var(--text-primary)', cursor: 'pointer',
-            fontFamily: 'inherit', whiteSpace: 'nowrap',
-          }}
-        >
-          {PRESETS.find(p => p.id === presetId)?.label}
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 4l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
-        {presetOpen && (
-          <div style={{
-            position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 200,
-            background: 'var(--bg-card)', border: '1px solid var(--border-default)',
-            borderRadius: 8, overflow: 'hidden', minWidth: 200,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-          }}>
-            {PRESETS.map(p => (
-              <button key={p.id} onClick={() => { setPresetId(p.id); setPresetOpen(false) }} style={{
-                display: 'block', width: '100%', textAlign: 'left',
-                padding: '8px 12px', fontSize: 12, fontFamily: 'inherit',
-                background: presetId === p.id ? 'var(--bg-canvas)' : 'none',
-                border: 'none', cursor: 'pointer', color: 'var(--text-primary)',
-              }}>{p.label}</button>
-            ))}
-          </div>
-        )}
+      {/* Preset */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
+        <span style={{
+          fontSize: 'var(--type-p14)', fontWeight: 500, color: 'var(--text-secondary)',
+          fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
+        }}>Preset:</span>
+        <PresetSelect
+          options={[{ value: '', label: 'None' }, ...PRESETS.map(p => ({ value: p.id, label: p.label }))]}
+          value={preset}
+          onChange={setPreset}
+        />
       </div>
 
-      {chips.map((chip, i) => (
-        <div key={i} style={{
-          display: 'inline-flex', alignItems: 'center', gap: 5,
-          padding: '3px 8px 3px 10px',
-          background: `${chip.color}15`, border: `1px solid ${chip.color}40`,
-          borderRadius: 999, fontSize: 12, fontWeight: 500, color: 'var(--text-primary)',
-          flexShrink: 0, whiteSpace: 'nowrap',
-        }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: chip.color, display: 'inline-block', flexShrink: 0 }} />
-          <span>{chip.label}</span>
-          <button
-            onClick={() => setChips(c => c.filter((_, j) => j !== i))}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '0 0 0 2px', fontSize: 15, lineHeight: 1, fontFamily: 'inherit' }}
-          >×</button>
-        </div>
-      ))}
+      {/* Divider */}
+      <div style={{ width: 1, height: 22, background: 'var(--border-input)', flexShrink: 0 }} />
 
-      <div style={{
-        padding: '3px 9px', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
-        borderRadius: 999, fontSize: 12, color: 'var(--text-secondary)', flexShrink: 0,
-      }}>+5</div>
-
-      <button style={{
-        marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer',
-        color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', padding: 4, borderRadius: 6,
+      {/* Chips */}
+      <div className="smooth-scroll" style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        flex: 1, overflowX: 'auto', overflowY: 'hidden', minWidth: 0,
       }}>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M2 4.5h10M4 7.5h6M6 10.5h2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-        </svg>
-      </button>
+        {chips.map(chip => (
+          <div key={chip.id} style={{
+            display: 'flex', alignItems: 'center', gap: 0,
+            height: 26, borderRadius: 99,
+            background: 'var(--b20)', border: '1px solid var(--b30)',
+            fontSize: 12, color: 'var(--b100)',
+            fontFamily: "'Byrd', sans-serif",
+            whiteSpace: 'nowrap', flexShrink: 0, userSelect: 'none',
+          }}>
+            <span style={{ padding: '0 8px 0 10px', lineHeight: 1 }}>{chip.label}</span>
+            <button
+              onClick={() => setChips(c => c.filter(ch => ch.id !== chip.id))}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 20, height: 20, marginRight: 3,
+                borderRadius: '50%', background: 'none', border: 'none',
+                cursor: 'pointer', color: 'var(--b100)', fontSize: 15, lineHeight: 1, flexShrink: 0,
+              }}
+            >×</button>
+          </div>
+        ))}
+        <button
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            height: 28, padding: '0 11px',
+            background: 'none', border: '1px solid var(--border-input)',
+            borderRadius: 99, fontSize: 12, color: 'var(--text-secondary)',
+            fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
+            whiteSpace: 'nowrap', flexShrink: 0,
+            transition: 'border-color 150ms ease, color 150ms ease, background 150ms ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--b100)'; e.currentTarget.style.color = 'var(--b100)'; e.currentTarget.style.background = 'var(--b20)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-input)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'none' }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          Add filter
+        </button>
+      </div>
     </div>
   )
 }
@@ -659,7 +743,7 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition }) {
       </div>
 
       {/* Scrollable content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <InsightCard agent={agent} />
           <PerformanceChart data={chartData} />
@@ -736,7 +820,7 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
       <FilterBar />
 
       {/* Scrollable content */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
         <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <PerformanceChart data={chartData} />
           <ScorePanel totalScore={90} />
