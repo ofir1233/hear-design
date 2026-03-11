@@ -1012,9 +1012,9 @@ function PersonPicker({ label, people, selected, onToggle, placeholder }) {
         <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
           {label}
         </label>
-        {selected.length > 0 && !expanded && (
+        {selected.length > 0 && (
           <button
-            onClick={() => setExpanded(true)}
+            onClick={() => setExpanded(v => !v)}
             style={{
               display: 'flex', alignItems: 'center', gap: 4,
               background: 'none', border: 'none', cursor: 'pointer', padding: 0,
@@ -1022,11 +1022,23 @@ function PersonPicker({ label, people, selected, onToggle, placeholder }) {
               color: 'var(--b100)', fontWeight: 500,
             }}
           >
-            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-              <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
-              <path d="M5.5 3.5v4M3.5 5.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-            </svg>
-            Add more
+            {expanded ? (
+              <>
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
+                  <path d="M3.5 5.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+                Minimize
+              </>
+            ) : (
+              <>
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+                  <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
+                  <path d="M5.5 3.5v4M3.5 5.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+                Add more
+              </>
+            )}
           </button>
         )}
       </div>
