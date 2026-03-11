@@ -49,25 +49,25 @@ const CATEGORIES = [
   {
     name: 'Professionalism',
     skills: [
-      { name: 'Customer Needs Assessment', score: 89 },
-      { name: 'Self-Introduction',         score: 19 },
+      { name: 'Customer Needs Assessment', score: 89, average: 82 },
+      { name: 'Self-Introduction',         score: 19, average: 55 },
     ],
   },
   {
     name: 'Sales Techniques',
     skills: [
-      { name: 'Identifying Sales Opportunities',      score: 90 },
-      { name: 'Handling Objections',                  score: 81 },
-      { name: 'Persuasion and Solution Presentation', score: 42 },
-      { name: 'Creating a Sense of Urgency',          score: 29 },
+      { name: 'Identifying Sales Opportunities',      score: 90, average: 74 },
+      { name: 'Handling Objections',                  score: 81, average: 68 },
+      { name: 'Persuasion and Solution Presentation', score: 42, average: 63 },
+      { name: 'Creating a Sense of Urgency',          score: 29, average: 58 },
     ],
   },
   {
     name: 'Communication',
     skills: [
-      { name: 'Customer Needs Assessment',  score: 92 },
-      { name: 'Self-Introduction',          score: 75 },
-      { name: 'Call Summary and Reflection', score: 45 },
+      { name: 'Customer Needs Assessment',   score: 92, average: 79 },
+      { name: 'Self-Introduction',           score: 75, average: 71 },
+      { name: 'Call Summary and Reflection', score: 45, average: 66 },
     ],
   },
 ]
@@ -193,12 +193,22 @@ function Stars({ value, max = 5 }) {
   )
 }
 
-function ScoreBar({ score, max = 100 }) {
-  const pct = Math.min(100, (score / max) * 100)
-  const color = scoreColor(score)
+function ScoreBar({ score, average, max = 100 }) {
+  const pct    = Math.min(100, (score   / max) * 100)
+  const avgPct = average != null ? Math.min(100, (average / max) * 100) : null
+  const color  = scoreColor(score)
   return (
     <div style={{ position: 'relative', height: 5, background: 'var(--border-default)', borderRadius: 999, marginTop: 5 }}>
       <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: color, borderRadius: 999 }} />
+      {/* Average tick — distinct position per skill */}
+      {avgPct != null && (
+        <div style={{
+          position: 'absolute', top: '-4px', left: `${avgPct}%`,
+          transform: 'translateX(-50%)',
+          width: 2, height: 13, background: 'var(--text-secondary)',
+          borderRadius: 1, opacity: 0.5,
+        }} />
+      )}
       <div style={{
         position: 'absolute', top: '50%', left: `${pct}%`,
         transform: 'translate(-50%, -50%)',
@@ -354,7 +364,7 @@ function ScorePanel({ totalScore = 90, title = 'Overall score', collapsible = fa
                       </div>
                       <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', flexShrink: 0 }}>{skill.score}/100</span>
                     </div>
-                    <ScoreBar score={skill.score} />
+                    <ScoreBar score={skill.score} average={skill.average} />
                   </div>
                 ))}
               </div>
@@ -868,7 +878,7 @@ function InsightCard({ agent }) {
 
 // ── Skill section ─────────────────────────────────────────────────────────────
 
-function SkillSection({ section }) {
+function SkillSection({ section, onOpenCall }) {
   const [expanded, setExpanded] = useState(true)
 
   return (
@@ -914,13 +924,14 @@ function SkillSection({ section }) {
                 {skill.calls.map(call => (
                   <div
                     key={call.id}
+                    onClick={() => onOpenCall?.(call.id)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       padding: '7px 10px', borderRadius: 7,
                       background: 'var(--bg-card)', border: '1px solid var(--border-default)',
-                      cursor: 'pointer', transition: 'background 120ms',
+                      cursor: onOpenCall ? 'pointer' : 'default', transition: 'background 120ms',
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-canvas)'}
+                    onMouseEnter={e => { if (onOpenCall) e.currentTarget.style.background = 'var(--bg-canvas)' }}
                     onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
@@ -945,8 +956,145 @@ function SkillSection({ section }) {
 
 // ── Agent detail view ─────────────────────────────────────────────────────────
 
-function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition }) {
-  const chartData = useMemo(() => genChartData(agent.avgScore), [agent.id])
+// ── Feedback modal ────────────────────────────────────────────────────────────
+
+function FeedbackModal({ agent, onClose }) {
+  const [recipient,  setRecipient]  = useState('agent')
+  const [schedType,  setSchedType]  = useState('one-time')
+  const [frequency,  setFrequency]  = useState('weekly')
+  const [sendDate,   setSendDate]   = useState('')
+  const [message,    setMessage]    = useState('')
+  const [sent,       setSent]       = useState(false)
+
+  function handleSend() {
+    setSent(true)
+    setTimeout(onClose, 1400)
+  }
+
+  const inputStyle = {
+    width: '100%', boxSizing: 'border-box',
+    height: 36, padding: '0 10px',
+    background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)',
+    borderRadius: 7, fontSize: 13, color: 'var(--text-primary)',
+    fontFamily: "'Byrd', sans-serif", outline: 'none',
+    transition: 'border-color 150ms ease',
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title="Send Feedback Form"
+      footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+          <Button size="sm" onClick={handleSend} disabled={sent}>
+            {sent ? 'Sent ✓' : 'Confirm & Send'}
+          </Button>
+        </>
+      }
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Recipient */}
+        <div>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Recipient</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[
+              { id: 'agent', label: agent?.name ?? 'This agent' },
+              { id: 'team',  label: `${agent?.team ?? ''} team` },
+              { id: 'all',   label: 'All agents' },
+            ].map(opt => (
+              <button key={opt.id} onClick={() => setRecipient(opt.id)} style={{
+                flex: 1, height: 32, borderRadius: 7, fontSize: 12,
+                fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
+                border: `1.5px solid ${recipient === opt.id ? 'var(--b100)' : 'var(--border-default)'}`,
+                background: recipient === opt.id ? 'var(--b20)' : 'var(--bg-canvas)',
+                color: recipient === opt.id ? 'var(--b100)' : 'var(--text-secondary)',
+                transition: 'all 150ms ease',
+              }}>{opt.label}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Schedule type */}
+        <div>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Schedule</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[
+              { id: 'one-time',  label: 'One-time' },
+              { id: 'recurring', label: 'Recurring' },
+            ].map(opt => (
+              <button key={opt.id} onClick={() => setSchedType(opt.id)} style={{
+                flex: 1, height: 32, borderRadius: 7, fontSize: 12,
+                fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
+                border: `1.5px solid ${schedType === opt.id ? 'var(--b100)' : 'var(--border-default)'}`,
+                background: schedType === opt.id ? 'var(--b20)' : 'var(--bg-canvas)',
+                color: schedType === opt.id ? 'var(--b100)' : 'var(--text-secondary)',
+                transition: 'all 150ms ease',
+              }}>{opt.label}</button>
+            ))}
+          </div>
+        </div>
+
+        {/* Frequency (only for recurring) */}
+        {schedType === 'recurring' && (
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Frequency</label>
+            <PresetSelect
+              fullWidth
+              options={[
+                { value: 'weekly',    label: 'Weekly' },
+                { value: 'biweekly', label: 'Bi-weekly' },
+                { value: 'monthly',  label: 'Monthly' },
+                { value: 'quarterly',label: 'Quarterly' },
+              ]}
+              value={frequency}
+              onChange={setFrequency}
+            />
+          </div>
+        )}
+
+        {/* Send date */}
+        <div>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>
+            {schedType === 'recurring' ? 'Start date' : 'Send date'}
+          </label>
+          <input
+            type="date"
+            value={sendDate}
+            onChange={e => setSendDate(e.target.value)}
+            style={inputStyle}
+            onFocus={e  => { e.currentTarget.style.borderColor = 'var(--b100)' }}
+            onBlur={e   => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
+          />
+        </div>
+
+        {/* Message */}
+        <div>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Message (optional)</label>
+          <textarea
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            placeholder="Add a personal note to the feedback form…"
+            rows={3}
+            style={{
+              ...inputStyle, height: 'auto', padding: '8px 10px',
+              resize: 'vertical', lineHeight: 1.5,
+            }}
+            onFocus={e  => { e.currentTarget.style.borderColor = 'var(--b100)' }}
+            onBlur={e   => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
+          />
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+// ── Agent detail view ─────────────────────────────────────────────────────────
+
+function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition, onOpenCall }) {
+  const chartData       = useMemo(() => genChartData(agent.avgScore), [agent.id])
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
 
   return (
     <div style={{
@@ -981,17 +1129,24 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition }) {
         </button>
         <span style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: "'Byrd', sans-serif", userSelect: 'none' }}>›</span>
         <span style={{
-          fontSize: 12, color: 'var(--text-muted)',
-          fontFamily: "'Byrd', sans-serif",
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          maxWidth: 280,
+          fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280,
         }}>
           {agent.name}
         </span>
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+          <Button variant="ghost" size="sm" onClick={() => setFeedbackOpen(true)}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ marginRight: 5 }}>
+              <path d="M7 1a6 6 0 100 12A6 6 0 007 1zM7 4v3l2 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            Send Feedback
+          </Button>
           <Button variant="secondary" size="sm">Export</Button>
         </div>
       </div>
+
+      {/* Filter bar for agent-specific filtering */}
+      <FilterBar />
 
       {/* Scrollable content */}
       <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1000,10 +1155,12 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition }) {
           <PerformanceChart data={chartData} />
           <ScorePanel totalScore={agent.avgScore} title="Agent evaluation" collapsible />
           {SKILL_DETAILS.map(section => (
-            <SkillSection key={section.category} section={section} />
+            <SkillSection key={section.category} section={section} onOpenCall={onOpenCall} />
           ))}
         </div>
       </div>
+
+      {feedbackOpen && <FeedbackModal agent={agent} onClose={() => setFeedbackOpen(false)} />}
     </div>
   )
 }
