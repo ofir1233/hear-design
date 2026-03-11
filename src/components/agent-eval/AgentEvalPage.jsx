@@ -2,8 +2,44 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
+import { AgGridReact } from 'ag-grid-react'
+import { ModuleRegistry, AllCommunityModule, themeQuartz, colorSchemeDark, colorSchemeLight } from 'ag-grid-community'
 import Button from '../Button.jsx'
 import Modal from '../Modal.jsx'
+
+// ── AG Grid setup (matches DataPage exactly) ───────────────────────────────────
+ModuleRegistry.registerModules([AllCommunityModule])
+
+const THEME_PARAMS = {
+  fontFamily: "'Byrd', sans-serif",
+  fontSize: 13,
+  cellHorizontalPaddingScale: 1.1,
+  wrapperBorderRadius: 0,
+}
+const lightTheme = themeQuartz.withPart(colorSchemeLight).withParams({
+  ...THEME_PARAMS,
+  backgroundColor:               '#FFFFFF',
+  foregroundColor:               '#181818',
+  headerBackgroundColor:         '#FFFFFF',
+  headerTextColor:               '#606060',
+  borderColor:                   '#E5E7EB',
+  rowHoverColor:                 '#E8E8E6',
+  selectedRowBackgroundColor:    'rgba(23,121,247,0.07)',
+  oddRowBackgroundColor:         '#FFFFFF',
+  headerColumnResizeHandleColor: '#D1D5DB',
+})
+const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
+  ...THEME_PARAMS,
+  backgroundColor:               '#242424',
+  foregroundColor:               '#F4F3F1',
+  headerBackgroundColor:         '#181818',
+  headerTextColor:               '#9B9B9B',
+  borderColor:                   '#333333',
+  rowHoverColor:                 '#2A2A2A',
+  selectedRowBackgroundColor:    'rgba(23,121,247,0.12)',
+  oddRowBackgroundColor:         '#242424',
+  headerColumnResizeHandleColor: '#444444',
+})
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
@@ -755,24 +791,61 @@ function FilterBar() {
 
 // ── Searchable entity table ───────────────────────────────────────────────────
 
-function EntityTable({ title, rows, onRowClick }) {
-  const [search, setSearch] = useState('')
+// ── AG Grid cell renderers for EntityTable ────────────────────────────────────
 
-  const filtered = useMemo(() => {
+function NameCell({ value, data }) {
+  if (!data) return null
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: '100%' }}>
+      <div style={{
+        width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+        background: avatarColor(value),
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 10, fontWeight: 700, color: '#fff', fontFamily: "'Byrd', sans-serif",
+      }}>{initials(value)}</div>
+      <span style={{ color: '#1779F7', fontWeight: 500, fontFamily: "'Byrd', sans-serif" }}>{value}</span>
+    </div>
+  )
+}
+
+function ScoreCell({ value }) {
+  if (value == null) return null
+  return <span style={{ fontWeight: 600, color: scoreColor(value), fontFamily: "'Byrd', sans-serif" }}>{value}</span>
+}
+
+function EntityTable({ title, rows, onRowClick }) {
+  const [isDark, setIsDark] = useState(() => document.documentElement.dataset.theme === 'dark')
+  const [search,  setSearch]  = useState('')
+
+  useEffect(() => {
+    const obs = new MutationObserver(() => setIsDark(document.documentElement.dataset.theme === 'dark'))
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
+
+  const rowData = useMemo(() => {
     if (!search.trim()) return rows
     const q = search.toLowerCase()
     return rows.filter(r => r.name.toLowerCase().includes(q))
   }, [rows, search])
 
+  const colDefs = useMemo(() => [
+    { field: 'name',          headerName: 'ID',                   flex: 1, minWidth: 180, cellRenderer: NameCell },
+    { field: 'lastCallDate',  headerName: 'LAST CALL DATE',       width: 210 },
+    { field: 'avgHandleTime', headerName: 'AVG HANDLE TIME',      width: 170 },
+    { field: 'avgScore',      headerName: 'AVG SCORE',            width: 130, cellRenderer: ScoreCell },
+  ], [])
+
+  const rowCount = rowData.length
+  const gridHeight = 38 + rowCount * 44 + 2 // headerHeight + rows + border
+
   return (
     <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
-      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>{title}</div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12, fontFamily: "'Byrd', sans-serif" }}>{title}</div>
 
       {/* Search */}
       <div style={{ position: 'relative', marginBottom: 12 }}>
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{
-          position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none',
-        }}>
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}>
           <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.4" />
           <path d="M9 9l2.5 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
         </svg>
@@ -784,45 +857,25 @@ function EntityTable({ title, rows, onRowClick }) {
             width: '100%', boxSizing: 'border-box', padding: '7px 10px 7px 30px',
             border: '1px solid var(--border-default)', borderRadius: 8,
             background: 'var(--bg-canvas)', color: 'var(--text-primary)',
-            fontSize: 13, fontFamily: 'inherit', outline: 'none',
+            fontSize: 13, fontFamily: "'Byrd', sans-serif", outline: 'none',
           }}
         />
       </div>
 
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-default)' }}>
-              {['', 'ID', 'last call Date', 'Average Handle Time', 'average score'].map((h, i) => (
-                <th key={i} style={{ padding: '6px 12px', textAlign: 'left', color: 'var(--text-muted)', fontWeight: 500, whiteSpace: 'nowrap', fontSize: 12 }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((row, i) => (
-              <tr
-                key={row.id}
-                onClick={() => onRowClick?.(row)}
-                style={{ borderBottom: '1px solid var(--border-default)', cursor: onRowClick ? 'pointer' : 'default', transition: 'background 120ms' }}
-                onMouseEnter={e => { if (onRowClick) e.currentTarget.style.background = 'var(--bg-canvas)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = '' }}
-              >
-                <td style={{ padding: '10px 12px', color: 'var(--text-muted)', width: 32 }}>{i + 1}</td>
-                <td style={{ padding: '10px 12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Avatar name={row.name} size={28} />
-                    <span style={{ color: '#1779F7', fontWeight: 500 }}>{row.name}</span>
-                  </div>
-                </td>
-                <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{row.lastCallDate}</td>
-                <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{row.avgHandleTime}</td>
-                <td style={{ padding: '10px 12px' }}>
-                  <span style={{ fontWeight: 600, color: scoreColor(row.avgScore) }}>{row.avgScore}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* AG Grid */}
+      <div className="hear-grid" style={{ height: gridHeight, width: '100%', borderRadius: 8, overflow: 'hidden' }}>
+        <AgGridReact
+          theme={isDark ? darkTheme : lightTheme}
+          className="hear-grid"
+          rowData={rowData}
+          columnDefs={colDefs}
+          defaultColDef={{ resizable: true, sortable: true }}
+          rowHeight={44}
+          headerHeight={38}
+          suppressCellFocus
+          onRowClicked={onRowClick ? e => onRowClick(e.data) : undefined}
+          getRowStyle={onRowClick ? () => ({ cursor: 'pointer' }) : undefined}
+        />
       </div>
     </div>
   )
