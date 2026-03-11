@@ -374,7 +374,7 @@ function ScorePanel({ totalScore = 90, title = 'Overall score', collapsible = fa
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
+    <div data-inspector="AgentScorePanel" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: collapsed ? 0 : 16 }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</span>
         {collapsible && (
@@ -885,7 +885,7 @@ function EntityTable({ title, rows, onRowClick }) {
 
 function InsightCard({ agent }) {
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
+    <div data-inspector="InsightCard" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
       <div style={{ display: 'flex', gap: 20, alignItems: 'stretch' }}>
 
         {/* Left: bordered inset panel */}
@@ -959,7 +959,7 @@ function SkillSection({ section, onOpenCall }) {
   const [expanded, setExpanded] = useState(true)
 
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, overflow: 'hidden' }}>
+    <div data-inspector="SkillSection" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, overflow: 'hidden' }}>
       <button
         onClick={() => setExpanded(e => !e)}
         style={{
@@ -1059,7 +1059,7 @@ function PersonPicker({ label, people, selected, onToggle, placeholder }) {
   }
 
   return (
-    <div>
+    <div data-inspector="PersonPicker">
       {/* Label row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
@@ -1442,7 +1442,7 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
   }
 
   return (
-    <div style={{
+    <div data-inspector="AgentEvalPage" style={{
       position: 'fixed', top: 0, left: sidebarWidth, right: 0, bottom: 0,
       transition: sidebarTransition, background: 'var(--bg-canvas)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',

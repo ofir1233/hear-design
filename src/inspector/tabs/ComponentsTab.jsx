@@ -453,10 +453,12 @@ function ComponentDetail({ name, def, onNavigate }) {
         overflow:     'hidden',
         marginBottom: 4,
         animation:    'inspector-preview-flash 180ms ease',
-        // Organisms that scale themselves use contain:paint internally.
-        // For non-contained components (atoms, molecules) the box expands to fit.
       }}>
-        {def.render(activeState.props)}
+        {activeState.preview
+          ? activeState.preview()
+          : def.render
+            ? def.render(activeState.props)
+            : null}
       </div>
       <style>{`
         @keyframes inspector-preview-flash { from { opacity: 0.4 } to { opacity: 1 } }
