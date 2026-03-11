@@ -180,7 +180,7 @@ function Avatar({ name, size = 36 }) {
 
 function Stars({ value, max = 5 }) {
   return (
-    <div style={{ display: 'flex', gap: 2 }}>
+    <div style={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
       {Array.from({ length: max }).map((_, i) => (
         <svg key={i} width="11" height="11" viewBox="0 0 12 12">
           <polygon
