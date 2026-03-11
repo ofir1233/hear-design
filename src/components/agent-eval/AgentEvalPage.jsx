@@ -823,48 +823,63 @@ function EntityTable({ title, rows, onRowClick }) {
 
 function InsightCard({ agent }) {
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '24px' }}>
-      <div style={{ display: 'flex', gap: 28, alignItems: 'stretch' }}>
-        {/* Left: avatar + role + rating + score */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, minWidth: 108 }}>
-          <Avatar name={agent.name} size={56} />
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-              {agent.name.split(' ')[0]}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-              Agent Operati...
-            </div>
-            <Stars value={agent.stars} />
-            <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--text-primary)', marginTop: 6, lineHeight: 1 }}>{agent.avgScore}</div>
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
+      <div style={{ display: 'flex', gap: 20, alignItems: 'stretch' }}>
+
+        {/* Left: bordered inset panel */}
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 6, minWidth: 120, padding: '20px 16px',
+          background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
+          borderRadius: 10, flexShrink: 0,
+        }}>
+          <Avatar name={agent.name} size={52} />
+          <div style={{ textAlign: 'center', marginTop: 4 }}>
+            <div style={{
+              fontSize: 12, fontWeight: 600, color: 'var(--text-primary)',
+              fontFamily: "'Byrd', sans-serif",
+              maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{agent.name}</div>
+            <div style={{
+              fontSize: 10, color: 'var(--text-muted)', fontWeight: 500,
+              textTransform: 'uppercase', letterSpacing: '0.07em',
+              marginTop: 2, fontFamily: "'Byrd', sans-serif",
+            }}>Agent Operations</div>
+          </div>
+          <Stars value={agent.stars} />
+          <div style={{ fontSize: 30, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1, fontFamily: "'Byrd', sans-serif" }}>
+            {agent.avgScore}
           </div>
         </div>
 
         {/* Right: insight content */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 0 }}>
           {/* AI insight */}
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ paddingBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
               <span style={{ color: '#FF7056', fontSize: 13, lineHeight: 1 }}>✦</span>
-              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Ai powered insight</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Ai powered insight</span>
             </div>
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.65 }}>
-              Meir demonstrates a solid trend in performance, showing consistent improvement in communication and technical knowledge over the recent period.
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.65, fontFamily: "'Byrd', sans-serif" }}>
+              {agent.name.split(' ')[0]} demonstrates a solid trend in performance, showing consistent improvement in communication and technical knowledge over the recent period.
             </p>
           </div>
+
+          {/* Divider */}
+          <div style={{ borderTop: '1px solid var(--border-default)', marginBottom: 16 }} />
 
           {/* Strengths + Areas */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
             {[
-              { title: 'Top 3 Strengths', items: ['High-Level Communication Clarity', 'Proactive Issue Resolution', 'Expanded Product Knowledge in Feature X'] },
+              { title: 'Top 3 Strengths',      items: ['High-Level Communication Clarity', 'Proactive Issue Resolution', 'Expanded Product Knowledge in Feature X'] },
               { title: 'Areas for improvement', items: ['High-Level Communication Clarity', 'Proactive Issue Resolution', 'Expanded Product Knowledge in Feature X'] },
             ].map(section => (
               <div key={section.title}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                   <span style={{ color: '#FF7056', fontSize: 11 }}>✦</span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{section.title}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>{section.title}</span>
                 </div>
-                <ul style={{ margin: 0, padding: '0 0 0 14px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.9 }}>
+                <ul style={{ margin: 0, padding: '0 0 0 14px', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.9, fontFamily: "'Byrd', sans-serif" }}>
                   {section.items.map(item => <li key={item}>{item}</li>)}
                 </ul>
               </div>
