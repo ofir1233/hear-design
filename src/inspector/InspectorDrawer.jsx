@@ -21,9 +21,30 @@ const NAV_PAGES = [
   { id: 'settings',    label: 'Settings'    },
 ]
 
+// ── Hash utilities ─────────────────────────────────────────────────────────────
+
+function readHash() {
+  try {
+    const p = new URLSearchParams(window.location.hash.slice(1))
+    return { tab: p.get('tab'), page: p.get('page') }
+  } catch { return {} }
+}
+
+function writeHashParams(updates) {
+  try {
+    const p = new URLSearchParams(window.location.hash.slice(1))
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v != null) p.set(k, v); else p.delete(k)
+    })
+    history.replaceState(null, '', '#' + p.toString())
+  } catch {}
+}
+
+// ── Drawer ────────────────────────────────────────────────────────────────────
+
 export default function InspectorDrawer({ open, onClose }) {
-  const [activeTab, setActiveTab] = useState('Foundations')
-  const [activePage, setActivePage] = useState(() => window.__hearActivePage || 'dashboard')
+  const [activeTab, setActiveTab] = useState(() => readHash().tab || 'Foundations')
+  const [activePage, setActivePage] = useState(() => readHash().page || window.__hearActivePage || 'dashboard')
 
   // Close on Escape
   useEffect(() => {
@@ -34,7 +55,10 @@ export default function InspectorDrawer({ open, onClose }) {
 
   // Sync activePage with main app
   useEffect(() => {
-    function handler(e) { setActivePage(e.detail) }
+    function handler(e) {
+      setActivePage(e.detail)
+      writeHashParams({ page: e.detail })
+    }
     window.addEventListener('hear:nav-changed', handler)
     return () => window.removeEventListener('hear:nav-changed', handler)
   }, [])
@@ -43,9 +67,15 @@ export default function InspectorDrawer({ open, onClose }) {
   const [scanKey, setScanKey] = useState(0)
   useEffect(() => { if (open) setScanKey(k => k + 1) }, [open])
 
+  function handleTabChange(tab) {
+    setActiveTab(tab)
+    writeHashParams({ tab })
+  }
+
   function handlePageNav(pageId) {
     window.dispatchEvent(new CustomEvent('hear:nav', { detail: pageId }))
-    setActiveTab('Components')
+    handleTabChange('Components')
+    writeHashParams({ tab: 'Components', page: pageId })
     // Re-scan after page renders
     setTimeout(() => setScanKey(k => k + 1), 200)
   }
@@ -115,6 +145,10 @@ export default function InspectorDrawer({ open, onClose }) {
           }}>
             DEV
           </span>
+
+          {/* ── Share / copy URL button ── */}
+          <CopyLinkButton />
+
           <div style={{ flex: 1 }} />
           <button
             onClick={onClose}
@@ -190,7 +224,7 @@ export default function InspectorDrawer({ open, onClose }) {
             return (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)}
                 style={{
                   padding:       '10px 10px',
                   fontSize:      12,
@@ -220,5 +254,58 @@ export default function InspectorDrawer({ open, onClose }) {
         </div>
       </div>
     </>
+  )
+}
+
+// ── Copy-link button ──────────────────────────────────────────────────────────
+
+function CopyLinkButton() {
+  const [copied, setCopied] = useState(false)
+
+  function copy() {
+    const url = window.location.href
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <button
+      onClick={copy}
+      title="Copy link to this inspector state"
+      style={{
+        display:    'flex',
+        alignItems: 'center',
+        gap:        4,
+        padding:    '3px 8px',
+        borderRadius: T.radiusSm,
+        border:     `1px solid ${copied ? 'rgba(75,163,115,0.4)' : T.border}`,
+        background: copied ? 'rgba(75,163,115,0.1)' : 'none',
+        color:      copied ? '#4BA373' : T.textMuted,
+        cursor:     'pointer',
+        fontSize:   10,
+        fontFamily: T.fontMono,
+        transition: 'all 150ms ease',
+        flexShrink: 0,
+      }}
+      onMouseEnter={e => { if (!copied) e.currentTarget.style.color = T.textDefault }}
+      onMouseLeave={e => { if (!copied) e.currentTarget.style.color = T.textMuted }}
+    >
+      {copied ? (
+        <>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Copied!
+        </>
+      ) : (
+        <>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+          Copy link
+        </>
+      )}
+    </button>
   )
 }

@@ -389,8 +389,57 @@ function HandoffPanel({ def }) {
 
 // ── Full component detail panel ────────────────────────────────────────────────
 
-function ComponentDetail({ name, def, onNavigate }) {
-  const [stateIdx, setStateIdx]     = useState(0)
+function ShareComponentButton({ name }) {
+  const [copied, setCopied] = useState(false)
+
+  function copyLink() {
+    // Build URL with current page/tab params preserved, but component fixed to this one
+    const p = new URLSearchParams(window.location.hash.slice(1))
+    p.set('tab', 'Components')
+    p.set('component', name)
+    p.set('state', '0')
+    const url = window.location.origin + window.location.pathname + '#' + p.toString()
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <button
+      onClick={copyLink}
+      title={`Copy direct link to ${name}`}
+      style={{
+        display:    'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding:    '3px 5px',
+        borderRadius: T.radiusSm,
+        border:     `1px solid ${copied ? 'rgba(75,163,115,0.4)' : T.border}`,
+        background: copied ? 'rgba(75,163,115,0.1)' : 'none',
+        color:      copied ? '#4BA373' : T.textSubtle,
+        cursor:     'pointer',
+        transition: 'all 150ms ease',
+        lineHeight: 1,
+      }}
+      onMouseEnter={e => { if (!copied) { e.currentTarget.style.borderColor = T.borderMuted; e.currentTarget.style.color = T.textDefault } }}
+      onMouseLeave={e => { if (!copied) { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.color = T.textSubtle } }}
+    >
+      {copied ? (
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      ) : (
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+      )}
+    </button>
+  )
+}
+
+function ComponentDetail({ name, def, onNavigate, stateIdx, onStateChange }) {
   const [previewKey, setPreviewKey] = useState(0)
 
   const activeState = def.states[stateIdx] ?? def.states[0]
@@ -398,7 +447,7 @@ function ComponentDetail({ name, def, onNavigate }) {
 
   function selectState(i) {
     if (i === stateIdx) return
-    setStateIdx(i)
+    onStateChange(i)
     setPreviewKey(k => k + 1)
   }
 
@@ -418,6 +467,7 @@ function ComponentDetail({ name, def, onNavigate }) {
           }}>
             {def.tier}
           </span>
+          <ShareComponentButton name={name} />
         </div>
         <p style={{ margin: 0, fontSize: 11, color: T.textMuted, fontFamily: T.fontMono, lineHeight: 1.5 }}>
           {def.description}
@@ -537,11 +587,36 @@ function ComponentDetail({ name, def, onNavigate }) {
   )
 }
 
+// ── Hash utilities (local to ComponentsTab) ───────────────────────────────────
+
+function readHashComponent() {
+  try {
+    const p = new URLSearchParams(window.location.hash.slice(1))
+    return {
+      component: p.get('component') || null,
+      state:     parseInt(p.get('state') || '0', 10),
+    }
+  } catch { return { component: null, state: 0 } }
+}
+
+function writeHashComponentParams(updates) {
+  try {
+    const p = new URLSearchParams(window.location.hash.slice(1))
+    // Make sure tab=Components is always present when we set a component
+    p.set('tab', 'Components')
+    Object.entries(updates).forEach(([k, v]) => {
+      if (v != null) p.set(k, String(v)); else p.delete(k)
+    })
+    history.replaceState(null, '', '#' + p.toString())
+  } catch {}
+}
+
 // ── Main tab ──────────────────────────────────────────────────────────────────
 
 export default function ComponentsTab() {
   const [discovered, setDiscovered] = useState([])
-  const [selected, setSelected]     = useState(null)
+  const [selected, setSelected]     = useState(() => readHashComponent().component)
+  const [stateIdx,  setStateIdx]    = useState(() => readHashComponent().state)
 
   function scan() {
     const nodes = document.querySelectorAll('[data-inspector]')
@@ -549,6 +624,17 @@ export default function ComponentsTab() {
     const valid  = names.filter(name => COMPONENT_DEFS[name])
     setDiscovered(valid)
     setSelected(prev => prev ?? (valid.length > 0 ? valid[0] : null))
+  }
+
+  function handleSelect(name) {
+    setSelected(name)
+    setStateIdx(0)
+    writeHashComponentParams({ component: name, state: 0 })
+  }
+
+  function handleStateChange(i) {
+    setStateIdx(i)
+    writeHashComponentParams({ state: i })
   }
 
   useEffect(() => {
@@ -594,7 +680,7 @@ export default function ComponentsTab() {
           return (
             <button
               key={name}
-              onClick={() => setSelected(name)}
+              onClick={() => handleSelect(name)}
               style={{
                 display:       'flex',
                 flexDirection: 'column',
@@ -638,7 +724,7 @@ export default function ComponentsTab() {
               return (
                 <button
                   key={name}
-                  onClick={() => setSelected(name)}
+                  onClick={() => handleSelect(name)}
                   style={{
                     display:       'flex',
                     flexDirection: 'column',
@@ -679,7 +765,9 @@ export default function ComponentsTab() {
             key={selected}
             name={selected}
             def={def}
-            onNavigate={(name) => setSelected(name)}
+            onNavigate={handleSelect}
+            stateIdx={stateIdx}
+            onStateChange={handleStateChange}
           />
         ) : (
           <p style={{ color: T.textMuted, fontSize: 12, fontFamily: T.fontMono }}>
