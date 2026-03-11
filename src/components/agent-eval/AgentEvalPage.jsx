@@ -959,12 +959,22 @@ function SkillSection({ section, onOpenCall }) {
 // ── Feedback modal ────────────────────────────────────────────────────────────
 
 function FeedbackModal({ agent, onClose }) {
-  const [recipient,  setRecipient]  = useState('agent')
-  const [schedType,  setSchedType]  = useState('one-time')
-  const [frequency,  setFrequency]  = useState('weekly')
-  const [sendDate,   setSendDate]   = useState('')
-  const [message,    setMessage]    = useState('')
-  const [sent,       setSent]       = useState(false)
+  // recipient picker
+  const [recipientSearch, setRecipientSearch] = useState('')
+  const [selectedAgents, setSelectedAgents]   = useState(agent ? [agent] : [])
+  const [notifyByMail,   setNotifyByMail]      = useState(false)
+
+  const [schedType, setSchedType] = useState('one-time')
+  const [frequency, setFrequency] = useState('weekly')
+  const [sendDate,  setSendDate]  = useState('')
+  const [message,   setMessage]   = useState('')
+  const [sent,      setSent]      = useState(false)
+
+  function toggleAgent(a) {
+    setSelectedAgents(prev =>
+      prev.find(x => x.id === a.id) ? prev.filter(x => x.id !== a.id) : [...prev, a]
+    )
+  }
 
   function handleSend() {
     setSent(true)
@@ -980,6 +990,16 @@ function FeedbackModal({ agent, onClose }) {
     transition: 'border-color 150ms ease',
   }
 
+  // build alphabetically grouped agent list
+  const filteredAgents = MOCK_AGENTS.filter(a =>
+    a.name.toLowerCase().includes(recipientSearch.toLowerCase())
+  )
+  const grouped = filteredAgents.reduce((acc, a) => {
+    const key = a.name[0].toUpperCase()
+    ;(acc[key] = acc[key] || []).push(a)
+    return acc
+  }, {})
+
   return (
     <Modal
       open
@@ -988,31 +1008,144 @@ function FeedbackModal({ agent, onClose }) {
       footer={
         <>
           <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleSend} disabled={sent}>
+          <Button size="sm" onClick={handleSend} disabled={sent || selectedAgents.length === 0}>
             {sent ? 'Sent ✓' : 'Confirm & Send'}
           </Button>
         </>
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {/* Recipient */}
+        {/* Recipient picker */}
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Recipient</label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {[
-              { id: 'agent', label: agent?.name ?? 'This agent' },
-              { id: 'team',  label: `${agent?.team ?? ''} team` },
-              { id: 'all',   label: 'All agents' },
-            ].map(opt => (
-              <button key={opt.id} onClick={() => setRecipient(opt.id)} style={{
-                flex: 1, height: 32, borderRadius: 7, fontSize: 12,
-                fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
-                border: `1.5px solid ${recipient === opt.id ? 'var(--b100)' : 'var(--border-default)'}`,
-                background: recipient === opt.id ? 'var(--b20)' : 'var(--bg-canvas)',
-                color: recipient === opt.id ? 'var(--b100)' : 'var(--text-secondary)',
-                transition: 'all 150ms ease',
-              }}>{opt.label}</button>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>
+            Recipients {selectedAgents.length > 0 && <span style={{ color: 'var(--text-muted)' }}>({selectedAgents.length} selected)</span>}
+          </label>
+
+          {/* Selected chips */}
+          {selectedAgents.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {selectedAgents.map(a => (
+                <div key={a.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: 'var(--bg-active)', border: '1px solid var(--border-default)',
+                  borderRadius: 20, padding: '3px 8px 3px 5px',
+                  fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)',
+                }}>
+                  <div style={{
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: avatarColor(a.name),
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 9, fontWeight: 600, color: '#fff', flexShrink: 0,
+                  }}>{initials(a.name)}</div>
+                  {a.name}
+                  <button onClick={() => toggleAgent(a)} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 14, height: 14, borderRadius: '50%',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--text-muted)', padding: 0, marginLeft: 2,
+                  }}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Search */}
+          <div style={{ position: 'relative', marginBottom: 4 }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}>
+              <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            <input
+              value={recipientSearch}
+              onChange={e => setRecipientSearch(e.target.value)}
+              placeholder="Search for agent…"
+              style={{ ...inputStyle, paddingLeft: 30 }}
+              onFocus={e  => { e.currentTarget.style.borderColor = 'var(--b100)' }}
+              onBlur={e   => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
+            />
+          </div>
+
+          {/* Agent list */}
+          <div className="smooth-scroll" style={{
+            maxHeight: 220, overflowY: 'auto',
+            border: '1px solid var(--border-default)', borderRadius: 8,
+            background: 'var(--bg-canvas)',
+          }}>
+            {Object.keys(grouped).sort().map(letter => (
+              <div key={letter}>
+                <div style={{
+                  padding: '6px 12px 3px',
+                  fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
+                  fontFamily: "'Byrd', sans-serif", letterSpacing: '0.04em',
+                }}>{letter}</div>
+                {grouped[letter].map((a, i) => {
+                  const checked = !!selectedAgents.find(x => x.id === a.id)
+                  return (
+                    <div
+                      key={a.id}
+                      onClick={() => toggleAgent(a)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '8px 12px', cursor: 'pointer',
+                        borderTop: i > 0 ? '1px solid var(--border-default)' : 'none',
+                        background: checked ? 'var(--bg-active)' : 'transparent',
+                        transition: 'background 120ms ease',
+                      }}
+                      onMouseEnter={e => { if (!checked) e.currentTarget.style.background = 'var(--bg-hover)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = checked ? 'var(--bg-active)' : 'transparent' }}
+                    >
+                      <div style={{
+                        width: 28, height: 28, borderRadius: '50%',
+                        background: avatarColor(a.name), flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 11, fontWeight: 600, color: '#fff',
+                      }}>{initials(a.name)}</div>
+                      <span style={{ flex: 1, fontSize: 13, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)' }}>{a.name}</span>
+                      {/* checkbox */}
+                      <div style={{
+                        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                        border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--border-default)'}`,
+                        background: checked ? 'var(--b100)' : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 120ms ease',
+                      }}>
+                        {checked && (
+                          <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                            <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             ))}
+            {filteredAgents.length === 0 && (
+              <div style={{ padding: '16px 12px', textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
+                No agents found
+              </div>
+            )}
+          </div>
+
+          {/* Notify by mail */}
+          <div
+            onClick={() => setNotifyByMail(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, cursor: 'pointer', userSelect: 'none' }}
+          >
+            <div style={{
+              width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+              border: `1.5px solid ${notifyByMail ? 'var(--b100)' : 'var(--border-default)'}`,
+              background: notifyByMail ? 'var(--b100)' : 'transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 120ms ease',
+            }}>
+              {notifyByMail && (
+                <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                  <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </div>
+            <span style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-secondary)' }}>Notify by mail</span>
           </div>
         </div>
 
@@ -1135,13 +1268,7 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition, onOpe
           {agent.name}
         </span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <Button variant="ghost" size="sm" onClick={() => setFeedbackOpen(true)}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ marginRight: 5 }}>
-              <path d="M7 1a6 6 0 100 12A6 6 0 007 1zM7 4v3l2 2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
-            Send Feedback
-          </Button>
-          <Button variant="secondary" size="sm">Export</Button>
+          <Button variant="secondary" size="sm" onClick={() => setFeedbackOpen(true)}>Export</Button>
         </div>
       </div>
 
