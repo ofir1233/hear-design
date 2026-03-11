@@ -1232,7 +1232,7 @@ function FeedbackModal({ agent, onClose }) {
         </>
       }
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      <div data-inspector="FeedbackModal" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
         {/* Agents — whose reports are included */}
         <PersonPicker

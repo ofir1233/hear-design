@@ -543,12 +543,20 @@ export default function ComponentsTab() {
   const [discovered, setDiscovered] = useState([])
   const [selected, setSelected]     = useState(null)
 
-  useEffect(() => {
+  function scan() {
     const nodes = document.querySelectorAll('[data-inspector]')
     const names = [...new Set([...nodes].map(n => n.getAttribute('data-inspector')))]
     const valid  = names.filter(name => COMPONENT_DEFS[name])
     setDiscovered(valid)
     setSelected(prev => prev ?? (valid.length > 0 ? valid[0] : null))
+  }
+
+  useEffect(() => {
+    scan()
+    // Re-scan whenever DOM nodes are added/removed (e.g. modals opening via portals)
+    const obs = new MutationObserver(scan)
+    obs.observe(document.body, { childList: true, subtree: true, attributeFilter: ['data-inspector'] })
+    return () => obs.disconnect()
   }, [])
 
   if (discovered.length === 0) {
