@@ -619,29 +619,41 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition }) {
       transition: sidebarTransition, background: 'var(--bg-canvas)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* Sticky header */}
+      {/* Header — matches ExplorePage breadcrumb style */}
       <div style={{
-        flexShrink: 0, padding: '0 24px', height: 56,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid var(--border-default)', background: 'var(--bg-canvas)',
+        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
+        padding: '0 20px', height: 52,
+        borderBottom: '1px solid var(--border-input)', background: 'var(--bg-sidebar)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
-          <span>Agent evaluation</span>
+        <button
+          onClick={onBack}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 3,
+            height: 28, padding: '0 10px',
+            background: 'none', border: '1px solid var(--border-default)',
+            borderRadius: 7, cursor: 'pointer',
+            fontSize: 12, color: 'var(--text-secondary)',
+            fontFamily: "'Byrd', sans-serif",
+            transition: 'background 130ms ease, color 130ms ease',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+        >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M5 3l4 4-4 4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '3px 10px', background: '#1779F715', border: '1px solid #1779F740',
-            borderRadius: 999, fontSize: 12, fontWeight: 500,
-          }}>
-            <span style={{ color: '#1779F7' }}>{agent.name}</span>
-            <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>•</span>
-            <span style={{ color: 'var(--text-secondary)' }}>{agent.name}</span>
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Button variant="ghost" size="sm" onClick={onBack}>← Back</Button>
+          Agent evaluation
+        </button>
+        <span style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: "'Byrd', sans-serif", userSelect: 'none' }}>›</span>
+        <span style={{
+          fontSize: 12, color: 'var(--text-muted)',
+          fontFamily: "'Byrd', sans-serif",
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          maxWidth: 280,
+        }}>
+          {agent.name}
+        </span>
+        <div style={{ marginLeft: 'auto' }}>
           <Button variant="secondary" size="sm">Export</Button>
         </div>
       </div>
@@ -665,7 +677,6 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition }) {
 
 export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
   const [selectedAgent, setSelectedAgent] = useState(null)
-  const [activeTab, setActiveTab] = useState('performance')
   const chartData = useMemo(() => genChartData(), [])
 
   if (selectedAgent) {
@@ -724,43 +735,13 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
       {/* Filter bar */}
       <FilterBar />
 
-      {/* Tabs */}
-      <div style={{
-        display: 'flex', padding: '0 24px',
-        borderBottom: '1px solid var(--border-default)',
-        background: 'var(--bg-canvas)', flexShrink: 0,
-      }}>
-        {[
-          { id: 'averages',    label: 'Category Averages' },
-          { id: 'performance', label: 'Agent Performance' },
-        ].map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: '10px 16px', fontSize: 13, fontWeight: 500,
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: activeTab === tab.id ? 'var(--text-primary)' : 'var(--text-secondary)',
-              borderBottom: activeTab === tab.id ? '2px solid #1779F7' : '2px solid transparent',
-              fontFamily: 'inherit', transition: 'color 150ms',
-            }}
-          >{tab.label}</button>
-        ))}
-      </div>
-
       {/* Scrollable content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
         <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {activeTab === 'performance' ? (
-            <>
-              <PerformanceChart data={chartData} />
-              <ScorePanel totalScore={90} />
-              <EntityTable title="Teams" rows={MOCK_TEAMS} />
-              <EntityTable title="Agent Performance" rows={MOCK_AGENTS} onRowClick={setSelectedAgent} />
-            </>
-          ) : (
-            <ScorePanel totalScore={90} />
-          )}
+          <PerformanceChart data={chartData} />
+          <ScorePanel totalScore={90} />
+          <EntityTable title="Teams" rows={MOCK_TEAMS} />
+          <EntityTable title="Agent Performance" rows={MOCK_AGENTS} onRowClick={setSelectedAgent} />
         </div>
       </div>
     </div>
