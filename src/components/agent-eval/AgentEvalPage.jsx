@@ -3,6 +3,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import Button from '../Button.jsx'
+import Modal from '../Modal.jsx'
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
@@ -127,9 +128,9 @@ function genChartData(seed = 75) {
 }
 
 const PRESETS = [
-  { id: 'p1', label: 'Preset agent evaluation (3)' },
-  { id: 'p2', label: 'High Performers' },
-  { id: 'p3', label: 'Needs Improvement' },
+  { id: 'p1', label: 'Preset agent evaluation (3)', filters: [{ field: 'team', operator: 'equals', value: 'Alpha' }, { field: 'avgScore', operator: 'not_equal', value: '0' }, { field: 'callDate', operator: 'not_equal', value: '18/25/8' }] },
+  { id: 'p2', label: 'High Performers',             filters: [{ field: 'avgScore', operator: 'not_equal', value: '70' }] },
+  { id: 'p3', label: 'Needs Improvement',            filters: [{ field: 'avgScore', operator: 'not_equal', value: '80' }] },
 ]
 
 const FILTER_FIELDS = [
@@ -458,7 +459,7 @@ function PresetSelect({ options, value, onChange, fullWidth }) {
   )
 }
 
-// ── Filter popover — exact copy of DataPage FilterPopover ────────────────────
+// ── Filter popover ────────────────────────────────────────────────────────────
 
 function FilterPopover({ anchor, chip, onChange, onDone, onClose }) {
   const ref = useRef(null)
@@ -495,7 +496,10 @@ function FilterPopover({ anchor, chip, onChange, onDone, onClose }) {
         onChange={e => onChange({ ...chip, value: e.target.value })}
         onKeyDown={e => { if (e.key === 'Enter' && canDone) onDone() }}
         placeholder="Value…"
+        autoFocus
         style={{ ...SEL, width: '100%', boxSizing: 'border-box' }}
+        onFocus={e  => { e.currentTarget.style.borderColor = 'var(--b100)' }}
+        onBlur={e   => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
       />
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
         <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
@@ -505,13 +509,49 @@ function FilterPopover({ anchor, chip, onChange, onDone, onClose }) {
   )
 }
 
-// ── Filter bar — matches DataPage filter bar layout ───────────────────────────
+// ── Filter bar ────────────────────────────────────────────────────────────────
 
 function FilterBar() {
-  const [preset,       setPreset]       = useState(PRESETS[0].id)
-  const [chips,        setChips]        = useState([])
-  const [activePopover, setActivePopover] = useState(null) // { id, anchor:{x,y} }
-  const [editingChip,  setEditingChip]  = useState({ field: '', operator: 'contains', value: '' })
+  const [selectedPreset,  setSelectedPreset]  = useState('')
+  const [customPresets,   setCustomPresets]   = useState([])
+  const [chips,           setChips]           = useState([])
+  const [appliedChips,    setAppliedChips]    = useState([])
+  const [activePopover,   setActivePopover]   = useState(null)
+  const [editingChip,     setEditingChip]     = useState({ field: '', operator: 'contains', value: '' })
+  const [saveModalOpen,   setSaveModalOpen]   = useState(false)
+  const [presetNameDraft, setPresetNameDraft] = useState('')
+
+  const allPresets = useMemo(() => [...PRESETS, ...customPresets], [customPresets])
+  const isDirty    = JSON.stringify(chips) !== JSON.stringify(appliedChips)
+
+  function loadPreset(id) {
+    setSelectedPreset(id)
+    const newChips = !id
+      ? []
+      : (allPresets.find(p => p.id === id)?.filters.map(f => ({ ...f, id: _chipId++ })) ?? [])
+    setChips(newChips)
+  }
+
+  function savePreset() {
+    if (!presetNameDraft.trim()) return
+    const id = `custom_${Date.now()}`
+    setCustomPresets(p => [...p, {
+      id, label: presetNameDraft.trim(),
+      filters: chips.map(({ id: _id, ...rest }) => rest),
+    }])
+    setSelectedPreset(id)
+    setSaveModalOpen(false)
+    setPresetNameDraft('')
+  }
+
+  function updatePreset() {
+    setCustomPresets(p => p.map(p2 =>
+      p2.id === selectedPreset
+        ? { ...p2, filters: chips.map(({ id: _id, ...rest }) => rest) }
+        : p2
+    ))
+    setAppliedChips(chips)
+  }
 
   function openPopover(id, el) {
     const r = el.getBoundingClientRect()
@@ -550,16 +590,16 @@ function FilterBar() {
         borderBottom: '1px solid var(--border-input)',
         background: 'var(--bg-sidebar)',
       }}>
-        {/* Preset */}
+        {/* Preset selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
           <span style={{
             fontSize: 'var(--type-p14)', fontWeight: 500, color: 'var(--text-secondary)',
             fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
           }}>Preset:</span>
           <PresetSelect
-            options={[{ value: '', label: 'None' }, ...PRESETS.map(p => ({ value: p.id, label: p.label }))]}
-            value={preset}
-            onChange={setPreset}
+            options={[{ value: '', label: 'None' }, ...allPresets.map(p => ({ value: p.id, label: p.label }))]}
+            value={selectedPreset}
+            onChange={loadPreset}
           />
         </div>
 
@@ -572,7 +612,7 @@ function FilterBar() {
           flex: 1, overflowX: 'auto', overflowY: 'hidden', minWidth: 0,
         }}>
           {chips.map(chip => (
-            <div key={chip.id} style={{
+            <div key={chip.id} data-chip style={{
               display: 'flex', alignItems: 'center', gap: 0,
               height: 26, borderRadius: 99,
               background: 'var(--b20)', border: '1px solid var(--b30)',
@@ -582,7 +622,6 @@ function FilterBar() {
             }}>
               <span
                 onClick={e => openPopover(chip.id, e.currentTarget.closest('[data-chip]') ?? e.currentTarget)}
-                data-chip
                 style={{ padding: '0 8px 0 10px', cursor: 'pointer', lineHeight: 1 }}
               >{chipLabel(chip)}</span>
               <button
@@ -616,9 +655,22 @@ function FilterBar() {
             Add filter
           </button>
         </div>
+
+        {/* Save / Update preset */}
+        {selectedPreset && customPresets.some(p => p.id === selectedPreset)
+          ? <Button variant="secondary" size="sm" onClick={updatePreset}>Update preset</Button>
+          : chips.length > 0
+            ? <Button variant="secondary" size="sm" onClick={() => { setPresetNameDraft(''); setSaveModalOpen(true) }}>Save</Button>
+            : null
+        }
+
+        {/* Apply */}
+        <Button size="sm" variant="outline" onClick={() => setAppliedChips(chips)}>
+          Apply
+        </Button>
       </div>
 
-      {/* Popover (rendered outside the bar so it's not clipped) */}
+      {/* Filter popover */}
       {activePopover && (
         <FilterPopover
           anchor={activePopover.anchor}
@@ -628,6 +680,56 @@ function FilterBar() {
           onClose={closePopover}
         />
       )}
+
+      {/* Save preset modal */}
+      <Modal
+        open={saveModalOpen}
+        onClose={() => setSaveModalOpen(false)}
+        title="Save as preset"
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setSaveModalOpen(false)}>Cancel</Button>
+            <Button size="sm" onClick={savePreset} disabled={!presetNameDraft.trim()}>Save preset</Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <label style={{
+            fontSize: 'var(--type-p14)', fontWeight: 500,
+            color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
+          }}>Preset name</label>
+          <input
+            value={presetNameDraft}
+            onChange={e => setPresetNameDraft(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') savePreset() }}
+            placeholder="e.g. High performers this month"
+            autoFocus
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              height: 38, padding: '0 12px',
+              background: 'var(--bg-canvas)',
+              border: '1.5px solid var(--border-default)',
+              borderRadius: 8, fontSize: 13,
+              color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+              outline: 'none', transition: 'border-color 150ms ease',
+            }}
+            onFocus={e => { e.currentTarget.style.borderColor = 'var(--b100)' }}
+            onBlur={e  => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
+          />
+          {chips.length > 0 && (
+            <p style={{
+              margin: '4px 0 0', fontSize: 'var(--type-p14)',
+              color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", lineHeight: 1.5,
+            }}>
+              {chips.length} filter{chips.length > 1 ? 's' : ''} will be saved:&nbsp;
+              {chips.map(c => {
+                const fl = FILTER_FIELDS.find(f => f.value === c.field)?.label ?? c.field
+                return `${fl}: ${c.value}`
+              }).join(' · ')}
+            </p>
+          )}
+        </div>
+      </Modal>
     </>
   )
 }
