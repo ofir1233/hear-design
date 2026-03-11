@@ -45,6 +45,15 @@ const MOCK_AGENTS = [
   { id: 46185, name: 'Neo Depeyster',        team: 'Delta', lastCallDate: '2/15/2024, 1:30:25 PM', avgHandleTime: '00:03:41', avgScore: 37, stars: 2.0 },
 ]
 
+const MOCK_LEADS = [
+  { id: 'L1', name: 'Rachel Kim',      role: 'Team Lead · Alpha' },
+  { id: 'L2', name: 'David Okafor',    role: 'Team Lead · Beta'  },
+  { id: 'L3', name: 'Sara Mendez',     role: 'Team Lead · Delta' },
+  { id: 'L4', name: 'Tom Brecker',     role: 'Team Lead · Gamma' },
+  { id: 'L5', name: 'Anna Strickland', role: 'QA Manager'        },
+  { id: 'L6', name: 'James Okonkwo',   role: 'Operations Manager'},
+]
+
 const CATEGORIES = [
   {
     name: 'Professionalism',
@@ -973,11 +982,122 @@ function SkillSection({ section, onOpenCall }) {
 
 // ── Feedback modal ────────────────────────────────────────────────────────────
 
+// Reusable picker used for both Agents and Send-to sections
+function PersonPicker({ label, people, selected, onToggle, placeholder, sublabel }) {
+  const [search, setSearch] = useState('')
+  const filtered = people.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+  const grouped  = filtered.reduce((acc, p) => {
+    const key = p.name[0].toUpperCase()
+    ;(acc[key] = acc[key] || []).push(p)
+    return acc
+  }, {})
+  const inputBase = {
+    width: '100%', boxSizing: 'border-box', height: 34, padding: '0 10px 0 30px',
+    background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)',
+    borderRadius: 7, fontSize: 12, color: 'var(--text-primary)',
+    fontFamily: "'Byrd', sans-serif", outline: 'none', transition: 'border-color 150ms ease',
+  }
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>
+        {label} {selected.length > 0 && <span style={{ color: 'var(--text-muted)' }}>({selected.length} selected)</span>}
+      </label>
+
+      {selected.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 7 }}>
+          {selected.map(p => (
+            <div key={p.id} style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              background: 'var(--bg-active)', border: '1px solid var(--border-default)',
+              borderRadius: 20, padding: '3px 8px 3px 5px',
+              fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)',
+            }}>
+              <div style={{
+                width: 20, height: 20, borderRadius: '50%', background: avatarColor(p.name),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 9, fontWeight: 600, color: '#fff', flexShrink: 0,
+              }}>{initials(p.name)}</div>
+              {p.name}
+              <button onClick={() => onToggle(p)} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 14, height: 14, background: 'none', border: 'none',
+                cursor: 'pointer', color: 'var(--text-muted)', padding: 0, marginLeft: 1,
+              }}>×</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ position: 'relative', marginBottom: 4 }}>
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}>
+          <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
+          <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+        </svg>
+        <input
+          value={search} onChange={e => setSearch(e.target.value)}
+          placeholder={placeholder}
+          style={inputBase}
+          onFocus={e => { e.currentTarget.style.borderColor = 'var(--b100)' }}
+          onBlur={e  => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
+        />
+      </div>
+
+      <div className="smooth-scroll" style={{
+        maxHeight: 190, overflowY: 'auto',
+        border: '1px solid var(--border-default)', borderRadius: 8,
+        background: 'var(--bg-canvas)',
+      }}>
+        {Object.keys(grouped).sort().map(letter => (
+          <div key={letter}>
+            <div style={{ padding: '5px 12px 2px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", letterSpacing: '0.05em' }}>{letter}</div>
+            {grouped[letter].map(p => {
+              const checked = !!selected.find(x => x.id === p.id)
+              return (
+                <div key={p.id} onClick={() => onToggle(p)} style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '7px 12px', cursor: 'pointer',
+                  borderTop: '1px solid var(--border-default)',
+                  background: checked ? 'var(--bg-active)' : 'transparent',
+                  transition: 'background 120ms ease',
+                }}
+                  onMouseEnter={e => { if (!checked) e.currentTarget.style.background = 'var(--bg-hover)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = checked ? 'var(--bg-active)' : 'transparent' }}
+                >
+                  <div style={{
+                    width: 26, height: 26, borderRadius: '50%', background: avatarColor(p.name), flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, fontWeight: 600, color: '#fff',
+                  }}>{initials(p.name)}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                    {p.role && <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{p.role}</div>}
+                  </div>
+                  <div style={{
+                    width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                    border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--n100, #606060)'}`,
+                    background: checked ? 'var(--b100)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'all 120ms ease',
+                  }}>
+                    {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <div style={{ padding: '14px 12px', textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>No results</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function FeedbackModal({ agent, onClose }) {
-  // recipient picker
-  const [recipientSearch, setRecipientSearch] = useState('')
-  const [selectedAgents, setSelectedAgents]   = useState(agent ? [agent] : [])
-  const [notifyByMail,   setNotifyByMail]      = useState(false)
+  const [selectedAgents, setSelectedAgents] = useState(agent ? [agent] : [])
+  const [selectedLeads,  setSelectedLeads]  = useState([])
+  const [notifyByMail,   setNotifyByMail]   = useState(false)
 
   const [schedType, setSchedType] = useState('one-time')
   const [frequency, setFrequency] = useState('weekly')
@@ -985,16 +1105,7 @@ function FeedbackModal({ agent, onClose }) {
   const [message,   setMessage]   = useState('')
   const [sent,      setSent]      = useState(false)
 
-  function toggleAgent(a) {
-    setSelectedAgents(prev =>
-      prev.find(x => x.id === a.id) ? prev.filter(x => x.id !== a.id) : [...prev, a]
-    )
-  }
-
-  function handleSend() {
-    setSent(true)
-    setTimeout(onClose, 1400)
-  }
+  function handleSend() { setSent(true); setTimeout(onClose, 1400) }
 
   const inputStyle = {
     width: '100%', boxSizing: 'border-box',
@@ -1005,15 +1116,8 @@ function FeedbackModal({ agent, onClose }) {
     transition: 'border-color 150ms ease',
   }
 
-  // build alphabetically grouped agent list
-  const filteredAgents = MOCK_AGENTS.filter(a =>
-    a.name.toLowerCase().includes(recipientSearch.toLowerCase())
-  )
-  const grouped = filteredAgents.reduce((acc, a) => {
-    const key = a.name[0].toUpperCase()
-    ;(acc[key] = acc[key] || []).push(a)
-    return acc
-  }, {})
+  function toggleAgent(a) { setSelectedAgents(prev => prev.find(x => x.id === a.id) ? prev.filter(x => x.id !== a.id) : [...prev, a]) }
+  function toggleLead(l)  { setSelectedLeads(prev  => prev.find(x => x.id === l.id) ? prev.filter(x => x.id !== l.id) : [...prev, l]) }
 
   return (
     <Modal
@@ -1023,126 +1127,33 @@ function FeedbackModal({ agent, onClose }) {
       footer={
         <>
           <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleSend} disabled={sent || selectedAgents.length === 0}>
+          <Button size="sm" onClick={handleSend} disabled={sent || selectedAgents.length === 0 || selectedLeads.length === 0}>
             {sent ? 'Sent ✓' : 'Confirm & Send'}
           </Button>
         </>
       }
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-        {/* Recipient picker */}
+
+        {/* Agents — whose reports are included */}
+        <PersonPicker
+          label="Agents"
+          people={MOCK_AGENTS}
+          selected={selectedAgents}
+          onToggle={toggleAgent}
+          placeholder="Search agents…"
+        />
+
+        {/* Send report to — who receives it */}
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>
-            Recipients {selectedAgents.length > 0 && <span style={{ color: 'var(--text-muted)' }}>({selectedAgents.length} selected)</span>}
-          </label>
-
-          {/* Selected chips */}
-          {selectedAgents.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-              {selectedAgents.map(a => (
-                <div key={a.id} style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
-                  background: 'var(--bg-active)', border: '1px solid var(--border-default)',
-                  borderRadius: 20, padding: '3px 8px 3px 5px',
-                  fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)',
-                }}>
-                  <div style={{
-                    width: 20, height: 20, borderRadius: '50%',
-                    background: avatarColor(a.name),
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 9, fontWeight: 600, color: '#fff', flexShrink: 0,
-                  }}>{initials(a.name)}</div>
-                  {a.name}
-                  <button onClick={() => toggleAgent(a)} style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    width: 14, height: 14, borderRadius: '50%',
-                    background: 'none', border: 'none', cursor: 'pointer',
-                    color: 'var(--text-muted)', padding: 0, marginLeft: 2,
-                  }}>×</button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Search */}
-          <div style={{ position: 'relative', marginBottom: 4 }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}>
-              <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
-              <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
-            <input
-              value={recipientSearch}
-              onChange={e => setRecipientSearch(e.target.value)}
-              placeholder="Search for agent…"
-              style={{ ...inputStyle, paddingLeft: 30 }}
-              onFocus={e  => { e.currentTarget.style.borderColor = 'var(--b100)' }}
-              onBlur={e   => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
-            />
-          </div>
-
-          {/* Agent list */}
-          <div className="smooth-scroll" style={{
-            maxHeight: 220, overflowY: 'auto',
-            border: '1px solid var(--border-default)', borderRadius: 8,
-            background: 'var(--bg-canvas)',
-          }}>
-            {Object.keys(grouped).sort().map(letter => (
-              <div key={letter}>
-                <div style={{
-                  padding: '6px 12px 3px',
-                  fontSize: 11, fontWeight: 600, color: 'var(--text-muted)',
-                  fontFamily: "'Byrd', sans-serif", letterSpacing: '0.04em',
-                }}>{letter}</div>
-                {grouped[letter].map((a, i) => {
-                  const checked = !!selectedAgents.find(x => x.id === a.id)
-                  return (
-                    <div
-                      key={a.id}
-                      onClick={() => toggleAgent(a)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '8px 12px', cursor: 'pointer',
-                        borderTop: '1px solid var(--border-default)',
-                        background: checked ? 'var(--bg-active)' : 'transparent',
-                        transition: 'background 120ms ease',
-                      }}
-                      onMouseEnter={e => { if (!checked) e.currentTarget.style.background = 'var(--bg-hover)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = checked ? 'var(--bg-active)' : 'transparent' }}
-                    >
-                      <div style={{
-                        width: 28, height: 28, borderRadius: '50%',
-                        background: avatarColor(a.name), flexShrink: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 11, fontWeight: 600, color: '#fff',
-                      }}>{initials(a.name)}</div>
-                      <span style={{ flex: 1, fontSize: 13, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)' }}>{a.name}</span>
-                      {/* checkbox */}
-                      <div style={{
-                        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-                        border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--n100, #606060)'}`,
-                        background: checked ? 'var(--b100)' : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'all 120ms ease',
-                      }}>
-                        {checked && (
-                          <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-                            <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            ))}
-            {filteredAgents.length === 0 && (
-              <div style={{ padding: '16px 12px', textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
-                No agents found
-              </div>
-            )}
-          </div>
-
-          {/* Notify by mail */}
+          <PersonPicker
+            label="Send report to"
+            people={MOCK_LEADS}
+            selected={selectedLeads}
+            onToggle={toggleLead}
+            placeholder="Search team leads & managers…"
+          />
+          {/* Notify by mail lives here — applies to the recipients */}
           <div
             onClick={() => setNotifyByMail(v => !v)}
             style={{
@@ -1159,11 +1170,7 @@ function FeedbackModal({ agent, onClose }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 120ms ease',
             }}>
-              {notifyByMail && (
-                <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-                  <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              )}
+              {notifyByMail && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
             </div>
             <span style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)' }}>Notify by mail</span>
           </div>
