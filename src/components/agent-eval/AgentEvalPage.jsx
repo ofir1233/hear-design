@@ -983,28 +983,60 @@ function SkillSection({ section, onOpenCall }) {
 // ── Feedback modal ────────────────────────────────────────────────────────────
 
 // Reusable picker used for both Agents and Send-to sections
-function PersonPicker({ label, people, selected, onToggle, placeholder, sublabel }) {
-  const [search, setSearch] = useState('')
+function PersonPicker({ label, people, selected, onToggle, placeholder }) {
+  const [expanded, setExpanded] = useState(selected.length === 0)
+  const [search,   setSearch]   = useState('')
+
   const filtered = people.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
   const grouped  = filtered.reduce((acc, p) => {
     const key = p.name[0].toUpperCase()
     ;(acc[key] = acc[key] || []).push(p)
     return acc
   }, {})
+
   const inputBase = {
     width: '100%', boxSizing: 'border-box', height: 34, padding: '0 10px 0 30px',
     background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)',
     borderRadius: 7, fontSize: 12, color: 'var(--text-primary)',
     fontFamily: "'Byrd', sans-serif", outline: 'none', transition: 'border-color 150ms ease',
   }
+
+  function handleToggle(p) {
+    onToggle(p)
+    // after adding first item, collapse back
+    const willBeSelected = !selected.find(x => x.id === p.id)
+    if (willBeSelected) setExpanded(false)
+  }
+
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>
-        {label} {selected.length > 0 && <span style={{ color: 'var(--text-muted)' }}>({selected.length} selected)</span>}
-      </label>
+      {/* Label row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
+          {label}
+        </label>
+        {selected.length > 0 && !expanded && (
+          <button
+            onClick={() => setExpanded(true)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              fontSize: 11, fontFamily: "'Byrd', sans-serif",
+              color: 'var(--b100)', fontWeight: 500,
+            }}
+          >
+            <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+              <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M5.5 3.5v4M3.5 5.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+            </svg>
+            Add more
+          </button>
+        )}
+      </div>
 
+      {/* Selected chips — always visible */}
       {selected.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 7 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: expanded ? 8 : 0 }}>
           {selected.map(p => (
             <div key={p.id} style={{
               display: 'flex', alignItems: 'center', gap: 5,
@@ -1018,7 +1050,7 @@ function PersonPicker({ label, people, selected, onToggle, placeholder, sublabel
                 fontSize: 9, fontWeight: 600, color: '#fff', flexShrink: 0,
               }}>{initials(p.name)}</div>
               {p.name}
-              <button onClick={() => onToggle(p)} style={{
+              <button onClick={e => { e.stopPropagation(); onToggle(p) }} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 width: 14, height: 14, background: 'none', border: 'none',
                 cursor: 'pointer', color: 'var(--text-muted)', padding: 0, marginLeft: 1,
@@ -1028,68 +1060,95 @@ function PersonPicker({ label, people, selected, onToggle, placeholder, sublabel
         </div>
       )}
 
-      <div style={{ position: 'relative', marginBottom: 4 }}>
-        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}>
-          <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
-          <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-        </svg>
-        <input
-          value={search} onChange={e => setSearch(e.target.value)}
-          placeholder={placeholder}
-          style={inputBase}
-          onFocus={e => { e.currentTarget.style.borderColor = 'var(--b100)' }}
-          onBlur={e  => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
-        />
-      </div>
-
-      <div className="smooth-scroll" style={{
-        maxHeight: 190, overflowY: 'auto',
-        border: '1px solid var(--border-default)', borderRadius: 8,
-        background: 'var(--bg-canvas)',
-      }}>
-        {Object.keys(grouped).sort().map(letter => (
-          <div key={letter}>
-            <div style={{ padding: '5px 12px 2px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", letterSpacing: '0.05em' }}>{letter}</div>
-            {grouped[letter].map(p => {
-              const checked = !!selected.find(x => x.id === p.id)
-              return (
-                <div key={p.id} onClick={() => onToggle(p)} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '7px 12px', cursor: 'pointer',
-                  borderTop: '1px solid var(--border-default)',
-                  background: checked ? 'var(--bg-active)' : 'transparent',
-                  transition: 'background 120ms ease',
-                }}
-                  onMouseEnter={e => { if (!checked) e.currentTarget.style.background = 'var(--bg-hover)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = checked ? 'var(--bg-active)' : 'transparent' }}
-                >
-                  <div style={{
-                    width: 26, height: 26, borderRadius: '50%', background: avatarColor(p.name), flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 10, fontWeight: 600, color: '#fff',
-                  }}>{initials(p.name)}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
-                    {p.role && <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{p.role}</div>}
-                  </div>
-                  <div style={{
-                    width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-                    border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--n100, #606060)'}`,
-                    background: checked ? 'var(--b100)' : 'transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'all 120ms ease',
-                  }}>
-                    {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                  </div>
-                </div>
-              )
-            })}
+      {/* Expandable search + list */}
+      {expanded && (
+        <>
+          <div style={{ position: 'relative', marginBottom: 4 }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }}>
+              <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/>
+              <path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+            <input
+              autoFocus
+              value={search} onChange={e => setSearch(e.target.value)}
+              placeholder={placeholder}
+              style={inputBase}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--b100)' }}
+              onBlur={e  => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
+            />
           </div>
-        ))}
-        {filtered.length === 0 && (
-          <div style={{ padding: '14px 12px', textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>No results</div>
-        )}
-      </div>
+
+          <div className="smooth-scroll" style={{
+            maxHeight: 180, overflowY: 'auto',
+            border: '1px solid var(--border-default)', borderRadius: 8,
+            background: 'var(--bg-canvas)',
+          }}>
+            {Object.keys(grouped).sort().map(letter => (
+              <div key={letter}>
+                <div style={{ padding: '5px 12px 2px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", letterSpacing: '0.05em' }}>{letter}</div>
+                {grouped[letter].map(p => {
+                  const checked = !!selected.find(x => x.id === p.id)
+                  return (
+                    <div key={p.id} onClick={() => handleToggle(p)} style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '7px 12px', cursor: 'pointer',
+                      borderTop: '1px solid var(--border-default)',
+                      background: checked ? 'var(--bg-active)' : 'transparent',
+                      transition: 'background 120ms ease',
+                    }}
+                      onMouseEnter={e => { if (!checked) e.currentTarget.style.background = 'var(--bg-hover)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = checked ? 'var(--bg-active)' : 'transparent' }}
+                    >
+                      <div style={{
+                        width: 26, height: 26, borderRadius: '50%', background: avatarColor(p.name), flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 10, fontWeight: 600, color: '#fff',
+                      }}>{initials(p.name)}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.name}</div>
+                        {p.role && <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{p.role}</div>}
+                      </div>
+                      <div style={{
+                        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                        border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--n100, #606060)'}`,
+                        background: checked ? 'var(--b100)' : 'transparent',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        transition: 'all 120ms ease',
+                      }}>
+                        {checked && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+            {filtered.length === 0 && (
+              <div style={{ padding: '14px 12px', textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>No results</div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Empty state — nothing selected yet, not expanded */}
+      {selected.length === 0 && !expanded && (
+        <button onClick={() => setExpanded(true)} style={{
+          width: '100%', height: 34, borderRadius: 7, cursor: 'pointer',
+          border: '1.5px dashed var(--border-default)',
+          background: 'transparent', color: 'var(--text-muted)',
+          fontSize: 12, fontFamily: "'Byrd', sans-serif",
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+          transition: 'border-color 150ms, color 150ms',
+        }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--b100)'; e.currentTarget.style.color = 'var(--b100)' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-default)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+        >
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+            <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
+            <path d="M5.5 3.5v4M3.5 5.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+          Select {label.toLowerCase()}…
+        </button>
+      )}
     </div>
   )
 }
