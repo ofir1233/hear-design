@@ -1012,14 +1012,13 @@ function PersonPicker({ label, people, selected, onToggle, placeholder }) {
         <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
           {label}
         </label>
-        {selected.length > 0 && (
           <button
             onClick={() => setExpanded(v => !v)}
             style={{
               display: 'flex', alignItems: 'center', gap: 4,
               background: 'none', border: 'none', cursor: 'pointer', padding: 0,
               fontSize: 11, fontFamily: "'Byrd', sans-serif",
-              color: 'var(--b100)', fontWeight: 500,
+              color: expanded ? 'var(--text-muted)' : 'var(--b100)', fontWeight: 500,
             }}
           >
             {expanded ? (
@@ -1036,11 +1035,10 @@ function PersonPicker({ label, people, selected, onToggle, placeholder }) {
                   <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
                   <path d="M5.5 3.5v4M3.5 5.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
                 </svg>
-                Add more
+                {selected.length > 0 ? 'Add more' : 'Select'}
               </>
             )}
           </button>
-        )}
       </div>
 
       {/* Selected chips — always visible */}
@@ -1138,26 +1136,6 @@ function PersonPicker({ label, people, selected, onToggle, placeholder }) {
         </>
       )}
 
-      {/* Empty state — nothing selected yet, not expanded */}
-      {selected.length === 0 && !expanded && (
-        <button onClick={() => setExpanded(true)} style={{
-          width: '100%', height: 34, borderRadius: 7, cursor: 'pointer',
-          border: '1.5px dashed var(--border-default)',
-          background: 'transparent', color: 'var(--text-muted)',
-          fontSize: 12, fontFamily: "'Byrd', sans-serif",
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-          transition: 'border-color 150ms, color 150ms',
-        }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--b100)'; e.currentTarget.style.color = 'var(--b100)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-default)'; e.currentTarget.style.color = 'var(--text-muted)' }}
-        >
-          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-            <circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/>
-            <path d="M5.5 3.5v4M3.5 5.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-          </svg>
-          Select {label.toLowerCase()}…
-        </button>
-      )}
     </div>
   )
 }
