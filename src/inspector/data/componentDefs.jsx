@@ -26,8 +26,9 @@ import OmniBar      from '../../components/data/OmniBar.jsx'
 import FilterDrawer from '../../components/data/FilterDrawer.jsx'
 import DataPage     from '../../components/data/DataPage.jsx'
 import ExplorePage  from '../../components/data/ExplorePage.jsx'
-import ReportsPage  from '../../components/reports/ReportsPage.jsx'
-import { SCHEMAS }  from '../../components/data/mockData.js'
+import ReportsPage   from '../../components/reports/ReportsPage.jsx'
+import AgentEvalPage from '../../components/agent-eval/AgentEvalPage.jsx'
+import { SCHEMAS }   from '../../components/data/mockData.js'
 
 // Raw source imports — Vite ?raw gives the file content as a plain string.
 // Used in the handoff panel so developers can copy the full implementation.
@@ -50,7 +51,8 @@ import FilterDrawerSrc  from '../../components/data/FilterDrawer.jsx?raw'
 import DataPageSrc      from '../../components/data/DataPage.jsx?raw'
 import ExplorePageSrc   from '../../components/data/ExplorePage.jsx?raw'
 import MockDataSrc      from '../../components/data/mockData.js?raw'
-import ReportsPageSrc   from '../../components/reports/ReportsPage.jsx?raw'
+import ReportsPageSrc    from '../../components/reports/ReportsPage.jsx?raw'
+import AgentEvalPageSrc  from '../../components/agent-eval/AgentEvalPage.jsx?raw'
 
 // ─── Shared preview wrapper helpers ──────────────────────────────────────────
 
@@ -1885,6 +1887,402 @@ export const COMPONENT_DEFS = {
         'Value <select> auto-populates from schema.events attribute values',
         'Max 3 rows — "+ Add condition" button hidden at limit',
         'Reset restores single empty row; Apply closes drawer and pushes tokens',
+      ],
+    },
+  },
+
+  // ── Agent Eval — InsightCard ───────────────────────────────────────────────
+
+  InsightCard: {
+    tier: 'Molecule',
+    description: 'AI-powered agent insight card. Left: bordered inset panel with avatar, full name, role label, star rating, and score. Right: AI insight heading + paragraph, horizontal divider, then 2-col strengths/improvements grid.',
+    props: [
+      { name: 'agent', type: 'object', default: '{ name, avgScore, stars, team }' },
+    ],
+    states: [
+      {
+        label: 'Default',
+        preview: () => center(
+          <div style={{ width: 500, background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
+            <div style={{ display: 'flex', gap: 20, alignItems: 'stretch' }}>
+              {/* Left inset panel */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: 110, padding: '16px 14px', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)', borderRadius: 10, flexShrink: 0 }}>
+                <div style={{ width: 46, height: 46, borderRadius: '50%', background: '#F59E0B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: "'Byrd',sans-serif" }}>MK</div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>Martha Kellett</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 2, fontFamily: "'Byrd',sans-serif" }}>Agent Operations</div>
+                </div>
+                <div style={{ display: 'flex', gap: 2 }}>{'★★★★☆'.split('').map((s, i) => <span key={i} style={{ color: '#F59E0B', fontSize: 12 }}>{s}</span>)}</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>86</div>
+              </div>
+              {/* Right content */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <span style={{ color: '#FF7056', fontSize: 12 }}>✦</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>Ai powered insight</span>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, fontFamily: "'Byrd',sans-serif" }}>Martha demonstrates a solid trend in performance, showing consistent improvement in communication and technical knowledge.</p>
+                </div>
+                <div style={{ borderTop: '1px solid var(--border-default)', marginBottom: 12 }} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  {[['Top 3 Strengths', ['Communication Clarity', 'Issue Resolution', 'Product Knowledge']], ['Areas to improve', ['Active Listening', 'Call Summary', 'Urgency Framing']]].map(([title, items]) => (
+                    <div key={title}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}><span style={{ color: '#FF7056', fontSize: 10 }}>✦</span><span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>{title}</span></div>
+                      <ul style={{ margin: 0, padding: '0 0 0 13px', fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.8, fontFamily: "'Byrd',sans-serif" }}>{items.map(i => <li key={i}>{i}</li>)}</ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `// Internal to AgentEvalPage — agent detail view\n// data-inspector="InsightCard"\n<InsightCard agent={agent} />`,
+    source: AgentEvalPageSrc,
+    files: [{ path: 'src/components/agent-eval/AgentEvalPage.jsx', src: AgentEvalPageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Pulse Coral (✦ icon)', hex: '#FF7056' },
+        { name: 'Amber (stars)',        hex: '#F59E0B' },
+        { name: '--bg-canvas (inset panel)', hex: '#F4F3F1' },
+      ],
+      subComponents: ['Avatar', 'Stars'],
+      notes: [
+        'Left panel is a bordered inset card (bg-canvas + border + borderRadius:10)',
+        'Agent name uses ellipsis overflow — maxWidth: 100px',
+        'Star rating is fractional — full/half/empty logic in Stars helper',
+        'Divider between insight text and strengths/improvements grid',
+        'Insight text uses agent first name dynamically',
+      ],
+    },
+  },
+
+  // ── Agent Eval — ScorePanel ────────────────────────────────────────────────
+
+  AgentScorePanel: {
+    tier: 'Molecule',
+    description: 'Collapsible evaluation breakdown. Shows total score progress bar at top, then 3-column grid of skill categories (Professionalism, Sales Techniques, Communication). Each skill row has a ScoreBar with colored fill + average tick mark.',
+    props: [
+      { name: 'totalScore', type: 'number',  default: '86' },
+      { name: 'title',      type: 'string',  default: '"Agent evaluation"' },
+      { name: 'collapsible',type: 'boolean', default: 'false' },
+    ],
+    states: [
+      {
+        label: 'Expanded',
+        preview: () => center(
+          <div style={{ width: 500, background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '16px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 14 }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif", flex: 1 }}>Agent evaluation</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6L8 10l4-4" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            {/* Total score bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif", width: 80 }}>total score</span>
+              <div style={{ flex: 1, position: 'relative', height: 5, background: 'var(--border-default)', borderRadius: 99 }}>
+                <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '86%', background: '#4BA373', borderRadius: 99 }} />
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif", width: 42, textAlign: 'right' }}>86/100</span>
+            </div>
+            {/* 3-col grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 20px' }}>
+              {[['Professionalism', [['Customer Needs', 89, 82], ['Self-Introduction', 19, 55]]], ['Sales Techniques', [['Identifying Opps', 90, 74], ['Handling Objections', 81, 68]]], ['Communication', [['Needs Assessment', 92, 79], ['Call Summary', 45, 66]]]].map(([cat, skills]) => (
+                <div key={cat}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif", marginBottom: 8 }}>{cat}</div>
+                  {skills.map(([name, score, avg]) => {
+                    const color = score >= 70 ? '#4BA373' : score >= 40 ? '#F59E0B' : '#E05252'
+                    return (
+                      <div key={name} style={{ marginBottom: 10 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                          <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>{name}</span>
+                          <span style={{ fontSize: 10, fontWeight: 600, color, fontFamily: "'Byrd',sans-serif" }}>{score}/100</span>
+                        </div>
+                        <div style={{ position: 'relative', height: 5, background: 'var(--border-default)', borderRadius: 99 }}>
+                          <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${score}%`, background: color, borderRadius: 99 }} />
+                          <div style={{ position: 'absolute', top: -4, left: `${avg}%`, transform: 'translateX(-50%)', width: 2, height: 13, background: 'var(--text-secondary)', borderRadius: 1, opacity: 0.5 }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `// Internal to AgentEvalPage\n<ScorePanel totalScore={agent.avgScore} title="Agent evaluation" collapsible />`,
+    source: AgentEvalPageSrc,
+    files: [{ path: 'src/components/agent-eval/AgentEvalPage.jsx', src: AgentEvalPageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Green (score ≥70)',  hex: '#4BA373' },
+        { name: 'Amber (score ≥40)',  hex: '#F59E0B' },
+        { name: 'Red (score <40)',    hex: '#E05252' },
+      ],
+      subComponents: ['ScoreBar'],
+      notes: [
+        'Total score bar always green when ≥70',
+        'ScoreBar average tick: thin 2px vertical line at avgPct%, opacity 0.5',
+        'Each skill has a distinct average value — not a shared constant',
+        'Grid is always 3 columns regardless of category count',
+        'collapsible prop adds chevron toggle button in header',
+      ],
+    },
+  },
+
+  // ── Agent Eval — SkillSection ──────────────────────────────────────────────
+
+  SkillSection: {
+    tier: 'Molecule',
+    description: 'Collapsible category card for the agent detail view. Header shows category name + chevron. Body has skill sub-cards (score, description, call evidence links). Each call row is clickable and navigates to the call detail.',
+    props: [
+      { name: 'section',    type: 'object',      default: '{ category, skills[] }' },
+      { name: 'onOpenCall', type: '(id) => void', default: 'undefined' },
+    ],
+    states: [
+      {
+        label: 'Expanded',
+        preview: () => center(
+          <div style={{ width: 500, background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid var(--border-default)' }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>Sales Techniques</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6L8 10l4-4" stroke="var(--text-secondary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            <div style={{ padding: '14px 20px', display: 'flex', gap: 12 }}>
+              {/* Skill card */}
+              <div style={{ flex: '0 0 200px', padding: '12px 14px', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)', borderRadius: 9 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>Handling Objections</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#4BA373', fontFamily: "'Byrd',sans-serif" }}>72/100</span>
+                </div>
+                <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.55, fontFamily: "'Byrd',sans-serif" }}>Agent consistently validates customer concerns before offering alternatives.</p>
+              </div>
+              {/* Call evidence */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {[['Call ID #402', 'De-escalated pricing complaint.', 75], ['Call ID #905', 'Validated user frustration re: timeline.', 95], ['Call ID #112', 'Pivot from objection to value proposition.', 66]].map(([id, summary, score]) => (
+                  <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)', borderRadius: 7, cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="#1779F7" strokeWidth="1.3"/><path d="M4 7h6M4 4.5h4M4 9.5h3" stroke="#1779F7" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                      <span style={{ fontSize: 11, color: '#1779F7', fontWeight: 500, fontFamily: "'Byrd',sans-serif" }}>{id}:</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>{summary}</span>
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: score >= 70 ? '#4BA373' : '#F59E0B', fontFamily: "'Byrd',sans-serif", flexShrink: 0 }}>{score}/100</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `// Internal to AgentEvalPage\n<SkillSection section={section} onOpenCall={(id) => navigate(id)} />`,
+    source: AgentEvalPageSrc,
+    files: [{ path: 'src/components/agent-eval/AgentEvalPage.jsx', src: AgentEvalPageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Cobalt (call ID link)',  hex: '#1779F7' },
+        { name: 'Green (score ≥70)',      hex: '#4BA373' },
+        { name: 'Amber (score ≥40)',      hex: '#F59E0B' },
+        { name: 'Red (score <40)',        hex: '#E05252' },
+      ],
+      subComponents: [],
+      notes: [
+        'onOpenCall is optional — call row uses onOpenCall?.(id) to prevent crash if undefined',
+        'Each skill card: score label + description paragraph in bg-canvas bordered box',
+        'Call evidence rows are full-width clickable — hover shows bg-hover',
+        'Section collapses to header only on chevron click',
+      ],
+    },
+  },
+
+  // ── Agent Eval — PersonPicker ──────────────────────────────────────────────
+
+  PersonPicker: {
+    tier: 'Molecule',
+    description: 'Collapsible search-and-select picker for agents or leads. Collapsed state shows selected chips + "Add more" / "Minimize" toggle. Expanded: search input (autoFocus) + alphabetically grouped list with avatar circles, optional role subtitle, and checkbox per row.',
+    props: [
+      { name: 'label',       type: 'string',          default: '"Agents"' },
+      { name: 'people',      type: 'object[]',        default: 'MOCK_AGENTS or MOCK_LEADS' },
+      { name: 'selected',    type: 'object[]',        default: '[]' },
+      { name: 'onToggle',    type: '(person) => void', default: 'required' },
+      { name: 'placeholder', type: 'string',          default: '"Search agents…"' },
+    ],
+    states: [
+      {
+        label: 'Collapsed — 1 selected',
+        preview: () => center(
+          <div style={{ width: 340, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>Agents</span>
+              <button style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--b100, #1779F7)', fontWeight: 500, fontFamily: "'Byrd',sans-serif" }}>
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/><path d="M5.5 3.5v4M3.5 5.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+                Add more
+              </button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'var(--bg-active)', border: '1px solid var(--border-default)', borderRadius: 20, padding: '3px 8px 3px 5px', alignSelf: 'flex-start' }}>
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#F59E0B', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 600, color: '#fff' }}>MK</div>
+              <span style={{ fontSize: 12, fontFamily: "'Byrd',sans-serif", color: 'var(--text-primary)' }}>Martha Kellett</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: 14, cursor: 'pointer', marginLeft: 2 }}>×</span>
+            </div>
+          </div>
+        ),
+      },
+      {
+        label: 'Expanded — searching',
+        preview: () => center(
+          <div style={{ width: 340 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>Send report to</span>
+              <button style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, fontFamily: "'Byrd',sans-serif" }}>
+                <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/><path d="M3.5 5.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
+                Minimize
+              </button>
+            </div>
+            <div style={{ position: 'relative', marginBottom: 5 }}>
+              <svg width="12" height="12" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}><circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.4"/><path d="M9.5 9.5L12 12" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>
+              <div style={{ height: 34, paddingLeft: 28, display: 'flex', alignItems: 'center', background: 'var(--bg-canvas)', border: '1.5px solid var(--b100, #1779F7)', borderRadius: 7, fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif" }}>Search team leads…</div>
+            </div>
+            <div style={{ border: '1px solid var(--border-default)', borderRadius: 8, background: 'var(--bg-canvas)', overflow: 'hidden' }}>
+              {[['A', 'Anna Strickland', 'QA Manager', '#4BA373'], ['D', 'David Okafor', 'Team Lead · Beta', '#1779F7'], ['R', 'Rachel Kim', 'Team Lead · Alpha', '#D799E2']].map(([letter, name, role, color], i) => (
+                <div key={name}>
+                  <div style={{ padding: '5px 12px 2px', fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif", letterSpacing: '0.05em', borderTop: i > 0 ? '1px solid var(--border-default)' : 'none' }}>{letter}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderTop: '1px solid var(--border-default)' }}>
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 600, color: '#fff', flexShrink: 0, fontFamily: "'Byrd',sans-serif" }}>{name.split(' ').map(w => w[0]).join('')}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 12, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>{name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif" }}>{role}</div>
+                    </div>
+                    <div style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--n100, #606060)', background: 'transparent' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `// Internal to FeedbackModal in AgentEvalPage\n<PersonPicker\n  label="Send report to"\n  people={MOCK_LEADS}\n  selected={selectedLeads}\n  onToggle={toggleLead}\n  placeholder="Search team leads & managers…"\n/>`,
+    source: AgentEvalPageSrc,
+    files: [{ path: 'src/components/agent-eval/AgentEvalPage.jsx', src: AgentEvalPageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Cobalt (Add more / focus border)', hex: '#1779F7' },
+        { name: '--n100 (unchecked checkbox border)', hex: '#606060' },
+        { name: 'Avatar colors from AVATAR_COLORS[]', hex: '#FF7056' },
+      ],
+      subComponents: [],
+      notes: [
+        'expanded state initializes based on selected.length === 0 (open if empty)',
+        'autoFocus on search input when expanded for keyboard-first use',
+        'Alphabetical grouping: first letter of name as section header',
+        'Role subtitle shown below name when p.role exists (leads have role, agents do not)',
+        '"Minimize" shows when expanded, "Add more"/"Select" when collapsed',
+        'Checkbox border: --n100 (#606060) unchecked — visible in both light and dark mode',
+      ],
+    },
+  },
+
+  // ── Agent Eval — FeedbackModal ─────────────────────────────────────────────
+
+  FeedbackModal: {
+    tier: 'Molecule',
+    description: 'Send Feedback Form modal. Two PersonPickers (Agents + Send report to), notify-by-mail checkbox, segmented schedule control (One-time / Recurring), frequency PresetSelect (recurring only), date input with theme-aware color-scheme, message textarea.',
+    props: [
+      { name: 'agent',   type: 'object',      default: 'current agent object' },
+      { name: 'onClose', type: '() => void',  default: 'required' },
+    ],
+    states: [
+      {
+        label: 'Default',
+        preview: () => center(
+          <div style={{ width: 340, background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px' }}>
+            {/* Segmented control */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif", marginBottom: 6 }}>Schedule</div>
+              <div style={{ display: 'flex', gap: 3, padding: 3, background: 'var(--bg-active)', border: '1px solid var(--border-default)', borderRadius: 9 }}>
+                {['One-time', 'Recurring'].map((opt, i) => (
+                  <div key={opt} style={{ flex: 1, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontFamily: "'Byrd',sans-serif", background: i === 0 ? 'var(--bg-card)' : 'transparent', color: i === 0 ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: i === 0 ? 500 : 400, boxShadow: i === 0 ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }}>{opt}</div>
+                ))}
+              </div>
+            </div>
+            {/* Date */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif", marginBottom: 6 }}>Send date</div>
+              <div style={{ height: 36, background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)', borderRadius: 7, display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif" }}>dd/mm/yyyy</div>
+            </div>
+            {/* Message */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif", marginBottom: 6 }}>Message (optional)</div>
+              <div style={{ height: 60, background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)', borderRadius: 7, padding: '8px 10px', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif" }}>Add a personal note…</div>
+            </div>
+          </div>
+        ),
+      },
+    ],
+    snippet: () => `// Opened via Export button in AgentDetailView header\n{feedbackOpen && <FeedbackModal agent={agent} onClose={() => setFeedbackOpen(false)} />}`,
+    source: AgentEvalPageSrc,
+    files: [{ path: 'src/components/agent-eval/AgentEvalPage.jsx', src: AgentEvalPageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Cobalt (active segment / focus)', hex: '#1779F7' },
+        { name: 'Pulse Coral (Confirm & Send btn)', hex: '#FF7056' },
+        { name: '--bg-active (segment track)',      hex: 'var(--bg-active)' },
+      ],
+      subComponents: ['Modal', 'Button', 'PersonPicker', 'PresetSelect'],
+      notes: [
+        'Opened by the Export button in AgentDetailView header',
+        'Confirm & Send disabled until both Agents and Send-to have ≥1 selection',
+        'Date input: color-scheme CSS rule (index.css) — light by default, dark under [data-theme="dark"]',
+        'Frequency PresetSelect only renders when schedType === "recurring"',
+        'Notify by mail checkbox uses --n100 (#606060) border — visible in both themes',
+        'Sent state: button shows "Sent ✓", modal auto-closes after 1.4s',
+        'PersonPicker auto-focuses search on expand for keyboard navigation',
+      ],
+    },
+  },
+
+  // ── Agent Eval — Overview Page ─────────────────────────────────────────────
+
+  AgentEvalPage: {
+    tier: 'Organism',
+    description: 'Full agent evaluation page. Two views: Overview (performance chart, score panel, teams table, agent performance table with search) and Agent Detail (InsightCard, PerformanceChart, ScorePanel, SkillSections, FilterBar). Nav via sidebar "Agent eval" item.',
+    props: [
+      { name: 'sidebarWidth',     type: 'number', default: '220' },
+      { name: 'sidebarTransition',type: 'string', default: '"width 200ms ease"' },
+    ],
+    states: [
+      {
+        label: 'Overview',
+        preview: () => containedPreview(
+          <AgentEvalPage sidebarWidth={0} sidebarTransition="none" />,
+          320,
+        ),
+      },
+    ],
+    snippet: () => `// Routed via activePage === 'agent-eval' in App.jsx\n<AgentEvalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />`,
+    source: AgentEvalPageSrc,
+    files: [{ path: 'src/components/agent-eval/AgentEvalPage.jsx', src: AgentEvalPageSrc }],
+    breakdown: {
+      colors: [
+        { name: 'Cobalt (chart line/gradient)', hex: '#1779F7' },
+        { name: 'Green (score ≥70)',             hex: '#4BA373' },
+        { name: 'Amber (score ≥40)',             hex: '#F59E0B' },
+        { name: 'Red (score <40)',               hex: '#E05252' },
+        { name: 'Pulse Coral (✦ AI icon)',       hex: '#FF7056' },
+      ],
+      subComponents: ['InsightCard', 'PerformanceChart', 'AgentScorePanel', 'SkillSection', 'PersonPicker', 'FeedbackModal', 'FilterBar', 'PresetSelect', 'Button', 'Modal'],
+      notes: [
+        'Overview → detail navigation via agent row click — no router, useState only',
+        'Back button replicates ExplorePage breadcrumb style: bordered button + › separator',
+        'Export button opens FeedbackModal (not a download)',
+        'FilterBar in detail view is full DataPage parity: appliedChips, isDirty, presets, Save modal',
+        'Chart uses Recharts AreaChart + ResponsiveContainer — not hand-rolled SVG',
+        'MOCK_LEADS: 6 team leads/managers for Send-report-to picker',
+        'All scroll containers use className="smooth-scroll" for blended scrollbars',
+        'position:fixed layout — left offset = sidebarWidth prop (matches DataPage/ExplorePage)',
       ],
     },
   },
