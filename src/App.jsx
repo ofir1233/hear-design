@@ -9,6 +9,7 @@ import SignIn from './components/SignIn.jsx'
 import DataPage from './components/data/DataPage.jsx'
 import ExplorePage from './components/data/ExplorePage.jsx'
 import ReportsPage from './components/reports/ReportsPage.jsx'
+import AgentEvalPage from './components/agent-eval/AgentEvalPage.jsx'
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -601,6 +602,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         />
       ) : activePage === 'reports' ? (
         <ReportsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
+      ) : activePage === 'agent-eval' ? (
+        <AgentEvalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage !== 'dashboard' ? (
         /* Placeholder for unimplemented pages */
         <div style={{
