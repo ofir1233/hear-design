@@ -129,6 +129,35 @@ const PRESETS = [
   { id: 'p3', label: 'Needs Improvement' },
 ]
 
+const FILTER_FIELDS = [
+  { value: 'agentName',   label: 'Agent name' },
+  { value: 'team',        label: 'Team' },
+  { value: 'callDate',    label: 'Call Date' },
+  { value: 'avgScore',    label: 'Average score' },
+  { value: 'handleTime',  label: 'Handle time' },
+]
+
+const OPERATORS = [
+  { value: 'contains',     label: 'Contains' },
+  { value: 'not_contains', label: 'Not contains' },
+  { value: 'equals',       label: 'Equals' },
+  { value: 'not_equal',    label: 'Not equal' },
+]
+
+const SEL = {
+  height: 32, padding: '0 10px',
+  background: 'var(--bg-canvas)',
+  border: '1px solid var(--border-default)',
+  borderRadius: 6,
+  fontSize: 'var(--type-p14)',
+  color: 'var(--text-primary)',
+  fontFamily: "'Byrd', sans-serif",
+  outline: 'none',
+  cursor: 'pointer',
+}
+
+let _chipId = 1
+
 // ── Micro components ──────────────────────────────────────────────────────────
 
 function Avatar({ name, size = 36 }) {
@@ -323,7 +352,7 @@ function ChevronDown({ open }) {
   )
 }
 
-function PresetSelect({ options, value, onChange }) {
+function PresetSelect({ options, value, onChange, fullWidth }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -337,7 +366,7 @@ function PresetSelect({ options, value, onChange }) {
   const selected = options.find(o => o.value === value)
 
   return (
-    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0, width: fullWidth ? '100%' : undefined }}>
       <button
         onClick={() => setOpen(o => !o)}
         style={{
@@ -349,7 +378,10 @@ function PresetSelect({ options, value, onChange }) {
           fontSize: 'var(--type-p14)',
           color: selected?.value ? 'var(--text-primary)' : 'var(--text-muted)',
           fontFamily: "'Byrd', sans-serif",
-          cursor: 'pointer', whiteSpace: 'nowrap', minWidth: 100,
+          cursor: 'pointer', whiteSpace: 'nowrap',
+          minWidth: fullWidth ? undefined : 100,
+          width: fullWidth ? '100%' : undefined,
+          boxSizing: 'border-box',
           transition: 'background 150ms ease, border-color 150ms ease',
         }}
       >
@@ -402,84 +434,177 @@ function PresetSelect({ options, value, onChange }) {
   )
 }
 
+// ── Filter popover — exact copy of DataPage FilterPopover ────────────────────
+
+function FilterPopover({ anchor, chip, onChange, onDone, onClose }) {
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function h(e) { if (ref.current && !ref.current.contains(e.target)) onClose() }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [onClose])
+
+  const canDone = chip.field && chip.value.trim()
+
+  return (
+    <div ref={ref} style={{
+      position: 'fixed', left: anchor.x, top: anchor.y, zIndex: 600,
+      background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+      borderRadius: 10, boxShadow: '0 8px 28px rgba(0,0,0,0.14)',
+      padding: 12, display: 'flex', flexDirection: 'column', gap: 8, width: 250,
+    }}>
+      <PresetSelect
+        fullWidth
+        options={[{ value: '', label: 'Field…' }, ...FILTER_FIELDS.map(f => ({ value: f.value, label: f.label }))]}
+        value={chip.field}
+        onChange={v => onChange({ ...chip, field: v })}
+      />
+      <PresetSelect
+        fullWidth
+        options={OPERATORS.map(op => ({ value: op.value, label: op.label }))}
+        value={chip.operator}
+        onChange={v => onChange({ ...chip, operator: v })}
+      />
+      <input
+        value={chip.value}
+        onChange={e => onChange({ ...chip, value: e.target.value })}
+        onKeyDown={e => { if (e.key === 'Enter' && canDone) onDone() }}
+        placeholder="Value…"
+        style={{ ...SEL, width: '100%', boxSizing: 'border-box' }}
+      />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+        <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+        <Button size="sm" onClick={onDone} disabled={!canDone}>Done</Button>
+      </div>
+    </div>
+  )
+}
+
 // ── Filter bar — matches DataPage filter bar layout ───────────────────────────
 
 function FilterBar() {
-  const [preset, setPreset] = useState(PRESETS[0].id)
-  const [chips, setChips] = useState([
-    { id: 1, label: 'Call Date : Not Equal : 18/25/8' },
-    { id: 2, label: 'Agent name : Shlomo' },
-  ])
+  const [preset,       setPreset]       = useState(PRESETS[0].id)
+  const [chips,        setChips]        = useState([])
+  const [activePopover, setActivePopover] = useState(null) // { id, anchor:{x,y} }
+  const [editingChip,  setEditingChip]  = useState({ field: '', operator: 'contains', value: '' })
+
+  function openPopover(id, el) {
+    const r = el.getBoundingClientRect()
+    setActivePopover({ id, anchor: { x: r.left, y: r.bottom + 6 } })
+    if (id === 'new') {
+      setEditingChip({ field: '', operator: 'contains', value: '' })
+    } else {
+      const c = chips.find(x => x.id === id)
+      if (c) setEditingChip({ field: c.field, operator: c.operator, value: c.value })
+    }
+  }
+
+  function closePopover() { setActivePopover(null) }
+
+  function donePopover() {
+    if (!editingChip.field || !editingChip.value.trim()) { closePopover(); return }
+    if (activePopover.id === 'new') {
+      setChips(c => [...c, { id: _chipId++, ...editingChip }])
+    } else {
+      setChips(c => c.map(x => x.id === activePopover.id ? { ...x, ...editingChip } : x))
+    }
+    closePopover()
+  }
+
+  function chipLabel(chip) {
+    const fieldLabel = FILTER_FIELDS.find(f => f.value === chip.field)?.label ?? chip.field
+    const isNeg = chip.operator === 'not_contains' || chip.operator === 'not_equal'
+    return `${fieldLabel}${isNeg ? ' ≠' : ':'} ${chip.value}`
+  }
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      padding: '0 20px', height: 48, flexShrink: 0,
-      borderBottom: '1px solid var(--border-input)',
-      background: 'var(--bg-sidebar)',
-    }}>
-      {/* Preset */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
-        <span style={{
-          fontSize: 'var(--type-p14)', fontWeight: 500, color: 'var(--text-secondary)',
-          fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
-        }}>Preset:</span>
-        <PresetSelect
-          options={[{ value: '', label: 'None' }, ...PRESETS.map(p => ({ value: p.id, label: p.label }))]}
-          value={preset}
-          onChange={setPreset}
-        />
-      </div>
-
-      {/* Divider */}
-      <div style={{ width: 1, height: 22, background: 'var(--border-input)', flexShrink: 0 }} />
-
-      {/* Chips */}
-      <div className="smooth-scroll" style={{
-        display: 'flex', alignItems: 'center', gap: 6,
-        flex: 1, overflowX: 'auto', overflowY: 'hidden', minWidth: 0,
+    <>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '0 20px', height: 48, flexShrink: 0,
+        borderBottom: '1px solid var(--border-input)',
+        background: 'var(--bg-sidebar)',
       }}>
-        {chips.map(chip => (
-          <div key={chip.id} style={{
-            display: 'flex', alignItems: 'center', gap: 0,
-            height: 26, borderRadius: 99,
-            background: 'var(--b20)', border: '1px solid var(--b30)',
-            fontSize: 12, color: 'var(--b100)',
-            fontFamily: "'Byrd', sans-serif",
-            whiteSpace: 'nowrap', flexShrink: 0, userSelect: 'none',
-          }}>
-            <span style={{ padding: '0 8px 0 10px', lineHeight: 1 }}>{chip.label}</span>
-            <button
-              onClick={() => setChips(c => c.filter(ch => ch.id !== chip.id))}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 20, height: 20, marginRight: 3,
-                borderRadius: '50%', background: 'none', border: 'none',
-                cursor: 'pointer', color: 'var(--b100)', fontSize: 15, lineHeight: 1, flexShrink: 0,
-              }}
-            >×</button>
-          </div>
-        ))}
-        <button
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            height: 28, padding: '0 11px',
-            background: 'none', border: '1px solid var(--border-input)',
-            borderRadius: 99, fontSize: 12, color: 'var(--text-secondary)',
-            fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
-            whiteSpace: 'nowrap', flexShrink: 0,
-            transition: 'border-color 150ms ease, color 150ms ease, background 150ms ease',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--b100)'; e.currentTarget.style.color = 'var(--b100)'; e.currentTarget.style.background = 'var(--b20)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-input)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'none' }}
-        >
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-          Add filter
-        </button>
+        {/* Preset */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
+          <span style={{
+            fontSize: 'var(--type-p14)', fontWeight: 500, color: 'var(--text-secondary)',
+            fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
+          }}>Preset:</span>
+          <PresetSelect
+            options={[{ value: '', label: 'None' }, ...PRESETS.map(p => ({ value: p.id, label: p.label }))]}
+            value={preset}
+            onChange={setPreset}
+          />
+        </div>
+
+        {/* Divider */}
+        <div style={{ width: 1, height: 22, background: 'var(--border-input)', flexShrink: 0 }} />
+
+        {/* Chips + Add filter */}
+        <div className="smooth-scroll" style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          flex: 1, overflowX: 'auto', overflowY: 'hidden', minWidth: 0,
+        }}>
+          {chips.map(chip => (
+            <div key={chip.id} style={{
+              display: 'flex', alignItems: 'center', gap: 0,
+              height: 26, borderRadius: 99,
+              background: 'var(--b20)', border: '1px solid var(--b30)',
+              fontSize: 12, color: 'var(--b100)',
+              fontFamily: "'Byrd', sans-serif",
+              whiteSpace: 'nowrap', flexShrink: 0, userSelect: 'none',
+            }}>
+              <span
+                onClick={e => openPopover(chip.id, e.currentTarget.closest('[data-chip]') ?? e.currentTarget)}
+                data-chip
+                style={{ padding: '0 8px 0 10px', cursor: 'pointer', lineHeight: 1 }}
+              >{chipLabel(chip)}</span>
+              <button
+                onClick={() => setChips(c => c.filter(x => x.id !== chip.id))}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 20, height: 20, marginRight: 3,
+                  borderRadius: '50%', background: 'none', border: 'none',
+                  cursor: 'pointer', color: 'var(--b100)', fontSize: 15, lineHeight: 1, flexShrink: 0,
+                }}
+              >×</button>
+            </div>
+          ))}
+          <button
+            onClick={e => openPopover('new', e.currentTarget)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              height: 28, padding: '0 11px',
+              background: 'none', border: '1px solid var(--border-input)',
+              borderRadius: 99, fontSize: 12, color: 'var(--text-secondary)',
+              fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
+              whiteSpace: 'nowrap', flexShrink: 0,
+              transition: 'border-color 150ms ease, color 150ms ease, background 150ms ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--b100)'; e.currentTarget.style.color = 'var(--b100)'; e.currentTarget.style.background = 'var(--b20)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-input)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'none' }}
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            Add filter
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* Popover (rendered outside the bar so it's not clipped) */}
+      {activePopover && (
+        <FilterPopover
+          anchor={activePopover.anchor}
+          chip={editingChip}
+          onChange={setEditingChip}
+          onDone={donePopover}
+          onClose={closePopover}
+        />
+      )}
+    </>
   )
 }
 
