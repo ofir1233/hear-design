@@ -1003,9 +1003,6 @@ function PersonPicker({ label, people, selected, onToggle, placeholder }) {
 
   function handleToggle(p) {
     onToggle(p)
-    // after adding first item, collapse back
-    const willBeSelected = !selected.find(x => x.id === p.id)
-    if (willBeSelected) setExpanded(false)
   }
 
   return (
