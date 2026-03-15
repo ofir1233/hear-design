@@ -636,7 +636,6 @@ function PinnedReportCard({ report }) {
         maxWidth: 540,
         background: 'var(--bg-card)',
         border: `1px solid ${hovered ? cfg.border : 'var(--border-input)'}`,
-        borderLeft: `3px solid ${cfg.border}`,
         borderRadius: 12,
         display: 'flex',
         flexDirection: 'column',
