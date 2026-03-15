@@ -31,8 +31,8 @@
 }
 
 @keyframes spark-pulse {
-  0%, 100% { transform: scale(1);   opacity: 0.18; }
-  50%       { transform: scale(1.7); opacity: 0.06; }
+  0%, 100% { transform: translate(-50%, -50%) scale(1);   opacity: 0.18; }
+  50%       { transform: translate(-50%, -50%) scale(1.9); opacity: 0.05; }
 }
 
 @keyframes wave-bar {

@@ -91,22 +91,51 @@ function Sparkline({ data, color = '#FF7056', height = 56 }) {
   const [lx, ly] = pts.at(-1)
   const gid = `sg${color.replace('#', '')}`
 
+  // Convert SVG-space coordinates to % so dots stay perfectly round
+  // even when the SVG is stretched via preserveAspectRatio="none"
+  const dotLeft = `${(lx / W) * 100}%`
+  const dotTop  = `${(ly / H) * 100}%`
+
   return (
-    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" fill="none"
-      style={{ display: 'block', overflow: 'visible' }}>
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.22" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#${gid})`} />
-      <polyline points={line} stroke={color} strokeWidth="1.8" strokeLinecap="round"
-        strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-      <circle cx={lx} cy={ly} r="4" fill={color} vectorEffect="non-scaling-stroke" />
-      <circle cx={lx} cy={ly} r="7" fill={color} fillOpacity="0.18" vectorEffect="non-scaling-stroke"
-        style={{ animation: 'spark-pulse 2s ease-in-out infinite', transformOrigin: `${lx}px ${ly}px` }} />
-    </svg>
+    <div style={{ position: 'relative', height }}>
+      {/* Line + area — stretched to fill card width */}
+      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" fill="none"
+        style={{ display: 'block' }}>
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill={`url(#${gid})`} />
+        <polyline points={line} stroke={color} strokeWidth="1.8" strokeLinecap="round"
+          strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      </svg>
+
+      {/* Pulsing halo — CSS div, always a perfect circle */}
+      <div style={{
+        position: 'absolute',
+        left: dotLeft, top: dotTop,
+        width: 14, height: 14,
+        borderRadius: '50%',
+        background: color,
+        opacity: 0.18,
+        transform: 'translate(-50%, -50%)',
+        animation: 'spark-pulse 2s ease-in-out infinite',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Solid dot — CSS div, always a perfect circle */}
+      <div style={{
+        position: 'absolute',
+        left: dotLeft, top: dotTop,
+        width: 8, height: 8,
+        borderRadius: '50%',
+        background: color,
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none',
+      }} />
+    </div>
   )
 }
 
