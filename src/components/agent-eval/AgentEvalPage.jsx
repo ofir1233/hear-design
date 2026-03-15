@@ -392,11 +392,15 @@ function ScorePanel({ totalScore = 90, title = 'Overall score', collapsible = fa
       {!collapsed && (
         <>
           <TotalScoreBar score={totalScore} />
-          <div style={{ height: 1, background: 'var(--border-default)', margin: '24px 0 20px', opacity: 0.6 }} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginTop: 20 }}>
             {CATEGORIES.map(cat => (
-              <div key={cat.name}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 14 }}>{cat.name}</div>
+              <div key={cat.name} style={{
+                background: 'var(--bg-canvas)',
+                border: '1px solid var(--border-input)',
+                borderRadius: 10,
+                padding: '14px 16px',
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{cat.name}</div>
                 {cat.skills.map(skill => (
                   <div key={skill.name} style={{ marginBottom: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
