@@ -392,7 +392,7 @@ function ScorePanel({ totalScore = 90, title = 'Overall score', collapsible = fa
       {!collapsed && (
         <>
           <TotalScoreBar score={totalScore} />
-          <div style={{ height: 20 }} />
+          <div style={{ height: 1, background: 'var(--border-default)', margin: '24px 0 20px', opacity: 0.6 }} />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 28 }}>
             {CATEGORIES.map(cat => (
               <div key={cat.name}>
