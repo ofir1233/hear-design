@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { BsPinFill, BsPin } from 'react-icons/bs'
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
 
@@ -54,16 +55,6 @@ function MoreIcon() {
   )
 }
 
-function PinIcon({ filled }) {
-  return (
-    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-      <path d="M9.5 1.5L12.5 4.5L9 8H5L2.5 11.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5 8L1.5 11.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <path d="M9.5 1.5C9.5 1.5 11 3 12.5 4.5C11.5 5.5 10 6.5 9 8H5C5 8 4 6 4.5 4.5C6 4 8.5 2.5 9.5 1.5Z"
-        fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-    </svg>
-  )
-}
 
 function SparkleIcon() {
   return (
@@ -433,7 +424,7 @@ function RowMenu({ isPinned, onTogglePin }) {
           zIndex: 200, minWidth: 168, padding: '4px 0',
         }}>
           <MenuRow
-            icon={<PinIcon filled={isPinned} />}
+            icon={isPinned ? <BsPinFill size={13} /> : <BsPin size={13} />}
             label={isPinned ? 'Unpin from top' : 'Pin to top'}
             onClick={() => { onTogglePin(); setOpen(false) }}
             highlight={!isPinned}
@@ -481,7 +472,7 @@ function ReportRow({ report, index, isPinned, onTogglePin }) {
       {/* Row # + pin dot */}
       <span style={{ width: 32, flexShrink: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", display: 'flex', alignItems: 'center', gap: 4 }}>
         {isPinned
-          ? <span style={{ color: 'var(--c100)', display: 'flex', alignItems: 'center' }}><PinIcon filled /></span>
+          ? <span style={{ color: 'var(--c100)', display: 'flex', alignItems: 'center' }}><BsPinFill size={12} /></span>
           : index + 1
         }
       </span>

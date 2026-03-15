@@ -1379,7 +1379,7 @@ export const COMPONENT_DEFS = {
 
   ReportsPage: {
     tier: 'Organism',
-    description: 'Full Reports page. Header + status filter tabs + search. List view (rows with status-colored left border) and grid view (cards). 22 mock reports across AI Generated, Running, Completed, Failed, and Not Executed states.',
+    description: 'Full Reports page. Pinned preview strip (sparkline cards) + status filter tabs + search + list/grid view. 22 mock reports. Pin/unpin from 3-dot row menu; pinned count badge updates live.',
     props: [
       { name: 'isMobile',     type: 'boolean', default: 'false' },
       { name: 'sidebarWidth', type: 'number',  default: '272'   },
@@ -1410,12 +1410,14 @@ export const COMPONENT_DEFS = {
         { name: 'Running / Completed', hex: '#4BA373' },
         { name: 'Failed border',       hex: '#DC2626' },
       ],
-      subComponents: ['Badge', 'Button', 'StatusBadge', 'ReportRow', 'ReportCard', 'StatusTabs'],
+      subComponents: ['Badge', 'Button', 'StatusBadge', 'ReportRow', 'ReportCard', 'StatusTabs', 'PinnedReportCard', 'PinnedReportsStrip', 'RowMenu', 'Sparkline'],
       notes: [
-        'List view: 3px left border animates in on hover, colored by status',
-        'Grid view: borderTop 3px status color + glow box-shadow on hover',
-        'Status filter tabs with per-status counts',
+        'Pinned strip: 3 default pinned IDs driven by pinnedIds Set state',
+        'Pin/unpin via RowMenu — strip count badge updates live; strip hides if all unpinned',
+        'List view: row number replaced by BsPinFill (coral) for pinned rows',
+        'Grid view: status-color border + glow box-shadow on hover',
         'Search filters across name, ID, and trend fields',
+        'PinIcon: BsPinFill / BsPin from react-icons/bs',
       ],
     },
   },
@@ -1424,10 +1426,12 @@ export const COMPONENT_DEFS = {
 
   ReportRow: {
     tier: 'Molecule',
-    description: 'Single row in the Reports list view. Status badge + truncated ID + name + trend snippet + schedule pill. 3px left border slides in on hover, colored by status.',
+    description: 'Single row in the Reports list view. Status badge + truncated ID + name + trend snippet + schedule pill. Pinned rows show BsPinFill in coral instead of row number. 3-dot RowMenu on hover with Pin/Unpin, Open, Delete.',
     props: [
-      { name: 'report', type: 'Report', default: 'required' },
-      { name: 'index',  type: 'number', default: 'required' },
+      { name: 'report',       type: 'Report',    default: 'required' },
+      { name: 'index',        type: 'number',    default: 'required' },
+      { name: 'isPinned',     type: 'boolean',   default: 'false'    },
+      { name: 'onTogglePin',  type: '() => void', default: 'required' },
     ],
     states: [
       { label: 'AI Generated', props: {} },
@@ -1442,20 +1446,22 @@ export const COMPONENT_DEFS = {
       </div>,
       180,
     ),
-    snippet: () => `<ReportRow report={report} index={index} />`,
+    snippet: () => `<ReportRow report={report} index={index} isPinned={isPinned} onTogglePin={() => togglePin(report.id)} />`,
     source: ReportsPageSrc,
     files: [{ path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc }],
     breakdown: {
-      icons: [],
+      icons: ['BsPinFill', 'BsPin'],
       colors: [
         { name: 'AI Generated', hex: '#FF7056' },
         { name: 'Failed',       hex: '#DC2626' },
         { name: 'Running/Done', hex: '#4BA373' },
+        { name: 'Pin coral',    hex: '#FF7056' },
       ],
-      subComponents: ['ReportStatusBadge', 'SchedulePill'],
+      subComponents: ['ReportStatusBadge', 'SchedulePill', 'RowMenu'],
       notes: [
+        'Row number cell shows BsPinFill (coral) when isPinned, row number otherwise',
         'borderLeft color transitions transparent → status color on hover',
-        'More button fades in (opacity 0→1) on hover',
+        'RowMenu fades in (opacity 0→1) on hover; closes on outside mousedown',
         'Defined inline in ReportsPage.jsx',
       ],
     },
@@ -1571,6 +1577,167 @@ export const COMPONENT_DEFS = {
       colors: [],
       subComponents: [],
       notes: ['Defined inline in ReportsPage.jsx — not a standalone file'],
+    },
+  },
+
+  // ── Sparkline ────────────────────────────────────────────────────────────────
+
+  Sparkline: {
+    tier: 'Atom',
+    description: 'SVG sparkline with area gradient fill. End-dot and pulsing halo are CSS divs positioned via % coordinates so they stay perfectly circular regardless of card width. preserveAspectRatio="none" stretches line only.',
+    props: [
+      { name: 'data',   type: 'number[]', default: 'required'  },
+      { name: 'color',  type: 'string',   default: "'#FF7056'" },
+      { name: 'height', type: 'number',   default: '56'        },
+    ],
+    states: [
+      { label: 'Coral (uptrend)',  props: { data: [42,38,46,55,49,61,67], color: '#FF7056', height: 56 } },
+      { label: 'Cobalt (flat)',    props: { data: [5.1,4.9,4.7,4.4,4.3,4.4,4.2], color: '#1779F7', height: 56 } },
+      { label: 'Green (variable)', props: { data: [11,14,13,16,12,15,14], color: '#4BA373', height: 56 } },
+    ],
+    render: (p) => center(
+      <div style={{ width: 240, background: 'var(--bg-card)', borderRadius: 8, padding: '8px 12px' }}>
+        <div style={{ position: 'relative', height: p.height ?? 56 }}>
+          <span style={{ fontSize: 11, color: p.color ?? '#FF7056', fontFamily: "'Byrd', sans-serif" }}>
+            Live sparkline preview — see PinnedReportCard
+          </span>
+        </div>
+      </div>
+    ),
+    snippet: (p) => `<Sparkline data={${JSON.stringify(p.data)}} color="${p.color}" height={${p.height}} />`,
+    source: ReportsPageSrc,
+    files: [{ path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'Coral',  hex: '#FF7056' },
+        { name: 'Cobalt', hex: '#1779F7' },
+        { name: 'Green',  hex: '#4BA373' },
+      ],
+      subComponents: [],
+      notes: [
+        'SVG viewBox 0 0 200 H with preserveAspectRatio="none" — stretches X only',
+        'End-dot + pulsing halo are CSS divs, not SVG circles (avoids oval distortion)',
+        'Halo animation: spark-pulse keyframe in index.css (scale + opacity)',
+        'vectorEffect="non-scaling-stroke" keeps stroke width consistent',
+        'Defined inline in ReportsPage.jsx',
+      ],
+    },
+  },
+
+  // ── PinnedReportCard ─────────────────────────────────────────────────────────
+
+  PinnedReportCard: {
+    tier: 'Molecule',
+    description: 'Featured report preview card in the Pinned strip. Header (status + schedule + last-run + Open button) → title → Sparkline hero with label and delta → 3-column stat chips → footer with cadence + masked API key.',
+    props: [
+      { name: 'report', type: 'PinnedReport', default: 'required' },
+    ],
+    states: [
+      { label: 'AI Generated (coral)', props: {} },
+      { label: 'Running (cobalt)',      props: {} },
+      { label: 'Completed (green)',     props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, transform: 'scale(0.55)', transformOrigin: 'top left', width: '182%', height: '182%', pointerEvents: 'none' }}>
+        <ReportsPage isMobile={false} sidebarWidth={0} />
+      </div>,
+      200,
+    ),
+    snippet: () => `<PinnedReportCard report={report} />`,
+    source: ReportsPageSrc,
+    files: [{ path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'Coral sparkline',  hex: '#FF7056' },
+        { name: 'Cobalt sparkline', hex: '#1779F7' },
+        { name: 'Green sparkline',  hex: '#4BA373' },
+        { name: 'Delta up',         hex: '#FF7056' },
+        { name: 'Delta down',       hex: '#4BA373' },
+      ],
+      subComponents: ['StatusBadge', 'SchedulePill', 'Sparkline'],
+      notes: [
+        'sparkDelta color: coral when sparkUp=true, green when false',
+        'border-color + box-shadow transitions on hover',
+        'Stats row: 3 cells divided by 1px border-input separators',
+        'API key shown masked — display only, not functional',
+        'Defined inline in ReportsPage.jsx',
+      ],
+    },
+  },
+
+  // ── PinnedReportsStrip ───────────────────────────────────────────────────────
+
+  PinnedReportsStrip: {
+    tier: 'Organism',
+    description: 'Horizontal strip above the report list showing pinned report preview cards. Driven by pinnedIds Set in ReportsPage. Renders null when no pins. Count badge updates live.',
+    props: [
+      { name: 'reports', type: 'PinnedReport[]', default: 'required' },
+    ],
+    states: [
+      { label: '3 pinned (default)', props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, transform: 'scale(0.55)', transformOrigin: 'top left', width: '182%', height: '182%', pointerEvents: 'none' }}>
+        <ReportsPage isMobile={false} sidebarWidth={0} />
+      </div>,
+      200,
+    ),
+    snippet: () => `<PinnedReportsStrip reports={pinnedReports} />`,
+    source: ReportsPageSrc,
+    files: [{ path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [],
+      subComponents: ['PinnedReportCard'],
+      notes: [
+        'Returns null when reports.length === 0 — strip disappears entirely',
+        'Cards in a flex row with overflowX: auto for narrow viewports',
+        'PREVIEW_DATA map provides sparkData + stats keyed by report ID',
+        'DEFAULT_PINNED = 3 IDs; togglePin() adds/removes from Set',
+        'Defined inline in ReportsPage.jsx',
+      ],
+    },
+  },
+
+  // ── RowMenu ──────────────────────────────────────────────────────────────────
+
+  RowMenu: {
+    tier: 'Molecule',
+    description: '3-dot context menu for report rows. Options: Pin/Unpin (BsPinFill / BsPin, coral highlight when unpinned), Open report, Delete. Closes on outside mousedown via document event listener.',
+    props: [
+      { name: 'isPinned',     type: 'boolean',    default: 'false'    },
+      { name: 'onTogglePin',  type: '() => void', default: 'required' },
+    ],
+    states: [
+      { label: 'Not pinned', props: {} },
+      { label: 'Pinned',     props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, transform: 'scale(0.55)', transformOrigin: 'top left', width: '182%', height: '182%', pointerEvents: 'none' }}>
+        <ReportsPage isMobile={false} sidebarWidth={0} />
+      </div>,
+      160,
+    ),
+    snippet: () => `<RowMenu isPinned={isPinned} onTogglePin={() => togglePin(report.id)} />`,
+    source: ReportsPageSrc,
+    files: [{ path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc }],
+    breakdown: {
+      icons: ['BsPinFill', 'BsPin'],
+      colors: [
+        { name: 'Pin highlight', hex: '#FF7056' },
+        { name: 'Delete danger', hex: '#DC2626'  },
+      ],
+      subComponents: [],
+      notes: [
+        'BsPinFill (filled) when isPinned, BsPin (outline) when not — both from react-icons/bs',
+        'Pin label: "Pin to top" (coral) | "Unpin from top" (secondary)',
+        'Dropdown: bg-card, border-default, 8px radius, 28px z-index 200',
+        'Outside-click: document mousedown listener added/removed on open/close',
+        'MenuRow uses onMouseDown={e => e.preventDefault()} to prevent blur-before-click',
+        'Defined inline in ReportsPage.jsx',
+      ],
     },
   },
 
