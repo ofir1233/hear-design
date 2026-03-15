@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
 
@@ -54,6 +54,17 @@ function MoreIcon() {
   )
 }
 
+function PinIcon({ filled }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+      <path d="M9.5 1.5L12.5 4.5L9 8H5L2.5 11.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5 8L1.5 11.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <path d="M9.5 1.5C9.5 1.5 11 3 12.5 4.5C11.5 5.5 10 6.5 9 8H5C5 8 4 6 4.5 4.5C6 4 8.5 2.5 9.5 1.5Z"
+        fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function SparkleIcon() {
   return (
     <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
@@ -99,45 +110,47 @@ function Sparkline({ data, color = '#FF7056', height = 56 }) {
   )
 }
 
-// ── Pinned report data ────────────────────────────────────────────────────────
+// ── Preview data map (keyed by report ID) ────────────────────────────────────
+// Provides sparkline + stat data for any report that can be pinned.
 
-const PINNED_REPORTS = [
-  {
-    id: '694d64ceefa95f9cc2ababdb3',
-    name: 'Daily trends report',
-    status: 'ai-generated',
-    schedule: 'Daily',
-    lastRun: 'Today · 07:09',
-    apiKey: 'hear_sk_••••3f9a',
-    sparkData: [42, 38, 46, 55, 49, 61, 67],
-    sparkColor: '#FF7056',
-    sparkLabel: 'Billing complaints / 7d',
-    sparkDelta: '+12%',
-    sparkUp: true,
+const PREVIEW_DATA = {
+  '694d64ceefa95f9cc2ababdb3': {
+    lastRun: 'Today · 07:09', apiKey: 'hear_sk_••••3f9a',
+    sparkData: [42, 38, 46, 55, 49, 61, 67], sparkColor: '#FF7056',
+    sparkLabel: 'Billing complaints / 7d', sparkDelta: '+12%', sparkUp: true,
     stats: [
       { label: 'Calls analyzed', value: '1,247' },
       { label: 'Avg handle time', value: '4m 36s' },
       { label: 'CSAT avg', value: '87%' },
     ],
   },
-  {
-    id: '6942b63cfd8049b0c779c75b',
-    name: 'Escalation tracking report',
-    status: 'running',
-    schedule: 'Weekly',
-    lastRun: 'Running now',
-    apiKey: 'hear_sk_••••8c2d',
-    sparkData: [5.1, 4.9, 4.7, 4.4, 4.3, 4.4, 4.2],
-    sparkColor: '#1779F7',
-    sparkLabel: 'Escalation rate / 7d',
-    sparkDelta: '−0.9pp',
-    sparkUp: false,
+  '6942b63cfd8049b0c779c75b': {
+    lastRun: 'Running now', apiKey: 'hear_sk_••••8c2d',
+    sparkData: [5.1, 4.9, 4.7, 4.4, 4.3, 4.4, 4.2], sparkColor: '#1779F7',
+    sparkLabel: 'Escalation rate / 7d', sparkDelta: '−0.9pp', sparkUp: false,
     stats: [
       { label: 'Escalation rate', value: '4.2%' },
       { label: 'Avg wait time', value: '2m 11s' },
       { label: 'Same-day resolved', value: '91%' },
     ],
   },
+  '694265261dcb88436adfcac5': {
+    lastRun: 'Mar 14 · 06:00', apiKey: 'hear_sk_••••a7e1',
+    sparkData: [11, 14, 13, 16, 12, 15, 14], sparkColor: '#4BA373',
+    sparkLabel: 'Peak hour calls / 7d', sparkDelta: '+3 slots', sparkUp: true,
+    stats: [
+      { label: 'Peak: 10–11 AM', value: '14 calls' },
+      { label: '2–3 PM peak', value: '11 calls' },
+      { label: 'Staff target', value: '94%' },
+    ],
+  },
+}
+
+// Default pinned IDs — first 3 have full preview data
+const DEFAULT_PINNED = [
+  '694d64ceefa95f9cc2ababdb3',
+  '6942b63cfd8049b0c779c75b',
+  '694265261dcb88436adfcac5',
 ]
 
 // ── Status config ──────────────────────────────────────────────────────────────
@@ -329,9 +342,94 @@ function TableHeader() {
   )
 }
 
+// ── RowMenu ───────────────────────────────────────────────────────────────────
+
+function MenuRow({ icon, label, onClick, danger, highlight }) {
+  const [hov, setHov] = useState(false)
+  return (
+    <button
+      onMouseDown={e => e.preventDefault()}
+      onClick={onClick}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 9,
+        width: '100%', padding: '7px 12px',
+        background: hov ? 'var(--bg-active)' : 'transparent',
+        border: 'none', cursor: 'pointer', textAlign: 'left',
+        color: danger ? '#DC2626' : highlight ? 'var(--c100)' : 'var(--text-secondary)',
+        fontSize: 12, fontFamily: "'Byrd', sans-serif", fontWeight: 500,
+        transition: 'background 100ms ease',
+      }}
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}
+
+function RowMenu({ isPinned, onTogglePin }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    function onDown(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={e => { e.stopPropagation(); setOpen(o => !o) }}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 26, height: 26, borderRadius: 5,
+          background: open ? 'var(--bg-active)' : 'var(--bg-canvas)',
+          border: '1px solid var(--border-input)',
+          cursor: 'pointer', color: 'var(--text-secondary)',
+        }}
+      >
+        <MoreIcon />
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', right: 0, top: 'calc(100% + 4px)',
+          background: 'var(--bg-card)', border: '1px solid var(--border-default)',
+          borderRadius: 8, boxShadow: '0 8px 28px rgba(0,0,0,0.45)',
+          zIndex: 200, minWidth: 168, padding: '4px 0',
+        }}>
+          <MenuRow
+            icon={<PinIcon filled={isPinned} />}
+            label={isPinned ? 'Unpin from top' : 'Pin to top'}
+            onClick={() => { onTogglePin(); setOpen(false) }}
+            highlight={!isPinned}
+          />
+          <MenuRow icon={
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+              <path d="M7 2H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+              <path d="M9 1h4v4M13 1L7.5 6.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          } label="Open report" onClick={() => setOpen(false)} />
+          <div style={{ height: 1, background: 'var(--border-input)', margin: '4px 0' }} />
+          <MenuRow icon={
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+              <path d="M2 4h10M5 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M11 4l-.7 7.5a.5.5 0 0 1-.5.5H4.2a.5.5 0 0 1-.5-.5L3 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          } label="Delete" onClick={() => setOpen(false)} danger />
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── ReportRow (list view) ──────────────────────────────────────────────────────
 
-function ReportRow({ report, index }) {
+function ReportRow({ report, index, isPinned, onTogglePin }) {
   const [hovered, setHovered] = useState(false)
   const cfg = STATUS_CFG[report.status] ?? STATUS_CFG['not-executed']
 
@@ -351,9 +449,12 @@ function ReportRow({ report, index }) {
         paddingLeft: 17,
       }}
     >
-      {/* Row # */}
-      <span style={{ width: 32, flexShrink: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
-        {index + 1}
+      {/* Row # + pin dot */}
+      <span style={{ width: 32, flexShrink: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", display: 'flex', alignItems: 'center', gap: 4 }}>
+        {isPinned
+          ? <span style={{ color: 'var(--c100)', display: 'flex', alignItems: 'center' }}><PinIcon filled /></span>
+          : index + 1
+        }
       </span>
 
       {/* Status */}
@@ -395,23 +496,13 @@ function ReportRow({ report, index }) {
         <SchedulePill label={report.schedule} />
       </div>
 
-      {/* More */}
+      {/* More menu */}
       <div style={{
         width: 40, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         opacity: hovered ? 1 : 0, transition: 'opacity 120ms ease',
       }}>
-        <button
-          onClick={e => e.stopPropagation()}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 26, height: 26, borderRadius: 5,
-            background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
-            cursor: 'pointer', color: 'var(--text-secondary)',
-          }}
-        >
-          <MoreIcon />
-        </button>
+        <RowMenu isPinned={isPinned} onTogglePin={onTogglePin} />
       </div>
     </div>
   )
@@ -636,7 +727,8 @@ function PinnedReportCard({ report }) {
 
 // ── PinnedReportsStrip ────────────────────────────────────────────────────────
 
-function PinnedReportsStrip() {
+function PinnedReportsStrip({ reports }) {
+  if (!reports.length) return null
   return (
     <div style={{
       padding: '14px 20px 14px',
@@ -659,13 +751,13 @@ function PinnedReportsStrip() {
           fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
           fontFamily: "'Byrd', sans-serif",
         }}>
-          {PINNED_REPORTS.length}
+          {reports.length}
         </span>
       </div>
 
       {/* Cards */}
       <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 2 }}>
-        {PINNED_REPORTS.map(r => <PinnedReportCard key={r.id} report={r} />)}
+        {reports.map(r => <PinnedReportCard key={r.id} report={r} />)}
       </div>
     </div>
   )
@@ -691,8 +783,29 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
   const [view, setView]             = useState('list')
   const [statusFilter, setStatus]   = useState('all')
   const [search, setSearch]         = useState('')
+  const [pinnedIds, setPinnedIds]   = useState(new Set(DEFAULT_PINNED))
 
   const left = isMobile ? 0 : sidebarWidth
+
+  function togglePin(id) {
+    setPinnedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  // Build pinned card objects — merge MOCK_REPORTS base data with PREVIEW_DATA
+  const pinnedReports = useMemo(() =>
+    [...pinnedIds]
+      .map(id => {
+        const base    = MOCK_REPORTS.find(r => r.id === id)
+        const preview = PREVIEW_DATA[id]
+        if (!base || !preview) return null
+        return { ...base, ...preview }
+      })
+      .filter(Boolean),
+  [pinnedIds])
 
   const counts = useMemo(() => {
     const c = { all: MOCK_REPORTS.length }
@@ -822,7 +935,7 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
       </div>
 
       {/* ── Pinned previews ─────────────────────────────────────────────── */}
-      <PinnedReportsStrip />
+      <PinnedReportsStrip reports={pinnedReports} />
 
       {/* ── Content ──────────────────────────────────────────────────────── */}
       {view === 'list' ? (
@@ -831,7 +944,7 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
           <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto' }}>
             {filtered.length === 0
               ? <EmptyState />
-              : filtered.map((r, i) => <ReportRow key={r.id} report={r} index={i} />)
+              : filtered.map((r, i) => <ReportRow key={r.id} report={r} index={i} isPinned={pinnedIds.has(r.id)} onTogglePin={() => togglePin(r.id)} />)
             }
           </div>
         </div>
