@@ -62,6 +62,84 @@ function SparkleIcon() {
   )
 }
 
+// ── Sparkline ─────────────────────────────────────────────────────────────────
+
+function Sparkline({ data, color = '#FF7056', height = 56 }) {
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+  const W = 200, H = height, pX = 2, pY = 6
+
+  const pts = data.map((v, i) => [
+    pX + (i / (data.length - 1)) * (W - pX * 2),
+    pY + (H - pY * 2) - ((v - min) / range) * (H - pY * 2),
+  ])
+
+  const line = pts.map(([x, y]) => `${x},${y}`).join(' ')
+  const area = `M${pts[0][0]},${H} ` + pts.map(([x, y]) => `L${x},${y}`).join(' ') + ` L${pts.at(-1)[0]},${H} Z`
+  const [lx, ly] = pts.at(-1)
+  const gid = `sg${color.replace('#', '')}`
+
+  return (
+    <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" fill="none"
+      style={{ display: 'block', overflow: 'visible' }}>
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill={`url(#${gid})`} />
+      <polyline points={line} stroke={color} strokeWidth="1.8" strokeLinecap="round"
+        strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      <circle cx={lx} cy={ly} r="4" fill={color} vectorEffect="non-scaling-stroke" />
+      <circle cx={lx} cy={ly} r="7" fill={color} fillOpacity="0.18" vectorEffect="non-scaling-stroke"
+        style={{ animation: 'spark-pulse 2s ease-in-out infinite', transformOrigin: `${lx}px ${ly}px` }} />
+    </svg>
+  )
+}
+
+// ── Pinned report data ────────────────────────────────────────────────────────
+
+const PINNED_REPORTS = [
+  {
+    id: '694d64ceefa95f9cc2ababdb3',
+    name: 'Daily trends report',
+    status: 'ai-generated',
+    schedule: 'Daily',
+    lastRun: 'Today · 07:09',
+    apiKey: 'hear_sk_••••3f9a',
+    sparkData: [42, 38, 46, 55, 49, 61, 67],
+    sparkColor: '#FF7056',
+    sparkLabel: 'Billing complaints / 7d',
+    sparkDelta: '+12%',
+    sparkUp: true,
+    stats: [
+      { label: 'Calls analyzed', value: '1,247' },
+      { label: 'Avg handle time', value: '4m 36s' },
+      { label: 'CSAT avg', value: '87%' },
+    ],
+  },
+  {
+    id: '6942b63cfd8049b0c779c75b',
+    name: 'Escalation tracking report',
+    status: 'running',
+    schedule: 'Weekly',
+    lastRun: 'Running now',
+    apiKey: 'hear_sk_••••8c2d',
+    sparkData: [5.1, 4.9, 4.7, 4.4, 4.3, 4.4, 4.2],
+    sparkColor: '#1779F7',
+    sparkLabel: 'Escalation rate / 7d',
+    sparkDelta: '−0.9pp',
+    sparkUp: false,
+    stats: [
+      { label: 'Escalation rate', value: '4.2%' },
+      { label: 'Avg wait time', value: '2m 11s' },
+      { label: 'Same-day resolved', value: '91%' },
+    ],
+  },
+]
+
 // ── Status config ──────────────────────────────────────────────────────────────
 
 const STATUS_CFG = {
@@ -421,6 +499,178 @@ function ReportCard({ report }) {
   )
 }
 
+// ── PinnedReportCard ──────────────────────────────────────────────────────────
+
+function PinnedReportCard({ report }) {
+  const [hovered, setHovered] = useState(false)
+  const cfg = STATUS_CFG[report.status] ?? STATUS_CFG['not-executed']
+
+  return (
+    <div
+      data-inspector="PinnedReportCard"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        flex: '1 1 340px',
+        minWidth: 320,
+        maxWidth: 540,
+        background: 'var(--bg-card)',
+        border: `1px solid ${hovered ? cfg.border : 'var(--border-input)'}`,
+        borderLeft: `3px solid ${cfg.border}`,
+        borderRadius: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'border-color 180ms ease, box-shadow 180ms ease',
+        boxShadow: hovered ? '0 6px 24px rgba(0,0,0,0.3)' : '0 1px 6px rgba(0,0,0,0.18)',
+      }}
+    >
+      {/* ─ Header ─ */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 14px 0', flexWrap: 'wrap' }}>
+        <StatusBadge status={report.status} />
+        <SchedulePill label={report.schedule} />
+        <div style={{ flex: 1 }} />
+        <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap' }}>
+          {report.lastRun}
+        </span>
+        <button
+          onClick={e => e.stopPropagation()}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 3,
+            height: 22, padding: '0 8px', borderRadius: 5,
+            background: hovered ? 'var(--bg-active)' : 'transparent',
+            border: '1px solid var(--border-input)',
+            color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 600,
+            fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
+            transition: 'background 150ms ease',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Open ↗
+        </button>
+      </div>
+
+      {/* ─ Title ─ */}
+      <div style={{ padding: '5px 14px 0' }}>
+        <p style={{
+          margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)',
+          fontFamily: "'Byrd', sans-serif",
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {report.name}
+        </p>
+      </div>
+
+      {/* ─ Sparkline zone ─ */}
+      <div style={{ padding: '8px 14px 4px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+          <span style={{
+            fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+            letterSpacing: '0.05em', textTransform: 'uppercase',
+          }}>
+            {report.sparkLabel}
+          </span>
+          <span style={{
+            fontSize: 11, fontWeight: 700,
+            color: report.sparkUp ? '#FF7056' : '#4BA373',
+            fontFamily: "'Byrd', sans-serif",
+          }}>
+            {report.sparkDelta} {report.sparkUp ? '↑' : '↓'}
+          </span>
+        </div>
+        <Sparkline data={report.sparkData} color={report.sparkColor} height={54} />
+      </div>
+
+      {/* ─ Stats row ─ */}
+      <div style={{ display: 'flex', padding: '6px 8px' }}>
+        {report.stats.map((s, i) => (
+          <div key={i} style={{
+            flex: 1, textAlign: 'center', padding: '4px 6px',
+            borderRight: i < report.stats.length - 1 ? '1px solid var(--border-input)' : 'none',
+          }}>
+            <div style={{
+              fontSize: 13, fontWeight: 700, color: 'var(--text-primary)',
+              fontFamily: "'Byrd', sans-serif", lineHeight: 1.2,
+            }}>
+              {s.value}
+            </div>
+            <div style={{
+              fontSize: 9.5, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+              letterSpacing: '0.03em', marginTop: 2, whiteSpace: 'nowrap',
+            }}>
+              {s.label}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ─ Footer ─ */}
+      <div style={{
+        borderTop: '1px solid var(--border-input)',
+        padding: '7px 14px',
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, color: 'var(--text-muted)' }}>
+          <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.2" />
+          <path d="M6 3.5V6l1.5 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
+          {report.schedule}
+        </span>
+        <span style={{ color: 'var(--border-default)', fontSize: 11, lineHeight: 1 }}>·</span>
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, color: 'var(--text-muted)' }}>
+          <rect x="1.5" y="5" width="9" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+          <path d="M4 5V3.5a2 2 0 0 1 4 0V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+        <span style={{
+          fontSize: 10.5, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+          fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em',
+        }}>
+          {report.apiKey}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ── PinnedReportsStrip ────────────────────────────────────────────────────────
+
+function PinnedReportsStrip() {
+  return (
+    <div style={{
+      padding: '14px 20px 14px',
+      borderBottom: '1px solid var(--border-input)',
+      background: 'var(--bg-canvas)',
+      flexShrink: 0,
+    }}>
+      {/* Label */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+        <span style={{
+          fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)',
+          fontFamily: "'Byrd', sans-serif", letterSpacing: '0.07em', textTransform: 'uppercase',
+        }}>
+          Pinned
+        </span>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          width: 16, height: 16, borderRadius: 4,
+          background: 'var(--bg-active)', border: '1px solid var(--border-input)',
+          fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
+          fontFamily: "'Byrd', sans-serif",
+        }}>
+          {PINNED_REPORTS.length}
+        </span>
+      </div>
+
+      {/* Cards */}
+      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 2 }}>
+        {PINNED_REPORTS.map(r => <PinnedReportCard key={r.id} report={r} />)}
+      </div>
+    </div>
+  )
+}
+
 // ── Empty state ────────────────────────────────────────────────────────────────
 
 function EmptyState() {
@@ -570,6 +820,9 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
           )}
         </div>
       </div>
+
+      {/* ── Pinned previews ─────────────────────────────────────────────── */}
+      <PinnedReportsStrip />
 
       {/* ── Content ──────────────────────────────────────────────────────── */}
       {view === 'list' ? (
