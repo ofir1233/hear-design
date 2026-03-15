@@ -3,7 +3,7 @@ import { gsap } from 'gsap'
 import { apiFetch } from '../../lib/api.js'
 
 // ── Screen IDs ────────────────────────────────────────────────────
-const S = { GATE: 'GATE', CHECKING: 'CHECKING', NAME: 'NAME', SELECT: 'SELECT', CREATE: 'CREATE', WAITING: 'WAITING' }
+const S = { GATE: 'GATE', CHECKING: 'CHECKING', NAME: 'NAME', SELECT: 'SELECT', CREATE: 'CREATE', WAITING: 'WAITING', ERROR: 'ERROR' }
 
 // ── Local fallback profile (when backend is unreachable) ───────────
 function makeLocalProfile(url, email) {
@@ -270,6 +270,8 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
   const [profiles, setProfiles] = useState([])
   const [error, setError] = useState('')
   const [firstName, setFirstName] = useState(() => localStorage.getItem('hear-user-name') || '')
+  const [slowLoad, setSlowLoad] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   // Create form
   const [url, setUrl] = useState('')
   const [description, setDescription] = useState('')
@@ -331,43 +333,60 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
       const name = googleUser.given_name || googleUser.name?.split(' ')[0] || ''
       if (name) localStorage.setItem('hear-user-name', name)
     }
-    if (screen === S.GATE || screen === S.CHECKING) {
-      // Show cached profiles instantly if available
-      const cacheKey = `hear-demo-profiles-${googleUser.email}`
-      const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
-      if (cached.length > 0) {
-        setProfiles(cached)
-        goToSelect()
-      } else {
-        setScreen(S.CHECKING)
-      }
+    if (screen !== S.GATE && screen !== S.CHECKING && screen !== S.ERROR) return
 
-      // Refresh from backend in background
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 8000)
-      apiFetch('/api/demo/profiles', {
-        headers: { 'X-User-Email': googleUser.email },
-        signal: controller.signal,
-      })
-        .then(r => r.json())
-        .then(data => {
-          clearTimeout(timeout)
-          const list = filterDeleted(googleUser.email, data.profiles || [])
-          if (list.length > 0) {
-            localStorage.setItem(cacheKey, JSON.stringify(list))
-            setProfiles(list)
-            goToSelect()
-          } else if (cached.length === 0) {
-            setScreen(S.CREATE)
-          }
-        })
-        .then(data => {
-          // After fresh backend list is loaded, attempt to sync any pending local profiles
-          syncPendingProfiles(googleUser.email)
-        })
-        .catch(() => { clearTimeout(timeout); if (cached.length === 0) setScreen(S.CREATE) })
+    // Show cached profiles instantly if available
+    const cacheKey = `hear-demo-profiles-${googleUser.email}`
+    const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
+    if (cached.length > 0) {
+      setProfiles(cached)
+      goToSelect()
+    } else {
+      setScreen(S.CHECKING)
     }
-  }, [googleUser]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Refresh from backend — 40s timeout handles Render cold-starts (~30s wake-up)
+    setSlowLoad(false)
+    const slowTimer = setTimeout(() => setSlowLoad(true), 8000)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 40000)
+    apiFetch('/api/demo/profiles', {
+      headers: { 'X-User-Email': googleUser.email },
+      signal: controller.signal,
+    })
+      .then(r => r.json())
+      .then(data => {
+        clearTimeout(timeout)
+        clearTimeout(slowTimer)
+        setSlowLoad(false)
+        const list = filterDeleted(googleUser.email, data.profiles || [])
+        if (list.length > 0) {
+          localStorage.setItem(cacheKey, JSON.stringify(list))
+          setProfiles(list)
+          goToSelect()
+        } else if (cached.length === 0) {
+          setScreen(S.CREATE)
+        }
+      })
+      .then(() => {
+        // After fresh backend list is loaded, attempt to sync any pending local profiles
+        syncPendingProfiles(googleUser.email)
+      })
+      .catch(() => {
+        clearTimeout(timeout)
+        clearTimeout(slowTimer)
+        setSlowLoad(false)
+        // Never silently drop to CREATE — show an error so the user can retry
+        if (cached.length === 0) setScreen(S.ERROR)
+      })
+
+    return () => { clearTimeout(slowTimer); controller.abort() }
+  }, [googleUser, retryCount]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function handleRetry() {
+    setScreen(S.CHECKING)
+    setRetryCount(c => c + 1)
+  }
 
   // Sync local-fallback profiles that were created while the backend was unreachable
   async function syncPendingProfiles(email) {
@@ -520,7 +539,34 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
       {screen === S.CHECKING && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '22px 0' }}>
           <Spinner size={30} />
-          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>Checking your demo workspace…</span>
+          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', textAlign: 'center' }}>
+            {slowLoad ? 'Server is waking up, hang tight…' : 'Checking your demo workspace…'}
+          </span>
+        </div>
+      )}
+
+      {/* ── ERROR ── */}
+      {screen === S.ERROR && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '22px 0' }}>
+          <span style={{ fontSize: 13, color: 'rgba(255,112,86,0.85)', textAlign: 'center' }}>
+            Couldn't reach the server. Please try again.
+          </span>
+          <button
+            onClick={handleRetry}
+            style={{
+              padding: '10px 24px',
+              background: '#FF7056',
+              border: 'none',
+              borderRadius: 10,
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              fontFamily: "'Byrd', sans-serif",
+              cursor: 'pointer',
+            }}
+          >
+            Try again
+          </button>
         </div>
       )}
 

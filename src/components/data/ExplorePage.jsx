@@ -1030,7 +1030,7 @@ function CustomerSection() {
     color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
     textTransform: 'uppercase', letterSpacing: '0.07em',
     textAlign: 'left', borderBottom: '1px solid var(--border-default)',
-    background: 'var(--bg-canvas)',
+    background: 'var(--bg-card)',
     whiteSpace: 'nowrap',
   }
 
