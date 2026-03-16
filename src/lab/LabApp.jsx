@@ -1,16 +1,23 @@
-import { useState, useRef, useEffect } from 'react'
+/**
+ * LabApp — Design Lab shell.
+ * Isolated from MainApp/Demo. All UI experiments happen here.
+ * To override a component: copy src/components/X.jsx → src/lab/components/X.jsx
+ * and update the import below. Demo is never affected.
+ */
+import { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { gsap } from 'gsap'
-import { apiFetch, apiHeaders } from './lib/api.js'
-import HearLogo from './components/HearLogo.jsx'
-import ChatBubble from './components/ChatBubble.jsx'
-import ChatInput from './components/ChatInput.jsx'
-import Sidebar from './components/Sidebar.jsx'
-import SignIn from './components/SignIn.jsx'
-import DataPage from './components/data/DataPage.jsx'
-import ExplorePage from './components/data/ExplorePage.jsx'
-import ReportsPage from './components/reports/ReportsPage.jsx'
-import AgentEvalPage from './components/agent-eval/AgentEvalPage.jsx'
-import LabApp from './lab/LabApp.jsx'
+import { apiFetch, apiHeaders } from '../lib/api.js'
+import HearLogo    from '../components/HearLogo.jsx'
+import ChatBubble  from '../components/ChatBubble.jsx'
+import ChatInput   from '../components/ChatInput.jsx'
+import Sidebar     from '../components/Sidebar.jsx'
+import DataPage    from '../components/data/DataPage.jsx'
+import ExplorePage from '../components/data/ExplorePage.jsx'
+import ReportsPage from '../components/reports/ReportsPage.jsx'
+import AgentEvalPage from '../components/agent-eval/AgentEvalPage.jsx'
+
+// Inspector lives here — never in Demo
+const InspectorRoot = lazy(() => import('../inspector/index.jsx'))
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -21,16 +28,14 @@ function getGreeting() {
 
 const SIDEBAR_WIDTH = 272
 
-// Build request cards from company config, or fall back to generic ones
 function buildRequestCards(config) {
-  const name = config?.companyName || 'your company'
+  const name   = config?.companyName || 'your company'
   const topics = config?.commonTopics?.length
     ? config.commonTopics
     : ['Trending Topics', 'Agent Performance', 'Customer Sentiment', 'Escalations', 'Call Volume', 'Product Mentions', 'Churn Risk', 'Satisfaction']
 
   if (config?.suggestedPrompts?.length) {
     const prompts = config.suggestedPrompts.slice(0, 10)
-    // Pad to at least 10 using fallback pool if needed
     const fallback = [
       `Show me trending topics from ${name} customer calls this week`,
       `Which agents handled ${name} inquiries best this month?`,
@@ -79,7 +84,6 @@ function ExternalLinkIcon() {
   )
 }
 
-
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
   useEffect(() => {
@@ -90,15 +94,11 @@ function useIsMobile() {
   return isMobile
 }
 
-
-// ── URL-based router helpers ────────────────────────────────────────────────
-
 function parsePath() {
-  // pathname looks like: /dashboard, /data, /data/explore/call-id, /reports, etc.
   const parts = window.location.pathname.replace(/^\//, '').split('/')
-  const page = parts[0] || 'dashboard'
-  const sub  = parts[1] || null   // e.g. 'explore'
-  const id   = parts[2] || null   // e.g. call-id
+  const page  = parts[0] || 'dashboard'
+  const sub   = parts[1] || null
+  const id    = parts[2] || null
   return { page, sub, id }
 }
 
@@ -107,17 +107,16 @@ function navigate(path, state = {}) {
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
 
-function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectChange, userId, profileId }) {
-  const greeting = getGreeting()
-  const userName = localStorage.getItem('hear-user-name') || 'there'
+export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectChange, userId, profileId }) {
+  const greeting     = getGreeting()
+  const userName     = localStorage.getItem('hear-user-name') || 'there'
   const fullGreeting = `${greeting}, ${userName}.`
-  const requests = buildRequestCards(companyConfig)
-  const isMobile = useIsMobile()
+  const requests     = buildRequestCards(companyConfig)
+  const isMobile     = useIsMobile()
 
-  // ── URL-driven page state ────────────────────────────────────────
   const [route, setRoute] = useState(parsePath)
-  const activePage   = route.page
-  const selectedCall = route.sub === 'explore' && route.id
+  const activePage    = route.page
+  const selectedCall  = route.sub === 'explore' && route.id
     ? JSON.parse(sessionStorage.getItem(`hear-call-${route.id}`) || 'null')
     : null
 
@@ -127,51 +126,45 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
-  function setActivePage(page) {
-    navigate(`/${page}`)
-  }
+  function setActivePage(page) { navigate(`/${page}`) }
 
   function openCall(call) {
-    // Persist call data in sessionStorage keyed by id so refresh works
     sessionStorage.setItem(`hear-call-${call.id}`, JSON.stringify(call))
     navigate(`/data/explore/${call.id}`, { call })
   }
 
-  function closeExplore() {
-    navigate('/data')
-  }
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  function closeExplore() { navigate('/data') }
+
+  const [sidebarOpen, setSidebarOpen]         = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [submitted, setSubmitted]     = useState(false)
-  const [settled, setSettled]         = useState(false)
-  const [loading, setLoading]         = useState(false)
-  const [fixedStart, setFixedStart]   = useState(null)
-  const [inputOffset, setInputOffset] = useState(0)
-  const [messages, setMessages]       = useState([])
-  const inputRef = useRef(null)
-  const cardsRef = useRef(null)
-  const messagesEndRef = useRef(null)
-  const [cardsScrolled, setCardsScrolled] = useState(false)
-  const [cardsScrolling, setCardsScrolling] = useState(false)
-  const cardsScrollTimeout = useRef(null)
-  const [mentionActive, setMentionActive] = useState(false)
-  const [uploadActive, setUploadActive]   = useState(false)
-  const [hoveredMsg, setHoveredMsg] = useState(null)
-  const [copiedIndex, setCopiedIndex] = useState(null)
+  const [submitted, setSubmitted]              = useState(false)
+  const [settled, setSettled]                  = useState(false)
+  const [loading, setLoading]                  = useState(false)
+  const [fixedStart, setFixedStart]            = useState(null)
+  const [inputOffset, setInputOffset]          = useState(0)
+  const [messages, setMessages]                = useState([])
+  const inputRef           = useRef(null)
+  const cardsRef           = useRef(null)
+  const messagesEndRef     = useRef(null)
+  const [cardsScrolled, setCardsScrolled]     = useState(false)
+  const [cardsScrolling, setCardsScrolling]   = useState(false)
+  const cardsScrollTimeout                     = useRef(null)
+  const [mentionActive, setMentionActive]     = useState(false)
+  const [uploadActive, setUploadActive]       = useState(false)
+  const [hoveredMsg, setHoveredMsg]           = useState(null)
+  const [copiedIndex, setCopiedIndex]         = useState(null)
   const [chatDefaultText, setChatDefaultText] = useState('')
   const dashTabContentRef = useRef(null)
-  const dashTabReady = useRef(false)
+  const dashTabReady      = useRef(false)
 
-  // ── Session state ───────────────────────────────────────────────
-  const [sessions, setSessions]           = useState([])
-  const [activeSessionId, setActiveSessionId] = useState(null)
-  const [newlyNamedId, setNewlyNamedId]   = useState(null)
-  const activeSessionRef                  = useRef(null)
+  const [sessions, setSessions]                   = useState([])
+  const [activeSessionId, setActiveSessionId]     = useState(null)
+  const [newlyNamedId, setNewlyNamedId]           = useState(null)
+  const activeSessionRef                          = useRef(null)
 
   const logoRef     = useRef(null)
   const subtitleRef = useRef(null)
 
-  // ── Inspector ↔ App page nav bridge ────────────────────────────────────────
   useEffect(() => {
     window.__hearActivePage = activePage
     window.dispatchEvent(new CustomEvent('hear:nav-changed', { detail: activePage }))
@@ -182,7 +175,6 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
     return () => window.removeEventListener('hear:nav', onInspectorNav)
   }, [])
 
-  // ── Dashboard entrance animation ───────────────────────────────────────────
   useEffect(() => {
     if (activePage !== 'dashboard' || submitted) return
     const logo     = logoRef.current
@@ -193,7 +185,6 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
     if (!logo || !subtitle || !input) return
 
     const tl = gsap.timeline({ defaults: { ease: 'expo.out' } })
-
     gsap.set(logo,     { opacity: 0, scale: 0.82 })
     gsap.set(words,    { opacity: 0, y: 22, filter: 'blur(10px)' })
     gsap.set(subtitle, { opacity: 0, y: 14, filter: 'blur(8px)' })
@@ -212,7 +203,6 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  // ── Session helpers — local-first, backend is background sync ───
   const WELCOME_MSG_TEXT = `Welcome to Hear — your AI intelligence layer for customer conversations and operational data.
 
 Here's what I can help you explore:
@@ -231,52 +221,44 @@ Ask me anything about your operations, or explore a topic below to get started.`
   ]
 
   const sessionNs = profileId ? `hear-sessions-${userId}:${profileId}` : `hear-sessions-${userId}`
-  function lsGetSessions()          { try { return JSON.parse(localStorage.getItem(sessionNs) || '[]') } catch { return [] } }
-  function lsSetSessions(s)         { localStorage.setItem(sessionNs, JSON.stringify(s)) }
-  function lsGetMsgs(sid)           { try { return JSON.parse(localStorage.getItem(`hear-msgs-${sid}`) || '[]') } catch { return [] } }
-  function lsSetMsgs(sid, msgs)     { localStorage.setItem(`hear-msgs-${sid}`, JSON.stringify(msgs)) }
-  function lsDelMsgs(sid)           { localStorage.removeItem(`hear-msgs-${sid}`) }
+  function lsGetSessions()      { try { return JSON.parse(localStorage.getItem(sessionNs) || '[]') } catch { return [] } }
+  function lsSetSessions(s)     { localStorage.setItem(sessionNs, JSON.stringify(s)) }
+  function lsGetMsgs(sid)       { try { return JSON.parse(localStorage.getItem(`hear-msgs-${sid}`) || '[]') } catch { return [] } }
+  function lsSetMsgs(sid, msgs) { localStorage.setItem(`hear-msgs-${sid}`, JSON.stringify(msgs)) }
+  function lsDelMsgs(sid)       { localStorage.removeItem(`hear-msgs-${sid}`) }
 
   useEffect(() => {
     if (!userId) return
-    // Load from localStorage immediately — zero latency
     let stored = lsGetSessions()
-    // Seed welcome session if this user has never had one
     if (!stored.find(s => s.is_welcome)) {
-      const welcomeId = `welcome-${userId}${profileId ? `-${profileId}` : ''}`
+      const welcomeId      = `welcome-${userId}${profileId ? `-${profileId}` : ''}`
       const welcomeSession = { id: welcomeId, user_id: userId, title: 'Welcome to Hear', is_welcome: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
-      const welcomeMsgs   = [{ role: 'ai', text: WELCOME_MSG_TEXT, related: WELCOME_RELATED }]
+      const welcomeMsgs    = [{ role: 'ai', text: WELCOME_MSG_TEXT, related: WELCOME_RELATED }]
       stored = [...stored, welcomeSession]
       lsSetSessions(stored)
       lsSetMsgs(welcomeId, welcomeMsgs)
     }
     setSessions(stored)
-    // Background: sync with backend (fire and forget)
     syncWithBackend(stored)
   }, [userId, profileId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function syncWithBackend(localSessions) {
     try {
-      // Ensure welcome exists in DB
       await apiFetch('/api/sessions/ensure-welcome', {
         method: 'POST',
         headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
       }).catch(() => {})
-      // Pull DB sessions and merge (DB is source of truth for IDs)
       const r = await apiFetch('/api/sessions', { headers: apiHeaders({ 'x-user-id': userId }) })
       if (!r.ok) return
-      const data = await r.json()
+      const data       = await r.json()
       const dbSessions = data.sessions || []
       if (dbSessions.length === 0) return
-      // Replace local welcome session with DB welcome session
-      const dbWelcome = dbSessions.find(s => s.is_welcome)
+      const dbWelcome      = dbSessions.find(s => s.is_welcome)
       const localWelcomeId = `welcome-${userId}`
       if (dbWelcome && localSessions.find(s => s.id === localWelcomeId)) {
-        // Migrate messages from local welcome ID to DB welcome ID
         const localMsgs = lsGetMsgs(localWelcomeId)
         if (localMsgs.length) lsSetMsgs(dbWelcome.id, localMsgs)
         lsDelMsgs(localWelcomeId)
-        // Rebuild sessions list replacing local placeholder with real DB sessions
         const merged = [
           ...dbSessions.filter(s => !s.is_welcome),
           ...localSessions.filter(s => !s.is_welcome && !dbSessions.find(d => d.id === s.id)),
@@ -284,18 +266,17 @@ Ask me anything about your operations, or explore a topic below to get started.`
         ].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
         lsSetSessions(merged)
         setSessions(merged)
-        // Remap activeSessionId if pointing at old welcome placeholder
         if (activeSessionRef.current === localWelcomeId) {
           activeSessionRef.current = dbWelcome.id
           setActiveSessionId(dbWelcome.id)
         }
       }
-    } catch { /* silent — backend is optional */ }
+    } catch { /* silent */ }
   }
 
   function createNewSession() {
-    const id    = crypto.randomUUID()
-    const now   = new Date().toISOString()
+    const id      = crypto.randomUUID()
+    const now     = new Date().toISOString()
     const session = { id, user_id: userId, title: '', is_welcome: false, created_at: now, updated_at: now }
     setSessions(prev => {
       const next = [session, ...prev.filter(s => !s.is_welcome), ...prev.filter(s => s.is_welcome)]
@@ -304,14 +285,12 @@ Ask me anything about your operations, or explore a topic below to get started.`
     })
     activeSessionRef.current = id
     setActiveSessionId(id)
-    // Background: persist to DB
     apiFetch('/api/sessions', {
       method: 'POST',
       headers: apiHeaders({ 'x-user-id': userId, 'Content-Type': 'application/json' }),
       body: JSON.stringify({ title: '' }),
     }).then(r => r.ok ? r.json() : null).then(data => {
       if (!data?.session) return
-      // Replace local UUID with real DB ID everywhere
       const dbId = data.session.id
       setSessions(prev => {
         const next = prev.map(s => s.id === id ? { ...data.session } : s)
@@ -330,16 +309,14 @@ Ask me anything about your operations, or explore a topic below to get started.`
 
   function saveMessage(sessionId, role, text, related) {
     if (!sessionId) return
-    const msg = { role, text, related: related || [] }
+    const msg  = { role, text, related: related || [] }
     const msgs = [...lsGetMsgs(sessionId), msg]
     lsSetMsgs(sessionId, msgs)
-    // Update session updated_at in local list
     setSessions(prev => {
       const next = prev.map(s => s.id === sessionId ? { ...s, updated_at: new Date().toISOString() } : s)
       lsSetSessions(next)
       return next
     })
-    // Background: sync to DB (content, not just meta)
     apiFetch(`/api/sessions/${sessionId}/messages`, {
       method: 'POST',
       headers: apiHeaders({ 'Content-Type': 'application/json' }),
@@ -348,11 +325,9 @@ Ask me anything about your operations, or explore a topic below to get started.`
   }
 
   async function autoTitleSession(localId, firstMessage) {
-    // Always have a fallback so the session never stays stuck on "..."
-    const fallbackTitle = firstMessage.trim().replace(/\s+/g, ' ').slice(0, 50) || 'New conversation'
-
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 15000)
+    const fallbackTitle  = firstMessage.trim().replace(/\s+/g, ' ').slice(0, 50) || 'New conversation'
+    const controller     = new AbortController()
+    const timeout        = setTimeout(() => controller.abort(), 15000)
 
     function applyTitle(title) {
       const currentId = activeSessionRef.current || localId
@@ -379,19 +354,14 @@ Ask me anything about your operations, or explore a topic below to get started.`
         signal: controller.signal,
       })
       clearTimeout(timeout)
-
       if (!r.ok) throw new Error('title api failed')
       const data = await r.json()
       if (!data.title) throw new Error('no title in response')
-
-      // Use the current session ID (may have been remapped from local UUID to DB UUID by now)
       const currentId = applyTitle(data.title)
-      // Trigger typewriter only on success
       setNewlyNamedId(currentId)
       setTimeout(() => setNewlyNamedId(null), 8000)
     } catch {
       clearTimeout(timeout)
-      // API failed or timed out — apply fallback so dots never stay stuck
       applyTitle(fallbackTitle)
     }
   }
@@ -404,7 +374,6 @@ Ask me anything about your operations, or explore a topic below to get started.`
     setSubmitted(false)
     setSettled(false)
     setFixedStart(null)
-    // Load from localStorage immediately
     const msgs = lsGetMsgs(sessionId)
     if (msgs.length) {
       setMessages(msgs)
@@ -470,9 +439,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
 
   function handleSubmit(text) {
     setChatDefaultText('')
-    const userMsg = { role: 'user', text }
+    const userMsg        = { role: 'user', text }
     setMessages(prev => [...prev, userMsg])
-
     const isFirstMessage = !activeSessionRef.current
 
     if (!submitted) {
@@ -489,11 +457,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
 
     setLoading(true)
 
-    // Create session on first message (synchronous — no backend needed)
     let sessionId = activeSessionRef.current
-    if (!sessionId) {
-      sessionId = createNewSession()
-    }
+    if (!sessionId) { sessionId = createNewSession() }
     saveMessage(sessionId, 'user', text, null)
 
     const history = [...messages, userMsg].map(m => ({
@@ -509,11 +474,9 @@ Ask me anything about your operations, or explore a topic below to get started.`
       .then(r => r.json())
       .then(data => {
         setLoading(false)
-        const aiText = data.reply || data.error || 'Something went wrong.'
+        const aiText    = data.reply || data.error || 'Something went wrong.'
         const aiRelated = data.related || []
         setMessages(prev => [...prev, { role: 'ai', text: aiText, related: aiRelated }])
-        // Always use the ref — by the time this resolves, the session may have been
-        // remapped from a local UUID to its real DB UUID. The ref is always current.
         const resolvedId = activeSessionRef.current || sessionId
         if (resolvedId) saveMessage(resolvedId, 'ai', aiText, aiRelated)
         if (isFirstMessage && resolvedId) autoTitleSession(resolvedId, text)
@@ -525,8 +488,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
   }
 
   const effectiveSidebarWidth = isMobile ? 0 : (sidebarCollapsed ? 0 : SIDEBAR_WIDTH)
-  const sidebarTransition = 'left 250ms cubic-bezier(0.4,0,0.2,1), padding-left 250ms cubic-bezier(0.4,0,0.2,1), width 250ms cubic-bezier(0.4,0,0.2,1)'
-  const paddingLeft = isMobile ? '1.5rem' : `calc(${effectiveSidebarWidth}px + 1.5rem)`
+  const sidebarTransition     = 'left 250ms cubic-bezier(0.4,0,0.2,1), padding-left 250ms cubic-bezier(0.4,0,0.2,1), width 250ms cubic-bezier(0.4,0,0.2,1)'
+  const paddingLeft           = isMobile ? '1.5rem' : `calc(${effectiveSidebarWidth}px + 1.5rem)`
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-canvas)' }}>
@@ -559,23 +522,18 @@ Ask me anything about your operations, or explore a topic below to get started.`
         onNewChat={handleNewChat}
       />
 
-      {/* Mobile hamburger button */}
       {isMobile && (
         <button
           onClick={() => setSidebarOpen(true)}
           style={{
-            position: 'fixed',
-            top: 16,
-            left: 16,
-            zIndex: 90,
+            position: 'fixed', top: 16, left: 16, zIndex: 90,
             width: 40, height: 40,
             background: 'var(--bg-card)',
             border: '1px solid var(--border-default)',
             borderRadius: 10,
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
-            gap: 5,
-            cursor: 'pointer',
+            gap: 5, cursor: 'pointer',
           }}
           aria-label="Open menu"
         >
@@ -606,7 +564,6 @@ Ask me anything about your operations, or explore a topic below to get started.`
       ) : activePage === 'agent-eval' ? (
         <AgentEvalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage !== 'dashboard' ? (
-        /* Placeholder for unimplemented pages */
         <div style={{
           position: 'fixed', top: 0,
           left: effectiveSidebarWidth,
@@ -621,307 +578,205 @@ Ask me anything about your operations, or explore a topic below to get started.`
           <span style={{ fontSize: 12, color: 'var(--text-muted)', opacity: 0.6 }}>Coming soon</span>
         </div>
       ) : (
-      <div
-        className="min-h-screen flex flex-col items-center justify-center px-6"
-        style={{ paddingLeft, transition: sidebarTransition }}
-      >
-
-      {/* Header */}
-      <div
-        className="flex flex-col items-center w-full max-w-2xl"
-        style={{
-          opacity:       submitted ? 0 : 1,
-          transform:     submitted ? 'translateY(-20px)' : 'translateY(0)',
-          marginBottom:  submitted ? 0 : '1.5rem',
-          pointerEvents: submitted ? 'none' : 'auto',
-          transition: [
-            'opacity 150ms cubic-bezier(0.4, 0, 1, 1)',
-            'transform 150ms cubic-bezier(0.4, 0, 1, 1)',
-            'margin-bottom 150ms cubic-bezier(0.4, 0, 1, 1)',
-          ].join(', '),
-        }}
-      >
-        <div ref={logoRef} style={{ marginBottom: '1.5rem' }}>
-          <HearLogo className="w-20 h-14" />
-        </div>
-        <div className="text-center">
-          <h1
-            className="text-3xl md:text-5xl font-bold tracking-tight"
-            style={{ color: 'var(--text-primary)' }}
+        <div
+          className="min-h-screen flex flex-col items-center justify-center px-6"
+          style={{ paddingLeft, transition: sidebarTransition }}
+        >
+          <div
+            className="flex flex-col items-center w-full max-w-2xl"
+            style={{
+              opacity:       submitted ? 0 : 1,
+              transform:     submitted ? 'translateY(-20px)' : 'translateY(0)',
+              marginBottom:  submitted ? 0 : '1.5rem',
+              pointerEvents: submitted ? 'none' : 'auto',
+              transition: [
+                'opacity 150ms cubic-bezier(0.4, 0, 1, 1)',
+                'transform 150ms cubic-bezier(0.4, 0, 1, 1)',
+                'margin-bottom 150ms cubic-bezier(0.4, 0, 1, 1)',
+              ].join(', '),
+            }}
           >
-            {fullGreeting.split(' ').map((word, i) => (
-              <span
-                key={i}
-                className="dash-word"
-                style={{ display: 'inline-block', marginRight: '0.28em' }}
-              >
-                {word}
-              </span>
-            ))}
-          </h1>
-          <p
-            ref={subtitleRef}
-            className="mt-2 text-lg tracking-wide"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            {companyConfig?.companyName
-            ? `What would you like to explore for ${companyConfig.companyName}?`
-            : 'What would you like to explore today?'
-          }
-          </p>
-        </div>
-      </div>
-
-      {fixedStart && !settled && (
-        <div style={{ width: '100%', maxWidth: '42rem', height: fixedStart.height, flexShrink: 0 }} />
-      )}
-
-      {/* Chat input */}
-      <div
-        ref={inputRef}
-        style={
-          settled
-            ? {
-                position:  'fixed',
-                bottom:    32,
-                left:       isMobile ? '50%' : `calc(50% + ${effectiveSidebarWidth / 2}px)`,
-                transform:  'translateX(-50%)',
-                width:      isMobile ? 'calc(100% - 3rem)' : `calc(100% - ${effectiveSidebarWidth}px - 3rem)`,
-                transition: sidebarTransition,
-                maxWidth:  '42rem',
-                zIndex:    50,
-              }
-            : fixedStart
-            ? {
-                position:   'fixed',
-                top:        fixedStart.top,
-                left:       fixedStart.left,
-                width:      fixedStart.width,
-                willChange: 'transform',
-                transform:  `translateY(${inputOffset}px)`,
-                transition: inputOffset !== 0
-                  ? 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)'
-                  : 'none',
-                zIndex: 50,
-              }
-            : {
-                width:    '100%',
-                maxWidth: '42rem',
-              }
-        }
-        onTransitionEnd={(e) => {
-          if (
-            e.target === inputRef.current &&
-            e.propertyName === 'transform' &&
-            fixedStart &&
-            !settled
-          ) {
-            setSettled(true)
-          }
-        }}
-      >
-        <ChatInput onSubmit={(text) => handleSubmit(text)} onMentionChange={setMentionActive} onUploadChange={setUploadActive} loading={loading} settled={settled} suggestedPrompts={companyConfig?.suggestedPrompts} defaultText={chatDefaultText} />
-      </div>
-
-      {/* Request cards — pre-submit */}
-      {!submitted && (
-        <div style={{
-          width: '100%',
-          maxWidth: '42rem',
-          marginTop: '1.5rem',
-          opacity: (mentionActive || uploadActive) ? 0 : 1,
-          transition: 'opacity 200ms ease',
-          pointerEvents: (mentionActive || uploadActive) ? 'none' : 'auto',
-        }}>
-          {/* ── Tab toggle ── */}
-          <div ref={dashTabContentRef} style={{ position: 'relative' }}>
-            <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0, height: 72,
-              background: 'linear-gradient(to bottom, var(--bg-canvas) 0%, transparent 100%)',
-              pointerEvents: 'none', zIndex: 3,
-              opacity: cardsScrolled ? 1 : 0, transition: 'opacity 350ms ease',
-            }} />
-            <div ref={cardsRef} className="cards-scroll" data-scrolling={cardsScrolling} onScroll={e => {
-              setCardsScrolled(e.currentTarget.scrollTop > 0)
-              setCardsScrolling(true)
-              clearTimeout(cardsScrollTimeout.current)
-              cardsScrollTimeout.current = setTimeout(() => setCardsScrolling(false), 800)
-            }} style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))',
-              gap: 12,
-              maxHeight: 280,
-              overflowY: 'auto',
-              paddingBottom: 40,
-            }}>
-              {requests.map((req, i) => (
-                <div
-                  key={i}
-                  className="request-card"
-                  style={{ borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer' }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span className="card-title" style={{ fontSize: 13, fontWeight: 600 }}>Request {req.id}</span>
-                      <span className="card-tag" style={{ fontSize: 11, borderRadius: 999, border: '1px solid', padding: '2px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '12ch' }}>{req.tag}</span>
-                    </div>
-                    <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}><ExternalLinkIcon /></span>
-                  </div>
-                  <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{req.description}</p>
-                </div>
-              ))}
+            <div ref={logoRef} style={{ marginBottom: '1.5rem' }}>
+              <HearLogo className="w-20 h-14" />
             </div>
-            <div style={{
-              position: 'absolute', bottom: 0, left: 0, right: 0, height: 96,
-              background: 'linear-gradient(to bottom, transparent 0%, var(--bg-canvas) 100%)',
-              pointerEvents: 'none', zIndex: 3,
-            }} />
-          </div>
-        </div>
-      )}
-
-      {/* Chat thread — post-submit */}
-      {submitted && settled && (
-        <div className="smooth-scroll" style={{
-          position: 'fixed',
-          top: 0,
-          left: effectiveSidebarWidth,
-          right: 0,
-          bottom: 80,
-          overflowY: 'auto',
-          transition: sidebarTransition,
-          padding: '40px 24px 160px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 16,
-        }}>
-          <div style={{ width: '100%', maxWidth: '42rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {(() => {
-              const lastAIIndex = messages.reduce((acc, m, i) => m.role === 'ai' ? i : acc, -1)
-              return messages.map((msg, i) => {
-                const isAI = msg.role === 'ai'
-                const showActions = isAI && (i === lastAIIndex || hoveredMsg === i)
-                return (
-                  <ChatBubble
+            <div className="text-center">
+              <h1
+                className="text-3xl md:text-5xl font-bold tracking-tight"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {fullGreeting.split(' ').map((word, i) => (
+                  <span
                     key={i}
-                    role={msg.role}
-                    text={msg.text}
-                    related={i === lastAIIndex ? (msg.related ?? []) : []}
-                    showActions={showActions}
-                    onCopy={() => { navigator.clipboard.writeText(msg.text); setCopiedIndex(i); setTimeout(() => setCopiedIndex(null), 1500) }}
-                    copied={copiedIndex === i}
-                    onRelatedClick={(topic) => setChatDefaultText(topic)}
-                    onMouseEnter={() => isAI && setHoveredMsg(i)}
-                    onMouseLeave={() => isAI && setHoveredMsg(null)}
-                  />
-                )
-              })
-            })()}
-
-            {/* Thinking indicator */}
-            {loading && <ChatBubble role="thinking" />}
-            <div ref={messagesEndRef} />
+                    className="dash-word"
+                    style={{ display: 'inline-block', marginRight: '0.28em' }}
+                  >
+                    {word}
+                  </span>
+                ))}
+              </h1>
+              <p
+                ref={subtitleRef}
+                className="mt-2 text-lg tracking-wide"
+                style={{ color: 'var(--text-muted)' }}
+              >
+                {companyConfig?.companyName
+                  ? `What would you like to explore for ${companyConfig.companyName}?`
+                  : 'What would you like to explore today?'
+                }
+              </p>
+            </div>
           </div>
+
+          {fixedStart && !settled && (
+            <div style={{ width: '100%', maxWidth: '42rem', height: fixedStart.height, flexShrink: 0 }} />
+          )}
+
+          <div
+            ref={inputRef}
+            style={
+              settled
+                ? {
+                    position: 'fixed', bottom: 32,
+                    left:      isMobile ? '50%' : `calc(50% + ${effectiveSidebarWidth / 2}px)`,
+                    transform: 'translateX(-50%)',
+                    width:     isMobile ? 'calc(100% - 3rem)' : `calc(100% - ${effectiveSidebarWidth}px - 3rem)`,
+                    transition: sidebarTransition,
+                    maxWidth: '42rem', zIndex: 50,
+                  }
+                : fixedStart
+                ? {
+                    position: 'fixed',
+                    top:       fixedStart.top,
+                    left:      fixedStart.left,
+                    width:     fixedStart.width,
+                    willChange: 'transform',
+                    transform:  `translateY(${inputOffset}px)`,
+                    transition: inputOffset !== 0
+                      ? 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)'
+                      : 'none',
+                    zIndex: 50,
+                  }
+                : { width: '100%', maxWidth: '42rem' }
+            }
+            onTransitionEnd={(e) => {
+              if (
+                e.target === inputRef.current &&
+                e.propertyName === 'transform' &&
+                fixedStart && !settled
+              ) { setSettled(true) }
+            }}
+          >
+            <ChatInput
+              onSubmit={(text) => handleSubmit(text)}
+              onMentionChange={setMentionActive}
+              onUploadChange={setUploadActive}
+              loading={loading}
+              settled={settled}
+              suggestedPrompts={companyConfig?.suggestedPrompts}
+              defaultText={chatDefaultText}
+            />
+          </div>
+
+          {!submitted && (
+            <div style={{
+              width: '100%', maxWidth: '42rem', marginTop: '1.5rem',
+              opacity: (mentionActive || uploadActive) ? 0 : 1,
+              transition: 'opacity 200ms ease',
+              pointerEvents: (mentionActive || uploadActive) ? 'none' : 'auto',
+            }}>
+              <div ref={dashTabContentRef} style={{ position: 'relative' }}>
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, height: 72,
+                  background: 'linear-gradient(to bottom, var(--bg-canvas) 0%, transparent 100%)',
+                  pointerEvents: 'none', zIndex: 3,
+                  opacity: cardsScrolled ? 1 : 0, transition: 'opacity 350ms ease',
+                }} />
+                <div
+                  ref={cardsRef}
+                  className="cards-scroll"
+                  data-scrolling={cardsScrolling}
+                  onScroll={e => {
+                    setCardsScrolled(e.currentTarget.scrollTop > 0)
+                    setCardsScrolling(true)
+                    clearTimeout(cardsScrollTimeout.current)
+                    cardsScrollTimeout.current = setTimeout(() => setCardsScrolling(false), 800)
+                  }}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))',
+                    gap: 12, maxHeight: 280, overflowY: 'auto', paddingBottom: 40,
+                  }}
+                >
+                  {requests.map((req, i) => (
+                    <div
+                      key={i}
+                      className="request-card"
+                      style={{ borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer' }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span className="card-title" style={{ fontSize: 13, fontWeight: 600 }}>Request {req.id}</span>
+                          <span className="card-tag" style={{ fontSize: 11, borderRadius: 999, border: '1px solid', padding: '2px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '12ch' }}>{req.tag}</span>
+                        </div>
+                        <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}><ExternalLinkIcon /></span>
+                      </div>
+                      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{req.description}</p>
+                    </div>
+                  ))}
+                </div>
+                <div style={{
+                  position: 'absolute', bottom: 0, left: 0, right: 0, height: 96,
+                  background: 'linear-gradient(to bottom, transparent 0%, var(--bg-canvas) 100%)',
+                  pointerEvents: 'none', zIndex: 3,
+                }} />
+              </div>
+            </div>
+          )}
+
+          {submitted && settled && (
+            <div className="smooth-scroll" style={{
+              position: 'fixed', top: 0,
+              left: effectiveSidebarWidth,
+              right: 0, bottom: 80,
+              overflowY: 'auto',
+              transition: sidebarTransition,
+              padding: '40px 24px 160px',
+              display: 'flex', flexDirection: 'column', gap: 16,
+            }}>
+              <div style={{ width: '100%', maxWidth: '42rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {(() => {
+                  const lastAIIndex = messages.reduce((acc, m, i) => m.role === 'ai' ? i : acc, -1)
+                  return messages.map((msg, i) => {
+                    const isAI       = msg.role === 'ai'
+                    const showActions = isAI && (i === lastAIIndex || hoveredMsg === i)
+                    return (
+                      <ChatBubble
+                        key={i}
+                        role={msg.role}
+                        text={msg.text}
+                        related={i === lastAIIndex ? (msg.related ?? []) : []}
+                        showActions={showActions}
+                        onCopy={() => { navigator.clipboard.writeText(msg.text); setCopiedIndex(i); setTimeout(() => setCopiedIndex(null), 1500) }}
+                        copied={copiedIndex === i}
+                        onRelatedClick={(topic) => setChatDefaultText(topic)}
+                        onMouseEnter={() => isAI && setHoveredMsg(i)}
+                        onMouseLeave={() => isAI && setHoveredMsg(null)}
+                      />
+                    )
+                  })
+                })()}
+                {loading && <ChatBubble role="thinking" />}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-    </div>
-      )}
+      {/* Inspector — Design Lab only */}
+      <Suspense fallback={null}>
+        <InspectorRoot />
+      </Suspense>
     </div>
   )
-}
-
-export default function App() {
-  const [signedIn, setSignedIn] = useState(() => sessionStorage.getItem('hear-signed-in') === '1')
-  const [appMode, setAppMode]   = useState(() => sessionStorage.getItem('hear-app-mode') || 'demo')
-  const [companyConfig, setCompanyConfig] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem('hear-session-config') || 'null') } catch { return null }
-  })
-
-  const [profileId, setProfileId] = useState(() => localStorage.getItem('hear-demo-profile-id') || null)
-
-  // Stable user identifier (email for demo users, anon UUID otherwise)
-  const [userId, setUserId] = useState(() => {
-    const stored = sessionStorage.getItem('hear-user-id')
-    if (stored) return stored
-    let anon = localStorage.getItem('hear-anon-id')
-    if (!anon) { anon = crypto.randomUUID(); localStorage.setItem('hear-anon-id', anon) }
-    return anon
-  })
-  const [isDark, setIsDark] = useState(() => {
-    const dark = localStorage.getItem('hear-theme') !== 'light'
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-    return dark
-  })
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
-    localStorage.setItem('hear-theme', isDark ? 'dark' : 'light')
-  }, [isDark])
-
-  const toggleTheme = () => setIsDark(d => !d)
-
-  function handleSignIn(profile = null) {
-    const mode   = profile?.mode ?? 'demo'
-    const config = profile?.config ?? (profile?.companyName ? profile : null)
-    if (config?.companyName) {
-      setCompanyConfig(config)
-      sessionStorage.setItem('hear-session-config', JSON.stringify(config))
-      localStorage.setItem('hear-demo-config', JSON.stringify(config))
-    } else {
-      setCompanyConfig(null)
-      sessionStorage.removeItem('hear-session-config')
-    }
-
-    // Persist user identifier for session binding
-    const email = profile?.user_email ?? profile?.email ?? ''
-    let finalId
-    if (email) {
-      finalId = email
-    } else {
-      let anon = localStorage.getItem('hear-anon-id')
-      if (!anon) { anon = crypto.randomUUID(); localStorage.setItem('hear-anon-id', anon) }
-      finalId = anon
-    }
-    sessionStorage.setItem('hear-user-id', finalId)
-    setUserId(finalId)
-
-    // Scope sessions to the selected profile
-    const pid = profile?.id ? String(profile.id) : null
-    setProfileId(pid)
-
-    sessionStorage.setItem('hear-app-mode', mode)
-    setAppMode(mode)
-    sessionStorage.setItem('hear-signed-in', '1')
-    setSignedIn(true)
-  }
-
-  function handleProjectChange(profile) {
-    const config = profile?.config ?? null
-    if (config?.companyName) {
-      setCompanyConfig(config)
-      sessionStorage.setItem('hear-session-config', JSON.stringify(config))
-      localStorage.setItem('hear-demo-config', JSON.stringify(config))
-    }
-    const pid = profile?.id ? String(profile.id) : null
-    // Keep localStorage in sync so apiHeaders() sends the correct x-demo-profile-id
-    if (pid) localStorage.setItem('hear-demo-profile-id', pid)
-    else localStorage.removeItem('hear-demo-profile-id')
-    setProfileId(pid)
-  }
-
-  function handleSignOut() {
-    sessionStorage.removeItem('hear-signed-in')
-    sessionStorage.removeItem('hear-session-config')
-    sessionStorage.removeItem('hear-app-mode')
-    setCompanyConfig(null)
-    setAppMode('demo')
-    setSignedIn(false)
-  }
-
-  if (!signedIn) return <SignIn onSignIn={handleSignIn} />
-
-  const sharedProps = { isDark, onThemeToggle: toggleTheme, companyConfig, onSignOut: handleSignOut, onProjectChange: handleProjectChange, userId, profileId }
-  if (appMode === 'lab') return <LabApp {...sharedProps} />
-  return <MainApp {...sharedProps} />
 }
