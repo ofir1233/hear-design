@@ -10,7 +10,7 @@ import { apiFetch, apiHeaders } from '../lib/api.js'
 import HearLogo    from '../components/HearLogo.jsx'
 import ChatBubble  from '../components/ChatBubble.jsx'
 import ChatInput   from '../components/ChatInput.jsx'
-import Sidebar     from '../components/Sidebar.jsx'
+import Sidebar     from './components/Sidebar.jsx'
 import DataPage    from '../components/data/DataPage.jsx'
 import ExplorePage from '../components/data/ExplorePage.jsx'
 import ReportsPage from '../components/reports/ReportsPage.jsx'
@@ -26,7 +26,7 @@ function getGreeting() {
   return 'Good evening'
 }
 
-const SIDEBAR_WIDTH = 272
+const SIDEBAR_WIDTH = 296 // 272px panel + 24px left margin
 
 function buildRequestCards(config) {
   const name   = config?.companyName || 'your company'
