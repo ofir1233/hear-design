@@ -579,6 +579,7 @@ const DESIGN_LAB = { id: '__design_lab__', label: 'Design Lab' }
 export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', onProjectChange, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onNewChat }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
   const [historyAnim, setHistoryAnim]   = useState(null) // null | 'in' | 'out'
+  const [allHistoryOpen, setAllHistoryOpen] = useState(false)
   const historyTimerRef = useRef(null)
 
   // ── Draggable nav divider ────────────────────────────────────────────────
@@ -837,7 +838,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* Nav items */}
-          <nav ref={navRef} className="smooth-scroll" style={{ padding: '0 24px', overflowY: 'auto', flexShrink: 0, height: navHeight ?? 'auto' }}>
+          <nav ref={navRef} className="smooth-scroll" style={{ padding: '0 24px', overflowY: 'auto', flex: '1 1 0', minHeight: 80, height: navHeight ?? undefined }}>
             {NAV_ITEMS.map(({ id, label, Icon }) => {
               const active = activeNav === id
               return (
@@ -894,78 +895,87 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
             </div>
           )}
 
-          {/* History section — dashboard only */}
-          {activeNav === 'dashboard' && (
-            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 0 8px' }}>
-              {/* Header row: label + collapse chevron + new-chat button */}
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                <button
-                  onClick={toggleHistory}
-                  style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '6px 12px',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted)',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    letterSpacing: '0.04em',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  History
-                  <ChevronIcon open={historyOpen} />
-                </button>
-                <button
-                  onClick={onNewChat}
-                  title="New chat"
-                  style={{
-                    flexShrink: 0,
-                    width: 28, height: 28,
-                    background: 'transparent',
-                    border: 'none',
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    color: 'var(--text-muted)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'color 150ms ease, background 150ms ease',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
-                >
-                  <PlusIcon />
-                </button>
-              </div>
+          {/* History section — dashboard only, always visible */}
+          {activeNav === 'dashboard' && (() => {
+            const todayStr = new Date().toDateString()
+            const todaySessions  = sessions.filter(s => new Date(s.updated_at).toDateString() === todayStr)
+            const olderSessions  = sessions.filter(s => new Date(s.updated_at).toDateString() !== todayStr)
 
-              {historyOpen && sessions.length === 0 && (
-                <div style={{
-                  padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic',
-                  animation: historyAnim === 'in' ? 'historyItemIn 220ms cubic-bezier(0.22,1,0.36,1) both' : undefined,
-                }}>
-                  No conversations yet
+            return (
+              <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', maxHeight: '45%', overflow: 'hidden' }}>
+                {/* Header row */}
+                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px 0 0', flexShrink: 0 }}>
+                  <span style={{
+                    flex: 1, padding: '6px 12px 6px 24px',
+                    color: 'var(--text-muted)', fontSize: 12, fontWeight: 600,
+                    letterSpacing: '0.04em', textTransform: 'uppercase',
+                  }}>
+                    History
+                  </span>
+                  <button
+                    onClick={onNewChat}
+                    title="New chat"
+                    style={{
+                      flexShrink: 0, width: 28, height: 28,
+                      background: 'transparent', border: 'none', borderRadius: 6,
+                      cursor: 'pointer', color: 'var(--text-muted)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      transition: 'color 150ms ease, background 150ms ease',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <PlusIcon />
+                  </button>
                 </div>
-              )}
 
-              {historyOpen && (
-                <div className="smooth-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 24px' }}>
-                  {sessions.map((session, i) => {
-                    const delay = historyAnim === 'in'
-                      ? `${i * 40}ms`
-                      : historyAnim === 'out'
-                      ? `${(sessions.length - 1 - i) * 35}ms`
-                      : '0ms'
-                    const anim = historyAnim === 'in'
-                      ? `historyItemIn 220ms cubic-bezier(0.22,1,0.36,1) ${delay} both`
-                      : historyAnim === 'out'
-                      ? `historyItemOut 160ms ease ${delay} both`
-                      : undefined
-                    return (
-                      <div key={session.id} style={{ animation: anim }}>
+                {/* Scrollable sessions */}
+                <div className="smooth-scroll" style={{ overflowY: 'auto', padding: '0 24px 8px' }}>
+                  {sessions.length === 0 && (
+                    <div style={{ padding: '4px 12px', fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                      No conversations yet
+                    </div>
+                  )}
+
+                  {/* Today's sessions */}
+                  {todaySessions.map(session => (
+                    <SessionItem
+                      key={session.id}
+                      session={session}
+                      isActive={session.id === activeSessionId}
+                      isNewlyNamed={session.id === newlyNamedId}
+                      onSelect={onSelectSession}
+                      onDelete={onDeleteSession}
+                      onRename={onRenameSession}
+                    />
+                  ))}
+
+                  {/* All history toggle */}
+                  {olderSessions.length > 0 && (
+                    <>
+                      <button
+                        onClick={() => setAllHistoryOpen(o => !o)}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center', gap: 6,
+                          padding: '5px 12px', marginTop: 2,
+                          background: 'transparent', border: 'none', borderRadius: 6,
+                          cursor: 'pointer', color: 'var(--text-muted)', fontSize: 11,
+                          fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
+                          transition: 'color 150ms ease, background 150ms ease',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
+                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                          style={{ transform: allHistoryOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms ease', flexShrink: 0 }}>
+                          <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                        All history
+                        <span style={{ marginLeft: 'auto', fontWeight: 400, opacity: 0.6 }}>{olderSessions.length}</span>
+                      </button>
+                      {allHistoryOpen && olderSessions.map(session => (
                         <SessionItem
+                          key={session.id}
                           session={session}
                           isActive={session.id === activeSessionId}
                           isNewlyNamed={session.id === newlyNamedId}
@@ -973,13 +983,13 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                           onDelete={onDeleteSession}
                           onRename={onRenameSession}
                         />
-                      </div>
-                    )
-                  })}
+                      ))}
+                    </>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )
+          })()}
 
           </div>{/* end scrollable middle */}
 
