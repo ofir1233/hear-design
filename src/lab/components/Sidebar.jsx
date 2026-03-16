@@ -838,7 +838,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* Nav items */}
-          <nav ref={navRef} className="smooth-scroll" style={{ padding: '0 24px', overflowY: 'auto', flex: '1 1 0', minHeight: 80, height: navHeight ?? undefined }}>
+          <nav ref={navRef} className="smooth-scroll" style={{ padding: '0 24px', overflowY: 'auto', flex: '0 1 auto', minHeight: 80, height: navHeight ?? undefined }}>
             {NAV_ITEMS.map(({ id, label, Icon }) => {
               const active = activeNav === id
               return (
@@ -902,7 +902,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
             const olderSessions  = sessions.filter(s => new Date(s.updated_at).toDateString() !== todayStr)
 
             return (
-              <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', maxHeight: '45%', overflow: 'hidden' }}>
+              <div style={{ flex: '0 1 auto', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
                 {/* Header row */}
                 <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px 0 0', flexShrink: 0 }}>
                   <button
