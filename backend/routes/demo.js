@@ -1,0 +1,90 @@
+import { Router } from 'express'
+import multer from 'multer'
+import { getProfilesByEmail, createDemoProfile, deleteDemoProfile, upsertDemoAccessToken, getProfilesByDemoToken } from '../db.js'
+import { extractFromUrl, extractFromFile } from '../services/extract.js'
+import { extractConfig } from '../services/llm.js'
+import { sendDemoReadyEmail } from '../services/email.js'
+
+const router = Router()
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })
+
+// ── GET /api/demo/profiles ────────────────────────────────────────
+router.get('/profiles', async (req, res) => {
+  try {
+    const email = req.headers['x-user-email']
+    if (!email) return res.status(400).json({ error: 'x-user-email header required' })
+
+    const profiles = await getProfilesByEmail(email)
+    res.json({ profiles })
+  } catch (err) {
+    console.error('[demo/profiles]', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── POST /api/demo/generate ───────────────────────────────────────
+router.post('/generate', upload.single('file'), async (req, res) => {
+  try {
+    const { userEmail, url, description } = req.body
+
+    const parts = []
+    if (description?.trim()) parts.push(`User description:\n${description.trim()}`)
+
+    if (url?.trim()) {
+      const scraped = await extractFromUrl(url.trim())
+      if (scraped) parts.push(`Website content:\n${scraped}`)
+    }
+
+    if (req.file) {
+      const fileText = await extractFromFile(req.file.buffer, req.file.mimetype, req.file.originalname)
+      if (fileText) parts.push(`Uploaded file:\n${fileText}`)
+    }
+
+    const rawText = parts.join('\n\n---\n\n')
+    const config  = await extractConfig(rawText, { url: url?.trim(), description: description?.trim() })
+
+    // Save as a demo profile for this user
+    const profile = await createDemoProfile(userEmail, {
+      name:     config.companyName,
+      subtitle: `${config.industry} · Demo`,
+      color:    '#FF7056',
+      config,
+    })
+
+    // Fire-and-forget: send access link email so the user can return without Google auth
+    upsertDemoAccessToken(userEmail)
+      .then(token => sendDemoReadyEmail(userEmail, token, process.env.FRONTEND_URL, config.companyName))
+      .catch(err => console.error('[demo/access-email]', err))
+
+    res.json({ success: true, profile, config })
+  } catch (err) {
+    console.error('[demo/generate]', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── DELETE /api/demo/profiles/:id ────────────────────────────────
+router.delete('/profiles/:id', async (req, res) => {
+  try {
+    await deleteDemoProfile(req.params.id)
+    res.json({ success: true })
+  } catch (err) {
+    console.error('[demo/delete]', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// ── GET /api/demo/token/:token ────────────────────────────────────
+// Called when user clicks the access link email. Returns all profiles for that user.
+router.get('/token/:token', async (req, res) => {
+  try {
+    const profiles = await getProfilesByDemoToken(req.params.token)
+    if (!profiles) return res.status(404).json({ error: 'Token not found' })
+    res.json({ profiles })
+  } catch (err) {
+    console.error('[demo/token]', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+export default router
