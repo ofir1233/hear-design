@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import HearLogo from '../components/HearLogo.jsx'
+import HearLogo from '../../components/HearLogo.jsx'
 import {
   HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon, ComplianceIcon,
   AgentIcon, KnowledgeIcon, AiTaskIcon, CustomersIcon, SettingsIcon,
   BellIcon, ChevronIcon, CollapseArrow, DotsIcon,
   MoonIcon, AccessibilityIcon, LogoutIcon,
-} from '../components/icons'
+} from '../../components/icons'
 
 // Sun icon — shown when dark mode is active (click to return to light)
 function SunIcon() {
