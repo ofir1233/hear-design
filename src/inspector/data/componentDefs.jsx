@@ -15,7 +15,7 @@ import Badge      from '../../components/Badge.jsx'
 import HearLogo   from '../../components/HearLogo.jsx'
 import ChatBubble from '../../components/ChatBubble.jsx'
 import ChatInput  from '../../components/ChatInput.jsx'
-import Sidebar    from '../../components/Sidebar.jsx'
+import Sidebar    from '../../lab/components/Sidebar.jsx'
 import SignIn     from '../../components/SignIn.jsx'
 import SignInHero   from '../../components/sign-in/SignInHero.jsx'
 import GoogleButton from '../../components/sign-in/GoogleButton.jsx'
@@ -38,7 +38,7 @@ import BadgeSrc      from '../../components/Badge.jsx?raw'
 import HearLogoSrc   from '../../components/HearLogo.jsx?raw'
 import ChatBubbleSrc from '../../components/ChatBubble.jsx?raw'
 import ChatInputSrc  from '../../components/ChatInput.jsx?raw'
-import SidebarSrc    from '../../components/Sidebar.jsx?raw'
+import SidebarSrc    from '../../lab/components/Sidebar.jsx?raw'
 import SignInSrc     from '../../components/SignIn.jsx?raw'
 import IconsSrc     from '../../components/icons/index.jsx?raw'
 import SignInHeroSrc    from '../../components/sign-in/SignInHero.jsx?raw'
@@ -431,23 +431,25 @@ export const COMPONENT_DEFS = {
 
   Sidebar: {
     tier: 'Organism',
-    description: '11-item navigation sidebar. Collapsible on desktop, full-screen drawer on mobile.',
+    description: '13-item floating navigation sidebar (Lab). Floats 16px from top/left/bottom with 16px border radius and subtle outline. Draggable divider above History lets you clip nav items. Collapsible on desktop, full-screen drawer on mobile.',
     props: [
       { name: 'isMobile',      type: 'boolean',    default: 'false' },
       { name: 'mobileOpen',    type: 'boolean',    default: 'false' },
       { name: 'onMobileClose', type: '() => void', default: 'undefined' },
+      { name: 'collapsed',     type: 'boolean',    default: 'false' },
     ],
     states: [
-      { label: 'Desktop open',   props: { isMobile: false } },
-      { label: 'Mobile closed',  props: { isMobile: true, mobileOpen: false } },
-      { label: 'Mobile open',    props: { isMobile: true, mobileOpen: true } },
+      { label: 'Desktop open',     props: { isMobile: false, collapsed: false } },
+      { label: 'Desktop collapsed', props: { isMobile: false, collapsed: true } },
+      { label: 'Mobile open',      props: { isMobile: true, mobileOpen: true } },
+      { label: 'Mobile closed',    props: { isMobile: true, mobileOpen: false } },
     ],
     // contain:paint makes position:fixed children relative to this box
     render: (p) => containedPreview(
       <div style={{
         position: 'absolute', top: 0, left: 0,
         transform: 'scale(0.62)', transformOrigin: 'top left',
-        width: 272, height: '100vh',
+        width: 320, height: '100vh',
         pointerEvents: 'none',
       }}>
         <Sidebar {...p} onMobileClose={() => {}} />
@@ -455,33 +457,39 @@ export const COMPONENT_DEFS = {
       172,
     ),
     snippet: () =>
-      `<Sidebar\n  isMobile={isMobile}\n  mobileOpen={sidebarOpen}\n  onMobileClose={() => setSidebarOpen(false)}\n/>`,
+      `<Sidebar\n  isMobile={isMobile}\n  mobileOpen={sidebarOpen}\n  onMobileClose={() => setSidebarOpen(false)}\n  collapsed={sidebarCollapsed}\n  onToggleCollapse={() => setSidebarCollapsed(c => !c)}\n/>`,
     source: SidebarSrc,
     files: [
-      { path: 'src/components/Sidebar.jsx',     src: SidebarSrc },
-      { path: 'src/components/HearLogo.jsx',    src: HearLogoSrc },
-      { path: 'src/components/icons/index.jsx', src: IconsSrc },
+      { path: 'src/lab/components/Sidebar.jsx',  src: SidebarSrc },
+      { path: 'src/components/HearLogo.jsx',     src: HearLogoSrc },
+      { path: 'src/components/icons/index.jsx',  src: IconsSrc },
     ],
     npm: [],
     breakdown: {
       icons: [
-        'HomeIcon', 'DataIcon', 'ReportsIcon', 'SignalsIcon', 'AlertsIcon',
-        'ComplianceIcon', 'AgentIcon', 'KnowledgeIcon', 'AiTaskIcon',
-        'CustomersIcon', 'SettingsIcon', 'BellIcon', 'ChevronIcon',
-        'CollapseArrow', 'DotsIcon', 'MoonIcon', 'AccessibilityIcon', 'LogoutIcon',
+        'HomeIcon (Chat)', 'DataIcon', 'ReportsIcon', 'SignalsIcon', 'AlertsIcon',
+        'AgentIcon', 'KnowledgeIcon', 'MagicApiIcon (inline)', 'AiTaskIcon',
+        'CustomersIcon', 'ActionsIcon (inline)', 'MarketplaceIcon (inline)',
+        'SettingsIcon', 'BellIcon', 'ChevronIcon', 'CollapseArrow',
+        'DotsIcon', 'MoonIcon', 'AccessibilityIcon', 'LogoutIcon',
       ],
       colors: [
-        { name: '--bg-sidebar',    hex: '#F5F5F3' },
-        { name: '--bg-active',     hex: '#E8E8E6' },
-        { name: '--text-primary',  hex: '#181818' },
-        { name: '--text-secondary',hex: '#606060' },
-        { name: '--border-default',hex: '#E5E7EB' },
-        { name: '--color-brand',   hex: '#FF7056' },
+        { name: '--bg-sidebar',      hex: '#F5F5F3' },
+        { name: '--bg-active',       hex: '#E8E8E6' },
+        { name: '--text-primary',    hex: '#181818' },
+        { name: '--text-secondary',  hex: '#606060' },
+        { name: '--border-default',  hex: '#E5E7EB' },
+        { name: '--sidebar-outline', hex: 'rgba(0,0,0,0.08)' },
+        { name: '--color-brand',     hex: '#FF7056' },
       ],
       subComponents: ['HearLogo'],
       notes: [
-        'FLAG (Drift): renders own nav <button> markup — does NOT import Atoms/NavItem',
-        'Uses 11 nav items + conversation history list + user profile strip',
+        'LAB VERSION — lives in src/lab/components/Sidebar.jsx',
+        'Floating: position fixed top:16 left:16 height:calc(100vh-32px)',
+        'Panel: borderRadius:16 + boxShadow outline via --sidebar-outline token',
+        'Nav: Chat, Data, Reports, Signals, Alerts, Agent Evaluation, Knowledge, Magic API, AI Tasks, Customers, Actions, Marketplace, Settings',
+        'Draggable divider above History: drag up/down to clip visible nav items',
+        'MagicApiIcon / ActionsIcon / MarketplaceIcon defined inline (not in icons/index.jsx)',
         'Collapse width: 272px → 0px (transition 250ms ease)',
         'z-index: 100 (panel) / 200 (project dropdown)',
       ],

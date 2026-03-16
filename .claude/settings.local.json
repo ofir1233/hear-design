@@ -1,7 +1,35 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(sudo chown:*)",
+      "Bash(unzip:*)",
+      "Bash(start:*)",
+      "Bash(vercel:*)",
+      "Bash(npm run:*)",
+      "Bash(npx vercel:*)",
+      "Bash(ffmpeg:*)",
+      "Bash(curl:*)",
+      "Bash(npx storybook@8:*)",
+      "Bash(npx storybook@latest:*)",
+      "Bash(npx storybook:*)",
+      "Bash(node:*)",
+      "Bash(python3:*)",
+      "Bash(taskkill:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo:*)",
+      "Bash(netstat -ano)",
+      "Bash(xargs -I{} taskkill //PID {} //F)",
+      "Bash(ls:*)",
+      "Bash(xargs -I{} taskkill /PID {} /F)",
+      "Bash(cmd:*)",
+      "Bash(powershell:*)",
+      "Bash(npx vite:*)",
+      "Bash(sed:*)",
+      "Bash(git:*)",
+      "Bash(ls C:/Users/ofirn/Desktop/hear-design/src/components/reports/ 2>/dev/null && head -60 C:/Users/ofirn/Desktop/hear-design/src/components/reports/*.jsx 2>/dev/null | head -80)",
+      "Bash(echo \"\" >> C:/Users/ofirn/Desktop/hear-design/src/index.css && echo \"/* Date input — native calendar icon matches theme */\" >> C:/Users/ofirn/Desktop/hear-design/src/index.css && echo \"input[type=\\\\\"date\\\\\"] { color-scheme: light; }\" >> C:/Users/ofirn/Desktop/hear-design/src/index.css && echo \"[data-theme=\\\\\"dark\\\\\"] input[type=\\\\\"date\\\\\"] { color-scheme: dark; }\" >> C:/Users/ofirn/Desktop/hear-design/src/index.css)",
+      "Bash(grep -n \"display: 'flex', flexDirection: 'column', gap: 18\" C:/Users/ofirn/Desktop/hear-design/src/components/agent-eval/AgentEvalPage.jsx)"
     ]
   }
 }
