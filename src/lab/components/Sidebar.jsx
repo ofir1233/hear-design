@@ -4,6 +4,7 @@ import HearLogo from '../../components/HearLogo.jsx'
 import {
   HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon,
   AgentIcon, KnowledgeIcon, AiTaskIcon, CustomersIcon, SettingsIcon,
+  MagicApiIcon, ActionsIcon, MarketplaceIcon,
   BellIcon, ChevronIcon, CollapseArrow, DotsIcon,
   MoonIcon, AccessibilityIcon, LogoutIcon,
 } from '../../components/icons'
@@ -556,39 +557,6 @@ function StorybookDisabledButton() {
   )
 }
 
-// ── Lab-only icons ────────────────────────────────────────────────────────────
-
-function MagicApiIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      {/* 4-pointed star */}
-      <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
-      {/* Small sparkle crosses */}
-      <path d="M20 3v4"/>
-      <path d="M22 5h-4"/>
-      <path d="M4 17v4"/>
-      <path d="M2 19h4"/>
-    </svg>
-  )
-}
-
-function ActionsIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-    </svg>
-  )
-}
-
-function MarketplaceIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-      <line x1="3" y1="6" x2="21" y2="6"/>
-      <path d="M16 10a4 4 0 0 1-8 0"/>
-    </svg>
-  )
-}
 
 const NAV_ITEMS = [
   { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon        },
@@ -713,7 +681,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           boxShadow: '0 0 0 1px var(--sidebar-outline)',
         }}
       >
-        <div className="smooth-scroll" style={{ position: 'relative', width: 272, display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', borderRadius: 24 }}>
+        <div style={{ position: 'relative', width: 272, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', borderRadius: 16 }}>
 
           {/* Mobile close button */}
           {isMobile && (
@@ -863,10 +831,13 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
             </div>
           </div>
 
-          <div style={{ height: 1, background: 'var(--border-input)', margin: '0 24px 8px' }} />
+          <div style={{ height: 1, background: 'var(--border-input)', margin: '0 24px 8px', flexShrink: 0 }} />
+
+          {/* ── Scrollable middle: nav + history ───────────────────────────── */}
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
           {/* Nav items */}
-          <nav ref={navRef} style={{ padding: '0 24px', overflow: 'hidden', height: navHeight ?? 'auto' }}>
+          <nav ref={navRef} className="smooth-scroll" style={{ padding: '0 24px', overflowY: 'auto', flexShrink: 0, height: navHeight ?? 'auto' }}>
             {NAV_ITEMS.map(({ id, label, Icon }) => {
               const active = activeNav === id
               return (
@@ -925,7 +896,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
 
           {/* History section — dashboard only */}
           {activeNav === 'dashboard' && (
-            <div style={{ padding: '0 24px 8px' }}>
+            <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '0 0 8px' }}>
               {/* Header row: label + collapse chevron + new-chat button */}
               <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
                 <button
@@ -979,35 +950,38 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                 </div>
               )}
 
-              {historyOpen && sessions.map((session, i) => {
-                const delay = historyAnim === 'in'
-                  ? `${i * 40}ms`
-                  : historyAnim === 'out'
-                  ? `${(sessions.length - 1 - i) * 35}ms`
-                  : '0ms'
-                const anim = historyAnim === 'in'
-                  ? `historyItemIn 220ms cubic-bezier(0.22,1,0.36,1) ${delay} both`
-                  : historyAnim === 'out'
-                  ? `historyItemOut 160ms ease ${delay} both`
-                  : undefined
-                return (
-                  <div key={session.id} style={{ animation: anim }}>
-                    <SessionItem
-                      session={session}
-                      isActive={session.id === activeSessionId}
-                      isNewlyNamed={session.id === newlyNamedId}
-                      onSelect={onSelectSession}
-                      onDelete={onDeleteSession}
-                      onRename={onRenameSession}
-                    />
-                  </div>
-                )
-              })}
+              {historyOpen && (
+                <div className="smooth-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 24px' }}>
+                  {sessions.map((session, i) => {
+                    const delay = historyAnim === 'in'
+                      ? `${i * 40}ms`
+                      : historyAnim === 'out'
+                      ? `${(sessions.length - 1 - i) * 35}ms`
+                      : '0ms'
+                    const anim = historyAnim === 'in'
+                      ? `historyItemIn 220ms cubic-bezier(0.22,1,0.36,1) ${delay} both`
+                      : historyAnim === 'out'
+                      ? `historyItemOut 160ms ease ${delay} both`
+                      : undefined
+                    return (
+                      <div key={session.id} style={{ animation: anim }}>
+                        <SessionItem
+                          session={session}
+                          isActive={session.id === activeSessionId}
+                          isNewlyNamed={session.id === newlyNamedId}
+                          onSelect={onSelectSession}
+                          onDelete={onDeleteSession}
+                          onRename={onRenameSession}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Spacer */}
-          <div style={{ flex: 1 }} />
+          </div>{/* end scrollable middle */}
 
           {/* Footer */}
           <div style={{ padding: '12px 24px 20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
