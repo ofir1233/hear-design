@@ -905,13 +905,22 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', maxHeight: '45%', overflow: 'hidden' }}>
                 {/* Header row */}
                 <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px 0 0', flexShrink: 0 }}>
-                  <span style={{
-                    flex: 1, padding: '6px 12px 6px 24px',
-                    color: 'var(--text-muted)', fontSize: 12, fontWeight: 600,
-                    letterSpacing: '0.04em', textTransform: 'uppercase',
-                  }}>
+                  <button
+                    onClick={toggleHistory}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', gap: 5,
+                      padding: '6px 12px 6px 24px',
+                      background: 'transparent', border: 'none', cursor: 'pointer',
+                      color: 'var(--text-muted)', fontSize: 12, fontWeight: 600,
+                      letterSpacing: '0.04em', textTransform: 'uppercase', textAlign: 'left',
+                    }}
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                      style={{ transform: historyOpen ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 200ms ease', flexShrink: 0 }}>
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
                     History
-                  </span>
+                  </button>
                   <button
                     onClick={onNewChat}
                     title="New chat"
@@ -930,7 +939,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                 </div>
 
                 {/* Scrollable sessions */}
-                <div className="smooth-scroll" style={{ overflowY: 'auto', padding: '0 24px 8px' }}>
+                {historyOpen && <div className="smooth-scroll" style={{ overflowY: 'auto', padding: '0 24px 8px' }}>
                   {sessions.length === 0 && (
                     <div style={{ padding: '4px 12px', fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
                       No conversations yet
@@ -986,7 +995,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                       ))}
                     </>
                   )}
-                </div>
+                </div>}
               </div>
             )
           })()}
