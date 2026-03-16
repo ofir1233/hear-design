@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import HearLogo from '../../components/HearLogo.jsx'
 import {
-  HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon, ComplianceIcon,
+  HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon,
   AgentIcon, KnowledgeIcon, AiTaskIcon, CustomersIcon, SettingsIcon,
   BellIcon, ChevronIcon, CollapseArrow, DotsIcon,
   MoonIcon, AccessibilityIcon, LogoutIcon,
@@ -556,18 +556,28 @@ function StorybookDisabledButton() {
   )
 }
 
+function CircleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="8" cy="8" r="6.25" stroke="currentColor" strokeWidth="1.5"/>
+    </svg>
+  )
+}
+
 const NAV_ITEMS = [
-  { id: 'dashboard',   label: 'Dashboard',        Icon: HomeIcon       },
-  { id: 'data',        label: 'Data',              Icon: DataIcon       },
-  { id: 'reports',     label: 'Reports',           Icon: ReportsIcon    },
-  { id: 'signals',     label: 'Signals',           Icon: SignalsIcon    },
-  { id: 'alerts',      label: 'Alerts',            Icon: AlertsIcon     },
-  { id: 'compliance',  label: 'Compliance',        Icon: ComplianceIcon },
-  { id: 'agent-eval',  label: 'Agent evaluation',  Icon: AgentIcon      },
-  { id: 'knowledge',   label: 'Knowledge',         Icon: KnowledgeIcon  },
-  { id: 'ai-task',     label: 'Ai task',           Icon: AiTaskIcon     },
-  { id: 'customers',   label: 'Customers',         Icon: CustomersIcon  },
-  { id: 'settings',    label: 'Settings',          Icon: SettingsIcon   },
+  { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon       },
+  { id: 'data',        label: 'Data',             Icon: DataIcon       },
+  { id: 'reports',     label: 'Reports',          Icon: ReportsIcon    },
+  { id: 'signals',     label: 'Signals',          Icon: SignalsIcon    },
+  { id: 'alerts',      label: 'Alerts',           Icon: AlertsIcon     },
+  { id: 'agent-eval',  label: 'Agent Evaluation', Icon: AgentIcon      },
+  { id: 'knowledge',   label: 'Knowledge',        Icon: KnowledgeIcon  },
+  { id: 'magic-api',   label: 'Magic API',        Icon: CircleIcon     },
+  { id: 'ai-task',     label: 'AI Tasks',         Icon: AiTaskIcon     },
+  { id: 'customers',   label: 'Customers',        Icon: CustomersIcon  },
+  { id: 'actions',     label: 'Actions',          Icon: CircleIcon     },
+  { id: 'marketplace', label: 'Marketplace',      Icon: CircleIcon     },
+  { id: 'settings',    label: 'Settings',         Icon: SettingsIcon   },
 ]
 
 const DESIGN_LAB = { id: '__design_lab__', label: 'Design Lab' }
@@ -576,6 +586,30 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
   const [historyOpen, setHistoryOpen]   = useState(true)
   const [historyAnim, setHistoryAnim]   = useState(null) // null | 'in' | 'out'
   const historyTimerRef = useRef(null)
+
+  // ── Draggable nav divider ────────────────────────────────────────────────
+  const [navHeight, setNavHeight]   = useState(null) // null = show all
+  const navRef                      = useRef(null)
+  const dragState                   = useRef(null) // { startY, startH }
+
+  function onDividerMouseDown(e) {
+    e.preventDefault()
+    const currentH = navRef.current?.offsetHeight ?? 400
+    dragState.current = { startY: e.clientY, startH: currentH }
+
+    function onMove(ev) {
+      const delta = ev.clientY - dragState.current.startY
+      const next  = Math.max(36, dragState.current.startH + delta) // min 1 row
+      setNavHeight(next)
+    }
+    function onUp() {
+      dragState.current = null
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
   const [projectOpen, setProjectOpen]   = useState(false)
   const [projectOpenKey, setProjectOpenKey] = useState(0)
   const projectRef = useRef(null)
@@ -806,7 +840,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           <div style={{ height: 1, background: 'var(--border-input)', margin: '0 24px 8px' }} />
 
           {/* Nav items */}
-          <nav style={{ padding: '0 24px' }}>
+          <nav ref={navRef} style={{ padding: '0 24px', overflow: 'hidden', height: navHeight ?? 'auto' }}>
             {NAV_ITEMS.map(({ id, label, Icon }) => {
               const active = activeNav === id
               return (
@@ -846,7 +880,22 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           </div>
           {/* ── end Storybook Dev Link ─────────────────────────────────────────── */}
 
-          {activeNav === 'dashboard' && <div style={{ height: 1, background: 'var(--border-input)', margin: '8px 24px' }} />}
+          {activeNav === 'dashboard' && (
+            <div
+              onMouseDown={onDividerMouseDown}
+              style={{
+                margin: '8px 16px',
+                height: 9,
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'ns-resize',
+                flexShrink: 0,
+                userSelect: 'none',
+              }}
+            >
+              <div style={{ width: '100%', height: 1, background: 'var(--border-input)' }} />
+            </div>
+          )}
 
           {/* History section — dashboard only */}
           {activeNav === 'dashboard' && (
