@@ -205,6 +205,7 @@
 
   --border-default: #E5E7EB;
   --border-input:   #D2D2D0;
+  --sidebar-outline: rgba(0, 0, 0, 0.08);
 
   --color-brand:       var(--c100);
   --color-interactive: var(--b100);
@@ -283,6 +284,7 @@
 
   --border-default: #333333;
   --border-input:   #3C3C3C;
+  --sidebar-outline: rgba(255, 255, 255, 0.08);
 
   --color-brand:       var(--c100);
   --color-interactive: var(--b80);

@@ -33,7 +33,7 @@ export default function SignIn({ onSignIn }) {
           setLoading(false)
           return
         }
-        onSignIn()
+        onSignIn({ mode: 'lab' })
       } catch {
         setGoogleError('Sign-in failed. Please try again.')
         setLoading(false)
@@ -141,7 +141,7 @@ export default function SignIn({ onSignIn }) {
                   <DemoFlow
                     googleUser={demoUser}
                     onGoogleLogin={() => demoGoogleLogin()}
-                    onComplete={(profile) => onSignIn(profile)}
+                    onComplete={(profile) => onSignIn({ ...profile, mode: 'demo' })}
                   />
                   {demoAuthError && (
                     <p style={{ fontSize: 12, color: '#FF6B6B', textAlign: 'center', margin: 0 }}>{demoAuthError}</p>

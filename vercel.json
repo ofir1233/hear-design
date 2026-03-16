@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build && storybook build --output-dir dist/storybook",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/((?!storybook).*)", "destination": "/index.html" }

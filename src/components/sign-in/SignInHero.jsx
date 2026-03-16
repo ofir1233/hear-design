@@ -6,7 +6,7 @@ const TABS = ['Design Lab', 'Demo']
 
 const TITLES = {
   'Design Lab': ['The AI for', 'enterprise', 'intelligence'],
-  'Demo':       ['See Hear in', 'your Ofir'],
+  'Demo':       ['See Hear in', 'your world'],
 }
 
 // ── Sliding pill toggle ────────────────────────────────────────────
