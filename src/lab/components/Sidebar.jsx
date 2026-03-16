@@ -556,28 +556,55 @@ function StorybookDisabledButton() {
   )
 }
 
-function CircleIcon() {
+// ── Lab-only icons ────────────────────────────────────────────────────────────
+
+function MagicApiIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="8" cy="8" r="6.25" stroke="currentColor" strokeWidth="1.5"/>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      {/* Wand shaft */}
+      <line x1="5" y1="19" x2="16" y2="8"/>
+      <path d="M3 21l2-2"/>
+      {/* Wand tip bracket — API */}
+      <path d="M15 5l4 4"/>
+      {/* Sparkle cross at top-right */}
+      <line x1="19" y1="2" x2="19" y2="5"/>
+      <line x1="17.5" y1="3.5" x2="20.5" y2="3.5"/>
+    </svg>
+  )
+}
+
+function ActionsIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+  )
+}
+
+function MarketplaceIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+      <line x1="3" y1="6" x2="21" y2="6"/>
+      <path d="M16 10a4 4 0 0 1-8 0"/>
     </svg>
   )
 }
 
 const NAV_ITEMS = [
-  { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon       },
-  { id: 'data',        label: 'Data',             Icon: DataIcon       },
-  { id: 'reports',     label: 'Reports',          Icon: ReportsIcon    },
-  { id: 'signals',     label: 'Signals',          Icon: SignalsIcon    },
-  { id: 'alerts',      label: 'Alerts',           Icon: AlertsIcon     },
-  { id: 'agent-eval',  label: 'Agent Evaluation', Icon: AgentIcon      },
-  { id: 'knowledge',   label: 'Knowledge',        Icon: KnowledgeIcon  },
-  { id: 'magic-api',   label: 'Magic API',        Icon: CircleIcon     },
-  { id: 'ai-task',     label: 'AI Tasks',         Icon: AiTaskIcon     },
-  { id: 'customers',   label: 'Customers',        Icon: CustomersIcon  },
-  { id: 'actions',     label: 'Actions',          Icon: CircleIcon     },
-  { id: 'marketplace', label: 'Marketplace',      Icon: CircleIcon     },
-  { id: 'settings',    label: 'Settings',         Icon: SettingsIcon   },
+  { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon        },
+  { id: 'data',        label: 'Data',             Icon: DataIcon        },
+  { id: 'reports',     label: 'Reports',          Icon: ReportsIcon     },
+  { id: 'signals',     label: 'Signals',          Icon: SignalsIcon     },
+  { id: 'alerts',      label: 'Alerts',           Icon: AlertsIcon      },
+  { id: 'agent-eval',  label: 'Agent Evaluation', Icon: AgentIcon       },
+  { id: 'knowledge',   label: 'Knowledge',        Icon: KnowledgeIcon   },
+  { id: 'magic-api',   label: 'Magic API',        Icon: MagicApiIcon    },
+  { id: 'ai-task',     label: 'AI Tasks',         Icon: AiTaskIcon      },
+  { id: 'customers',   label: 'Customers',        Icon: CustomersIcon   },
+  { id: 'actions',     label: 'Actions',          Icon: ActionsIcon     },
+  { id: 'marketplace', label: 'Marketplace',      Icon: MarketplaceIcon },
+  { id: 'settings',    label: 'Settings',         Icon: SettingsIcon    },
 ]
 
 const DESIGN_LAB = { id: '__design_lab__', label: 'Design Lab' }
