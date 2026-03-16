@@ -561,14 +561,13 @@ function StorybookDisabledButton() {
 function MagicApiIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      {/* Wand shaft */}
-      <line x1="5" y1="19" x2="16" y2="8"/>
-      <path d="M3 21l2-2"/>
-      {/* Wand tip bracket — API */}
-      <path d="M15 5l4 4"/>
-      {/* Sparkle cross at top-right */}
-      <line x1="19" y1="2" x2="19" y2="5"/>
-      <line x1="17.5" y1="3.5" x2="20.5" y2="3.5"/>
+      {/* 4-pointed star */}
+      <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+      {/* Small sparkle crosses */}
+      <path d="M20 3v4"/>
+      <path d="M22 5h-4"/>
+      <path d="M4 17v4"/>
+      <path d="M2 19h4"/>
     </svg>
   )
 }
