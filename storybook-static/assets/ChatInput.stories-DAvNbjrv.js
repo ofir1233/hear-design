@@ -1,0 +1,87 @@
+import{r as o,j as e}from"./iframe-BXICU-hg.js";import{i as Y,l as L,E as G,N as J,k as Z}from"./index-Bk43pguZ.js";import"./preload-helper-D1UD9lgW.js";const ee=[{id:1,name:"Ai assistant",handle:"Tommy@"},{id:2,name:"Another something makes seance",handle:"Whatever@"},{id:3,name:"Something makes seance",handle:"Whatever@"}];function te(){const d=["0ms","120ms","240ms","80ms","200ms"];return e.jsx("div",{style:{display:"flex",alignItems:"center",gap:2,height:14},children:d.map((m,n)=>e.jsx("span",{style:{display:"inline-block",width:2,height:2,borderRadius:1,background:"#FF7056",animation:"wave-bar 900ms ease-in-out infinite",animationDelay:m}},n))})}function se(){const d={display:"inline-block",width:3.5,height:3.5,borderRadius:"50%",background:"white",animation:"dot-bounce 1.1s ease-in-out infinite"};return e.jsxs("div",{style:{display:"flex",alignItems:"center",gap:3,marginTop:2},children:[e.jsx("span",{style:{...d,animationDelay:"0ms"}}),e.jsx("span",{style:{...d,animationDelay:"160ms"}}),e.jsx("span",{style:{...d,animationDelay:"320ms"}})]})}function ne(d,m){const i=d.slice(0,m).match(/@(\w*)$/);return i?{query:i[1],start:i.index}:null}function V({onSubmit:d,onMentionChange:m,loading:n=!1,settled:i=!1,defaultText:_="",initialUploadOpen:X=!1,initialMentionQuery:$=null}){const[a,N]=o.useState(_),[M,R]=o.useState(!1),[l,p]=o.useState($),[D,K]=o.useState(0),[U,I]=o.useState(0),[O,f]=o.useState(X),[C,E]=o.useState(!1),A=o.useRef(null),W=o.useRef(null);function P(){if(C){W.current?.stop();return}const t=window.SpeechRecognition||window.webkitSpeechRecognition;if(!t)return;const s=new t;s.continuous=!1,s.interimResults=!0,s.lang="en-US",s.onresult=r=>{const u=Array.from(r.results).map(h=>h[0].transcript).join("");N(u)},s.onend=()=>E(!1),s.onerror=r=>{E(!1),r.error==="not-allowed"&&alert("Microphone access was blocked. Please allow microphone permission for this site in your browser settings.")},W.current=s,s.start(),E(!0)}o.useEffect(()=>{m?.(l!==null)},[l]),o.useEffect(()=>{const t=A.current;t&&(t.style.height="auto",t.style.height=`${t.scrollHeight}px`)},[a]);const c=l===null?[]:ee.filter(t=>l===""?!0:t.name.toLowerCase().startsWith(l.toLowerCase()));o.useEffect(()=>{I(0)},[l]);function H(t){const s=t.target.value,r=t.target.selectionStart;N(s);const u=ne(s,r);u?(p(u.query),K(u.start),f(!1)):p(null)}function Q(t){const s=a.slice(0,D),r=a.slice(D+1+(l?.length??0)),u=s+"@"+t.handle+" "+r;N(u),p(null),setTimeout(()=>{const h=A.current;if(!h)return;h.focus();const z=(s+"@"+t.handle+" ").length;h.setSelectionRange(z,z)},0)}function B(t){if(l!==null&&c.length>0){if(t.key==="ArrowDown"){t.preventDefault(),I(s=>(s+1)%c.length);return}if(t.key==="ArrowUp"){t.preventDefault(),I(s=>(s-1+c.length)%c.length);return}if(t.key==="Enter"){t.preventDefault(),Q(c[U]);return}if(t.key==="Escape"){t.preventDefault(),p(null);return}}if(O&&t.key==="Escape"){t.preventDefault(),f(!1);return}t.key==="Enter"&&!t.shiftKey&&l===null&&(t.preventDefault(),q())}function q(){if(!a.trim()||n)return;const t=a.trim();N(""),p(null),f(!1),d?.(t)}const F=l!==null&&c.length>0;return e.jsxs("div",{"data-inspector":"ChatInput",className:"relative w-full max-w-2xl mx-auto",children:[e.jsx("div",{className:"absolute -top-3 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 border-fuchsia-500",style:{zIndex:10}}),e.jsx("div",{className:"border overflow-hidden",style:{background:"var(--bg-card)",borderColor:M?"var(--border-default)":"var(--bg-active)",boxShadow:"0 2px 8px 0 rgba(0,0,0,0.06)",transition:"border-color 200ms ease, border-radius 200ms ease",borderRadius:F||O?i?"0 0 1rem 1rem":"1rem 1rem 0 0":"1rem"},onMouseEnter:()=>R(!0),onMouseLeave:()=>R(!1),children:e.jsxs("div",{className:"px-5 pt-5 pb-4",children:[e.jsx("textarea",{ref:A,rows:1,value:a,onChange:H,onKeyDown:B,placeholder:"Ask me anything...",className:"smooth-scroll w-full resize-none bg-transparent outline-none text-base leading-relaxed min-h-[28px] max-h-48 overflow-y-auto",style:{color:"var(--text-primary)"}}),e.jsxs("div",{className:"flex items-center justify-between mt-4",children:[e.jsx("div",{className:"flex items-center gap-3",style:{color:"var(--text-muted)"},children:e.jsx("button",{onClick:()=>{f(t=>!t),p(null)},className:"transition-colors text-2xl font-thin leading-none",style:{color:"var(--text-muted)"},onMouseEnter:t=>t.currentTarget.style.color="var(--text-secondary)",onMouseLeave:t=>t.currentTarget.style.color="var(--text-muted)","aria-label":"Add attachment",children:"+"})}),e.jsxs("div",{className:"relative w-9 h-9",children:[e.jsx("button",{"aria-label":"Voice input",onClick:P,style:{transition:"opacity 200ms ease, transform 200ms ease, background 200ms ease",opacity:a.trim()||n?0:1,transform:a.trim()||n?"scale(0.8)":"scale(1)",pointerEvents:a.trim()||n?"none":"auto",color:C?"#FF7056":"var(--text-muted)",background:C?"rgba(255,112,86,0.08)":"transparent",borderRadius:10},className:"absolute inset-0 flex items-center justify-center",children:C?e.jsx(te,{}):e.jsx(Y,{})}),e.jsxs("button",{"aria-label":"Submit",onClick:()=>{q()},className:"absolute inset-0 flex items-center justify-center overflow-hidden hover:opacity-90",style:{background:"#007AFF",borderRadius:8,transition:"opacity 200ms ease, transform 200ms ease",opacity:a.trim()||n?1:0,transform:a.trim()||n?"scale(1)":"scale(0.8)",pointerEvents:a.trim()||n?"auto":"none"},children:[e.jsx("span",{style:{position:"absolute",display:"flex",alignItems:"center",justifyContent:"center",transition:"transform 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease",transform:n?"translateX(-120%)":"translateX(0)",opacity:n?0:1},children:e.jsxs("svg",{width:"18",height:"18",viewBox:"0 0 18 18",fill:"none",children:[e.jsx("rect",{x:"8.08",y:"0.75",width:"1.67",height:"16.67",rx:"0.83",fill:"white"}),e.jsx("path",{d:"M3.17 7.33L9 1.5L14.83 7.33",stroke:"white",strokeWidth:"1.67",strokeLinecap:"round",strokeLinejoin:"round"})]})}),e.jsx("span",{style:{position:"absolute",display:"flex",alignItems:"center",justifyContent:"center",transition:"transform 300ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease",transform:n?"translateX(0)":"translateX(120%)",opacity:n?1:0},children:e.jsx(se,{})})]})]})]})]})}),e.jsx("div",{className:"absolute left-0 right-0 z-50",style:{[i?"bottom":"top"]:"100%",display:"grid",gridTemplateRows:F?"1fr":"0fr",transition:"grid-template-rows 200ms ease"},children:e.jsx("div",{className:"overflow-hidden",children:e.jsxs("div",{className:`px-4 ${i?"border-x border-t rounded-t-2xl pt-3 pb-4":"border-x border-b rounded-b-2xl pb-4 pt-3"}`,style:{background:"var(--bg-card)",borderColor:M?"var(--border-default)":"var(--bg-active)",boxShadow:i?"0 -8px 16px 0 rgba(0,0,0,0.08)":"0 8px 16px 0 rgba(0,0,0,0.08)"},children:[e.jsx("p",{className:"text-[11px] font-semibold tracking-widest uppercase mb-2",style:{color:"var(--text-muted)"},children:"Mention"}),e.jsx("div",{className:"flex flex-col gap-1",children:c.map((t,s)=>{const r=s===U;return e.jsxs("button",{onMouseEnter:()=>I(s),onClick:()=>Q(t),className:"flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-left",style:{background:r?"var(--bg-active)":"transparent",border:r?"1.5px solid var(--border-default)":"1.5px solid transparent",opacity:r?1:.3,transition:"opacity 150ms ease, background 150ms ease"},children:[e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx("span",{className:"text-sm",style:{color:"var(--text-primary)"},children:t.name}),e.jsx("span",{className:"text-xs px-2 py-0.5 rounded-full border",style:{borderColor:r?"var(--text-secondary)":"var(--border-default)",color:r?"var(--text-primary)":"var(--text-muted)"},children:t.handle})]}),e.jsx("span",{className:"flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0",style:{color:"var(--text-muted)"},children:e.jsx(L,{})})]},t.id)})}),e.jsxs("div",{className:"flex items-center justify-end gap-4 mt-3 pt-3 border-t",style:{borderColor:"var(--border-default)",color:"var(--text-muted)"},children:[e.jsxs("span",{className:"flex items-center gap-1.5 text-xs",children:["Close ",e.jsx(G,{})]}),e.jsxs("span",{className:"flex items-center gap-1.5 text-xs",children:["Select ",e.jsx(L,{})]}),e.jsxs("span",{className:"flex items-center gap-1.5 text-xs",children:["Navigate ",e.jsx(J,{})]})]})]})})}),e.jsx("div",{className:"absolute left-0 right-0 z-50",style:{[i?"bottom":"top"]:"100%",display:"grid",gridTemplateRows:O?"1fr":"0fr",transition:"grid-template-rows 200ms ease"},children:e.jsx("div",{className:"overflow-hidden",children:e.jsxs("div",{className:`px-4 ${i?"border-x border-t rounded-t-2xl pt-3 pb-4":"border-x border-b rounded-b-2xl pb-4 pt-3"}`,style:{background:"var(--bg-card)",borderColor:M?"var(--border-default)":"var(--bg-active)",boxShadow:i?"0 -8px 16px 0 rgba(0,0,0,0.08)":"0 8px 16px 0 rgba(0,0,0,0.08)"},children:[e.jsx("p",{className:"text-[11px] font-semibold tracking-widest uppercase mb-2",style:{color:"var(--text-muted)"},children:"Upload"}),e.jsxs("button",{onClick:()=>f(!1),className:"flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-left",style:{background:"var(--bg-active)",border:"1.5px solid var(--border-default)",color:"var(--text-primary)",transition:"background 150ms ease"},children:[e.jsxs("div",{className:"flex items-center gap-2",children:[e.jsx(Z,{}),e.jsx("span",{className:"text-sm",children:"Upload file"})]}),e.jsx("span",{className:"flex items-center justify-center w-7 h-7 flex-shrink-0",style:{color:"var(--text-muted)"},children:e.jsx(L,{})})]})]})})})]})}V.__docgenInfo={description:"",methods:[],displayName:"ChatInput",props:{loading:{defaultValue:{value:"false",computed:!1},required:!1},settled:{defaultValue:{value:"false",computed:!1},required:!1},defaultText:{defaultValue:{value:"''",computed:!1},required:!1},initialUploadOpen:{defaultValue:{value:"false",computed:!1},required:!1},initialMentionQuery:{defaultValue:{value:"null",computed:!1},required:!1}}};const ie={title:"Organisms/Chat Input",component:V,tags:["autodocs"],parameters:{layout:"padded",backgrounds:{default:"hear-light"},docs:{description:{component:"**Tier: Organisms** — Complex, self-contained input section. Features: auto-resize textarea, `@` mention trigger with dropdown, file attachment (`+`), voice mic button, and an animated send button (arrow → thinking dots). `onSubmit(text)` fires on Enter (without Shift) or send-button click. \n\n**Atoms composed (inline — not yet extracted):** MicIcon, SubmitIcon, AttachIcon, ReturnIcon, NavigateIcon, CloseIcon, ThinkingDots. \n\n> ⚠️ **COMPOSITION OPACITY** — The 7 icon/animation sub-components above are defined inline in `ChatInput.jsx` with no individual story coverage. Developers cannot locate or reuse them from the design system. **Resolution:** Extract to `src/components/icons/` and add `Atoms/Chat Input Icons` story."}}},argTypes:{loading:{control:"boolean",description:"True while AI is streaming — disables submission, shows thinking dots"},settled:{control:"boolean",description:"True after a response completes — dropdowns open upward instead of downward"},defaultText:{control:"text",description:"Initial textarea content (submit button appears when non-empty)"},initialUploadOpen:{control:"boolean",description:"Open the upload dropdown on mount"},initialMentionQuery:{control:"text",description:"Seed the @mention dropdown on mount (empty string = show all items)"},onSubmit:{action:"onSubmit",description:"Called with the trimmed input string when the user submits"},onMentionChange:{action:"onMentionChange",description:"Called with `true/false` whenever @mention dropdown opens or closes"}}},x={args:{loading:!1,settled:!1}},g={args:{loading:!1,settled:!1,defaultText:"What are the top signals from last week's enterprise calls?"},parameters:{docs:{description:{story:"Submit button is visible when `defaultText` (or any typed text) is non-empty."}}}},b={args:{loading:!1,settled:!1,defaultText:`Summarise the key themes from Q1 calls:
+1. Enterprise churn signals and at-risk accounts
+2. Feature requests mentioned more than 3 times
+3. Competitor comparisons that came up in discovery
+4. Onboarding friction points raised by new customers
+5. Any pricing or packaging objections`}},y={args:{loading:!0,settled:!1,defaultText:"Tell me about churn risk accounts."},parameters:{docs:{description:{story:"Submit is blocked. The send button shows animated thinking dots instead of the arrow."}}}},v={args:{loading:!1,settled:!0}},w={args:{loading:!0,settled:!0,defaultText:"Which of those accounts are in the healthcare vertical?"}},j={args:{loading:!1,settled:!1,defaultText:"@",initialMentionQuery:""},parameters:{docs:{description:{story:'Triggered by typing `@`. `initialMentionQuery: ""` seeds all items on mount.'}}}},k={args:{loading:!1,settled:!0,defaultText:"Loop in @",initialMentionQuery:""}},S={args:{loading:!1,settled:!1,initialUploadOpen:!0}},T={args:{loading:!1,settled:!0,initialUploadOpen:!0}};x.parameters={...x.parameters,docs:{...x.parameters?.docs,source:{originalSource:`{
+  args: {
+    loading: false,
+    settled: false
+  }
+}`,...x.parameters?.docs?.source},description:{story:"Idle state — ready for user input. Mic button visible, submit hidden.",...x.parameters?.docs?.description}}};g.parameters={...g.parameters,docs:{...g.parameters?.docs,source:{originalSource:`{
+  args: {
+    loading: false,
+    settled: false,
+    defaultText: "What are the top signals from last week's enterprise calls?"
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Submit button is visible when \`defaultText\` (or any typed text) is non-empty.'
+      }
+    }
+  }
+}`,...g.parameters?.docs?.source},description:{story:"Text entered — submit button slides in, mic fades out.",...g.parameters?.docs?.description}}};b.parameters={...b.parameters,docs:{...b.parameters?.docs,source:{originalSource:`{
+  args: {
+    loading: false,
+    settled: false,
+    defaultText: 'Summarise the key themes from Q1 calls:\\n' + '1. Enterprise churn signals and at-risk accounts\\n' + '2. Feature requests mentioned more than 3 times\\n' + '3. Competitor comparisons that came up in discovery\\n' + '4. Onboarding friction points raised by new customers\\n' + '5. Any pricing or packaging objections'
+  }
+}`,...b.parameters?.docs?.source},description:{story:"Long multi-line text — textarea auto-resizes up to `max-h-48`.",...b.parameters?.docs?.description}}};y.parameters={...y.parameters,docs:{...y.parameters?.docs,source:{originalSource:`{
+  args: {
+    loading: true,
+    settled: false,
+    defaultText: 'Tell me about churn risk accounts.'
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Submit is blocked. The send button shows animated thinking dots instead of the arrow.'
+      }
+    }
+  }
+}`,...y.parameters?.docs?.source},description:{story:"Loading — AI is streaming; arrow slides left, thinking dots slide in.",...y.parameters?.docs?.description}}};v.parameters={...v.parameters,docs:{...v.parameters?.docs,source:{originalSource:`{
+  args: {
+    loading: false,
+    settled: true
+  }
+}`,...v.parameters?.docs?.source},description:{story:"Settled — response complete. Dropdowns open upward.",...v.parameters?.docs?.description}}};w.parameters={...w.parameters,docs:{...w.parameters?.docs,source:{originalSource:`{
+  args: {
+    loading: true,
+    settled: true,
+    defaultText: 'Which of those accounts are in the healthcare vertical?'
+  }
+}`,...w.parameters?.docs?.source},description:{story:"Follow-up streaming — new question submitted while settled below a response.",...w.parameters?.docs?.description}}};j.parameters={...j.parameters,docs:{...j.parameters?.docs,source:{originalSource:`{
+  args: {
+    loading: false,
+    settled: false,
+    defaultText: '@',
+    initialMentionQuery: ''
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: 'Triggered by typing \`@\`. \`initialMentionQuery: ""\` seeds all items on mount.'
+      }
+    }
+  }
+}`,...j.parameters?.docs?.source},description:{story:"@mention dropdown open — all items visible, keyboard-navigable.",...j.parameters?.docs?.description}}};k.parameters={...k.parameters,docs:{...k.parameters?.docs,source:{originalSource:`{
+  args: {
+    loading: false,
+    settled: true,
+    defaultText: 'Loop in @',
+    initialMentionQuery: ''
+  }
+}`,...k.parameters?.docs?.source},description:{story:"@mention dropdown in settled mode — panel attaches upward.",...k.parameters?.docs?.description}}};S.parameters={...S.parameters,docs:{...S.parameters?.docs,source:{originalSource:`{
+  args: {
+    loading: false,
+    settled: false,
+    initialUploadOpen: true
+  }
+}`,...S.parameters?.docs?.source},description:{story:'Upload dropdown open — "Upload file" option visible.',...S.parameters?.docs?.description}}};T.parameters={...T.parameters,docs:{...T.parameters?.docs,source:{originalSource:`{
+  args: {
+    loading: false,
+    settled: true,
+    initialUploadOpen: true
+  }
+}`,...T.parameters?.docs?.source},description:{story:"Upload dropdown in settled mode — panel attaches upward.",...T.parameters?.docs?.description}}};const le=["Default","WithText","WithLongText","Loading","Settled","SettledAndLoading","MentionOpen","MentionOpenSettled","UploadOpen","UploadOpenSettled"];export{x as Default,y as Loading,j as MentionOpen,k as MentionOpenSettled,v as Settled,w as SettledAndLoading,S as UploadOpen,T as UploadOpenSettled,b as WithLongText,g as WithText,le as __namedExportsOrder,ie as default};
