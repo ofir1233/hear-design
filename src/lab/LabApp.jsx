@@ -26,7 +26,7 @@ function getGreeting() {
   return 'Good evening'
 }
 
-const SIDEBAR_WIDTH = 296 // 272px panel + 24px left margin
+const SIDEBAR_WIDTH = 288 // 272px panel + 16px left margin
 
 function buildRequestCards(config) {
   const name   = config?.companyName || 'your company'

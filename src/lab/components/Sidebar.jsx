@@ -637,7 +637,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
         />
       )}
 
-    <div data-inspector="Sidebar" style={{ display: 'flex', alignItems: 'stretch', position: 'fixed', top: 24, left: 24, height: 'calc(100vh - 48px)', zIndex: 100 }}>
+    <div data-inspector="Sidebar" style={{ display: 'flex', alignItems: 'stretch', position: 'fixed', top: 16, left: 16, height: 'calc(100vh - 32px)', zIndex: 100 }}>
 
       {/* Sidebar panel */}
       <div
@@ -648,8 +648,9 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           display: 'flex',
           flexDirection: 'column',
           background: 'var(--bg-sidebar)',
-          borderRadius: 24,
+          borderRadius: 16,
           height: '100%',
+          boxShadow: '0 0 0 1px var(--sidebar-outline)',
         }}
       >
         <div className="smooth-scroll" style={{ position: 'relative', width: 272, display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto', borderRadius: 24 }}>
