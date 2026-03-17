@@ -311,8 +311,8 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
     if (!open || !anchorRef?.current) return
     const r = anchorRef.current.getBoundingClientRect()
     setPos({
-      top:  r.bottom + 8,
-      left: Math.max(8, r.right - 360),
+      top:  r.top,
+      left: r.right + 8,
     })
     setClosing(false)
     setVisible(true)
@@ -413,7 +413,7 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
           animation: closing
             ? 'notifPopoverOut 150ms cubic-bezier(0.4,0,1,1) both'
             : 'notifPopoverIn 200ms cubic-bezier(0.22,1,0.36,1) both',
-          transformOrigin: 'top right',
+          transformOrigin: 'top left',
         }}
       >
         {/* Header */}
