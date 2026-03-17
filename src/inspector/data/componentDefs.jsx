@@ -52,7 +52,8 @@ import DataPageSrc      from '../../components/data/DataPage.jsx?raw'
 import ExplorePageSrc   from '../../components/data/ExplorePage.jsx?raw'
 import MockDataSrc      from '../../components/data/mockData.js?raw'
 import ReportsPageSrc    from '../../components/reports/ReportsPage.jsx?raw'
-import AgentEvalPageSrc  from '../../components/agent-eval/AgentEvalPage.jsx?raw'
+import AgentEvalPageSrc           from '../../components/agent-eval/AgentEvalPage.jsx?raw'
+import NotificationsPopoverSrc    from '../../lab/components/NotificationsPopover.jsx?raw'
 
 // ─── Shared preview wrapper helpers ──────────────────────────────────────────
 
@@ -2458,6 +2459,219 @@ export const COMPONENT_DEFS = {
         'MOCK_LEADS: 6 team leads/managers for Send-report-to picker',
         'All scroll containers use className="smooth-scroll" for blended scrollbars',
         'position:fixed layout — left offset = sidebarWidth prop (matches DataPage/ExplorePage)',
+      ],
+    },
+  },
+
+  // ── NotificationsPopover ───────────────────────────────────────────────────
+
+  NotificationsPopover: {
+    tier: 'Organism',
+    description: 'Lab-only notification panel. Portal-rendered popover anchored to the bell button in Sidebar. 7 notification types with a strict color budget (type color on icon only). Actionable types: csv_ready (Download CSV), pdf_ready (Download PDF), mention (inline reply composer). Download 3-state machine + CSS grid reply expansion.',
+    props: [
+      { name: 'open',      type: 'boolean',        default: 'false' },
+      { name: 'anchorRef', type: 'React.RefObject', default: 'required' },
+      { name: 'onClose',   type: '() => void',      default: 'required' },
+    ],
+    states: [
+      { label: 'With unread',  props: { _state: 'unread' } },
+      { label: 'Mention open', props: { _state: 'mention' } },
+      { label: 'Empty',        props: { _state: 'empty' } },
+    ],
+    render: (p) => {
+      const state = p._state || 'unread'
+      // Panel chrome — inlined as plain divs (no inline component functions).
+      // Defining sub-components inside a render() function creates new references
+      // on every call, causing React to remount DOM nodes which fires the
+      // MutationObserver in ComponentsTab → infinite re-render loop.
+      const panelShell = (inner) => (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
+          <div style={{
+            width: 340, background: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 12, overflow: 'hidden',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            fontFamily: "'Byrd', sans-serif",
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px 10px', borderBottom: '1px solid var(--border-default)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Notifications</span>
+                {state !== 'empty' && <span style={{ fontSize: 10, fontWeight: 700, background: '#E8613A', color: '#fff', padding: '1px 6px', borderRadius: 999, lineHeight: 1.6 }}>3</span>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {state !== 'empty' && <span style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontWeight: 500 }}>Mark all read</span>}
+                <span style={{ color: 'var(--text-muted)', fontSize: 16 }}>×</span>
+              </div>
+            </div>
+            {inner}
+          </div>
+        </div>
+      )
+
+      if (state === 'empty') {
+        return panelShell(
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '36px 20px' }}>
+            <div style={{ color: 'var(--text-muted)', opacity: 0.4, marginBottom: 10 }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 4.17-1.75 6.58-2.73 7.75A1 1 0 0 0 3 18.5h18a1 1 0 0 0 .73-1.75C20.75 15.58 19 13.17 19 9a7 7 0 0 0-7-7z"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" strokeWidth="1.5"/><polyline points="9 10 11 12 15 8" strokeWidth="1.5"/></svg>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 3 }}>You're all caught up</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No new notifications</div>
+          </div>
+        )
+      }
+
+      if (state === 'mention') {
+        return panelShell(
+          <div>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '7px 14px 3px' }}>Today</div>
+            <div style={{ display: 'flex', gap: 10, padding: '10px 14px 12px' }}>
+              <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(91,163,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5BA3FF', flexShrink: 0, marginTop: 1 }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Sarah Chen mentioned you</div>
+                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 6 }}>In "Q4 Agent Performance Review"</div>
+                <div style={{ padding: '6px 9px', borderLeft: '2px solid var(--border-default)', background: 'var(--bg-active)', borderRadius: '0 5px 5px 0', fontSize: 11, color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: 7, lineHeight: 1.45 }}>
+                  "Hey @ofir, can you double-check the sentiment scores?"
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div style={{ height: 44, background: 'var(--bg-canvas)', border: '1px solid #5BA3FF', borderRadius: 7, padding: '6px 9px', fontSize: 11.5, color: 'var(--text-muted)' }}>On it — reviewing now…</div>
+                  <div style={{ display: 'flex', gap: 5 }}>
+                    <div style={{ height: 24, padding: '0 10px', borderRadius: 6, background: 'var(--text-secondary)', display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--bg-canvas)', fontWeight: 600 }}>Send</div>
+                    <div style={{ height: 24, padding: '0 9px', borderRadius: 6, border: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--text-muted)' }}>Cancel</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
+                  <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>18m ago</span>
+                  <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      // Default: 3 unread (mention + csv + pdf)
+      return panelShell(
+        <div>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '7px 14px 3px' }}>Today</div>
+          {/* Mention row */}
+          <div style={{ display: 'flex', gap: 10, padding: '9px 14px', borderBottom: '1px solid var(--border-default)' }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(91,163,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5BA3FF', flexShrink: 0, marginTop: 1 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Sarah Chen mentioned you</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 6, lineHeight: 1.4 }}>In "Q4 Agent Performance Review"</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↩ Reply</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>18m ago</span>
+                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
+              </div>
+            </div>
+          </div>
+          {/* CSV row */}
+          <div style={{ display: 'flex', gap: 10, padding: '9px 14px', borderBottom: '1px solid var(--border-default)' }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(75,163,115,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4BA373', flexShrink: 0, marginTop: 1 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Agent Report Export Ready</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 5, lineHeight: 1.4 }}>October agent performance report compiled.</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 5, background: 'var(--bg-active)', border: '1px solid var(--border-default)', marginBottom: 5 }}>
+                <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>agent-report-oct-2025.csv</span>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· 2.4 MB</span>
+              </div>
+              <div style={{ display: 'block' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↓ Download CSV</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>2h ago</span>
+                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
+              </div>
+            </div>
+          </div>
+          {/* PDF row */}
+          <div style={{ display: 'flex', gap: 10, padding: '9px 14px' }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(249,115,22,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F97316', flexShrink: 0, marginTop: 1 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Daily Trend Report Ready</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 5, lineHeight: 1.4 }}>AI summary of today's call trends.</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 5, background: 'var(--bg-active)', border: '1px solid var(--border-default)', marginBottom: 5 }}>
+                <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>daily-trends-oct-28.pdf</span>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· 840 KB</span>
+              </div>
+              <div style={{ display: 'block' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↓ Download PDF</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>5h ago</span>
+                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    snippet: () =>
+`// In Lab Sidebar — wire to bell button ref
+const [notifOpen, setNotifOpen] = useState(false)
+const bellRef = useRef(null)
+
+<button ref={bellRef} onClick={() => setNotifOpen(v => !v)}>
+  <BellIcon />
+</button>
+
+<NotificationsPopover
+  open={notifOpen}
+  anchorRef={bellRef}
+  onClose={() => setNotifOpen(false)}
+/>`,
+    source: NotificationsPopoverSrc,
+    files: [
+      { path: 'src/lab/components/NotificationsPopover.jsx', src: NotificationsPopoverSrc },
+      { path: 'src/lab/components/Sidebar.jsx',              src: SidebarSrc },
+    ],
+    npm: [],
+    breakdown: {
+      icons: [
+        'BellIcon (trigger — in Sidebar)',
+        'Inline SVG: processing (monitor), insight (lightbulb), download (arrow)',
+        'Inline SVG: alert (triangle), csv_ready (spreadsheet), pdf_ready (doc)',
+        'Inline SVG: mention (@-circle), spinner, checkmark, reply arrow',
+      ],
+      colors: [
+        { name: '--bg-card (panel bg)',      hex: '#FFFFFF' },
+        { name: '--bg-active (chip/btn bg)', hex: '#E8E8E6' },
+        { name: '--border-default',          hex: '#E5E7EB' },
+        { name: '--text-primary (unread title)', hex: '#181818' },
+        { name: '--text-secondary (read title)', hex: '#606060' },
+        { name: '--text-muted (desc/timestamp)', hex: '#9B9B9B' },
+        { name: 'Unread badge',              hex: '#E8613A' },
+        { name: 'Processing icon',           hex: '#5BA3FF' },
+        { name: 'Insight icon',              hex: '#A78BFA' },
+        { name: 'CSV / Download icon',       hex: '#4BA373' },
+        { name: 'Alert icon',                hex: '#F59E0B' },
+        { name: 'PDF icon',                  hex: '#F97316' },
+        { name: 'Mention icon',              hex: '#5BA3FF' },
+      ],
+      subComponents: [],
+      notes: [
+        'LAB ONLY — lives in src/lab/components/NotificationsPopover.jsx',
+        'Uses createPortal(…, document.body) for z-index isolation',
+        'Position computed from anchorRef.getBoundingClientRect() on open — top: anchor.bottom+8, left: anchor.left',
+        '7 types: processing · insight · download · alert · csv_ready · pdf_ready · mention',
+        'Color budget rule: type color on icon only — all chips, buttons, borders are CSS-var neutral',
+        'Download state machine per id: idle → downloading (spinner) → done (checkmark)',
+        'Mention reply: CSS grid-template-rows 0fr→1fr height animation (220ms ease)',
+        'Entrance animation frozen in useRef on mount — prevents re-fire on parent state updates (dlState/replyState)',
+        'Click outside + Escape closes; no focus trap (non-modal pattern)',
+        'Grouping: Today / Earlier based on same calendar day vs earlier',
+        'Stagger: items animate in at index × 35ms delay',
+        'Popover enter: translateY(-8px)+scale(0.98) → identity (200ms); exit: reverse (150ms)',
       ],
     },
   },
