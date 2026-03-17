@@ -29,7 +29,6 @@ import ExplorePage  from '../../components/data/ExplorePage.jsx'
 import ReportsPage   from '../../components/reports/ReportsPage.jsx'
 import AgentEvalPage from '../../components/agent-eval/AgentEvalPage.jsx'
 import { SCHEMAS }   from '../../components/data/mockData.js'
-import NotificationsPopover from '../../lab/components/NotificationsPopover.jsx'
 
 // Raw source imports — Vite ?raw gives the file content as a plain string.
 // Used in the handoff panel so developers can copy the full implementation.
@@ -2481,179 +2480,139 @@ export const COMPONENT_DEFS = {
     ],
     render: (p) => {
       const state = p._state || 'unread'
-
-      // Shared panel chrome
-      const Panel = ({ children, footer }) => (
-        <div style={{
-          width: 340, background: 'var(--bg-card)',
-          border: '1px solid var(--border-default)',
-          borderRadius: 12,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-          overflow: 'hidden',
-          fontFamily: "'Byrd', sans-serif",
-        }}>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px 10px', borderBottom: '1px solid var(--border-default)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Notifications</span>
-              {state !== 'empty' && <span style={{ fontSize: 10, fontWeight: 700, background: '#E8613A', color: '#fff', padding: '1px 6px', borderRadius: 999, lineHeight: 1.6 }}>3</span>}
+      // Panel chrome — inlined as plain divs (no inline component functions).
+      // Defining sub-components inside a render() function creates new references
+      // on every call, causing React to remount DOM nodes which fires the
+      // MutationObserver in ComponentsTab → infinite re-render loop.
+      const panelShell = (inner) => (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
+          <div style={{
+            width: 340, background: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 12, overflow: 'hidden',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            fontFamily: "'Byrd', sans-serif",
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px 10px', borderBottom: '1px solid var(--border-default)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Notifications</span>
+                {state !== 'empty' && <span style={{ fontSize: 10, fontWeight: 700, background: '#E8613A', color: '#fff', padding: '1px 6px', borderRadius: 999, lineHeight: 1.6 }}>3</span>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {state !== 'empty' && <span style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontWeight: 500 }}>Mark all read</span>}
+                <span style={{ color: 'var(--text-muted)', fontSize: 16 }}>×</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {state !== 'empty' && <span style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontWeight: 500 }}>Mark all read</span>}
-              <span style={{ color: 'var(--text-muted)', fontSize: 16 }}>×</span>
-            </div>
+            {inner}
           </div>
-          {children}
-        </div>
-      )
-
-      // Notification row helper
-      const Row = ({ iconColor, iconBg, icon, title, desc, timestamp, action, unread }) => (
-        <div style={{ display: 'flex', gap: 10, padding: '10px 14px', background: 'transparent', borderBottom: '1px solid var(--border-default)' }}>
-          <div style={{ width: 28, height: 28, borderRadius: 7, background: iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: iconColor, flexShrink: 0, marginTop: 1 }}>
-            {icon}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, fontWeight: unread ? 600 : 400, color: unread ? 'var(--text-primary)' : 'var(--text-secondary)', marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
-            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: 4 }}>{desc}</div>
-            {action}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>{timestamp}</span>
-              {unread && <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />}
-            </div>
-          </div>
-          <span style={{ position: 'absolute', right: 10, top: 8, color: 'var(--text-muted)', fontSize: 13, opacity: 0.4 }}>×</span>
-        </div>
-      )
-
-      const ActionBtn = ({ label }) => (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 6 }}>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          {label}
-        </div>
-      )
-
-      const FileChip = ({ name, meta }) => (
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 5, background: 'var(--bg-active)', border: '1px solid var(--border-default)', marginBottom: 6 }}>
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>{name}</span>
-          <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· {meta}</span>
         </div>
       )
 
       if (state === 'empty') {
-        return (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
-            <Panel>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '36px 20px' }}>
-                <div style={{ color: 'var(--text-muted)', opacity: 0.4, marginBottom: 10 }}>
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 4.17-1.75 6.58-2.73 7.75A1 1 0 0 0 3 18.5h18a1 1 0 0 0 .73-1.75C20.75 15.58 19 13.17 19 9a7 7 0 0 0-7-7z"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" strokeWidth="1.5"/><polyline points="9 10 11 12 15 8" strokeWidth="1.5"/></svg>
-                </div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 3 }}>You're all caught up</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No new notifications</div>
-              </div>
-            </Panel>
+        return panelShell(
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '36px 20px' }}>
+            <div style={{ color: 'var(--text-muted)', opacity: 0.4, marginBottom: 10 }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 4.17-1.75 6.58-2.73 7.75A1 1 0 0 0 3 18.5h18a1 1 0 0 0 .73-1.75C20.75 15.58 19 13.17 19 9a7 7 0 0 0-7-7z"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" strokeWidth="1.5"/><polyline points="9 10 11 12 15 8" strokeWidth="1.5"/></svg>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 3 }}>You're all caught up</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No new notifications</div>
           </div>
         )
       }
 
       if (state === 'mention') {
-        return (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
-            <Panel>
-              <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '7px 14px 3px' }}>Today</div>
-              <div style={{ display: 'flex', gap: 10, padding: '10px 14px 12px' }}>
-                <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(91,163,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5BA3FF', flexShrink: 0, marginTop: 1 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Sarah Chen mentioned you</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 6 }}>In "Q4 Agent Performance Review"</div>
-                  <div style={{ padding: '6px 9px', borderLeft: '2px solid var(--border-default)', background: 'var(--bg-active)', borderRadius: '0 5px 5px 0', fontSize: 11, color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: 7, lineHeight: 1.45 }}>
-                    "Hey @ofir, can you double-check the sentiment scores?"
-                  </div>
-                  {/* Expanded reply */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <div style={{ height: 44, background: 'var(--bg-canvas)', border: '1px solid #5BA3FF', borderRadius: 7, padding: '6px 9px', fontSize: 11.5, color: 'var(--text-muted)' }}>On it — reviewing now…</div>
-                    <div style={{ display: 'flex', gap: 5 }}>
-                      <div style={{ height: 24, padding: '0 10px', borderRadius: 6, background: 'var(--text-secondary)', display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--bg-canvas)', fontWeight: 600 }}>Send</div>
-                      <div style={{ height: 24, padding: '0 9px', borderRadius: 6, border: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--text-muted)' }}>Cancel</div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
-                    <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>18m ago</span>
-                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
-                  </div>
-                </div>
-              </div>
-            </Panel>
-          </div>
-        )
-      }
-
-      // Default: 3 unread (mention + csv + pdf)
-      return (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
-          <Panel>
+        return panelShell(
+          <div>
             <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '7px 14px 3px' }}>Today</div>
-            {/* Mention row */}
-            <div style={{ display: 'flex', gap: 10, padding: '9px 14px', borderBottom: '1px solid var(--border-default)' }}>
+            <div style={{ display: 'flex', gap: 10, padding: '10px 14px 12px' }}>
               <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(91,163,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5BA3FF', flexShrink: 0, marginTop: 1 }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Sarah Chen mentioned you</div>
-                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 6, lineHeight: 1.4 }}>In "Q4 Agent Performance Review"</div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↩ Reply</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 6 }}>In "Q4 Agent Performance Review"</div>
+                <div style={{ padding: '6px 9px', borderLeft: '2px solid var(--border-default)', background: 'var(--bg-active)', borderRadius: '0 5px 5px 0', fontSize: 11, color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: 7, lineHeight: 1.45 }}>
+                  "Hey @ofir, can you double-check the sentiment scores?"
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <div style={{ height: 44, background: 'var(--bg-canvas)', border: '1px solid #5BA3FF', borderRadius: 7, padding: '6px 9px', fontSize: 11.5, color: 'var(--text-muted)' }}>On it — reviewing now…</div>
+                  <div style={{ display: 'flex', gap: 5 }}>
+                    <div style={{ height: 24, padding: '0 10px', borderRadius: 6, background: 'var(--text-secondary)', display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--bg-canvas)', fontWeight: 600 }}>Send</div>
+                    <div style={{ height: 24, padding: '0 9px', borderRadius: 6, border: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--text-muted)' }}>Cancel</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
                   <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>18m ago</span>
                   <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
                 </div>
               </div>
             </div>
-            {/* CSV row */}
-            <div style={{ display: 'flex', gap: 10, padding: '9px 14px', borderBottom: '1px solid var(--border-default)' }}>
-              <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(75,163,115,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4BA373', flexShrink: 0, marginTop: 1 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Agent Report Export Ready</div>
-                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 5, lineHeight: 1.4 }}>October agent performance report compiled.</div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 5, background: 'var(--bg-active)', border: '1px solid var(--border-default)', marginBottom: 5 }}>
-                  <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>agent-report-oct-2025.csv</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· 2.4 MB</span>
-                </div>
-                <div style={{ display: 'block' }}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↓ Download CSV</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>2h ago</span>
-                  <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
-                </div>
+          </div>
+        )
+      }
+
+      // Default: 3 unread (mention + csv + pdf)
+      return panelShell(
+        <div>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '7px 14px 3px' }}>Today</div>
+          {/* Mention row */}
+          <div style={{ display: 'flex', gap: 10, padding: '9px 14px', borderBottom: '1px solid var(--border-default)' }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(91,163,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5BA3FF', flexShrink: 0, marginTop: 1 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Sarah Chen mentioned you</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 6, lineHeight: 1.4 }}>In "Q4 Agent Performance Review"</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↩ Reply</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>18m ago</span>
+                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
               </div>
             </div>
-            {/* PDF row */}
-            <div style={{ display: 'flex', gap: 10, padding: '9px 14px' }}>
-              <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(249,115,22,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F97316', flexShrink: 0, marginTop: 1 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          {/* CSV row */}
+          <div style={{ display: 'flex', gap: 10, padding: '9px 14px', borderBottom: '1px solid var(--border-default)' }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(75,163,115,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4BA373', flexShrink: 0, marginTop: 1 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Agent Report Export Ready</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 5, lineHeight: 1.4 }}>October agent performance report compiled.</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 5, background: 'var(--bg-active)', border: '1px solid var(--border-default)', marginBottom: 5 }}>
+                <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>agent-report-oct-2025.csv</span>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· 2.4 MB</span>
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Daily Trend Report Ready</div>
-                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 5, lineHeight: 1.4 }}>AI summary of today's call trends.</div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 5, background: 'var(--bg-active)', border: '1px solid var(--border-default)', marginBottom: 5 }}>
-                  <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>daily-trends-oct-28.pdf</span>
-                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· 840 KB</span>
-                </div>
-                <div style={{ display: 'block' }}>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↓ Download PDF</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>5h ago</span>
-                  <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
-                </div>
+              <div style={{ display: 'block' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↓ Download CSV</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>2h ago</span>
+                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
               </div>
             </div>
-          </Panel>
+          </div>
+          {/* PDF row */}
+          <div style={{ display: 'flex', gap: 10, padding: '9px 14px' }}>
+            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(249,115,22,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F97316', flexShrink: 0, marginTop: 1 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Daily Trend Report Ready</div>
+              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 5, lineHeight: 1.4 }}>AI summary of today's call trends.</div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 5, background: 'var(--bg-active)', border: '1px solid var(--border-default)', marginBottom: 5 }}>
+                <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>daily-trends-oct-28.pdf</span>
+                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· 840 KB</span>
+              </div>
+              <div style={{ display: 'block' }}>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↓ Download PDF</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>5h ago</span>
+                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
+              </div>
+            </div>
+          </div>
         </div>
       )
     },
