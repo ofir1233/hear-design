@@ -408,8 +408,8 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
         display: 'flex',
         gap: 11,
         padding: isActionable ? '11px 14px 13px 12px' : '11px 14px 11px 12px',
-        background: hovered && !isActionable ? 'var(--bg-active)' : 'transparent',
-        borderLeft: notif.read ? '3px solid transparent' : `3px solid ${cfg.color}40`,
+        background: hovered ? 'var(--bg-active)' : 'transparent',
+        borderLeft: 'none',
         cursor: isActionable ? 'default' : 'pointer',
         transition: 'background 140ms ease, opacity 220ms ease, transform 220ms ease',
         opacity: dismissing ? 0 : 1,
@@ -417,8 +417,8 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
         animation: animationRef.current,
       }}
       onClick={!isActionable ? handleItemClick : undefined}
-      onMouseEnter={() => !isActionable && setHovered(true)}
-      onMouseLeave={() => !isActionable && setHovered(false)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {/* Type icon */}
       <div style={{
