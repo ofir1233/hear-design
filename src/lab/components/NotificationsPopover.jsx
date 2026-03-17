@@ -148,6 +148,13 @@ const TYPE_CONFIG = {
   },
 }
 
+// ─── Theme-adaptive fill colors ───────────────────────────────────────────────
+// bg-active in light mode is #E8E8E6 — too dark as a fill on white cards.
+// Dilute against bg-card so it's subtle in light and still visible in dark.
+const FILL_BG       = 'color-mix(in srgb, var(--bg-active) 45%, var(--bg-card))'  // chips, quote, buttons
+const FILL_BG_HOVER = 'color-mix(in srgb, var(--bg-active) 70%, var(--bg-card))'  // deeper hover on fills
+const ROW_HOVER_BG  = 'color-mix(in srgb, var(--bg-active) 32%, var(--bg-card))'  // row hover tint
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function relativeTime(ts) {
@@ -202,7 +209,7 @@ function DownloadButton({ notifId, fileType, dlState, onDownload }) {
         padding: '0 10px',
         borderRadius: 6,
         border: `1px solid ${isFailed ? 'var(--border-default)' : 'var(--border-default)'}`,
-        background: isDone ? 'var(--bg-active)' : isLoading ? 'transparent' : 'var(--bg-active)',
+        background: isDone ? FILL_BG : isLoading ? 'transparent' : FILL_BG,
         color: isDone ? 'var(--text-muted)' : isFailed ? 'var(--text-secondary)' : 'var(--text-secondary)',
         fontSize: 11.5,
         fontWeight: 500,
@@ -213,8 +220,8 @@ function DownloadButton({ notifId, fileType, dlState, onDownload }) {
         minWidth: 110,
         justifyContent: 'center',
       }}
-      onMouseEnter={e => { if (isInteractive) { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
-      onMouseLeave={e => { if (isInteractive) { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
+      onMouseEnter={e => { if (isInteractive) { e.currentTarget.style.background = FILL_BG_HOVER; e.currentTarget.style.color = 'var(--text-primary)' } }}
+      onMouseLeave={e => { if (isInteractive) { e.currentTarget.style.background = FILL_BG; e.currentTarget.style.color = 'var(--text-secondary)' } }}
       onMouseDown={e => { if (isInteractive) e.currentTarget.style.transform = 'scale(0.95)' }}
       onMouseUp={e => { if (isInteractive) e.currentTarget.style.transform = 'scale(1)' }}
     >
@@ -280,15 +287,15 @@ function MentionReply({ notifId, replyState, onReplyChange, onSend, onCancel }) 
             height: 26, padding: '0 10px',
             borderRadius: 6,
             border: '1px solid var(--border-default)',
-            background: 'var(--bg-active)',
+            background: FILL_BG,
             color: 'var(--text-secondary)',
             fontSize: 11.5, fontWeight: 500,
             cursor: 'pointer',
             transition: 'background 150ms, color 150ms',
             alignSelf: 'flex-start',
           }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = FILL_BG_HOVER; e.currentTarget.style.color = 'var(--text-primary)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = FILL_BG; e.currentTarget.style.color = 'var(--text-secondary)' }}
           onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
           onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
         >
@@ -374,7 +381,7 @@ function MentionReply({ notifId, replyState, onReplyChange, onSend, onCancel }) 
                   fontSize: 11.5, cursor: 'pointer',
                   transition: 'background 130ms, color 130ms',
                 }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                onMouseEnter={e => { e.currentTarget.style.background = FILL_BG; e.currentTarget.style.color = 'var(--text-primary)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
               >
                 Cancel
@@ -419,7 +426,7 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
         display: 'flex',
         gap: 11,
         padding: isActionable ? '11px 14px 13px 12px' : '11px 14px 11px 12px',
-        background: hovered ? 'var(--bg-active)' : 'transparent',
+        background: hovered ? ROW_HOVER_BG : 'transparent',
         borderLeft: 'none',
         cursor: isActionable ? 'default' : 'pointer',
         transition: 'background 140ms ease, opacity 220ms ease, transform 220ms ease',
@@ -496,7 +503,7 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
             <div style={{
               padding: '7px 10px',
               borderLeft: `2px solid var(--border-default)`,
-              background: 'var(--bg-active)',
+              background: FILL_BG,
               borderRadius: '0 6px 6px 0',
               fontSize: 11.5,
               color: 'var(--text-secondary)',
@@ -528,7 +535,7 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '3px 8px', borderRadius: 5,
-              background: 'var(--bg-active)',
+              background: FILL_BG,
               border: '1px solid var(--border-default)',
               marginBottom: 8,
             }}>
@@ -552,7 +559,7 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '3px 8px', borderRadius: 5,
-              background: 'var(--bg-active)',
+              background: FILL_BG,
               border: '1px solid var(--border-default)',
               marginBottom: 8,
             }}>
@@ -908,7 +915,7 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
                   transition: 'color 200ms ease, background 140ms ease',
                   fontWeight: 500,
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-active)'}
+                onMouseEnter={e => e.currentTarget.style.background = ROW_HOVER_BG}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
                 Mark all read
