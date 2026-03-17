@@ -286,7 +286,6 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, onNavigate, entering }
               opacity: hovered ? 0.9 : 0.45,
               fontFamily: 'monospace',
               letterSpacing: '-0.01em',
-              transition: 'color 140ms, opacity 140ms',
               whiteSpace: 'nowrap',
               paddingRight: hovered ? 14 : 0,
               transition: 'color 140ms, opacity 140ms, padding-right 140ms',
