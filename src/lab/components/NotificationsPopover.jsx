@@ -391,7 +391,11 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
   const cfg = TYPE_CONFIG[notif.type] ?? TYPE_CONFIG.processing
 
   const isActionable = ['csv_ready', 'pdf_ready', 'mention'].includes(notif.type)
-  const entranceDelay = entering ? index * 35 : 0
+
+  // Freeze animation string on mount — prevents re-firing when parent state updates (dlState/replyState)
+  const animationRef = useRef(
+    entering ? `notifItemIn 240ms cubic-bezier(0.22,1,0.36,1) ${index * 35}ms both` : 'none'
+  )
 
   function handleDismiss(e) {
     e.stopPropagation()
@@ -420,7 +424,7 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
         transition: 'background 140ms ease, opacity 220ms ease, transform 220ms ease',
         opacity: dismissing ? 0 : 1,
         transform: dismissing ? 'translateX(28px)' : 'none',
-        animation: entering ? `notifItemIn 240ms cubic-bezier(0.22,1,0.36,1) ${entranceDelay}ms both` : 'none',
+        animation: animationRef.current,
       }}
       onClick={!isActionable ? handleItemClick : undefined}
       onMouseEnter={() => !isActionable && setHovered(true)}
@@ -564,23 +568,22 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
           </div>
         )}
 
-        {/* Timestamp */}
-        <div style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>
-          {relativeTime(notif.ts)}
+        {/* Timestamp + unread dot inline — keeps top-right clear for dismiss × */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 0 }}>
+          <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>
+            {relativeTime(notif.ts)}
+          </span>
+          {!notif.read && (
+            <div style={{
+              width: 5, height: 5,
+              borderRadius: '50%',
+              background: cfg.color,
+              flexShrink: 0,
+              opacity: 0.85,
+            }} />
+          )}
         </div>
       </div>
-
-      {/* Unread dot */}
-      {!notif.read && (
-        <div style={{
-          position: 'absolute',
-          top: 14, right: 12,
-          width: 6, height: 6,
-          borderRadius: '50%',
-          background: cfg.color,
-          flexShrink: 0,
-        }} />
-      )}
 
       {/* Dismiss × — shown on hover */}
       {hovered && !isActionable && (
