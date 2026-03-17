@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import HearLogo from '../../components/HearLogo.jsx'
+import NotificationsPopover from './NotificationsPopover.jsx'
 import {
   HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon,
   AgentIcon, KnowledgeIcon, AiTaskIcon, CustomersIcon, SettingsIcon,
@@ -608,6 +609,8 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
   const [projectOpen, setProjectOpen]   = useState(false)
   const [projectOpenKey, setProjectOpenKey] = useState(0)
   const projectRef = useRef(null)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const bellRef = useRef(null)
 
   const isDemo = !!(userId?.includes('@') && companyConfig)
 
@@ -804,16 +807,21 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               </div>
             </div>
             <div style={{ position: 'relative', flexShrink: 0 }}>
-              <button style={{
-                position: 'relative',
-                width: 40, height: 40,
-                background: 'transparent',
-                border: '1.5px solid var(--border-input)',
-                borderRadius: 9.6,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'var(--text-secondary)',
-              }}>
+              <button
+                ref={bellRef}
+                onClick={() => setNotifOpen(v => !v)}
+                style={{
+                  position: 'relative',
+                  width: 40, height: 40,
+                  background: notifOpen ? 'var(--bg-active)' : 'transparent',
+                  border: `1.5px solid ${notifOpen ? 'var(--border-default)' : 'var(--border-input)'}`,
+                  borderRadius: 9.6,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: notifOpen ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  transition: 'background 140ms ease, color 140ms ease, border-color 140ms ease',
+                }}
+              >
                 <BellIcon />
                 <span style={{
                   position: 'absolute', top: -3, right: -3,
@@ -827,8 +835,13 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   outline: '2px solid var(--bg-sidebar)',
                   animation: 'notif-pulse 2s ease-out infinite',
-                }}>7</span>
+                }}>2</span>
               </button>
+              <NotificationsPopover
+                open={notifOpen}
+                anchorRef={bellRef}
+                onClose={() => setNotifOpen(false)}
+              />
             </div>
           </div>
 
