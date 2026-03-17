@@ -198,17 +198,11 @@ function DownloadButton({ notifId, fileType, dlState, onDownload }) {
         height: 26,
         padding: '0 10px',
         borderRadius: 6,
-        border: isDone
-          ? '1px solid rgba(75,163,115,0.4)'
-          : '1px solid rgba(91,163,255,0.35)',
-        background: isDone
-          ? 'rgba(75,163,115,0.12)'
-          : isLoading
-            ? 'rgba(91,163,255,0.08)'
-            : 'rgba(91,163,255,0.12)',
-        color: isDone ? '#4BA373' : '#5BA3FF',
+        border: '1px solid var(--border-default)',
+        background: isDone ? 'var(--bg-active)' : isLoading ? 'transparent' : 'var(--bg-active)',
+        color: isDone ? 'var(--text-muted)' : 'var(--text-secondary)',
         fontSize: 11.5,
-        fontWeight: 600,
+        fontWeight: 500,
         cursor: isDone || isLoading ? 'default' : 'pointer',
         transition: 'all 200ms ease',
         transform: isLoading ? 'scale(0.97)' : 'scale(1)',
@@ -216,8 +210,8 @@ function DownloadButton({ notifId, fileType, dlState, onDownload }) {
         minWidth: 110,
         justifyContent: 'center',
       }}
-      onMouseEnter={e => { if (!isDone && !isLoading) e.currentTarget.style.background = 'rgba(91,163,255,0.20)' }}
-      onMouseLeave={e => { if (!isDone && !isLoading) e.currentTarget.style.background = 'rgba(91,163,255,0.12)' }}
+      onMouseEnter={e => { if (!isDone && !isLoading) { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
+      onMouseLeave={e => { if (!isDone && !isLoading) { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
       onMouseDown={e => { if (!isDone && !isLoading) e.currentTarget.style.transform = 'scale(0.95)' }}
       onMouseUp={e => { if (!isDone && !isLoading) e.currentTarget.style.transform = 'scale(1)' }}
     >
@@ -255,7 +249,7 @@ function MentionReply({ notifId, replyState, onReplyChange, onSend, onCancel }) 
     return (
       <div style={{
         display: 'inline-flex', alignItems: 'center', gap: 5,
-        fontSize: 11.5, color: '#4BA373', fontWeight: 500,
+        fontSize: 11.5, color: 'var(--text-secondary)', fontWeight: 500,
         animation: 'notifFadeIn 300ms ease both',
         padding: '4px 0',
       }}>
@@ -277,16 +271,16 @@ function MentionReply({ notifId, replyState, onReplyChange, onSend, onCancel }) 
             display: 'inline-flex', alignItems: 'center', gap: 5,
             height: 26, padding: '0 10px',
             borderRadius: 6,
-            border: '1px solid rgba(91,163,255,0.35)',
-            background: 'rgba(91,163,255,0.10)',
-            color: '#5BA3FF',
-            fontSize: 11.5, fontWeight: 600,
+            border: '1px solid var(--border-default)',
+            background: 'var(--bg-active)',
+            color: 'var(--text-secondary)',
+            fontSize: 11.5, fontWeight: 500,
             cursor: 'pointer',
-            transition: 'background 150ms',
+            transition: 'background 150ms, color 150ms',
             alignSelf: 'flex-start',
           }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(91,163,255,0.20)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'rgba(91,163,255,0.10)'}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
           onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
           onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
         >
@@ -335,7 +329,7 @@ function MentionReply({ notifId, replyState, onReplyChange, onSend, onCancel }) 
                 fontFamily: 'inherit',
                 transition: 'border-color 150ms',
               }}
-              onFocus={e => e.target.style.borderColor = '#5BA3FF'}
+              onFocus={e => e.target.style.borderColor = 'var(--text-muted)'}
               onBlur={e => e.target.style.borderColor = 'var(--border-input)'}
             />
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -347,8 +341,8 @@ function MentionReply({ notifId, replyState, onReplyChange, onSend, onCancel }) 
                   height: 26, padding: '0 12px',
                   borderRadius: 6,
                   border: 'none',
-                  background: state.text.trim() ? '#5BA3FF' : 'rgba(91,163,255,0.3)',
-                  color: '#fff',
+                  background: state.text.trim() ? 'var(--text-secondary)' : 'var(--bg-active)',
+                  color: state.text.trim() ? 'var(--bg-canvas)' : 'var(--text-muted)',
                   fontSize: 11.5, fontWeight: 600,
                   cursor: state.text.trim() && !state.sending ? 'pointer' : 'default',
                   transition: 'background 150ms, transform 100ms',
@@ -414,12 +408,8 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
         display: 'flex',
         gap: 11,
         padding: isActionable ? '11px 14px 13px 12px' : '11px 14px 11px 12px',
-        background: hovered && !isActionable
-          ? 'var(--bg-active)'
-          : notif.read
-            ? 'transparent'
-            : cfg.bg,
-        borderLeft: notif.read ? '3px solid transparent' : `3px solid ${cfg.color}`,
+        background: hovered && !isActionable ? 'var(--bg-active)' : 'transparent',
+        borderLeft: notif.read ? '3px solid transparent' : `3px solid ${cfg.color}40`,
         cursor: isActionable ? 'default' : 'pointer',
         transition: 'background 140ms ease, opacity 220ms ease, transform 220ms ease',
         opacity: dismissing ? 0 : 1,
@@ -494,8 +484,8 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
             {/* Snippet quote block */}
             <div style={{
               padding: '7px 10px',
-              borderLeft: `2.5px solid ${cfg.color}`,
-              background: 'rgba(91,163,255,0.06)',
+              borderLeft: `2px solid var(--border-default)`,
+              background: 'var(--bg-active)',
               borderRadius: '0 6px 6px 0',
               fontSize: 11.5,
               color: 'var(--text-secondary)',
@@ -527,15 +517,15 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '3px 8px', borderRadius: 5,
-              background: 'rgba(75,163,115,0.10)',
-              border: '1px solid rgba(75,163,115,0.2)',
+              background: 'var(--bg-active)',
+              border: '1px solid var(--border-default)',
               marginBottom: 8,
             }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#4BA373" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
-              <span style={{ fontSize: 10.5, color: '#4BA373', fontWeight: 600 }}>{notif.meta.fileName}</span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 500 }}>{notif.meta.fileName}</span>
               <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· {notif.meta.fileSize} · {notif.meta.rows}</span>
             </div>
             <div>
@@ -551,15 +541,15 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '3px 8px', borderRadius: 5,
-              background: 'rgba(249,115,22,0.10)',
-              border: '1px solid rgba(249,115,22,0.2)',
+              background: 'var(--bg-active)',
+              border: '1px solid var(--border-default)',
               marginBottom: 8,
             }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
-              <span style={{ fontSize: 10.5, color: '#F97316', fontWeight: 600 }}>{notif.meta.fileName}</span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 500 }}>{notif.meta.fileName}</span>
               <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· {notif.meta.fileSize} · {notif.meta.pages}</span>
             </div>
             <div>
@@ -575,11 +565,11 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
           </span>
           {!notif.read && (
             <div style={{
-              width: 5, height: 5,
+              width: 4, height: 4,
               borderRadius: '50%',
-              background: cfg.color,
+              background: 'var(--text-muted)',
               flexShrink: 0,
-              opacity: 0.85,
+              opacity: 0.6,
             }} />
           )}
         </div>
@@ -862,7 +852,7 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
                 onClick={handleMarkAllRead}
                 style={{
                   fontSize: 11.5,
-                  color: markingAll ? 'var(--text-muted)' : 'var(--color-brand)',
+                  color: 'var(--text-secondary)',
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   padding: '3px 6px', borderRadius: 5,
                   transition: 'color 200ms ease, background 140ms ease',
