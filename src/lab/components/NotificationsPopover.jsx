@@ -188,6 +188,9 @@ function DownloadButton({ notifId, fileType, dlState, onDownload }) {
   const label = fileType === 'csv' ? 'CSV' : 'PDF'
   const isDone = state === 'done'
   const isLoading = state === 'downloading'
+  const isFailed = state === 'failed'
+  const isIdle = !isDone && !isLoading && !isFailed
+  const isInteractive = isIdle || isFailed
 
   return (
     <button
@@ -198,22 +201,22 @@ function DownloadButton({ notifId, fileType, dlState, onDownload }) {
         height: 26,
         padding: '0 10px',
         borderRadius: 6,
-        border: '1px solid var(--border-default)',
+        border: `1px solid ${isFailed ? 'var(--border-default)' : 'var(--border-default)'}`,
         background: isDone ? 'var(--bg-active)' : isLoading ? 'transparent' : 'var(--bg-active)',
-        color: isDone ? 'var(--text-muted)' : 'var(--text-secondary)',
+        color: isDone ? 'var(--text-muted)' : isFailed ? 'var(--text-secondary)' : 'var(--text-secondary)',
         fontSize: 11.5,
         fontWeight: 500,
-        cursor: isDone || isLoading ? 'default' : 'pointer',
+        cursor: isInteractive ? 'pointer' : 'default',
         transition: 'all 200ms ease',
         transform: isLoading ? 'scale(0.97)' : 'scale(1)',
         whiteSpace: 'nowrap',
         minWidth: 110,
         justifyContent: 'center',
       }}
-      onMouseEnter={e => { if (!isDone && !isLoading) { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
-      onMouseLeave={e => { if (!isDone && !isLoading) { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
-      onMouseDown={e => { if (!isDone && !isLoading) e.currentTarget.style.transform = 'scale(0.95)' }}
-      onMouseUp={e => { if (!isDone && !isLoading) e.currentTarget.style.transform = 'scale(1)' }}
+      onMouseEnter={e => { if (isInteractive) { e.currentTarget.style.background = 'var(--bg-elevated)'; e.currentTarget.style.color = 'var(--text-primary)' } }}
+      onMouseLeave={e => { if (isInteractive) { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
+      onMouseDown={e => { if (isInteractive) e.currentTarget.style.transform = 'scale(0.95)' }}
+      onMouseUp={e => { if (isInteractive) e.currentTarget.style.transform = 'scale(1)' }}
     >
       {isLoading && <Spinner />}
       {isDone && (
@@ -221,14 +224,19 @@ function DownloadButton({ notifId, fileType, dlState, onDownload }) {
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       )}
-      {!isLoading && !isDone && (
+      {isFailed && (
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+        </svg>
+      )}
+      {isIdle && (
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
       )}
-      {isLoading ? `Downloading…` : isDone ? `Downloaded` : `Download ${label}`}
+      {isLoading ? 'Downloading…' : isDone ? 'Downloaded' : isFailed ? 'Retry' : `Download ${label}`}
     </button>
   )
 }
@@ -313,6 +321,8 @@ function MentionReply({ notifId, replyState, onReplyChange, onSend, onCancel }) 
               onChange={e => onReplyChange(notifId, { text: e.target.value })}
               onClick={e => e.stopPropagation()}
               placeholder="Write a reply…"
+              aria-label="Write a reply"
+              maxLength={500}
               rows={2}
               style={{
                 width: '100%',
@@ -403,6 +413,7 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
 
   return (
     <div
+      role="listitem"
       style={{
         position: 'relative',
         display: 'flex',
@@ -525,8 +536,8 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
-              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 500 }}>{notif.meta.fileName}</span>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· {notif.meta.fileSize} · {notif.meta.rows}</span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 500, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notif.meta.fileName}</span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>· {notif.meta.fileSize} · {notif.meta.rows}</span>
             </div>
             <div>
               <DownloadButton notifId={notif.id} fileType="csv" dlState={dlState} onDownload={onDownload} />
@@ -549,8 +560,8 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
               </svg>
-              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 500 }}>{notif.meta.fileName}</span>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· {notif.meta.fileSize} · {notif.meta.pages}</span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 500, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notif.meta.fileName}</span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>· {notif.meta.fileSize} · {notif.meta.pages}</span>
             </div>
             <div>
               <DownloadButton notifId={notif.id} fileType="pdf" dlState={dlState} onDownload={onDownload} />
@@ -570,7 +581,9 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
               background: 'var(--text-muted)',
               flexShrink: 0,
               opacity: 0.6,
-            }} />
+            }}>
+              <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Unread</span>
+            </div>
           )}
         </div>
       </div>
@@ -579,6 +592,7 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
       {hovered && !isActionable && (
         <button
           onClick={handleDismiss}
+          aria-label={`Dismiss: ${notif.title}`}
           style={{
             position: 'absolute',
             top: 8, right: 8,
@@ -594,7 +608,6 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
           }}
           onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
           onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'var(--bg-card)' }}
-          title="Dismiss"
         >
           ×
         </button>
@@ -604,6 +617,7 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
       {isActionable && (
         <button
           onClick={handleDismiss}
+          aria-label={`Dismiss: ${notif.title}`}
           style={{
             position: 'absolute',
             top: 8, right: 8,
@@ -620,7 +634,6 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '1'}
           onMouseLeave={e => e.currentTarget.style.opacity = '0.5'}
-          title="Dismiss"
         >
           ×
         </button>
@@ -693,16 +706,46 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
   const todayItems  = notifications.filter(n => isToday(n.ts))
   const olderItems  = notifications.filter(n => !isToday(n.ts))
 
-  // Position from anchor
+  // Position from anchor — clamped to viewport
   useEffect(() => {
     if (!open || !anchorRef?.current) return
     const r = anchorRef.current.getBoundingClientRect()
-    setPos({ top: r.bottom + 8, left: r.left })
+    const PANEL_W = 360, PANEL_H = 520, GAP = 8
+    const rawLeft = Math.min(r.left, window.innerWidth - PANEL_W - GAP)
+    const rawTop = r.bottom + GAP
+    const top = rawTop + PANEL_H > window.innerHeight
+      ? Math.max(GAP, r.top - PANEL_H - GAP)
+      : rawTop
+    setPos({ top, left: Math.max(GAP, rawLeft) })
     setClosing(false)
     setVisible(true)
     setEntering(true)
     setTimeout(() => setEntering(false), 600)
+    // Move focus into popover for keyboard/screen-reader users
+    setTimeout(() => popoverRef.current?.focus(), 50)
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reposition on resize or scroll while open
+  useEffect(() => {
+    if (!visible || !anchorRef?.current) return
+    function reposition() {
+      const r = anchorRef.current?.getBoundingClientRect()
+      if (!r) return
+      const PANEL_W = 360, PANEL_H = 520, GAP = 8
+      const rawLeft = Math.min(r.left, window.innerWidth - PANEL_W - GAP)
+      const rawTop = r.bottom + GAP
+      const top = rawTop + PANEL_H > window.innerHeight
+        ? Math.max(GAP, r.top - PANEL_H - GAP)
+        : rawTop
+      setPos({ top, left: Math.max(GAP, rawLeft) })
+    }
+    window.addEventListener('resize', reposition)
+    window.addEventListener('scroll', reposition, true)
+    return () => {
+      window.removeEventListener('resize', reposition)
+      window.removeEventListener('scroll', reposition, true)
+    }
+  }, [visible, anchorRef])
 
   const handleClose = useCallback(() => {
     setClosing(true)
@@ -742,9 +785,9 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
     setTimeout(() => setMarkingAll(false), 400)
   }
 
-  // Download flow
+  // Download flow — idle → downloading → done | failed
   function handleDownload(id) {
-    if (dlState[id] && dlState[id] !== 'idle') return
+    if (dlState[id] && dlState[id] !== 'idle' && dlState[id] !== 'failed') return
     setDlState(prev => ({ ...prev, [id]: 'downloading' }))
     setTimeout(() => {
       setDlState(prev => ({ ...prev, [id]: 'done' }))
@@ -758,15 +801,19 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
   }
 
   function handleSend(id) {
-    handleReplyChange(id, { sending: true })
+    handleReplyChange(id, { sending: true, cancelled: false })
     setTimeout(() => {
-      handleReplyChange(id, { sending: false, sent: true, expanded: false })
+      setReplyState(prev => {
+        const cur = prev[id] || {}
+        if (cur.cancelled) return prev  // user cancelled — don't mark sent
+        return { ...prev, [id]: { ...cur, sending: false, sent: true, expanded: false } }
+      })
       handleMarkRead(id)
     }, 900)
   }
 
   function handleCancel(id) {
-    handleReplyChange(id, { expanded: false, text: '' })
+    handleReplyChange(id, { expanded: false, text: '', sending: false, cancelled: true })
   }
 
   if (!visible) return null
@@ -807,7 +854,10 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
         ref={popoverRef}
         role="dialog"
         aria-label="Notifications"
+        aria-modal="true"
+        tabIndex={-1}
         style={{
+          outline: 'none',
           position: 'fixed',
           top: pos.top,
           left: pos.left,
@@ -842,7 +892,7 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
                 background: '#E8613A', color: '#fff',
                 padding: '1px 6px', borderRadius: 999, lineHeight: 1.6,
               }}>
-                {unreadCount}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </div>
@@ -884,7 +934,7 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
         </div>
 
         {/* Body */}
-        <div className="notif-scroll" style={{ flex: 1, overflowY: 'auto' }}>
+        <div className="notif-scroll" role="list" style={{ flex: 1, overflowY: 'auto' }}>
           {notifications.length === 0 ? (
             <EmptyState />
           ) : (
