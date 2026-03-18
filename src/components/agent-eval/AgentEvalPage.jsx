@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { MdRepeat } from 'react-icons/md'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -1316,10 +1317,7 @@ function FeedbackModal({ agent, onClose }) {
               borderRadius: 20,
               fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
             }}>
-              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                <path d="M6 2A4 4 0 1 1 8 2.54" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-                <path d="M6.5 0.6L8 2.54 6 3.3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <MdRepeat size={13} />
               Repeats on the same day each month
             </div>
           </div>
