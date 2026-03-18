@@ -19,6 +19,18 @@ class PreviewErrorBoundary extends Component {
   }
 }
 
+// ── Preview renderer — must be a real component so errors thrown by def.render()
+// or state.preview() are caught by the PreviewErrorBoundary above it.
+// Calling def.render() inline in the parent's render body bypasses the boundary.
+function PreviewRenderer({ def, state }) {
+  if (!state) return null
+  return state.preview
+    ? state.preview()
+    : def.render
+      ? def.render(state.props ?? {})
+      : null
+}
+
 // ── Syntax-highlighted code block ─────────────────────────────────────────────
 
 const SYNTAX_COLOR = {
@@ -457,7 +469,8 @@ function ShareComponentButton({ name }) {
 function ComponentDetail({ name, def, onNavigate, stateIdx, onStateChange }) {
   const [previewKey, setPreviewKey] = useState(0)
 
-  const activeState = def.states[stateIdx] ?? def.states[0]
+  const states      = def.states ?? []
+  const activeState = states[stateIdx] ?? states[0] ?? null
   const bd = def.breakdown ?? {}
 
   function selectState(i) {
@@ -491,7 +504,7 @@ function ComponentDetail({ name, def, onNavigate, stateIdx, onStateChange }) {
 
       {/* ── State pills ── */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 12 }}>
-        {def.states.map((s, i) => {
+        {states.map((s, i) => {
           const isActive = i === stateIdx
           return (
             <button
@@ -520,18 +533,14 @@ function ComponentDetail({ name, def, onNavigate, stateIdx, onStateChange }) {
         animation:    'inspector-preview-flash 180ms ease',
       }}>
         <PreviewErrorBoundary key={previewKey}>
-          {activeState.preview
-            ? activeState.preview()
-            : def.render
-              ? def.render(activeState.props)
-              : null}
+          <PreviewRenderer def={def} state={activeState} />
         </PreviewErrorBoundary>
       </div>
       <style>{`
         @keyframes inspector-preview-flash { from { opacity: 0.4 } to { opacity: 1 } }
       `}</style>
       <p style={{ fontSize: 9, color: T.textSubtle, fontFamily: T.fontMono, margin: '4px 0 0 2px' }}>
-        {activeState.label} state · pointer events disabled in preview
+        {activeState?.label} state · pointer events disabled in preview
       </p>
 
       {/* ── Breakdown: Icons ── */}
@@ -639,7 +648,12 @@ export default function ComponentsTab() {
     const nodes = document.querySelectorAll('[data-inspector]')
     const names = [...new Set([...nodes].map(n => n.getAttribute('data-inspector')))]
     const valid  = names.filter(name => COMPONENT_DEFS[name])
-    setDiscovered(valid)
+    // Use functional updater so React bails out (same reference) when the list
+    // hasn't changed. Without this, every DOM mutation from the preview panel
+    // triggers a re-render → re-render triggers more DOM changes → infinite loop.
+    setDiscovered(prev =>
+      prev.length === valid.length && prev.every((n, i) => n === valid[i]) ? prev : valid
+    )
     setSelected(prev => prev ?? (valid.length > 0 ? valid[0] : null))
   }
 
