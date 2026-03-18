@@ -2484,7 +2484,7 @@ export const COMPONENT_DEFS = {
         preview: () => center(
           <div style={{ width: 340 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>Send report to</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif" }}>Agents</span>
               <button style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: 'var(--text-muted)', fontWeight: 500, fontFamily: "'Byrd',sans-serif" }}>
                 <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.3"/><path d="M3.5 5.5h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg>
                 Minimize
@@ -2513,7 +2513,7 @@ export const COMPONENT_DEFS = {
         ),
       },
     ],
-    snippet: () => `// Internal to FeedbackModal in AgentEvalPage\n<PersonPicker\n  label="Send report to"\n  people={MOCK_LEADS}\n  selected={selectedLeads}\n  onToggle={toggleLead}\n  placeholder="Search team leads & managers…"\n/>`,
+    snippet: () => `// Internal to FeedbackModal in AgentEvalPage\n<PersonPicker\n  label="Agents"\n  people={MOCK_AGENTS}\n  selected={selectedAgents}\n  onToggle={toggleAgent}\n  placeholder="Search agents…"\n/>`,
     source: AgentEvalPageSrc,
     files: [{ path: 'src/components/agent-eval/AgentEvalPage.jsx', src: AgentEvalPageSrc }],
     breakdown: {
@@ -2538,7 +2538,7 @@ export const COMPONENT_DEFS = {
 
   FeedbackModal: {
     tier: 'Molecule',
-    description: 'Send Feedback Form modal. Two PersonPickers (Agents + Send report to), notify-by-mail checkbox, segmented schedule control (One-time / Recurring), frequency PresetSelect (recurring only), date input with theme-aware color-scheme, message textarea.',
+    description: 'Export Report modal. Single PersonPicker (Agents), segmented schedule control (One-time / Monthly), date input with theme-aware color-scheme. Report is automatically routed to the agent\'s supervised manager or team lead.',
     props: [
       { name: 'agent',   type: 'object',      default: 'current agent object' },
       { name: 'onClose', type: '() => void',  default: 'required' },
@@ -2552,20 +2552,15 @@ export const COMPONENT_DEFS = {
             <div style={{ marginBottom: 14 }}>
               <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif", marginBottom: 6 }}>Schedule</div>
               <div style={{ display: 'flex', gap: 3, padding: 3, background: 'var(--bg-active)', border: '1px solid var(--border-default)', borderRadius: 9 }}>
-                {['One-time', 'Recurring'].map((opt, i) => (
+                {['One-time', 'Monthly'].map((opt, i) => (
                   <div key={opt} style={{ flex: 1, height: 28, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontFamily: "'Byrd',sans-serif", background: i === 0 ? 'var(--bg-card)' : 'transparent', color: i === 0 ? 'var(--text-primary)' : 'var(--text-muted)', fontWeight: i === 0 ? 500 : 400, boxShadow: i === 0 ? '0 1px 3px rgba(0,0,0,0.18)' : 'none' }}>{opt}</div>
                 ))}
               </div>
             </div>
             {/* Date */}
-            <div style={{ marginBottom: 14 }}>
+            <div>
               <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif", marginBottom: 6 }}>Send date</div>
               <div style={{ height: 36, background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)', borderRadius: 7, display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif" }}>dd/mm/yyyy</div>
-            </div>
-            {/* Message */}
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd',sans-serif", marginBottom: 6 }}>Message (optional)</div>
-              <div style={{ height: 60, background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)', borderRadius: 7, padding: '8px 10px', fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif" }}>Add a personal note…</div>
             </div>
           </div>
         ),
@@ -2580,15 +2575,15 @@ export const COMPONENT_DEFS = {
         { name: 'Pulse Coral (Confirm & Send btn)', hex: '#FF7056' },
         { name: '--bg-active (segment track)',      hex: 'var(--bg-active)' },
       ],
-      subComponents: ['Modal', 'Button', 'PersonPicker', 'PresetSelect'],
+      subComponents: ['Modal', 'Button', 'PersonPicker'],
       notes: [
         'Opened by the Export button in AgentDetailView header',
-        'Confirm & Send disabled until both Agents and Send-to have ≥1 selection',
+        'Confirm & Send disabled until Agents has ≥1 selection',
+        'Report is auto-routed to the agent\'s team lead/manager — no recipient selection needed',
+        'Schedule: One-time sends on selected date; Monthly recurs from start date',
+        'Date label changes to "Start date" when Monthly is selected',
         'Date input: color-scheme CSS rule (index.css) — light by default, dark under [data-theme="dark"]',
-        'Frequency PresetSelect only renders when schedType === "recurring"',
-        'Notify by mail checkbox uses --n100 (#606060) border — visible in both themes',
         'Sent state: button shows "Sent ✓", modal auto-closes after 1.4s',
-        'PersonPicker auto-focuses search on expand for keyboard navigation',
       ],
     },
   },
