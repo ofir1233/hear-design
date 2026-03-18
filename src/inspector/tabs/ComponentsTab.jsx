@@ -1,8 +1,23 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Component } from 'react'
 import { T } from '../theme.js'
 import { COMPONENT_DEFS } from '../data/componentDefs.jsx'
 import { tokenize } from '../utils/syntaxHighlight.js'
 import * as Icons from '../../components/icons/index.jsx'
+
+// ── Preview error boundary ─────────────────────────────────────────────────────
+class PreviewErrorBoundary extends Component {
+  constructor(props) { super(props); this.state = { error: null } }
+  static getDerivedStateFromError(e) { return { error: e } }
+  componentDidCatch() {}
+  render() {
+    if (this.state.error) return (
+      <div style={{ padding: '20px 16px', color: T.textSubtle, fontSize: 11, fontFamily: T.fontMono }}>
+        Preview error: {this.state.error.message}
+      </div>
+    )
+    return this.props.children
+  }
+}
 
 // ── Syntax-highlighted code block ─────────────────────────────────────────────
 
@@ -504,11 +519,13 @@ function ComponentDetail({ name, def, onNavigate, stateIdx, onStateChange }) {
         marginBottom: 4,
         animation:    'inspector-preview-flash 180ms ease',
       }}>
-        {activeState.preview
-          ? activeState.preview()
-          : def.render
-            ? def.render(activeState.props)
-            : null}
+        <PreviewErrorBoundary key={previewKey}>
+          {activeState.preview
+            ? activeState.preview()
+            : def.render
+              ? def.render(activeState.props)
+              : null}
+        </PreviewErrorBoundary>
       </div>
       <style>{`
         @keyframes inspector-preview-flash { from { opacity: 0.4 } to { opacity: 1 } }

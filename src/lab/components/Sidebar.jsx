@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import HearLogo from '../../components/HearLogo.jsx'
+import NotificationsPopover from './NotificationsPopover.jsx'
 import {
   HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon,
   AgentIcon, KnowledgeIcon, AiTaskIcon, CustomersIcon, SettingsIcon,
@@ -255,6 +256,15 @@ function TrashIcon() {
   )
 }
 
+function ShareIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+    </svg>
+  )
+}
+
 // Typewriter hook — types text character-by-character when active
 function useTypewriter(text, active, speed = 72) {
   const [displayed, setDisplayed] = useState(active ? '' : text)
@@ -273,7 +283,7 @@ function useTypewriter(text, active, speed = 72) {
 }
 
 // Single session history item with 3-dot menu + rename
-function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRename }) {
+function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRename, onShare }) {
   const [hovered, setHovered]       = useState(false)
   const [menuOpen, setMenuOpen]     = useState(false)
   const [menuOpenKey, setMenuOpenKey] = useState(0)
@@ -452,6 +462,20 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
                   >
                     <PencilIcon /> Rename
                   </button>
+                  <button
+                    onClick={e => { e.stopPropagation(); setMenuOpen(false); onShare && onShare(session.id) }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '9px 12px', background: 'transparent', border: 'none',
+                      cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13,
+                      textAlign: 'left', transition: 'background 120ms ease',
+                      animation: `dropdownItemIn 140ms cubic-bezier(0.22,1,0.36,1) 35ms both`,
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-active)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    <ShareIcon /> Share
+                  </button>
                   <div style={{ height: 1, background: 'var(--border-input)', margin: '0 8px' }} />
                   <button
                     onClick={e => { e.stopPropagation(); setMenuOpen(false); onDelete(session.id) }}
@@ -576,7 +600,7 @@ const NAV_ITEMS = [
 
 const DESIGN_LAB = { id: '__design_lab__', label: 'Design Lab' }
 
-export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', onProjectChange, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onNewChat }) {
+export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', onProjectChange, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onShareSession, onNewChat }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
   const [historyAnim, setHistoryAnim]   = useState(null) // null | 'in' | 'out'
   const [allHistoryOpen, setAllHistoryOpen] = useState(false)
@@ -608,6 +632,8 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
   const [projectOpen, setProjectOpen]   = useState(false)
   const [projectOpenKey, setProjectOpenKey] = useState(0)
   const projectRef = useRef(null)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const bellRef = useRef(null)
 
   const isDemo = !!(userId?.includes('@') && companyConfig)
 
@@ -804,16 +830,21 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               </div>
             </div>
             <div style={{ position: 'relative', flexShrink: 0 }}>
-              <button style={{
-                position: 'relative',
-                width: 40, height: 40,
-                background: 'transparent',
-                border: '1.5px solid var(--border-input)',
-                borderRadius: 9.6,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer',
-                color: 'var(--text-secondary)',
-              }}>
+              <button
+                ref={bellRef}
+                onClick={() => setNotifOpen(v => !v)}
+                style={{
+                  position: 'relative',
+                  width: 40, height: 40,
+                  background: notifOpen ? 'var(--bg-active)' : 'transparent',
+                  border: `1.5px solid ${notifOpen ? 'var(--border-default)' : 'var(--border-input)'}`,
+                  borderRadius: 9.6,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: notifOpen ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  transition: 'background 140ms ease, color 140ms ease, border-color 140ms ease',
+                }}
+              >
                 <BellIcon />
                 <span style={{
                   position: 'absolute', top: -3, right: -3,
@@ -827,8 +858,13 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   outline: '2px solid var(--bg-sidebar)',
                   animation: 'notif-pulse 2s ease-out infinite',
-                }}>7</span>
+                }}>2</span>
               </button>
+              <NotificationsPopover
+                open={notifOpen}
+                anchorRef={bellRef}
+                onClose={() => setNotifOpen(false)}
+              />
             </div>
           </div>
 
@@ -956,6 +992,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                       onSelect={onSelectSession}
                       onDelete={onDeleteSession}
                       onRename={onRenameSession}
+                      onShare={onShareSession}
                     />
                   ))}
 
@@ -991,6 +1028,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                           onSelect={onSelectSession}
                           onDelete={onDeleteSession}
                           onRename={onRenameSession}
+                          onShare={onShareSession}
                         />
                       ))}
                     </>

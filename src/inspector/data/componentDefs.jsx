@@ -52,7 +52,8 @@ import DataPageSrc      from '../../components/data/DataPage.jsx?raw'
 import ExplorePageSrc   from '../../components/data/ExplorePage.jsx?raw'
 import MockDataSrc      from '../../components/data/mockData.js?raw'
 import ReportsPageSrc    from '../../components/reports/ReportsPage.jsx?raw'
-import AgentEvalPageSrc  from '../../components/agent-eval/AgentEvalPage.jsx?raw'
+import AgentEvalPageSrc           from '../../components/agent-eval/AgentEvalPage.jsx?raw'
+import NotificationsPopoverSrc    from '../../lab/components/NotificationsPopover.jsx?raw'
 
 // ─── Shared preview wrapper helpers ──────────────────────────────────────────
 
@@ -2458,6 +2459,171 @@ export const COMPONENT_DEFS = {
         'MOCK_LEADS: 6 team leads/managers for Send-report-to picker',
         'All scroll containers use className="smooth-scroll" for blended scrollbars',
         'position:fixed layout — left offset = sidebarWidth prop (matches DataPage/ExplorePage)',
+      ],
+    },
+  },
+
+  // ── NotificationsPopover ───────────────────────────────────────────────────
+
+  NotificationsPopover: {
+    tier: 'Organism',
+    description: 'Lab-only notification panel. Portal-rendered popover anchored to the bell button in Sidebar. 5 notification tags matching real platform sources (DATA, SIGNALS, MAGIC_API, AGENT_EVALUATION, CHAT). Navigable types (DATA → /data or /customers, SIGNALS → /magicapi-v2) close the popover and fire onNavigate. Tag-only types are passive. Delivered via GCP Pub/Sub → MongoDB → PubNub → NotificationProvider.',
+    props: [
+      { name: 'open',       type: 'boolean',          default: 'false' },
+      { name: 'anchorRef',  type: 'React.RefObject',   default: 'required' },
+      { name: 'onClose',    type: '() => void',         default: 'required' },
+      { name: 'onNavigate', type: '(path: string) => void', default: 'undefined' },
+    ],
+    states: [
+      { label: 'With unread', props: { _state: 'unread' } },
+      { label: 'All tags',    props: { _state: 'tags' } },
+      { label: 'Empty',       props: { _state: 'empty' } },
+    ],
+    render: (p) => {
+      const state = p._state || 'unread'
+      // Panel chrome — inlined as plain divs (no inline component functions).
+      // Defining sub-components inside a render() function creates new references
+      // on every call, causing React to remount DOM nodes which fires the
+      // MutationObserver in ComponentsTab → infinite re-render loop.
+      const panelShell = (inner) => (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
+          <div style={{
+            width: 360, background: 'var(--bg-card)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 12, overflow: 'hidden',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
+            fontFamily: "'Byrd', sans-serif",
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px 11px', borderBottom: '1px solid var(--border-default)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Notifications</span>
+                {state !== 'empty' && <span style={{ fontSize: 10, fontWeight: 700, background: '#E8613A', color: '#fff', padding: '1px 6px', borderRadius: 999, lineHeight: 1.6 }}>3</span>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                {state !== 'empty' && <span style={{ fontSize: 11.5, color: 'var(--text-secondary)', fontWeight: 500 }}>Mark all read</span>}
+                <span style={{ color: 'var(--text-muted)', fontSize: 16 }}>×</span>
+              </div>
+            </div>
+            {inner}
+          </div>
+        </div>
+      )
+
+      // Helper: render a notification row
+      const notifRow = ({ color, bg, iconPath, title, description, tag, navTo, time, unread }) => (
+        <div style={{ display: 'flex', gap: 11, padding: '11px 14px 12px 12px', cursor: navTo ? 'pointer' : 'default' }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: `color-mix(in srgb, ${color} 15%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0, marginTop: 1 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: iconPath }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12.5, fontWeight: unread ? 600 : 400, color: unread ? 'var(--text-primary)' : 'var(--text-secondary)', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 20 }}>{title}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 7, lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{description}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 6px', borderRadius: 4, background: bg, color, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.05em', fontFamily: 'monospace' }}>{tag}</span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>{time}</span>
+              {unread && <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />}
+              {navTo && <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-muted)', fontFamily: 'monospace', opacity: 0.45 }}>{navTo}</span>}
+            </div>
+          </div>
+        </div>
+      )
+
+      if (state === 'empty') {
+        return panelShell(
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px' }}>
+            <div style={{ color: 'var(--text-muted)', opacity: 0.45, marginBottom: 10 }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 4.17-1.75 6.58-2.73 7.75A1 1 0 0 0 3 18.5h18a1 1 0 0 0 .73-1.75C20.75 15.58 19 13.17 19 9a7 7 0 0 0-7-7z"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" strokeWidth="1.5"/><polyline points="9 10 11 12 15 8" strokeWidth="1.5"/></svg>
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>You're all caught up</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No new notifications</div>
+          </div>
+        )
+      }
+
+      if (state === 'tags') {
+        // Show one row per tag type
+        return panelShell(
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '8px 14px 4px' }}>All tag types</div>
+            {notifRow({ color: '#4BA373', bg: 'rgba(75,163,115,0.10)', iconPath: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>', title: 'File Export Ready', description: 'Your Q4 data export has completed.', tag: 'DATA', navTo: '/data', time: '18m ago', unread: true })}
+            {notifRow({ color: '#5BA3FF', bg: 'rgba(91,163,255,0.10)', iconPath: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>', title: 'Signal Export Complete', description: 'Magic API v2 signal export finished.', tag: 'SIGNALS', navTo: '/magicapi-v2', time: '2h ago', unread: true })}
+            {notifRow({ color: '#A78BFA', bg: 'rgba(167,139,250,0.10)', iconPath: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>', title: 'Magic API Export Done', description: 'Your Magic API v1 export completed.', tag: 'MAGIC_API', time: '5h ago', unread: false })}
+            {notifRow({ color: '#F97316', bg: 'rgba(249,115,22,0.10)', iconPath: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>', title: 'Evaluation Shared with You', description: 'Sarah Chen shared "Q4 Agent Performance" with your team.', tag: 'AGENT_EVALUATION', time: '1d ago', unread: false })}
+            {notifRow({ color: '#F59E0B', bg: 'rgba(245,158,11,0.10)', iconPath: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', title: 'New Chat Session Activity', description: 'A new session was added to your monitored conversations.', tag: 'CHAT', time: '1d ago', unread: false })}
+          </div>
+        )
+      }
+
+      // Default: 3 unread (DATA file + DATA customer + SIGNALS)
+      return panelShell(
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '8px 14px 4px' }}>Today</div>
+          {notifRow({ color: '#4BA373', bg: 'rgba(75,163,115,0.10)', iconPath: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>', title: 'File Export Ready', description: 'Your Q4 data export has completed and is ready to review.', tag: 'DATA', navTo: '/data', time: '18m ago', unread: true })}
+          {notifRow({ color: '#4BA373', bg: 'rgba(75,163,115,0.10)', iconPath: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>', title: 'Customer Export Complete', description: '2,340 customer records exported successfully.', tag: 'DATA', navTo: '/customers', time: '2h ago', unread: true })}
+          {notifRow({ color: '#5BA3FF', bg: 'rgba(91,163,255,0.10)', iconPath: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>', title: 'Signal Export Complete', description: 'Your Magic API v2 signal export has finished processing.', tag: 'SIGNALS', navTo: '/magicapi-v2', time: '5h ago', unread: true })}
+        </div>
+      )
+    },
+    snippet: () =>
+`// In Lab Sidebar — wire to bell button ref
+const [notifOpen, setNotifOpen] = useState(false)
+const bellRef = useRef(null)
+
+<button ref={bellRef} onClick={() => setNotifOpen(v => !v)}>
+  <BellIcon />
+</button>
+
+<NotificationsPopover
+  open={notifOpen}
+  anchorRef={bellRef}
+  onClose={() => setNotifOpen(false)}
+  onNavigate={(path) => router.push(path)}
+/>`,
+    source: NotificationsPopoverSrc,
+    files: [
+      { path: 'src/lab/components/NotificationsPopover.jsx', src: NotificationsPopoverSrc },
+      { path: 'src/lab/components/Sidebar.jsx',              src: SidebarSrc },
+    ],
+    npm: [],
+    breakdown: {
+      icons: [
+        'BellIcon (trigger — in Sidebar)',
+        'Inline SVG: DATA (spreadsheet), SIGNALS (waveform), MAGIC_API (code brackets)',
+        'Inline SVG: AGENT_EVALUATION (share/nodes), CHAT (message bubble)',
+      ],
+      colors: [
+        { name: '--bg-card (panel bg)',          hex: '#FFFFFF' },
+        { name: '--bg-active (chip/btn bg)',      hex: '#E8E8E6' },
+        { name: '--border-default',               hex: '#E5E7EB' },
+        { name: '--text-primary (unread title)',   hex: '#181818' },
+        { name: '--text-secondary (read title)',   hex: '#606060' },
+        { name: '--text-muted (desc/timestamp)',   hex: '#9B9B9B' },
+        { name: 'Unread badge',                   hex: '#E8613A' },
+        { name: 'DATA tag',                       hex: '#4BA373' },
+        { name: 'SIGNALS tag',                    hex: '#5BA3FF' },
+        { name: 'MAGIC_API tag',                  hex: '#A78BFA' },
+        { name: 'AGENT_EVALUATION tag',           hex: '#F97316' },
+        { name: 'CHAT tag',                       hex: '#F59E0B' },
+      ],
+      subComponents: [],
+      notes: [
+        'LAB ONLY — lives in src/lab/components/NotificationsPopover.jsx',
+        'Uses createPortal(…, document.body) for z-index isolation',
+        'Position computed from anchorRef.getBoundingClientRect() on open — top: anchor.bottom+8, left: anchor.left (viewport-clamped)',
+        '5 tags: DATA · SIGNALS · MAGIC_API · AGENT_EVALUATION · CHAT',
+        'Navigable tags: DATA (→ /data or /customers) and SIGNALS (→ /magicapi-v2) — row click fires onNavigate + closes',
+        'Tag-only tags: MAGIC_API · AGENT_EVALUATION · CHAT — no navigation action',
+        'CHAT notifications filtered by platform when user is on the active chat page/session',
+        'Delivery pipeline: Server Action → GCP Pub/Sub → MongoDB → PubNub → NotificationProvider → here',
+        'Scopes: USER · TEAM · PROJECT · ORGANIZATION · GLOBAL_USER (defined in src/mongo/types/notification.ts)',
+        'Entrance animation frozen in useRef on mount — prevents re-fire on parent state updates',
+        'Click outside + Escape closes; no focus trap (non-modal pattern)',
+        'Grouping: Today / Earlier based on same calendar day vs earlier',
+        'Stagger: items animate in at index × 35ms delay',
+        'Popover enter: translateY(-8px)+scale(0.98) → identity (200ms); exit: reverse (150ms)',
+        'Rows use hover bg (ROW_HOVER_BG = color-mix(--bg-active 32%, --bg-card)) — no border separators between items',
+        'Type icon bg: color-mix(in srgb, tag-color 15%, transparent) — adapts to light/dark without fixed opacity values',
       ],
     },
   },
