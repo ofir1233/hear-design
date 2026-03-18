@@ -1197,16 +1197,23 @@ function PersonPicker({ label, people, selected, onToggle, placeholder }) {
   )
 }
 
+const TEAM_LEAD_MAP = {
+  Alpha: { name: 'Rachel Kim',      role: 'Team Lead · Alpha' },
+  Beta:  { name: 'David Okafor',    role: 'Team Lead · Beta'  },
+  Delta: { name: 'Sara Mendez',     role: 'Team Lead · Delta' },
+  Gamma: { name: 'Tom Brecker',     role: 'Team Lead · Gamma' },
+}
+
 function FeedbackModal({ agent, onClose }) {
   const [selectedAgents, setSelectedAgents] = useState(agent ? [agent] : [])
-  const [selectedLeads,  setSelectedLeads]  = useState([])
-  const [notifyByMail,   setNotifyByMail]   = useState(false)
-
   const [schedType, setSchedType] = useState('one-time')
-  const [frequency, setFrequency] = useState('weekly')
   const [sendDate,  setSendDate]  = useState('')
-  const [message,   setMessage]   = useState('')
   const [sent,      setSent]      = useState(false)
+
+  const autoRecipient = useMemo(() => {
+    if (!selectedAgents.length) return null
+    return TEAM_LEAD_MAP[selectedAgents[0].team] ?? { name: 'Anna Strickland', role: 'QA Manager' }
+  }, [selectedAgents])
 
   function handleSend() { setSent(true); setTimeout(onClose, 1400) }
 
@@ -1220,17 +1227,16 @@ function FeedbackModal({ agent, onClose }) {
   }
 
   function toggleAgent(a) { setSelectedAgents(prev => prev.find(x => x.id === a.id) ? prev.filter(x => x.id !== a.id) : [...prev, a]) }
-  function toggleLead(l)  { setSelectedLeads(prev  => prev.find(x => x.id === l.id) ? prev.filter(x => x.id !== l.id) : [...prev, l]) }
 
   return (
     <Modal
       open
       onClose={onClose}
-      title="Send Feedback Form"
+      title="Export Report"
       footer={
         <>
           <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleSend} disabled={sent || selectedAgents.length === 0 || selectedLeads.length === 0}>
+          <Button size="sm" onClick={handleSend} disabled={sent || selectedAgents.length === 0}>
             {sent ? 'Sent ✓' : 'Confirm & Send'}
           </Button>
         </>
@@ -1247,37 +1253,30 @@ function FeedbackModal({ agent, onClose }) {
           placeholder="Search agents…"
         />
 
-        {/* Send report to — who receives it */}
-        <div>
-          <PersonPicker
-            label="Send report to"
-            people={MOCK_LEADS}
-            selected={selectedLeads}
-            onToggle={toggleLead}
-            placeholder="Search team leads & managers…"
-          />
-          {/* Notify by mail lives here — applies to the recipients */}
-          <div
-            onClick={() => setNotifyByMail(v => !v)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              marginTop: 10, paddingTop: 10,
-              borderTop: '1px solid var(--border-default)',
-              cursor: 'pointer', userSelect: 'none',
-            }}
-          >
+        {/* Send report to — auto-assigned, read-only */}
+        {autoRecipient && (
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Send report to</label>
             <div style={{
-              width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-              border: `1.5px solid ${notifyByMail ? 'var(--b100)' : 'var(--n100, #606060)'}`,
-              background: notifyByMail ? 'var(--b100)' : 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 120ms ease',
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '8px 12px',
+              background: 'var(--bg-active)', border: '1.5px solid var(--border-default)',
+              borderRadius: 8,
             }}>
-              {notifyByMail && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+              <div style={{
+                width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                background: 'var(--b100)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 700, color: '#fff', fontFamily: "'Byrd', sans-serif",
+              }}>
+                {autoRecipient.name.split(' ').map(w => w[0]).join('')}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>{autoRecipient.name}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{autoRecipient.role}</div>
+              </div>
             </div>
-            <span style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)' }}>Notify by mail</span>
           </div>
-        </div>
+        )}
 
         {/* Schedule type — segmented control */}
         <div>
@@ -1288,8 +1287,8 @@ function FeedbackModal({ agent, onClose }) {
             borderRadius: 9,
           }}>
             {[
-              { id: 'one-time',  label: 'One-time' },
-              { id: 'recurring', label: 'Recurring' },
+              { id: 'one-time', label: 'One-time' },
+              { id: 'monthly',  label: 'Monthly'  },
             ].map(opt => (
               <button key={opt.id} onClick={() => setSchedType(opt.id)} style={{
                 flex: 1, height: 30, borderRadius: 6, fontSize: 12,
@@ -1305,51 +1304,16 @@ function FeedbackModal({ agent, onClose }) {
           </div>
         </div>
 
-        {/* Frequency (only for recurring) */}
-        {schedType === 'recurring' && (
-          <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Frequency</label>
-            <PresetSelect
-              fullWidth
-              options={[
-                { value: 'weekly',    label: 'Weekly' },
-                { value: 'biweekly', label: 'Bi-weekly' },
-                { value: 'monthly',  label: 'Monthly' },
-                { value: 'quarterly',label: 'Quarterly' },
-              ]}
-              value={frequency}
-              onChange={setFrequency}
-            />
-          </div>
-        )}
-
         {/* Send date */}
         <div>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>
-            {schedType === 'recurring' ? 'Start date' : 'Send date'}
+            {schedType === 'monthly' ? 'Start date' : 'Send date'}
           </label>
           <input
             type="date"
             value={sendDate}
             onChange={e => setSendDate(e.target.value)}
             style={inputStyle}
-            onFocus={e  => { e.currentTarget.style.borderColor = 'var(--b100)' }}
-            onBlur={e   => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
-          />
-        </div>
-
-        {/* Message */}
-        <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Message (optional)</label>
-          <textarea
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            placeholder="Add a personal note to the feedback form…"
-            rows={3}
-            style={{
-              ...inputStyle, height: 'auto', padding: '8px 10px',
-              resize: 'vertical', lineHeight: 1.5,
-            }}
             onFocus={e  => { e.currentTarget.style.borderColor = 'var(--b100)' }}
             onBlur={e   => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
           />
