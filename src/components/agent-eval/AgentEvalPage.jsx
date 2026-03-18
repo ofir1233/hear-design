@@ -1197,23 +1197,11 @@ function PersonPicker({ label, people, selected, onToggle, placeholder }) {
   )
 }
 
-const TEAM_LEAD_MAP = {
-  Alpha: { name: 'Rachel Kim',      role: 'Team Lead · Alpha' },
-  Beta:  { name: 'David Okafor',    role: 'Team Lead · Beta'  },
-  Delta: { name: 'Sara Mendez',     role: 'Team Lead · Delta' },
-  Gamma: { name: 'Tom Brecker',     role: 'Team Lead · Gamma' },
-}
-
 function FeedbackModal({ agent, onClose }) {
   const [selectedAgents, setSelectedAgents] = useState(agent ? [agent] : [])
   const [schedType, setSchedType] = useState('one-time')
   const [sendDate,  setSendDate]  = useState('')
   const [sent,      setSent]      = useState(false)
-
-  const autoRecipient = useMemo(() => {
-    if (!selectedAgents.length) return null
-    return TEAM_LEAD_MAP[selectedAgents[0].team] ?? { name: 'Anna Strickland', role: 'QA Manager' }
-  }, [selectedAgents])
 
   function handleSend() { setSent(true); setTimeout(onClose, 1400) }
 
@@ -1253,30 +1241,6 @@ function FeedbackModal({ agent, onClose }) {
           placeholder="Search agents…"
         />
 
-        {/* Send report to — auto-assigned, read-only */}
-        {autoRecipient && (
-          <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Send report to</label>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              padding: '8px 12px',
-              background: 'var(--bg-active)', border: '1.5px solid var(--border-default)',
-              borderRadius: 8,
-            }}>
-              <div style={{
-                width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-                background: 'var(--b100)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, color: '#fff', fontFamily: "'Byrd', sans-serif",
-              }}>
-                {autoRecipient.name.split(' ').map(w => w[0]).join('')}
-              </div>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>{autoRecipient.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{autoRecipient.role}</div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Schedule type — segmented control */}
         <div>
