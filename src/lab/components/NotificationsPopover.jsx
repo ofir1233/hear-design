@@ -1,7 +1,14 @@
 /**
  * NotificationsPopover — Design Lab only.
- * Rich actionable notifications: file downloads (CSV/PDF), mentions with
- * inline reply, plus passive info types. Full motion system via CSS keyframes.
+ * Completion/sharing event notifications mapped to the real platform sources:
+ *   DATA            — File & Customer exports  (navigates to /data or /customers)
+ *   SIGNALS         — Magic API v2 exports     (navigates to /magicapi-v2)
+ *   MAGIC_API       — Magic API v1 exports     (tag display only)
+ *   AGENT_EVALUATION— Evaluation sharing       (tag display only)
+ *   CHAT            — Chat session events      (tag display only; filtered on active chat page)
+ *
+ * Delivery pipeline: Server Action → GCP Pub/Sub → MongoDB → PubNub → NotificationProvider → here
+ * Scopes: USER · TEAM · PROJECT · ORGANIZATION · GLOBAL_USER
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
@@ -13,57 +20,53 @@ const NOW = Date.now()
 const INITIAL_NOTIFICATIONS = [
   {
     id: 'n1',
-    type: 'mention',
-    title: 'Sarah Chen mentioned you',
-    description: 'In "Q4 Agent Performance Review"',
+    tag: 'DATA',
+    title: 'File Export Ready',
+    description: 'Your Q4 data export has completed and is ready to review.',
     ts: NOW - 18 * 60 * 1000,
     read: false,
-    meta: {
-      mentionedBy: { name: 'Sarah Chen', initials: 'SC', color: '#FF7056' },
-      snippet: 'Hey @ofir, can you double-check the sentiment scores for the ACME batch? Something looks off on the last column.',
-      conversationId: 'conv-q4-review',
-    },
+    navTo: '/data',
   },
   {
     id: 'n2',
-    type: 'csv_ready',
-    title: 'Agent Report Export Ready',
-    description: 'Your October agent performance report has been compiled.',
+    tag: 'DATA',
+    title: 'Customer Export Complete',
+    description: '2,340 customer records exported successfully.',
     ts: NOW - 2 * 60 * 60 * 1000,
     read: false,
-    meta: {
-      fileName: 'agent-report-oct-2025.csv',
-      fileSize: '2.4 MB',
-      rows: '4,821 rows',
-    },
+    navTo: '/customers',
   },
   {
     id: 'n3',
-    type: 'pdf_ready',
-    title: 'Daily Trend Report Ready',
-    description: 'AI-generated summary of today\'s call trends and sentiment shifts.',
+    tag: 'SIGNALS',
+    title: 'Signal Export Complete',
+    description: 'Your Magic API v2 signal export has finished processing.',
     ts: NOW - 5 * 60 * 60 * 1000,
     read: false,
-    meta: {
-      fileName: 'daily-trends-oct-28-2025.pdf',
-      fileSize: '840 KB',
-      pages: '12 pages',
-    },
+    navTo: '/magicapi-v2',
   },
   {
     id: 'n4',
-    type: 'processing',
-    title: 'Audio Processing Complete',
-    description: '48 new calls analyzed from the Oct 28 batch. Sentiment and topic data are ready.',
+    tag: 'MAGIC_API',
+    title: 'Magic API Export Done',
+    description: 'Your Magic API v1 export completed successfully.',
     ts: NOW - 26 * 60 * 60 * 1000,
     read: true,
   },
   {
     id: 'n5',
-    type: 'alert',
-    title: 'Compliance Flag Detected',
-    description: '3 calls in the Oct 27 batch were flagged for potential policy violations.',
+    tag: 'AGENT_EVALUATION',
+    title: 'Evaluation Shared with You',
+    description: 'Sarah Chen shared the "Q4 Agent Performance" evaluation with your team.',
     ts: NOW - 30 * 60 * 60 * 1000,
+    read: true,
+  },
+  {
+    id: 'n6',
+    tag: 'CHAT',
+    title: 'New Chat Session Activity',
+    description: 'A new session was added to your monitored conversations.',
+    ts: NOW - 32 * 60 * 60 * 1000,
     read: true,
   },
 ]
@@ -71,48 +74,8 @@ const INITIAL_NOTIFICATIONS = [
 // ─── Type config ──────────────────────────────────────────────────────────────
 
 const TYPE_CONFIG = {
-  processing: {
-    color: '#5BA3FF',
-    bg: 'rgba(91,163,255,0.10)',
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2"/>
-        <path d="M8 21h8M12 17v4M9 8h6M9 12h4"/>
-      </svg>
-    ),
-  },
-  insight: {
-    color: '#A78BFA',
-    bg: 'rgba(167,139,250,0.10)',
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 18h6M10 22h4M12 2a7 7 0 0 1 4 12.9V17H8v-2.1A7 7 0 0 1 12 2z"/>
-      </svg>
-    ),
-  },
-  download: {
-    color: '#4BA373',
-    bg: 'rgba(75,163,115,0.10)',
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="7 10 12 15 17 10"/>
-        <line x1="12" y1="15" x2="12" y2="3"/>
-      </svg>
-    ),
-  },
-  alert: {
-    color: '#F59E0B',
-    bg: 'rgba(245,158,11,0.10)',
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-        <line x1="12" y1="9" x2="12" y2="13"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
-    ),
-  },
-  csv_ready: {
+  DATA: {
+    label: 'DATA',
     color: '#4BA373',
     bg: 'rgba(75,163,115,0.10)',
     icon: (
@@ -121,39 +84,60 @@ const TYPE_CONFIG = {
         <polyline points="14 2 14 8 20 8"/>
         <line x1="8" y1="13" x2="16" y2="13"/>
         <line x1="8" y1="17" x2="16" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/>
       </svg>
     ),
   },
-  pdf_ready: {
-    color: '#F97316',
-    bg: 'rgba(249,115,22,0.10)',
-    icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <path d="M9 13h1c.55 0 1 .45 1 1v1c0 .55-.45 1-1 1H9v-3zM13 13h2M13 15.5h1.5M13 18h2"/>
-      </svg>
-    ),
-  },
-  mention: {
+  SIGNALS: {
+    label: 'SIGNALS',
     color: '#5BA3FF',
     bg: 'rgba(91,163,255,0.10)',
     icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="4"/>
-        <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/>
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+    ),
+  },
+  MAGIC_API: {
+    label: 'MAGIC_API',
+    color: '#A78BFA',
+    bg: 'rgba(167,139,250,0.10)',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6"/>
+        <polyline points="8 6 2 12 8 18"/>
+      </svg>
+    ),
+  },
+  AGENT_EVALUATION: {
+    label: 'AGENT_EVALUATION',
+    color: '#F97316',
+    bg: 'rgba(249,115,22,0.10)',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="18" cy="5" r="3"/>
+        <circle cx="6" cy="12" r="3"/>
+        <circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    ),
+  },
+  CHAT: {
+    label: 'CHAT',
+    color: '#F59E0B',
+    bg: 'rgba(245,158,11,0.10)',
+    icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
     ),
   },
 }
 
 // ─── Theme-adaptive fill colors ───────────────────────────────────────────────
-// bg-active in light mode is #E8E8E6 — too dark as a fill on white cards.
-// Dilute against bg-card so it's subtle in light and still visible in dark.
-const FILL_BG       = 'color-mix(in srgb, var(--bg-active) 45%, var(--bg-card))'  // chips, quote, buttons
-const FILL_BG_HOVER = 'color-mix(in srgb, var(--bg-active) 70%, var(--bg-card))'  // deeper hover on fills
-const ROW_HOVER_BG  = 'color-mix(in srgb, var(--bg-active) 32%, var(--bg-card))'  // row hover tint
+const FILL_BG       = 'color-mix(in srgb, var(--bg-active) 45%, var(--bg-card))'
+const FILL_BG_HOVER = 'color-mix(in srgb, var(--bg-active) 70%, var(--bg-card))'
+const ROW_HOVER_BG  = 'color-mix(in srgb, var(--bg-active) 32%, var(--bg-card))'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -177,233 +161,15 @@ function isToday(ts) {
     d.getDate() === today.getDate()
 }
 
-// ─── Spinner ──────────────────────────────────────────────────────────────────
-
-function Spinner() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-      style={{ animation: 'notifSpin 700ms linear infinite', flexShrink: 0 }}>
-      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-    </svg>
-  )
-}
-
-// ─── Download button — 3-state ────────────────────────────────────────────────
-
-function DownloadButton({ notifId, fileType, dlState, onDownload }) {
-  const state = dlState[notifId] || 'idle'
-  const label = fileType === 'csv' ? 'CSV' : 'PDF'
-  const isDone = state === 'done'
-  const isLoading = state === 'downloading'
-  const isFailed = state === 'failed'
-  const isIdle = !isDone && !isLoading && !isFailed
-  const isInteractive = isIdle || isFailed
-
-  return (
-    <button
-      onClick={e => { e.stopPropagation(); onDownload(notifId) }}
-      disabled={isLoading || isDone}
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 5,
-        height: 26,
-        padding: '0 10px',
-        borderRadius: 6,
-        border: `1px solid ${isFailed ? 'var(--border-default)' : 'var(--border-default)'}`,
-        background: isDone ? FILL_BG : isLoading ? 'transparent' : FILL_BG,
-        color: isDone ? 'var(--text-muted)' : isFailed ? 'var(--text-secondary)' : 'var(--text-secondary)',
-        fontSize: 11.5,
-        fontWeight: 500,
-        cursor: isInteractive ? 'pointer' : 'default',
-        transition: 'all 200ms ease',
-        transform: isLoading ? 'scale(0.97)' : 'scale(1)',
-        whiteSpace: 'nowrap',
-        minWidth: 110,
-        justifyContent: 'center',
-      }}
-      onMouseEnter={e => { if (isInteractive) { e.currentTarget.style.background = FILL_BG_HOVER; e.currentTarget.style.color = 'var(--text-primary)' } }}
-      onMouseLeave={e => { if (isInteractive) { e.currentTarget.style.background = FILL_BG; e.currentTarget.style.color = 'var(--text-secondary)' } }}
-      onMouseDown={e => { if (isInteractive) e.currentTarget.style.transform = 'scale(0.95)' }}
-      onMouseUp={e => { if (isInteractive) e.currentTarget.style.transform = 'scale(1)' }}
-    >
-      {isLoading && <Spinner />}
-      {isDone && (
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-      )}
-      {isFailed && (
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
-        </svg>
-      )}
-      {isIdle && (
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-      )}
-      {isLoading ? 'Downloading…' : isDone ? 'Downloaded' : isFailed ? 'Retry' : `Download ${label}`}
-    </button>
-  )
-}
-
-// ─── Mention reply composer ────────────────────────────────────────────────────
-
-function MentionReply({ notifId, replyState, onReplyChange, onSend, onCancel }) {
-  const state = replyState[notifId] || { expanded: false, text: '', sending: false, sent: false }
-  const textareaRef = useRef(null)
-
-  useEffect(() => {
-    if (state.expanded && textareaRef.current) {
-      setTimeout(() => textareaRef.current?.focus(), 230)
-    }
-  }, [state.expanded])
-
-  if (state.sent) {
-    return (
-      <div style={{
-        display: 'inline-flex', alignItems: 'center', gap: 5,
-        fontSize: 11.5, color: 'var(--text-secondary)', fontWeight: 500,
-        animation: 'notifFadeIn 300ms ease both',
-        padding: '4px 0',
-      }}>
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="20 6 9 17 4 12"/>
-        </svg>
-        Reply sent
-      </div>
-    )
-  }
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {/* Reply button (collapsed state) */}
-      {!state.expanded && (
-        <button
-          onClick={e => { e.stopPropagation(); onReplyChange(notifId, { expanded: true }) }}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            height: 26, padding: '0 10px',
-            borderRadius: 6,
-            border: '1px solid var(--border-default)',
-            background: FILL_BG,
-            color: 'var(--text-secondary)',
-            fontSize: 11.5, fontWeight: 500,
-            cursor: 'pointer',
-            transition: 'background 150ms, color 150ms',
-            alignSelf: 'flex-start',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = FILL_BG_HOVER; e.currentTarget.style.color = 'var(--text-primary)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = FILL_BG; e.currentTarget.style.color = 'var(--text-secondary)' }}
-          onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-          onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 17 4 12 9 7"/>
-            <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
-          </svg>
-          Reply
-        </button>
-      )}
-
-      {/* Expanded composer — CSS grid trick for height animation */}
-      <div style={{
-        display: 'grid',
-        gridTemplateRows: state.expanded ? '1fr' : '0fr',
-        transition: 'grid-template-rows 220ms cubic-bezier(0.22,1,0.36,1)',
-      }}>
-        <div style={{ overflow: 'hidden' }}>
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: 6,
-            paddingTop: 2,
-            opacity: state.expanded ? 1 : 0,
-            transform: state.expanded ? 'translateY(0)' : 'translateY(-4px)',
-            transition: 'opacity 180ms ease, transform 180ms ease',
-            transitionDelay: state.expanded ? '80ms' : '0ms',
-          }}>
-            <textarea
-              ref={textareaRef}
-              value={state.text}
-              onChange={e => onReplyChange(notifId, { text: e.target.value })}
-              onClick={e => e.stopPropagation()}
-              placeholder="Write a reply…"
-              aria-label="Write a reply"
-              maxLength={500}
-              rows={2}
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '7px 10px',
-                borderRadius: 7,
-                border: '1px solid var(--border-input)',
-                background: 'var(--bg-canvas)',
-                color: 'var(--text-primary)',
-                fontSize: 12,
-                lineHeight: 1.5,
-                resize: 'none',
-                outline: 'none',
-                fontFamily: 'inherit',
-                transition: 'border-color 150ms',
-              }}
-              onFocus={e => e.target.style.borderColor = 'var(--text-muted)'}
-              onBlur={e => e.target.style.borderColor = 'var(--border-input)'}
-            />
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-              <button
-                onClick={e => { e.stopPropagation(); onSend(notifId) }}
-                disabled={!state.text.trim() || state.sending}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  height: 26, padding: '0 12px',
-                  borderRadius: 6,
-                  border: 'none',
-                  background: state.text.trim() ? 'var(--text-secondary)' : 'var(--bg-active)',
-                  color: state.text.trim() ? 'var(--bg-canvas)' : 'var(--text-muted)',
-                  fontSize: 11.5, fontWeight: 600,
-                  cursor: state.text.trim() && !state.sending ? 'pointer' : 'default',
-                  transition: 'background 150ms, transform 100ms',
-                }}
-                onMouseDown={e => { if (state.text.trim()) e.currentTarget.style.transform = 'scale(0.95)' }}
-                onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-              >
-                {state.sending ? <Spinner /> : null}
-                {state.sending ? 'Sending…' : 'Send'}
-              </button>
-              <button
-                onClick={e => { e.stopPropagation(); onCancel(notifId) }}
-                style={{
-                  height: 26, padding: '0 10px',
-                  borderRadius: 6,
-                  border: '1px solid var(--border-default)',
-                  background: 'transparent',
-                  color: 'var(--text-muted)',
-                  fontSize: 11.5, cursor: 'pointer',
-                  transition: 'background 130ms, color 130ms',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = FILL_BG; e.currentTarget.style.color = 'var(--text-primary)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ─── Single notification item ─────────────────────────────────────────────────
 
-function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onDownload, replyState, onReplyChange, onSend, onCancel }) {
+function NotifItem({ notif, index, onDismiss, onMarkRead, onNavigate, entering }) {
   const [dismissing, setDismissing] = useState(false)
   const [hovered, setHovered] = useState(false)
-  const cfg = TYPE_CONFIG[notif.type] ?? TYPE_CONFIG.processing
+  const cfg = TYPE_CONFIG[notif.tag] ?? TYPE_CONFIG.DATA
+  const hasNav = Boolean(notif.navTo)
 
-  const isActionable = ['csv_ready', 'pdf_ready', 'mention'].includes(notif.type)
-
-  // Freeze animation string on mount — prevents re-firing when parent state updates (dlState/replyState)
+  // Freeze animation string on mount — prevents re-firing when parent state updates
   const animationRef = useRef(
     entering ? `notifItemIn 240ms cubic-bezier(0.22,1,0.36,1) ${index * 35}ms both` : 'none'
   )
@@ -416,6 +182,7 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
 
   function handleItemClick() {
     if (!notif.read) onMarkRead(notif.id)
+    if (hasNav) onNavigate?.(notif.navTo)
   }
 
   return (
@@ -425,16 +192,15 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
         position: 'relative',
         display: 'flex',
         gap: 11,
-        padding: isActionable ? '11px 14px 13px 12px' : '11px 14px 11px 12px',
+        padding: '11px 14px 12px 12px',
         background: hovered ? ROW_HOVER_BG : 'transparent',
-        borderLeft: 'none',
-        cursor: isActionable ? 'default' : 'pointer',
+        cursor: hasNav ? 'pointer' : 'default',
         transition: 'background 140ms ease, opacity 220ms ease, transform 220ms ease',
         opacity: dismissing ? 0 : 1,
         transform: dismissing ? 'translateX(28px)' : 'none',
         animation: animationRef.current,
       }}
-      onClick={!isActionable ? handleItemClick : undefined}
+      onClick={handleItemClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -453,7 +219,7 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
 
       {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Title row */}
+        {/* Title */}
         <div style={{
           fontSize: 12.5,
           fontWeight: notif.read ? 400 : 600,
@@ -477,107 +243,26 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
-          marginBottom: 4,
+          marginBottom: 7,
         }}>
           {notif.description}
         </div>
 
-        {/* ── Mention: avatar snippet + reply ──────────────── */}
-        {notif.type === 'mention' && notif.meta && (
-          <div style={{ marginBottom: 8 }}>
-            {/* Who mentioned */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-              <div style={{
-                width: 18, height: 18, borderRadius: '50%',
-                background: notif.meta.mentionedBy.color,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 9, fontWeight: 700, color: '#fff', flexShrink: 0,
-              }}>
-                {notif.meta.mentionedBy.initials}
-              </div>
-              <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 500 }}>
-                {notif.meta.mentionedBy.name}
-              </span>
-            </div>
-            {/* Snippet quote block */}
-            <div style={{
-              padding: '7px 10px',
-              borderLeft: `2px solid var(--border-default)`,
-              background: FILL_BG,
-              borderRadius: '0 6px 6px 0',
-              fontSize: 11.5,
-              color: 'var(--text-secondary)',
-              lineHeight: 1.5,
-              fontStyle: 'italic',
-              marginBottom: 8,
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-            }}>
-              "{notif.meta.snippet}"
-            </div>
-            {/* Reply composer */}
-            <MentionReply
-              notifId={notif.id}
-              replyState={replyState}
-              onReplyChange={onReplyChange}
-              onSend={onSend}
-              onCancel={onCancel}
-            />
-          </div>
-        )}
-
-        {/* ── CSV ready: file meta + download ──────────────── */}
-        {notif.type === 'csv_ready' && notif.meta && (
-          <div style={{ marginBottom: 8 }}>
-            {/* File chip */}
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '3px 8px', borderRadius: 5,
-              background: FILL_BG,
-              border: '1px solid var(--border-default)',
-              marginBottom: 8,
-            }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 500, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notif.meta.fileName}</span>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>· {notif.meta.fileSize} · {notif.meta.rows}</span>
-            </div>
-            <div>
-              <DownloadButton notifId={notif.id} fileType="csv" dlState={dlState} onDownload={onDownload} />
-            </div>
-          </div>
-        )}
-
-        {/* ── PDF ready: file meta + download ──────────────── */}
-        {notif.type === 'pdf_ready' && notif.meta && (
-          <div style={{ marginBottom: 8 }}>
-            {/* File chip */}
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              padding: '3px 8px', borderRadius: 5,
-              background: FILL_BG,
-              border: '1px solid var(--border-default)',
-              marginBottom: 8,
-            }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-              <span style={{ fontSize: 10.5, color: 'var(--text-secondary)', fontWeight: 500, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{notif.meta.fileName}</span>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>· {notif.meta.fileSize} · {notif.meta.pages}</span>
-            </div>
-            <div>
-              <DownloadButton notifId={notif.id} fileType="pdf" dlState={dlState} onDownload={onDownload} />
-            </div>
-          </div>
-        )}
-
-        {/* Timestamp + unread dot inline — keeps top-right clear for dismiss × */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 0 }}>
+        {/* Tag chip + timestamp + unread dot */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center',
+            padding: '2px 6px',
+            borderRadius: 4,
+            background: cfg.bg,
+            color: cfg.color,
+            fontSize: 9.5, fontWeight: 700,
+            letterSpacing: '0.05em',
+            fontFamily: 'monospace',
+            flexShrink: 0,
+          }}>
+            {cfg.label}
+          </span>
           <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>
             {relativeTime(notif.ts)}
           </span>
@@ -592,11 +277,44 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
               <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Unread</span>
             </div>
           )}
+          {/* Navigation path hint for navigable types */}
+          {hasNav && (
+            <span style={{
+              marginLeft: 'auto',
+              fontSize: 10, fontWeight: 500,
+              color: hovered ? cfg.color : 'var(--text-muted)',
+              opacity: hovered ? 0.9 : 0.45,
+              fontFamily: 'monospace',
+              letterSpacing: '-0.01em',
+              whiteSpace: 'nowrap',
+              paddingRight: hovered ? 14 : 0,
+              transition: 'color 140ms, opacity 140ms, padding-right 140ms',
+            }}>
+              {notif.navTo}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Dismiss × — shown on hover */}
-      {hovered && !isActionable && (
+      {/* Chevron arrow — navigable items only, visible on hover */}
+      {hasNav && hovered && (
+        <div style={{
+          position: 'absolute',
+          top: '50%', right: 10,
+          transform: 'translateY(-50%)',
+          color: cfg.color,
+          opacity: 0.7,
+          display: 'flex', alignItems: 'center',
+          pointerEvents: 'none',
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      )}
+
+      {/* Dismiss × — shown on hover for non-nav items */}
+      {hovered && !hasNav && (
         <button
           onClick={handleDismiss}
           aria-label={`Dismiss: ${notif.title}`}
@@ -620,8 +338,8 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
         </button>
       )}
 
-      {/* Actionable dismiss — always accessible as small × top-right */}
-      {isActionable && (
+      {/* Dismiss for navigable items — small × always accessible at top-right */}
+      {hasNav && (
         <button
           onClick={handleDismiss}
           aria-label={`Dismiss: ${notif.title}`}
@@ -636,11 +354,11 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, entering, dlState, onD
             cursor: 'pointer',
             color: 'var(--text-muted)',
             fontSize: 13, lineHeight: 1, padding: 0,
-            opacity: 0.5,
+            opacity: hovered ? 0.7 : 0.3,
             transition: 'opacity 120ms',
           }}
           onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '0.5'}
+          onMouseLeave={e => e.currentTarget.style.opacity = hovered ? '0.7' : '0.3'}
         >
           ×
         </button>
@@ -693,19 +411,13 @@ function EmptyState() {
 
 // ─── Main popover ─────────────────────────────────────────────────────────────
 
-export default function NotificationsPopover({ open, anchorRef, onClose }) {
+export default function NotificationsPopover({ open, anchorRef, onClose, onNavigate }) {
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS)
   const [markingAll, setMarkingAll]       = useState(false)
   const [visible, setVisible]             = useState(false)
   const [closing, setClosing]             = useState(false)
   const [entering, setEntering]           = useState(false)
   const [pos, setPos]                     = useState({ top: 0, left: 0 })
-
-  // Download state machine per notification id: 'idle' | 'downloading' | 'done'
-  const [dlState, setDlState] = useState({})
-
-  // Reply state per mention notification id
-  const [replyState, setReplyState] = useState({})
 
   const popoverRef = useRef(null)
 
@@ -728,7 +440,6 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
     setVisible(true)
     setEntering(true)
     setTimeout(() => setEntering(false), 600)
-    // Move focus into popover for keyboard/screen-reader users
     setTimeout(() => popoverRef.current?.focus(), 50)
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -792,35 +503,9 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
     setTimeout(() => setMarkingAll(false), 400)
   }
 
-  // Download flow — idle → downloading → done | failed
-  function handleDownload(id) {
-    if (dlState[id] && dlState[id] !== 'idle' && dlState[id] !== 'failed') return
-    setDlState(prev => ({ ...prev, [id]: 'downloading' }))
-    setTimeout(() => {
-      setDlState(prev => ({ ...prev, [id]: 'done' }))
-      handleMarkRead(id)
-    }, 1600)
-  }
-
-  // Reply flow
-  function handleReplyChange(id, patch) {
-    setReplyState(prev => ({ ...prev, [id]: { ...(prev[id] || {}), ...patch } }))
-  }
-
-  function handleSend(id) {
-    handleReplyChange(id, { sending: true, cancelled: false })
-    setTimeout(() => {
-      setReplyState(prev => {
-        const cur = prev[id] || {}
-        if (cur.cancelled) return prev  // user cancelled — don't mark sent
-        return { ...prev, [id]: { ...cur, sending: false, sent: true, expanded: false } }
-      })
-      handleMarkRead(id)
-    }, 900)
-  }
-
-  function handleCancel(id) {
-    handleReplyChange(id, { expanded: false, text: '', sending: false, cancelled: true })
+  function handleNavigate(path) {
+    onNavigate?.(path)
+    handleClose()
   }
 
   if (!visible) return null
@@ -843,13 +528,6 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
         @keyframes notifEmptyIn {
           from { opacity: 0; transform: scale(0.95); }
           to   { opacity: 1; transform: scale(1); }
-        }
-        @keyframes notifFadeIn {
-          from { opacity: 0; transform: translateY(4px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes notifSpin {
-          to { transform: rotate(360deg); }
         }
         .notif-scroll::-webkit-scrollbar { width: 4px; }
         .notif-scroll::-webkit-scrollbar-track { background: transparent; }
@@ -953,10 +631,8 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
                     <NotifItem
                       key={n.id} notif={n} index={i}
                       onDismiss={handleDismiss} onMarkRead={handleMarkRead}
+                      onNavigate={handleNavigate}
                       entering={entering}
-                      dlState={dlState} onDownload={handleDownload}
-                      replyState={replyState} onReplyChange={handleReplyChange}
-                      onSend={handleSend} onCancel={handleCancel}
                     />
                   ))}
                 </>
@@ -968,10 +644,8 @@ export default function NotificationsPopover({ open, anchorRef, onClose }) {
                     <NotifItem
                       key={n.id} notif={n} index={todayItems.length + i}
                       onDismiss={handleDismiss} onMarkRead={handleMarkRead}
+                      onNavigate={handleNavigate}
                       entering={entering}
-                      dlState={dlState} onDownload={handleDownload}
-                      replyState={replyState} onReplyChange={handleReplyChange}
-                      onSend={handleSend} onCancel={handleCancel}
                     />
                   ))}
                 </>

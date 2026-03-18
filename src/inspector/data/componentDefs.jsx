@@ -428,6 +428,179 @@ export const COMPONENT_DEFS = {
     },
   },
 
+  // ── NavItem ────────────────────────────────────────────────────────────────
+
+  NavItem: {
+    tier: 'Atom',
+    description: 'Single navigation button in the Sidebar. Active state: cobalt tint bg + cobalt text. Inactive: transparent bg + text-secondary. 13 items total: Chat, Data, Reports, Signals, Alerts, Agent Evaluation, Knowledge, Magic API, AI Tasks, Customers, Actions, Marketplace, Settings.',
+    props: [
+      { name: 'label',    type: 'string',  default: 'required' },
+      { name: 'active',   type: 'boolean', default: 'false' },
+    ],
+    states: [
+      { label: 'Chat — active',            props: { _label: 'Chat',             _active: true  } },
+      { label: 'Chat — inactive',          props: { _label: 'Chat',             _active: false } },
+      { label: 'Data — active',            props: { _label: 'Data',             _active: true  } },
+      { label: 'Reports — active',         props: { _label: 'Reports',          _active: true  } },
+      { label: 'Signals — active',         props: { _label: 'Signals',          _active: true  } },
+      { label: 'Alerts — active',          props: { _label: 'Alerts',           _active: true  } },
+      { label: 'Agent Evaluation — active',props: { _label: 'Agent Evaluation', _active: true  } },
+      { label: 'Knowledge — active',       props: { _label: 'Knowledge',        _active: true  } },
+      { label: 'Magic API — active',       props: { _label: 'Magic API',        _active: true  } },
+      { label: 'AI Tasks — active',        props: { _label: 'AI Tasks',         _active: true  } },
+      { label: 'Customers — active',       props: { _label: 'Customers',        _active: true  } },
+      { label: 'Settings — active',        props: { _label: 'Settings',         _active: true  } },
+      { label: 'All items — inactive',     props: { _label: 'all',              _active: false } },
+    ],
+    render: (p) => {
+      const NAV_LABELS = ['Chat', 'Data', 'Reports', 'Signals', 'Alerts', 'Agent Evaluation', 'Knowledge', 'Magic API', 'AI Tasks', 'Customers', 'Actions', 'Marketplace', 'Settings']
+      const items = p._label === 'all' ? NAV_LABELS : [p._label]
+      return (
+        <div style={{ padding: '12px 16px', background: 'var(--bg-sidebar, #F5F5F3)', display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {items.map(label => {
+            const active = p._label !== 'all' && p._active
+            return (
+              <div key={label} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 12px', borderRadius: 8,
+                background: active ? 'rgba(91,163,255,0.12)' : 'transparent',
+                color: active ? '#5BA3FF' : 'var(--text-secondary)',
+                fontSize: 13.5, fontWeight: 400,
+              }}>
+                <div style={{ width: 16, height: 16, borderRadius: 3, background: active ? 'rgba(91,163,255,0.3)' : 'rgba(96,96,96,0.2)', flexShrink: 0 }} />
+                {label}
+              </div>
+            )
+          })}
+        </div>
+      )
+    },
+    snippet: () => `// Internal to Sidebar — rendered via NAV_ITEMS.map()\n// Active state controlled by activeNav prop on Sidebar\nconst NAV_ITEMS = [\n  { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon },\n  { id: 'data',        label: 'Data',             Icon: DataIcon },\n  { id: 'reports',     label: 'Reports',          Icon: ReportsIcon },\n  // ... 10 more\n]`,
+    breakdown: {
+      colors: [
+        { name: 'Active bg',   hex: '#5BA3FF' },
+        { name: 'Active text', hex: '#5BA3FF' },
+      ],
+      notes: [
+        'Defined inline in Sidebar.jsx — not a standalone exported component',
+        'Active: rgba(91,163,255,0.12) bg + #5BA3FF text',
+        'Inactive: transparent bg + var(--text-secondary)',
+        'Hover: var(--bg-active) background',
+        '13 items rendered via NAV_ITEMS array — see Sidebar source',
+      ],
+    },
+  },
+
+  // ── SessionItem ────────────────────────────────────────────────────────────
+
+  SessionItem: {
+    tier: 'Molecule',
+    description: 'Single chat history row in the Sidebar History section. Shows session title with a typewriter animation when newly named. 3-dot menu (Rename, Share, Delete) appears on hover. Rename mode replaces title with an inline input.',
+    props: [
+      { name: 'session',      type: 'object',  default: 'required' },
+      { name: 'isActive',     type: 'boolean', default: 'false' },
+      { name: 'isNewlyNamed', type: 'boolean', default: 'false' },
+      { name: 'onSelect',     type: '() => void', default: 'required' },
+      { name: 'onDelete',     type: '() => void', default: 'required' },
+      { name: 'onRename',     type: '() => void', default: 'required' },
+      { name: 'onShare',      type: '() => void', default: 'required' },
+    ],
+    states: [
+      { label: 'Default',         props: { _state: 'default'  } },
+      { label: 'Active',          props: { _state: 'active'   } },
+      { label: 'Pending (new)',   props: { _state: 'pending'  } },
+      { label: 'Menu open',       props: { _state: 'menu'     } },
+      { label: 'Renaming',        props: { _state: 'renaming' } },
+    ],
+    render: (p) => {
+      const state = p._state || 'default'
+      const isActive  = state === 'active'
+      const isPending = state === 'pending'
+      const isMenu    = state === 'menu'
+      const isRename  = state === 'renaming'
+      const title = isPending ? '' : 'Q4 agent performance review'
+
+      const row = (
+        <div style={{
+          position: 'relative', display: 'flex', alignItems: 'center',
+          padding: '7px 12px', borderRadius: 8, gap: 8,
+          background: isActive ? 'rgba(91,163,255,0.10)' : 'transparent',
+          color: isActive ? '#5BA3FF' : 'var(--text-secondary)',
+        }}>
+          {/* Title / input */}
+          {isRename ? (
+            <input
+              readOnly
+              defaultValue="Q4 agent performance review"
+              style={{
+                flex: 1, fontSize: 13, background: 'var(--bg-canvas)',
+                border: '1px solid #5BA3FF', borderRadius: 6,
+                padding: '2px 6px', color: 'var(--text-primary)',
+                outline: 'none',
+              }}
+            />
+          ) : (
+            <span style={{
+              flex: 1, fontSize: 13, overflow: 'hidden',
+              textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              color: isPending ? 'var(--text-muted)' : 'inherit',
+              fontStyle: isPending ? 'italic' : 'normal',
+            }}>
+              {isPending ? 'Generating title…' : title}
+            </span>
+          )}
+          {/* Dots button */}
+          {(state === 'default' || isActive) && (
+            <div style={{ opacity: 0.5, fontSize: 16, lineHeight: 1, letterSpacing: 2 }}>···</div>
+          )}
+          {/* Menu open */}
+          {isMenu && (
+            <div style={{ opacity: 1, fontSize: 16, lineHeight: 1, letterSpacing: 2, color: 'var(--text-primary)' }}>···</div>
+          )}
+        </div>
+      )
+
+      if (!isMenu) return (
+        <div style={{ padding: '6px 8px', background: 'var(--bg-sidebar, #F5F5F3)' }}>
+          {row}
+        </div>
+      )
+
+      return (
+        <div style={{ padding: '6px 8px', background: 'var(--bg-sidebar, #F5F5F3)', position: 'relative' }}>
+          {row}
+          <div style={{
+            marginTop: 4, marginLeft: 8,
+            background: 'var(--bg-card)', border: '1px solid var(--border-default)',
+            borderRadius: 8, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+          }}>
+            {['Rename', 'Share', 'Delete'].map((action, i) => (
+              <div key={action} style={{
+                padding: '9px 12px', fontSize: 12.5, cursor: 'pointer',
+                color: action === 'Delete' ? '#E05252' : 'var(--text-secondary)',
+                borderTop: i > 0 ? '1px solid var(--border-default)' : 'none',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                {action}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    },
+    snippet: () => `// Internal to Sidebar — rendered in the History section\n<SessionItem\n  session={session}\n  isActive={session.id === activeSessionId}\n  isNewlyNamed={session.id === newlyNamedId}\n  onSelect={() => onSelectSession(session.id)}\n  onDelete={() => onDeleteSession(session.id)}\n  onRename={(id, title) => onRenameSession(id, title)}\n  onShare={onShareSession}\n/>`,
+    breakdown: {
+      notes: [
+        'Defined inside Sidebar.jsx — not a standalone exported component',
+        'Pending state: empty session.title → shows "Generating title…" italic',
+        'Typewriter animation: useTypewriter hook activates when isNewlyNamed=true',
+        '3-dot menu: position:fixed, anchored to dotsRef.getBoundingClientRect()',
+        'Rename: inline <input> replaces title span, commits on blur/Enter',
+        'Share: fires onShare(session.id) — wires into NotificationsPopover pipeline',
+      ],
+    },
+  },
+
   // ── Sidebar ────────────────────────────────────────────────────────────────
 
   Sidebar: {
@@ -483,7 +656,7 @@ export const COMPONENT_DEFS = {
         { name: '--sidebar-outline', hex: 'rgba(0,0,0,0.08)' },
         { name: '--color-brand',     hex: '#FF7056' },
       ],
-      subComponents: ['HearLogo'],
+      subComponents: ['HearLogo', 'NavItem', 'SessionItem'],
       notes: [
         'LAB VERSION — lives in src/lab/components/Sidebar.jsx',
         'Floating: position fixed top:16 left:16 height:calc(100vh-32px)',
@@ -2467,16 +2640,17 @@ export const COMPONENT_DEFS = {
 
   NotificationsPopover: {
     tier: 'Organism',
-    description: 'Lab-only notification panel. Portal-rendered popover anchored to the bell button in Sidebar. 7 notification types with a strict color budget (type color on icon only). Actionable types: csv_ready (Download CSV), pdf_ready (Download PDF), mention (inline reply composer). Download 3-state machine + CSS grid reply expansion.',
+    description: 'Lab-only notification panel. Portal-rendered popover anchored to the bell button in Sidebar. 5 notification tags matching real platform sources (DATA, SIGNALS, MAGIC_API, AGENT_EVALUATION, CHAT). Navigable types (DATA → /data or /customers, SIGNALS → /magicapi-v2) close the popover and fire onNavigate. Tag-only types are passive. Delivered via GCP Pub/Sub → MongoDB → PubNub → NotificationProvider.',
     props: [
-      { name: 'open',      type: 'boolean',        default: 'false' },
-      { name: 'anchorRef', type: 'React.RefObject', default: 'required' },
-      { name: 'onClose',   type: '() => void',      default: 'required' },
+      { name: 'open',       type: 'boolean',          default: 'false' },
+      { name: 'anchorRef',  type: 'React.RefObject',   default: 'required' },
+      { name: 'onClose',    type: '() => void',         default: 'required' },
+      { name: 'onNavigate', type: '(path: string) => void', default: 'undefined' },
     ],
     states: [
-      { label: 'With unread',  props: { _state: 'unread' } },
-      { label: 'Mention open', props: { _state: 'mention' } },
-      { label: 'Empty',        props: { _state: 'empty' } },
+      { label: 'With unread', props: { _state: 'unread' } },
+      { label: 'All tags',    props: { _state: 'tags' } },
+      { label: 'Empty',       props: { _state: 'empty' } },
     ],
     render: (p) => {
       const state = p._state || 'unread'
@@ -2487,15 +2661,15 @@ export const COMPONENT_DEFS = {
       const panelShell = (inner) => (
         <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
           <div style={{
-            width: 340, background: 'var(--bg-card)',
+            width: 360, background: 'var(--bg-card)',
             border: '1px solid var(--border-default)',
             borderRadius: 12, overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)',
             fontFamily: "'Byrd', sans-serif",
           }}>
             {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 14px 10px', borderBottom: '1px solid var(--border-default)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px 11px', borderBottom: '1px solid var(--border-default)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Notifications</span>
                 {state !== 'empty' && <span style={{ fontSize: 10, fontWeight: 700, background: '#E8613A', color: '#fff', padding: '1px 6px', borderRadius: 999, lineHeight: 1.6 }}>3</span>}
               </div>
@@ -2509,110 +2683,58 @@ export const COMPONENT_DEFS = {
         </div>
       )
 
+      // Helper: render a notification row
+      const notifRow = ({ color, bg, iconPath, title, description, tag, navTo, time, unread }) => (
+        <div style={{ display: 'flex', gap: 11, padding: '11px 14px 12px 12px', cursor: navTo ? 'pointer' : 'default' }}>
+          <div style={{ width: 28, height: 28, borderRadius: 7, background: `color-mix(in srgb, ${color} 15%, transparent)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color, flexShrink: 0, marginTop: 1 }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: iconPath }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12.5, fontWeight: unread ? 600 : 400, color: unread ? 'var(--text-primary)' : 'var(--text-secondary)', marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: 20 }}>{title}</div>
+            <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 7, lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{description}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 6px', borderRadius: 4, background: bg, color, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.05em', fontFamily: 'monospace' }}>{tag}</span>
+              <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>{time}</span>
+              {unread && <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />}
+              {navTo && <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--text-muted)', fontFamily: 'monospace', opacity: 0.45 }}>{navTo}</span>}
+            </div>
+          </div>
+        </div>
+      )
+
       if (state === 'empty') {
         return panelShell(
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '36px 20px' }}>
-            <div style={{ color: 'var(--text-muted)', opacity: 0.4, marginBottom: 10 }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 4.17-1.75 6.58-2.73 7.75A1 1 0 0 0 3 18.5h18a1 1 0 0 0 .73-1.75C20.75 15.58 19 13.17 19 9a7 7 0 0 0-7-7z"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" strokeWidth="1.5"/><polyline points="9 10 11 12 15 8" strokeWidth="1.5"/></svg>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px' }}>
+            <div style={{ color: 'var(--text-muted)', opacity: 0.45, marginBottom: 10 }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 4.17-1.75 6.58-2.73 7.75A1 1 0 0 0 3 18.5h18a1 1 0 0 0 .73-1.75C20.75 15.58 19 13.17 19 9a7 7 0 0 0-7-7z"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" strokeWidth="1.5"/><polyline points="9 10 11 12 15 8" strokeWidth="1.5"/></svg>
             </div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 3 }}>You're all caught up</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 4 }}>You're all caught up</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No new notifications</div>
           </div>
         )
       }
 
-      if (state === 'mention') {
+      if (state === 'tags') {
+        // Show one row per tag type
         return panelShell(
           <div>
-            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '7px 14px 3px' }}>Today</div>
-            <div style={{ display: 'flex', gap: 10, padding: '10px 14px 12px' }}>
-              <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(91,163,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5BA3FF', flexShrink: 0, marginTop: 1 }}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Sarah Chen mentioned you</div>
-                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 6 }}>In "Q4 Agent Performance Review"</div>
-                <div style={{ padding: '6px 9px', borderLeft: '2px solid var(--border-default)', background: 'var(--bg-active)', borderRadius: '0 5px 5px 0', fontSize: 11, color: 'var(--text-secondary)', fontStyle: 'italic', marginBottom: 7, lineHeight: 1.45 }}>
-                  "Hey @ofir, can you double-check the sentiment scores?"
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <div style={{ height: 44, background: 'var(--bg-canvas)', border: '1px solid #5BA3FF', borderRadius: 7, padding: '6px 9px', fontSize: 11.5, color: 'var(--text-muted)' }}>On it — reviewing now…</div>
-                  <div style={{ display: 'flex', gap: 5 }}>
-                    <div style={{ height: 24, padding: '0 10px', borderRadius: 6, background: 'var(--text-secondary)', display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--bg-canvas)', fontWeight: 600 }}>Send</div>
-                    <div style={{ height: 24, padding: '0 9px', borderRadius: 6, border: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', fontSize: 11, color: 'var(--text-muted)' }}>Cancel</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 5 }}>
-                  <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>18m ago</span>
-                  <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
-                </div>
-              </div>
-            </div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '8px 14px 4px' }}>All tag types</div>
+            {notifRow({ color: '#4BA373', bg: 'rgba(75,163,115,0.10)', iconPath: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>', title: 'File Export Ready', description: 'Your Q4 data export has completed.', tag: 'DATA', navTo: '/data', time: '18m ago', unread: true })}
+            {notifRow({ color: '#5BA3FF', bg: 'rgba(91,163,255,0.10)', iconPath: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>', title: 'Signal Export Complete', description: 'Magic API v2 signal export finished.', tag: 'SIGNALS', navTo: '/magicapi-v2', time: '2h ago', unread: true })}
+            {notifRow({ color: '#A78BFA', bg: 'rgba(167,139,250,0.10)', iconPath: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>', title: 'Magic API Export Done', description: 'Your Magic API v1 export completed.', tag: 'MAGIC_API', time: '5h ago', unread: false })}
+            {notifRow({ color: '#F97316', bg: 'rgba(249,115,22,0.10)', iconPath: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>', title: 'Evaluation Shared with You', description: 'Sarah Chen shared "Q4 Agent Performance" with your team.', tag: 'AGENT_EVALUATION', time: '1d ago', unread: false })}
+            {notifRow({ color: '#F59E0B', bg: 'rgba(245,158,11,0.10)', iconPath: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', title: 'New Chat Session Activity', description: 'A new session was added to your monitored conversations.', tag: 'CHAT', time: '1d ago', unread: false })}
           </div>
         )
       }
 
-      // Default: 3 unread (mention + csv + pdf)
+      // Default: 3 unread (DATA file + DATA customer + SIGNALS)
       return panelShell(
         <div>
-          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '7px 14px 3px' }}>Today</div>
-          {/* Mention row */}
-          <div style={{ display: 'flex', gap: 10, padding: '9px 14px', borderBottom: '1px solid var(--border-default)' }}>
-            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(91,163,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5BA3FF', flexShrink: 0, marginTop: 1 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/></svg>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Sarah Chen mentioned you</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 6, lineHeight: 1.4 }}>In "Q4 Agent Performance Review"</div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 9px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↩ Reply</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>18m ago</span>
-                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
-              </div>
-            </div>
-          </div>
-          {/* CSV row */}
-          <div style={{ display: 'flex', gap: 10, padding: '9px 14px', borderBottom: '1px solid var(--border-default)' }}>
-            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(75,163,115,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4BA373', flexShrink: 0, marginTop: 1 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Agent Report Export Ready</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 5, lineHeight: 1.4 }}>October agent performance report compiled.</div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 5, background: 'var(--bg-active)', border: '1px solid var(--border-default)', marginBottom: 5 }}>
-                <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>agent-report-oct-2025.csv</span>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· 2.4 MB</span>
-              </div>
-              <div style={{ display: 'block' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↓ Download CSV</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>2h ago</span>
-                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
-              </div>
-            </div>
-          </div>
-          {/* PDF row */}
-          <div style={{ display: 'flex', gap: 10, padding: '9px 14px' }}>
-            <div style={{ width: 28, height: 28, borderRadius: 7, background: 'rgba(249,115,22,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#F97316', flexShrink: 0, marginTop: 1 }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 2 }}>Daily Trend Report Ready</div>
-              <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 5, lineHeight: 1.4 }}>AI summary of today's call trends.</div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 5, background: 'var(--bg-active)', border: '1px solid var(--border-default)', marginBottom: 5 }}>
-                <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>daily-trends-oct-28.pdf</span>
-                <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· 840 KB</span>
-              </div>
-              <div style={{ display: 'block' }}>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 6, border: '1px solid var(--border-default)', background: 'var(--bg-active)', color: 'var(--text-secondary)', fontSize: 11, fontWeight: 500, marginBottom: 5 }}>↓ Download PDF</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ fontSize: 10.5, color: 'var(--text-muted)', opacity: 0.7 }}>5h ago</span>
-                <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--text-muted)', opacity: 0.6 }} />
-              </div>
-            </div>
-          </div>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '8px 14px 4px' }}>Today</div>
+          {notifRow({ color: '#4BA373', bg: 'rgba(75,163,115,0.10)', iconPath: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>', title: 'File Export Ready', description: 'Your Q4 data export has completed and is ready to review.', tag: 'DATA', navTo: '/data', time: '18m ago', unread: true })}
+          {notifRow({ color: '#4BA373', bg: 'rgba(75,163,115,0.10)', iconPath: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>', title: 'Customer Export Complete', description: '2,340 customer records exported successfully.', tag: 'DATA', navTo: '/customers', time: '2h ago', unread: true })}
+          {notifRow({ color: '#5BA3FF', bg: 'rgba(91,163,255,0.10)', iconPath: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>', title: 'Signal Export Complete', description: 'Your Magic API v2 signal export has finished processing.', tag: 'SIGNALS', navTo: '/magicapi-v2', time: '5h ago', unread: true })}
         </div>
       )
     },
@@ -2629,6 +2751,7 @@ const bellRef = useRef(null)
   open={notifOpen}
   anchorRef={bellRef}
   onClose={() => setNotifOpen(false)}
+  onNavigate={(path) => router.push(path)}
 />`,
     source: NotificationsPopoverSrc,
     files: [
@@ -2639,39 +2762,41 @@ const bellRef = useRef(null)
     breakdown: {
       icons: [
         'BellIcon (trigger — in Sidebar)',
-        'Inline SVG: processing (monitor), insight (lightbulb), download (arrow)',
-        'Inline SVG: alert (triangle), csv_ready (spreadsheet), pdf_ready (doc)',
-        'Inline SVG: mention (@-circle), spinner, checkmark, reply arrow',
+        'Inline SVG: DATA (spreadsheet), SIGNALS (waveform), MAGIC_API (code brackets)',
+        'Inline SVG: AGENT_EVALUATION (share/nodes), CHAT (message bubble)',
       ],
       colors: [
-        { name: '--bg-card (panel bg)',      hex: '#FFFFFF' },
-        { name: '--bg-active (chip/btn bg)', hex: '#E8E8E6' },
-        { name: '--border-default',          hex: '#E5E7EB' },
-        { name: '--text-primary (unread title)', hex: '#181818' },
-        { name: '--text-secondary (read title)', hex: '#606060' },
-        { name: '--text-muted (desc/timestamp)', hex: '#9B9B9B' },
-        { name: 'Unread badge',              hex: '#E8613A' },
-        { name: 'Processing icon',           hex: '#5BA3FF' },
-        { name: 'Insight icon',              hex: '#A78BFA' },
-        { name: 'CSV / Download icon',       hex: '#4BA373' },
-        { name: 'Alert icon',                hex: '#F59E0B' },
-        { name: 'PDF icon',                  hex: '#F97316' },
-        { name: 'Mention icon',              hex: '#5BA3FF' },
+        { name: '--bg-card (panel bg)',          hex: '#FFFFFF' },
+        { name: '--bg-active (chip/btn bg)',      hex: '#E8E8E6' },
+        { name: '--border-default',               hex: '#E5E7EB' },
+        { name: '--text-primary (unread title)',   hex: '#181818' },
+        { name: '--text-secondary (read title)',   hex: '#606060' },
+        { name: '--text-muted (desc/timestamp)',   hex: '#9B9B9B' },
+        { name: 'Unread badge',                   hex: '#E8613A' },
+        { name: 'DATA tag',                       hex: '#4BA373' },
+        { name: 'SIGNALS tag',                    hex: '#5BA3FF' },
+        { name: 'MAGIC_API tag',                  hex: '#A78BFA' },
+        { name: 'AGENT_EVALUATION tag',           hex: '#F97316' },
+        { name: 'CHAT tag',                       hex: '#F59E0B' },
       ],
       subComponents: [],
       notes: [
         'LAB ONLY — lives in src/lab/components/NotificationsPopover.jsx',
         'Uses createPortal(…, document.body) for z-index isolation',
-        'Position computed from anchorRef.getBoundingClientRect() on open — top: anchor.bottom+8, left: anchor.left',
-        '7 types: processing · insight · download · alert · csv_ready · pdf_ready · mention',
-        'Color budget rule: type color on icon only — all chips, buttons, borders are CSS-var neutral',
-        'Download state machine per id: idle → downloading (spinner) → done (checkmark)',
-        'Mention reply: CSS grid-template-rows 0fr→1fr height animation (220ms ease)',
-        'Entrance animation frozen in useRef on mount — prevents re-fire on parent state updates (dlState/replyState)',
+        'Position computed from anchorRef.getBoundingClientRect() on open — top: anchor.bottom+8, left: anchor.left (viewport-clamped)',
+        '5 tags: DATA · SIGNALS · MAGIC_API · AGENT_EVALUATION · CHAT',
+        'Navigable tags: DATA (→ /data or /customers) and SIGNALS (→ /magicapi-v2) — row click fires onNavigate + closes',
+        'Tag-only tags: MAGIC_API · AGENT_EVALUATION · CHAT — no navigation action',
+        'CHAT notifications filtered by platform when user is on the active chat page/session',
+        'Delivery pipeline: Server Action → GCP Pub/Sub → MongoDB → PubNub → NotificationProvider → here',
+        'Scopes: USER · TEAM · PROJECT · ORGANIZATION · GLOBAL_USER (defined in src/mongo/types/notification.ts)',
+        'Entrance animation frozen in useRef on mount — prevents re-fire on parent state updates',
         'Click outside + Escape closes; no focus trap (non-modal pattern)',
         'Grouping: Today / Earlier based on same calendar day vs earlier',
         'Stagger: items animate in at index × 35ms delay',
         'Popover enter: translateY(-8px)+scale(0.98) → identity (200ms); exit: reverse (150ms)',
+        'Rows use hover bg (ROW_HOVER_BG = color-mix(--bg-active 32%, --bg-card)) — no border separators between items',
+        'Type icon bg: color-mix(in srgb, tag-color 15%, transparent) — adapts to light/dark without fixed opacity values',
       ],
     },
   },
