@@ -428,6 +428,179 @@ export const COMPONENT_DEFS = {
     },
   },
 
+  // ── NavItem ────────────────────────────────────────────────────────────────
+
+  NavItem: {
+    tier: 'Atom',
+    description: 'Single navigation button in the Sidebar. Active state: cobalt tint bg + cobalt text. Inactive: transparent bg + text-secondary. 13 items total: Chat, Data, Reports, Signals, Alerts, Agent Evaluation, Knowledge, Magic API, AI Tasks, Customers, Actions, Marketplace, Settings.',
+    props: [
+      { name: 'label',    type: 'string',  default: 'required' },
+      { name: 'active',   type: 'boolean', default: 'false' },
+    ],
+    states: [
+      { label: 'Chat — active',            props: { _label: 'Chat',             _active: true  } },
+      { label: 'Chat — inactive',          props: { _label: 'Chat',             _active: false } },
+      { label: 'Data — active',            props: { _label: 'Data',             _active: true  } },
+      { label: 'Reports — active',         props: { _label: 'Reports',          _active: true  } },
+      { label: 'Signals — active',         props: { _label: 'Signals',          _active: true  } },
+      { label: 'Alerts — active',          props: { _label: 'Alerts',           _active: true  } },
+      { label: 'Agent Evaluation — active',props: { _label: 'Agent Evaluation', _active: true  } },
+      { label: 'Knowledge — active',       props: { _label: 'Knowledge',        _active: true  } },
+      { label: 'Magic API — active',       props: { _label: 'Magic API',        _active: true  } },
+      { label: 'AI Tasks — active',        props: { _label: 'AI Tasks',         _active: true  } },
+      { label: 'Customers — active',       props: { _label: 'Customers',        _active: true  } },
+      { label: 'Settings — active',        props: { _label: 'Settings',         _active: true  } },
+      { label: 'All items — inactive',     props: { _label: 'all',              _active: false } },
+    ],
+    render: (p) => {
+      const NAV_LABELS = ['Chat', 'Data', 'Reports', 'Signals', 'Alerts', 'Agent Evaluation', 'Knowledge', 'Magic API', 'AI Tasks', 'Customers', 'Actions', 'Marketplace', 'Settings']
+      const items = p._label === 'all' ? NAV_LABELS : [p._label]
+      return (
+        <div style={{ padding: '12px 16px', background: 'var(--bg-sidebar, #F5F5F3)', display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {items.map(label => {
+            const active = p._label !== 'all' && p._active
+            return (
+              <div key={label} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 12px', borderRadius: 8,
+                background: active ? 'rgba(91,163,255,0.12)' : 'transparent',
+                color: active ? '#5BA3FF' : 'var(--text-secondary)',
+                fontSize: 13.5, fontWeight: 400,
+              }}>
+                <div style={{ width: 16, height: 16, borderRadius: 3, background: active ? 'rgba(91,163,255,0.3)' : 'rgba(96,96,96,0.2)', flexShrink: 0 }} />
+                {label}
+              </div>
+            )
+          })}
+        </div>
+      )
+    },
+    snippet: () => `// Internal to Sidebar — rendered via NAV_ITEMS.map()\n// Active state controlled by activeNav prop on Sidebar\nconst NAV_ITEMS = [\n  { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon },\n  { id: 'data',        label: 'Data',             Icon: DataIcon },\n  { id: 'reports',     label: 'Reports',          Icon: ReportsIcon },\n  // ... 10 more\n]`,
+    breakdown: {
+      colors: [
+        { name: 'Active bg',   hex: '#5BA3FF' },
+        { name: 'Active text', hex: '#5BA3FF' },
+      ],
+      notes: [
+        'Defined inline in Sidebar.jsx — not a standalone exported component',
+        'Active: rgba(91,163,255,0.12) bg + #5BA3FF text',
+        'Inactive: transparent bg + var(--text-secondary)',
+        'Hover: var(--bg-active) background',
+        '13 items rendered via NAV_ITEMS array — see Sidebar source',
+      ],
+    },
+  },
+
+  // ── SessionItem ────────────────────────────────────────────────────────────
+
+  SessionItem: {
+    tier: 'Molecule',
+    description: 'Single chat history row in the Sidebar History section. Shows session title with a typewriter animation when newly named. 3-dot menu (Rename, Share, Delete) appears on hover. Rename mode replaces title with an inline input.',
+    props: [
+      { name: 'session',      type: 'object',  default: 'required' },
+      { name: 'isActive',     type: 'boolean', default: 'false' },
+      { name: 'isNewlyNamed', type: 'boolean', default: 'false' },
+      { name: 'onSelect',     type: '() => void', default: 'required' },
+      { name: 'onDelete',     type: '() => void', default: 'required' },
+      { name: 'onRename',     type: '() => void', default: 'required' },
+      { name: 'onShare',      type: '() => void', default: 'required' },
+    ],
+    states: [
+      { label: 'Default',         props: { _state: 'default'  } },
+      { label: 'Active',          props: { _state: 'active'   } },
+      { label: 'Pending (new)',   props: { _state: 'pending'  } },
+      { label: 'Menu open',       props: { _state: 'menu'     } },
+      { label: 'Renaming',        props: { _state: 'renaming' } },
+    ],
+    render: (p) => {
+      const state = p._state || 'default'
+      const isActive  = state === 'active'
+      const isPending = state === 'pending'
+      const isMenu    = state === 'menu'
+      const isRename  = state === 'renaming'
+      const title = isPending ? '' : 'Q4 agent performance review'
+
+      const row = (
+        <div style={{
+          position: 'relative', display: 'flex', alignItems: 'center',
+          padding: '7px 12px', borderRadius: 8, gap: 8,
+          background: isActive ? 'rgba(91,163,255,0.10)' : 'transparent',
+          color: isActive ? '#5BA3FF' : 'var(--text-secondary)',
+        }}>
+          {/* Title / input */}
+          {isRename ? (
+            <input
+              readOnly
+              defaultValue="Q4 agent performance review"
+              style={{
+                flex: 1, fontSize: 13, background: 'var(--bg-canvas)',
+                border: '1px solid #5BA3FF', borderRadius: 6,
+                padding: '2px 6px', color: 'var(--text-primary)',
+                outline: 'none',
+              }}
+            />
+          ) : (
+            <span style={{
+              flex: 1, fontSize: 13, overflow: 'hidden',
+              textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              color: isPending ? 'var(--text-muted)' : 'inherit',
+              fontStyle: isPending ? 'italic' : 'normal',
+            }}>
+              {isPending ? 'Generating title…' : title}
+            </span>
+          )}
+          {/* Dots button */}
+          {(state === 'default' || isActive) && (
+            <div style={{ opacity: 0.5, fontSize: 16, lineHeight: 1, letterSpacing: 2 }}>···</div>
+          )}
+          {/* Menu open */}
+          {isMenu && (
+            <div style={{ opacity: 1, fontSize: 16, lineHeight: 1, letterSpacing: 2, color: 'var(--text-primary)' }}>···</div>
+          )}
+        </div>
+      )
+
+      if (!isMenu) return (
+        <div style={{ padding: '6px 8px', background: 'var(--bg-sidebar, #F5F5F3)' }}>
+          {row}
+        </div>
+      )
+
+      return (
+        <div style={{ padding: '6px 8px', background: 'var(--bg-sidebar, #F5F5F3)', position: 'relative' }}>
+          {row}
+          <div style={{
+            marginTop: 4, marginLeft: 8,
+            background: 'var(--bg-card)', border: '1px solid var(--border-default)',
+            borderRadius: 8, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+          }}>
+            {['Rename', 'Share', 'Delete'].map((action, i) => (
+              <div key={action} style={{
+                padding: '9px 12px', fontSize: 12.5, cursor: 'pointer',
+                color: action === 'Delete' ? '#E05252' : 'var(--text-secondary)',
+                borderTop: i > 0 ? '1px solid var(--border-default)' : 'none',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                {action}
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    },
+    snippet: () => `// Internal to Sidebar — rendered in the History section\n<SessionItem\n  session={session}\n  isActive={session.id === activeSessionId}\n  isNewlyNamed={session.id === newlyNamedId}\n  onSelect={() => onSelectSession(session.id)}\n  onDelete={() => onDeleteSession(session.id)}\n  onRename={(id, title) => onRenameSession(id, title)}\n  onShare={onShareSession}\n/>`,
+    breakdown: {
+      notes: [
+        'Defined inside Sidebar.jsx — not a standalone exported component',
+        'Pending state: empty session.title → shows "Generating title…" italic',
+        'Typewriter animation: useTypewriter hook activates when isNewlyNamed=true',
+        '3-dot menu: position:fixed, anchored to dotsRef.getBoundingClientRect()',
+        'Rename: inline <input> replaces title span, commits on blur/Enter',
+        'Share: fires onShare(session.id) — wires into NotificationsPopover pipeline',
+      ],
+    },
+  },
+
   // ── Sidebar ────────────────────────────────────────────────────────────────
 
   Sidebar: {
@@ -483,7 +656,7 @@ export const COMPONENT_DEFS = {
         { name: '--sidebar-outline', hex: 'rgba(0,0,0,0.08)' },
         { name: '--color-brand',     hex: '#FF7056' },
       ],
-      subComponents: ['HearLogo'],
+      subComponents: ['HearLogo', 'NavItem', 'SessionItem'],
       notes: [
         'LAB VERSION — lives in src/lab/components/Sidebar.jsx',
         'Floating: position fixed top:16 left:16 height:calc(100vh-32px)',
