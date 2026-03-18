@@ -1208,9 +1208,10 @@ function FeedbackModal({ agent, onClose }) {
   const inputStyle = {
     width: '100%', boxSizing: 'border-box',
     height: 36, padding: '0 10px',
-    background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)',
+    background: 'var(--bg-active)', border: '1px solid var(--border-default)',
     borderRadius: 7, fontSize: 13, color: 'var(--text-primary)',
     fontFamily: "'Byrd', sans-serif", outline: 'none',
+    accentColor: 'var(--text-secondary)',
     transition: 'border-color 150ms ease',
   }
 
@@ -1230,7 +1231,7 @@ function FeedbackModal({ agent, onClose }) {
       footer={
         <>
           <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleSend} disabled={sent || selectedAgents.length === 0}>
+          <Button size="sm" onClick={handleSend} disabled={sent || selectedAgents.length === 0 || !sendDate}>
             {sent ? 'Sent ✓' : 'Confirm & Send'}
           </Button>
         </>
@@ -1316,8 +1317,8 @@ function FeedbackModal({ agent, onClose }) {
               fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
             }}>
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-                <path d="M10.5 6A4.5 4.5 0 1 1 6 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                <path d="M6 1.5L8 3.5M6 1.5L8 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 2A4 4 0 1 1 8 2.54" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                <path d="M6.5 0.6L8 2.54 6 3.3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Repeats on the same day each month
             </div>
