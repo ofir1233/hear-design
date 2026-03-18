@@ -1216,6 +1216,12 @@ function FeedbackModal({ agent, onClose }) {
 
   function toggleAgent(a) { setSelectedAgents(prev => prev.find(x => x.id === a.id) ? prev.filter(x => x.id !== a.id) : [...prev, a]) }
 
+  const schedOpts = [
+    { id: 'one-time', label: 'One-time' },
+    { id: 'monthly',  label: 'Monthly'  },
+  ]
+  const activeIdx = schedOpts.findIndex(o => o.id === schedType)
+
   return (
     <Modal
       open
@@ -1241,36 +1247,86 @@ function FeedbackModal({ agent, onClose }) {
           placeholder="Search agents…"
         />
 
+        {/* Auto-routing info note */}
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 9,
+          padding: '9px 12px',
+          background: 'rgba(23, 121, 247, 0.07)',
+          border: '1px solid rgba(23, 121, 247, 0.18)',
+          borderRadius: 8,
+        }}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+            <circle cx="7" cy="7" r="6" stroke="#1779F7" strokeWidth="1.4"/>
+            <path d="M7 6.5v3.5" stroke="#1779F7" strokeWidth="1.4" strokeLinecap="round"/>
+            <circle cx="7" cy="4.5" r="0.75" fill="#1779F7"/>
+          </svg>
+          <span style={{ fontSize: 11.5, lineHeight: 1.55, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
+            Report is automatically sent to the agent's{' '}
+            <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>team lead</strong>
+            {' '}or{' '}
+            <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>organization admin</strong>.
+          </span>
+        </div>
 
-        {/* Schedule type — segmented control */}
+        {/* Schedule type — sliding pill */}
         <div>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Schedule</label>
           <div style={{
-            display: 'flex', gap: 3, padding: 3,
+            position: 'relative', display: 'flex', padding: 3,
             background: 'var(--bg-active)', border: '1px solid var(--border-default)',
             borderRadius: 9,
           }}>
-            {[
-              { id: 'one-time', label: 'One-time' },
-              { id: 'monthly',  label: 'Monthly'  },
-            ].map(opt => (
+            {/* Animated sliding pill */}
+            <div style={{
+              position: 'absolute',
+              top: 3, bottom: 3,
+              left: `calc(3px + ${activeIdx} * (50% - 3px))`,
+              width: 'calc(50% - 3px)',
+              background: 'var(--bg-card)',
+              borderRadius: 6,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+              transition: 'left 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+              pointerEvents: 'none',
+            }} />
+            {schedOpts.map(opt => (
               <button key={opt.id} onClick={() => setSchedType(opt.id)} style={{
                 flex: 1, height: 30, borderRadius: 6, fontSize: 12,
                 fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
-                border: 'none',
-                background: schedType === opt.id ? 'var(--bg-card)' : 'transparent',
+                border: 'none', background: 'transparent', position: 'relative', zIndex: 1,
                 color: schedType === opt.id ? 'var(--text-primary)' : 'var(--text-muted)',
                 fontWeight: schedType === opt.id ? 500 : 400,
-                boxShadow: schedType === opt.id ? '0 1px 3px rgba(0,0,0,0.18)' : 'none',
-                transition: 'all 150ms ease',
+                transition: 'color 220ms ease',
               }}>{opt.label}</button>
             ))}
           </div>
+
+          {/* Monthly contextual hint — animates in */}
+          <div style={{
+            overflow: 'hidden',
+            maxHeight: schedType === 'monthly' ? 34 : 0,
+            opacity: schedType === 'monthly' ? 1 : 0,
+            marginTop: schedType === 'monthly' ? 7 : 0,
+            transition: 'max-height 220ms ease, opacity 200ms ease, margin-top 220ms ease',
+          }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '4px 10px',
+              background: 'var(--bg-active)', border: '1px solid var(--border-default)',
+              borderRadius: 20,
+              fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+            }}>
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                <path d="M10.5 6A4.5 4.5 0 1 1 6 1.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                <path d="M6 1.5L8 3.5M6 1.5L8 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Repeats on the same day each month
+            </div>
+          </div>
         </div>
 
-        {/* Send date */}
+        {/* Send / Start date */}
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6, transition: 'opacity 150ms ease' }}>
             {schedType === 'monthly' ? 'Start date' : 'Send date'}
           </label>
           <input
