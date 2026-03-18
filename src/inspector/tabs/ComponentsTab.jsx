@@ -526,11 +526,12 @@ function ComponentDetail({ name, def, onNavigate, stateIdx, onStateChange }) {
 
       {/* ── Live preview — grows to fit the component's rendered state ── */}
       <div key={previewKey} style={{
-        border:       `1px solid ${T.border}`,
-        borderRadius: T.radius,
-        overflow:     'hidden',
-        marginBottom: 4,
-        animation:    'inspector-preview-flash 180ms ease',
+        border:        `1px solid ${T.border}`,
+        borderRadius:  T.radius,
+        overflow:      'hidden',
+        marginBottom:  4,
+        animation:     'inspector-preview-flash 180ms ease',
+        pointerEvents: 'none', // prevent clicks inside preview from firing component state
       }}>
         <PreviewErrorBoundary key={previewKey}>
           <PreviewRenderer def={def} state={activeState} />
@@ -645,12 +646,16 @@ export default function ComponentsTab() {
   const [stateIdx,  setStateIdx]    = useState(() => readHashComponent().state)
 
   function scan() {
-    const nodes = document.querySelectorAll('[data-inspector]')
-    const names = [...new Set([...nodes].map(n => n.getAttribute('data-inspector')))]
+    // Exclude nodes that live inside the inspector drawer itself (.hear-inspector).
+    // Without this filter, components rendered in the preview panel (e.g. a full
+    // AgentEvalPage preview) show their own data-inspector attributes, get picked
+    // up as "on screen", change `discovered`, trigger a re-render, re-render the
+    // preview, trigger the observer again → crash loop on every heavy component.
+    const nodes = [...document.querySelectorAll('[data-inspector]')]
+      .filter(n => !n.closest('.hear-inspector'))
+    const names = [...new Set(nodes.map(n => n.getAttribute('data-inspector')))]
     const valid  = names.filter(name => COMPONENT_DEFS[name])
-    // Use functional updater so React bails out (same reference) when the list
-    // hasn't changed. Without this, every DOM mutation from the preview panel
-    // triggers a re-render → re-render triggers more DOM changes → infinite loop.
+    // Functional updater: bail out (same reference) when the list hasn't changed.
     setDiscovered(prev =>
       prev.length === valid.length && prev.every((n, i) => n === valid[i]) ? prev : valid
     )
