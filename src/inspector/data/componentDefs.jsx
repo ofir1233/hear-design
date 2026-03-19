@@ -27,7 +27,14 @@ import FilterDrawer from '../../components/data/FilterDrawer.jsx'
 import DataPage     from '../../components/data/DataPage.jsx'
 import ExplorePage  from '../../components/data/ExplorePage.jsx'
 import ReportsPage        from '../../components/reports/ReportsPage.jsx'
-import CreateReportPage   from '../../components/reports/CreateReportPage.jsx'
+import CreateReportPage, {
+  Toggle        as CRToggle,
+  ChoiceGroup   as CRChoiceGroup,
+  Tag           as CRTag,
+  Section       as CRSection,
+  Field         as CRField,
+  ToggleRow     as CRToggleRow,
+} from '../../components/reports/CreateReportPage.jsx'
 import AgentEvalPage from '../../components/agent-eval/AgentEvalPage.jsx'
 import { SCHEMAS }   from '../../components/data/mockData.js'
 
@@ -2809,8 +2816,21 @@ const bellRef = useRef(null)
       { name: 'defaultOpen', type: 'boolean', default: 'true' },
       { name: 'badge',       type: 'number',  default: 'undefined' },
     ],
-    states: [{ label: 'Default', props: {} }],
-    render: () => null,
+    states: [
+      { label: 'Open',            props: { collapsible: true,  defaultOpen: true,  badge: 0 } },
+      { label: 'Collapsed',       props: { collapsible: true,  defaultOpen: false, badge: 0 } },
+      { label: 'With badge',      props: { collapsible: true,  defaultOpen: true,  badge: 2 } },
+      { label: 'Non-collapsible', props: { collapsible: false, defaultOpen: true,  badge: 0 } },
+    ],
+    render: (p) => center(
+      <div style={{ width: 320 }}>
+        <CRSection title="Configuration" {...p}>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
+            Field content goes here
+          </div>
+        </CRSection>
+      </div>
+    ),
     snippet: () => `<Section title="Configuration" collapsible defaultOpen badge={2}>\n  {/* fields */}\n</Section>`,
     source: CreateReportPageSrc,
     files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
@@ -2831,8 +2851,27 @@ const bellRef = useRef(null)
       { name: 'required', type: 'boolean',   default: 'false' },
       { name: 'tooltip',  type: 'string',    default: 'undefined' },
     ],
-    states: [{ label: 'Default', props: {} }],
-    render: () => null,
+    states: [
+      { label: 'Default',          props: { label: 'Report Title',  required: false, hint: undefined,       tooltip: undefined } },
+      { label: 'Required',         props: { label: 'Report Title',  required: true,  hint: undefined,       tooltip: undefined } },
+      { label: 'With hint',        props: { label: 'Lookback',      required: false, hint: '(optional)',    tooltip: undefined } },
+      { label: 'With tooltip',     props: { label: 'Lookback',      required: false, hint: undefined,       tooltip: 'How far back the report should pull data.' } },
+    ],
+    render: (p) => center(
+      <div style={{ width: 280 }}>
+        <CRField {...p}>
+          <input
+            placeholder="Enter value…"
+            style={{
+              width: '100%', boxSizing: 'border-box', height: 36, padding: '0 12px',
+              background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+              borderRadius: 8, fontSize: 13, color: 'var(--text-primary)',
+              fontFamily: "'Byrd', sans-serif", outline: 'none',
+            }}
+          />
+        </CRField>
+      </div>
+    ),
     snippet: () => `<Field label="Title" required tooltip="Used as the report heading">\n  <input ... />\n</Field>`,
     source: CreateReportPageSrc,
     files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
@@ -2851,8 +2890,18 @@ const bellRef = useRef(null)
       { name: 'checked',  type: 'boolean',  default: 'required' },
       { name: 'onChange', type: 'function', default: 'required' },
     ],
-    states: [{ label: 'Default', props: {} }],
-    render: () => null,
+    states: [
+      { label: 'On',  props: { checked: true  } },
+      { label: 'Off', props: { checked: false } },
+    ],
+    render: (p) => center(
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <CRToggle checked={p.checked} onChange={() => {}} />
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
+          {p.checked ? 'Enabled' : 'Disabled'}
+        </span>
+      </div>
+    ),
     snippet: () => `<Toggle checked={enabled} onChange={setEnabled} />`,
     source: CreateReportPageSrc,
     files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
@@ -2873,8 +2922,27 @@ const bellRef = useRef(null)
       { name: 'value',   type: 'any',          default: 'required' },
       { name: 'onChange', type: 'function',    default: 'required' },
     ],
-    states: [{ label: 'Default', props: {} }],
-    render: () => null,
+    states: [
+      { label: 'Seg — Daily',   props: { variant: 'seg',  value: 'daily'   } },
+      { label: 'Seg — Weekly',  props: { variant: 'seg',  value: 'weekly'  } },
+      { label: 'Seg — Monthly', props: { variant: 'seg',  value: 'monthly' } },
+      { label: 'Pill — 7d',     props: { variant: 'pill', value: 7         } },
+      { label: 'Pill — 30d',    props: { variant: 'pill', value: 30        } },
+    ],
+    render: (p) => {
+      const segOpts  = [
+        { value: 'hourly', label: 'Hourly' }, { value: 'daily', label: 'Daily' },
+        { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' },
+      ]
+      const pillOpts = [1, 3, 5, 7, 30, 60, 90, 180, 365].map(n => ({ value: n, label: n < 365 ? `${n}d` : '1y' }))
+      const opts  = p.variant === 'pill' ? pillOpts : segOpts
+      const value = p.value ?? (p.variant === 'pill' ? 7 : 'daily')
+      return center(
+        <div style={{ width: p.variant === 'pill' ? 320 : 280 }}>
+          <CRChoiceGroup variant={p.variant} options={opts} value={value} onChange={() => {}} />
+        </div>
+      )
+    },
     snippet: () => `<ChoiceGroup variant="seg" options={[{value:'daily',label:'Daily'},{value:'weekly',label:'Weekly'}]} value={freq} onChange={setFreq} />`,
     source: CreateReportPageSrc,
     files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
@@ -2893,8 +2961,20 @@ const bellRef = useRef(null)
       { name: 'label',    type: 'string',   default: 'required' },
       { name: 'onRemove', type: 'function', default: 'required' },
     ],
-    states: [{ label: 'Default', props: {} }],
-    render: () => null,
+    states: [
+      { label: 'Email',    props: { label: 'alice@example.com' } },
+      { label: 'Short',    props: { label: 'Monthly'           } },
+      { label: 'Multiple', props: { label: 'multiple'          } },
+    ],
+    render: (p) => center(
+      p.label === 'multiple'
+        ? <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {['alice@example.com', 'bob@acme.io', 'Weekly'].map(l => (
+              <CRTag key={l} label={l} onRemove={() => {}} />
+            ))}
+          </div>
+        : <CRTag label={p.label} onRemove={() => {}} />
+    ),
     snippet: () => `<Tag label="user@example.com" onRemove={() => removeEmail(email)} />`,
     source: CreateReportPageSrc,
     files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
@@ -2917,8 +2997,17 @@ const bellRef = useRef(null)
       { name: 'noBorder', type: 'boolean',  default: 'false' },
       { name: 'tooltip',  type: 'string',   default: 'undefined' },
     ],
-    states: [{ label: 'Default', props: {} }],
-    render: () => null,
+    states: [
+      { label: 'On',           props: { checked: true,  label: 'Stick to template?',   subtext: undefined,                        tooltip: undefined,                                   noBorder: false } },
+      { label: 'Off',          props: { checked: false, label: 'Stick to template?',   subtext: undefined,                        tooltip: undefined,                                   noBorder: false } },
+      { label: 'With subtext', props: { checked: true,  label: 'Experimental Mode',    subtext: 'Enable cutting-edge AI features', tooltip: undefined,                                   noBorder: true  } },
+      { label: 'With tooltip', props: { checked: false, label: 'Is AI Accessible',     subtext: undefined,                        tooltip: 'Makes this report available via API.',       noBorder: false } },
+    ],
+    render: (p) => center(
+      <div style={{ width: 300 }}>
+        <CRToggleRow {...p} onChange={() => {}} />
+      </div>
+    ),
     snippet: () => `<ToggleRow label="Stick to template?" tooltip="Prevents AI from deviating from template structure." checked={stick} onChange={setStick} />`,
     source: CreateReportPageSrc,
     files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],

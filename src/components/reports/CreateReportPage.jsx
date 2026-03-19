@@ -132,7 +132,7 @@ function blurBorder(e, hasError) {
 
 // ── Atoms ─────────────────────────────────────────────────────────────────────
 
-function Toggle({ checked, onChange }) {
+export function Toggle({ checked, onChange }) {
   return (
     <div
       data-inspector="Toggle"
@@ -157,7 +157,7 @@ function Toggle({ checked, onChange }) {
 
 // ── ChoiceGroup — unified seg + pill control (replaces SegControl + PillRadio) ─
 
-function ChoiceGroup({ variant = 'seg', options, value, onChange }) {
+export function ChoiceGroup({ variant = 'seg', options, value, onChange }) {
   if (variant === 'seg') {
     const n = options.length
     const activeIdx = options.findIndex(o => o.value === value)
@@ -216,7 +216,7 @@ const LOOKBACK_OPTIONS = [1, 3, 5, 7, 30, 60, 90, 180, 365].map(n => ({
   label: n < 365 ? `${n}d` : '1y',
 }))
 
-function Tag({ label, onRemove }) {
+export function Tag({ label, onRemove }) {
   return (
     <div data-inspector="Tag" style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -349,7 +349,7 @@ function ChartPreview({ state, onRetry }) {
 
 // ── Layout components ─────────────────────────────────────────────────────────
 
-function Section({ title, children, collapsible = false, defaultOpen = true, badge }) {
+export function Section({ title, children, collapsible = false, defaultOpen = true, badge }) {
   const [open, setOpen] = useState(defaultOpen)
 
   return (
@@ -406,7 +406,7 @@ function Section({ title, children, collapsible = false, defaultOpen = true, bad
   )
 }
 
-function Field({ label, hint, required, tooltip, children }) {
+export function Field({ label, hint, required, tooltip, children }) {
   return (
     <div data-inspector="Field" style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -429,7 +429,7 @@ function Field({ label, hint, required, tooltip, children }) {
   )
 }
 
-function ToggleRow({ label, subtext, checked, onChange, noBorder, tooltip }) {
+export function ToggleRow({ label, subtext, checked, onChange, noBorder, tooltip }) {
   return (
     <div data-inspector="ToggleRow" style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
