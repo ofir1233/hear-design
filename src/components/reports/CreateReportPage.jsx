@@ -455,6 +455,8 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
   const [lookback,       setLookback]       = useState(7)
   const [exclusionInput, setExclusionInput] = useState('')
   const [exclusions,     setExclusions]     = useState([])
+  const [excludedDays,   setExcludedDays]   = useState([])
+  const [daysDropOpen,   setDaysDropOpen]   = useState(false)
   const [revisions,      setRevisions]      = useState('')
 
   // § Options
@@ -799,7 +801,87 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
                 />
               </Field>
 
-              <Field label="Exclusions" hint="— skip report on specific dates (optional)">
+              <Field label="Exclusions" hint="— skip report on specific days or dates (optional)">
+                {/* Days of week multi-select */}
+                {(() => {
+                  const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
+                  const label = excludedDays.length === 0
+                    ? 'Select days…'
+                    : excludedDays.map(i => DAYS[i].slice(0,3)).join(', ')
+                  const toggleDay = i => {
+                    setIsDirty(true)
+                    setExcludedDays(prev =>
+                      prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]
+                    )
+                  }
+                  return (
+                    <div style={{ position: 'relative', marginBottom: 8 }}>
+                      <button
+                        onClick={() => setDaysDropOpen(v => !v)}
+                        style={{
+                          width: '100%', display: 'flex', alignItems: 'center',
+                          justifyContent: 'space-between', gap: 8,
+                          padding: '0 12px', height: 36,
+                          background: 'var(--bg-canvas)',
+                          border: '1px solid var(--border-input)',
+                          borderRadius: daysDropOpen ? '8px 8px 0 0' : 8,
+                          cursor: 'pointer', fontSize: 13,
+                          fontFamily: "'Byrd', sans-serif",
+                          color: excludedDays.length ? 'var(--text-primary)' : 'var(--text-muted)',
+                          textAlign: 'left', transition: 'border-radius 150ms ease',
+                        }}
+                      >
+                        <span>{label}</span>
+                        <ChevronDownIcon open={daysDropOpen} />
+                      </button>
+                      <div style={{
+                        overflow: 'hidden',
+                        maxHeight: daysDropOpen ? 260 : 0,
+                        transition: 'max-height 200ms ease',
+                        border: daysDropOpen ? '1px solid var(--border-input)' : 'none',
+                        borderTop: 'none',
+                        borderRadius: '0 0 8px 8px',
+                      }}>
+                        {DAYS.map((day, i) => {
+                          const selected = excludedDays.includes(i)
+                          return (
+                            <button
+                              key={day}
+                              onClick={() => toggleDay(i)}
+                              style={{
+                                display: 'flex', alignItems: 'center', gap: 10,
+                                width: '100%', padding: '9px 12px',
+                                border: 'none', cursor: 'pointer',
+                                background: selected ? 'var(--bg-active)' : 'var(--bg-canvas)',
+                                fontSize: 13, fontFamily: "'Byrd', sans-serif",
+                                color: selected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                transition: 'background 100ms ease',
+                              }}
+                              onMouseEnter={e => { if (!selected) e.currentTarget.style.background = 'var(--bg-active)' }}
+                              onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'var(--bg-canvas)' }}
+                            >
+                              <span style={{
+                                width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                                border: `1.5px solid ${selected ? 'var(--b100)' : 'var(--border-input)'}`,
+                                background: selected ? 'var(--b100)' : 'transparent',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                transition: 'all 150ms ease',
+                              }}>
+                                {selected && (
+                                  <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                                    <path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                )}
+                              </span>
+                              {day}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })()}
+                {/* Specific date exclusions */}
                 {exclusions.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
                     {exclusions.map(d => (
