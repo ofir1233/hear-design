@@ -26,7 +26,8 @@ import OmniBar      from '../../components/data/OmniBar.jsx'
 import FilterDrawer from '../../components/data/FilterDrawer.jsx'
 import DataPage     from '../../components/data/DataPage.jsx'
 import ExplorePage  from '../../components/data/ExplorePage.jsx'
-import ReportsPage   from '../../components/reports/ReportsPage.jsx'
+import ReportsPage        from '../../components/reports/ReportsPage.jsx'
+import CreateReportPage   from '../../components/reports/CreateReportPage.jsx'
 import AgentEvalPage from '../../components/agent-eval/AgentEvalPage.jsx'
 import { SCHEMAS }   from '../../components/data/mockData.js'
 
@@ -51,7 +52,8 @@ import FilterDrawerSrc  from '../../components/data/FilterDrawer.jsx?raw'
 import DataPageSrc      from '../../components/data/DataPage.jsx?raw'
 import ExplorePageSrc   from '../../components/data/ExplorePage.jsx?raw'
 import MockDataSrc      from '../../components/data/mockData.js?raw'
-import ReportsPageSrc    from '../../components/reports/ReportsPage.jsx?raw'
+import ReportsPageSrc       from '../../components/reports/ReportsPage.jsx?raw'
+import CreateReportPageSrc  from '../../components/reports/CreateReportPage.jsx?raw'
 import AgentEvalPageSrc           from '../../components/agent-eval/AgentEvalPage.jsx?raw'
 import NotificationsPopoverSrc    from '../../lab/components/NotificationsPopover.jsx?raw'
 
@@ -2792,6 +2794,94 @@ const bellRef = useRef(null)
         'Popover enter: translateY(-8px)+scale(0.98) → identity (200ms); exit: reverse (150ms)',
         'Rows use hover bg (ROW_HOVER_BG = color-mix(--bg-active 32%, --bg-card)) — no border separators between items',
         'Type icon bg: color-mix(in srgb, tag-color 15%, transparent) — adapts to light/dark without fixed opacity values',
+      ],
+    },
+  },
+
+  // ── CreateReportPage ────────────────────────────────────────────────────────
+
+  CreateReportPage: {
+    tier: 'Organism',
+    description: 'Full "Create Report" form page. 3-tier collapsible section layout: Tier 1 (Critical, always open) — Basic Info + Prompts; Tier 2 (Standard, collapsible+open) — Configuration + Recipients; Tier 3 (Advanced, collapsed) — Options + Chart Setup. isDirty guard triggers discard-confirmation modal on back navigation.',
+    props: [
+      { name: 'sidebarWidth',      type: 'number', default: '272' },
+      { name: 'sidebarTransition', type: 'string', default: "''" },
+    ],
+    states: [
+      { label: 'Default', props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        transform: 'scale(0.5)', transformOrigin: 'top left',
+        width: '200%', height: '200%',
+        pointerEvents: 'none', overflow: 'hidden',
+      }}>
+        <CreateReportPage sidebarWidth={0} />
+      </div>,
+      260,
+    ),
+    snippet: () => `<CreateReportPage sidebarWidth={sidebarWidth} sidebarTransition={sidebarTransition} />`,
+    source: CreateReportPageSrc,
+    files: [
+      { path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc },
+    ],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'Cobalt accent / focus ring', hex: '#1779F7' },
+        { name: 'Avatar palette — coral',     hex: '#FF7056' },
+        { name: 'Avatar palette — cobalt',    hex: '#1779F7' },
+        { name: 'Avatar palette — green',     hex: '#4BA373' },
+        { name: 'Avatar palette — lavender',  hex: '#D799E2' },
+        { name: 'Char counter amber',         hex: '#D97706' },
+        { name: 'Char counter red / error',   hex: '#E53E3E' },
+      ],
+      subComponents: [
+        'Section', 'Field', 'ToggleRow', 'Toggle', 'ChoiceGroup',
+        'Tag', 'InfoTooltip', 'Button', 'Modal',
+      ],
+      notes: [
+        // ── Sections
+        'Tier 1 (Critical, always open): Basic Info, Prompts',
+        'Tier 2 (Standard, collapsible+open): Configuration, Recipients',
+        'Tier 3 (Advanced, collapsible+closed, active badge): Options, Chart Setup',
+        'Section badge = count of non-default values inside that section',
+
+        // ── Basic Info
+        'Title char counter: muted → amber at 90 % of 120 chars → red at 100 %; border mirrors the color state',
+        'canSave: title.trim() && prompts.some(p => p.trim()) — drives Save Report button',
+
+        // ── Prompts
+        'Dynamic prompt rows: add via "+ Add prompt", remove via trash icon; first row cannot be removed',
+
+        // ── Configuration
+        'Frequency: Hourly / Daily / Weekly / Monthly — ChoiceGroup variant="seg"',
+        'Execution Time: Toggle + time input; default "Midnight (default)"',
+        'Lookback Period: [1,3,5,7,30,60,90,180,365] mapped to "Nd" / "1y" labels — ChoiceGroup variant="pill"',
+        'Exclusions: Days-of-week multi-select dropdown (Sun–Sat); animated checkbox per row; no date picker',
+        'Revisions: free-text input for revision instructions',
+
+        // ── Recipients
+        'Notify by Email: Enter / comma to add; EMAIL_RE validation; inline error; dismissible Tag chips',
+        'Access Control: agent picker dropdown (max 5); shows avatar (colored initials circle) + name + team; selected agents shown as dismissible tag chips above trigger; trigger greys out + shows "Maximum 5 agents selected" at limit',
+        'PROJECT_AGENTS: 9 mock agents with id, name, team — shared with AgentEvalPage MOCK_AGENTS',
+        'Avatar: colored circle using avatarColor(name) — same AVATAR_COLORS palette as AgentEvalPage',
+
+        // ── Options
+        'Stick to template (tooltip), Is AI Accessible (tooltip), Use Agentic Method (tooltip), Experimental Mode (tooltip + subtext)',
+
+        // ── Chart Setup
+        'Chart Prompt: free-text input describing desired visualization',
+        'Chart Type: Auto / Line / Bar / Pie — ChoiceGroup variant="seg"',
+        'No ChartPreview widget; no Report Format dropdown',
+
+        // ── UX / nav
+        'isDirty tracked via d(setter) wrapper on every state change',
+        'Back / Cancel trigger tryDiscard() — shows Modal if dirty, navigates directly if clean',
+        'navigate() defined at module level using window.history.pushState + popstate event',
+        'InfoTooltip: hover ⓘ button → absolute-positioned tooltip bubble (200px wide, z-index 10)',
+        'ChoiceGroup unifies SegControl (variant="seg") and PillRadio (variant="pill") with normalized { value, label } options',
       ],
     },
   },
