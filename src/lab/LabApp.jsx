@@ -14,6 +14,7 @@ import Sidebar     from './components/Sidebar.jsx'
 import DataPage    from '../components/data/DataPage.jsx'
 import ExplorePage from '../components/data/ExplorePage.jsx'
 import ReportsPage from '../components/reports/ReportsPage.jsx'
+import CreateReportPage from '../components/reports/CreateReportPage.jsx'
 import AgentEvalPage from '../components/agent-eval/AgentEvalPage.jsx'
 
 // Inspector lives here — never in Demo
@@ -559,6 +560,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
           companyConfig={companyConfig}
           onOpenCall={openCall}
         />
+      ) : activePage === 'reports' && route.sub === 'create' ? (
+        <CreateReportPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'reports' ? (
         <ReportsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
       ) : activePage === 'agent-eval' ? (
