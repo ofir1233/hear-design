@@ -135,6 +135,7 @@ function blurBorder(e, hasError) {
 function Toggle({ checked, onChange }) {
   return (
     <div
+      data-inspector="Toggle"
       onClick={() => onChange(!checked)}
       role="switch" aria-checked={checked}
       style={{
@@ -161,7 +162,7 @@ function ChoiceGroup({ variant = 'seg', options, value, onChange }) {
     const n = options.length
     const activeIdx = options.findIndex(o => o.value === value)
     return (
-      <div style={{
+      <div data-inspector="ChoiceGroup" style={{
         position: 'relative', display: 'flex', padding: 3,
         background: 'var(--bg-active)', border: '1px solid var(--border-default)',
         borderRadius: 9, width: '100%',
@@ -191,7 +192,7 @@ function ChoiceGroup({ variant = 'seg', options, value, onChange }) {
 
   // variant === 'pill'
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+    <div data-inspector="ChoiceGroup" style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
       {options.map(opt => {
         const active = value === opt.value
         return (
@@ -217,7 +218,7 @@ const LOOKBACK_OPTIONS = [1, 3, 5, 7, 30, 60, 90, 180, 365].map(n => ({
 
 function Tag({ label, onRemove }) {
   return (
-    <div style={{
+    <div data-inspector="Tag" style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       padding: '3px 8px 3px 10px', borderRadius: 20,
       background: 'var(--bg-active)', border: '1px solid var(--border-default)',
@@ -352,7 +353,7 @@ function Section({ title, children, collapsible = false, defaultOpen = true, bad
   const [open, setOpen] = useState(defaultOpen)
 
   return (
-    <div style={{
+    <div data-inspector="Section" style={{
       background: 'var(--bg-card)',
       border: '1px solid var(--border-default)',
       borderRadius: 12, overflow: 'hidden',
@@ -407,7 +408,7 @@ function Section({ title, children, collapsible = false, defaultOpen = true, bad
 
 function Field({ label, hint, required, tooltip, children }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+    <div data-inspector="Field" style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
         <label style={{
           fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)',
@@ -430,7 +431,7 @@ function Field({ label, hint, required, tooltip, children }) {
 
 function ToggleRow({ label, subtext, checked, onChange, noBorder, tooltip }) {
   return (
-    <div style={{
+    <div data-inspector="ToggleRow" style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '13px 0',
       borderBottom: noBorder ? 'none' : '1px solid var(--border-default)',
@@ -561,7 +562,7 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
       </Modal>
 
       {/* ── Page shell ────────────────────────────────────────────────────────── */}
-      <div style={{
+      <div data-inspector="CreateReportPage" style={{
         position: 'fixed', top: 0, left: sidebarWidth, right: 0, bottom: 0,
         transition: sidebarTransition,
         background: 'var(--bg-canvas)',

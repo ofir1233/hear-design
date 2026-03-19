@@ -2798,6 +2798,138 @@ const bellRef = useRef(null)
     },
   },
 
+  // ── CreateReportPage sub-components (defined inline in CreateReportPage.jsx) ─
+
+  Section: {
+    tier: 'Molecule',
+    description: 'Collapsible form section card used in CreateReportPage. Header with uppercase title, optional active-values badge, and ChevronDown toggle. Content animates open/closed via maxHeight transition.',
+    props: [
+      { name: 'title',       type: 'string',  default: 'required' },
+      { name: 'collapsible', type: 'boolean', default: 'false' },
+      { name: 'defaultOpen', type: 'boolean', default: 'true' },
+      { name: 'badge',       type: 'number',  default: 'undefined' },
+    ],
+    states: [{ label: 'Default', props: {} }],
+    render: () => null,
+    snippet: () => `<Section title="Configuration" collapsible defaultOpen badge={2}>\n  {/* fields */}\n</Section>`,
+    source: CreateReportPageSrc,
+    files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [{ name: 'Active badge', hex: '#1779F7' }],
+      subComponents: [],
+      notes: ['Defined inline in CreateReportPage.jsx', 'maxHeight: 2000 when open, 0 when closed — 260ms cubic-bezier', 'badge > 0 shows cobalt pill with "N active"'],
+    },
+  },
+
+  Field: {
+    tier: 'Molecule',
+    description: 'Form field wrapper with label, optional hint, required asterisk, and InfoTooltip. Stacks label row above children with consistent 7px gap.',
+    props: [
+      { name: 'label',    type: 'string',    default: 'required' },
+      { name: 'hint',     type: 'string',    default: 'undefined' },
+      { name: 'required', type: 'boolean',   default: 'false' },
+      { name: 'tooltip',  type: 'string',    default: 'undefined' },
+    ],
+    states: [{ label: 'Default', props: {} }],
+    render: () => null,
+    snippet: () => `<Field label="Title" required tooltip="Used as the report heading">\n  <input ... />\n</Field>`,
+    source: CreateReportPageSrc,
+    files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [{ name: 'Required asterisk', hex: '#FF7056' }],
+      subComponents: ['InfoTooltip'],
+      notes: ['Defined inline in CreateReportPage.jsx', 'Required asterisk uses --c100 (coral)', 'InfoTooltip appears when tooltip prop is passed'],
+    },
+  },
+
+  Toggle: {
+    tier: 'Atom',
+    description: 'Animated toggle switch. Cobalt track when on, border-input color when off. Thumb slides with cubic-bezier transition.',
+    props: [
+      { name: 'checked',  type: 'boolean',  default: 'required' },
+      { name: 'onChange', type: 'function', default: 'required' },
+    ],
+    states: [{ label: 'Default', props: {} }],
+    render: () => null,
+    snippet: () => `<Toggle checked={enabled} onChange={setEnabled} />`,
+    source: CreateReportPageSrc,
+    files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [{ name: 'On state track', hex: '#1779F7' }],
+      subComponents: [],
+      notes: ['Defined inline in CreateReportPage.jsx', '36×20px pill track', 'Thumb: 16×16px white circle, left: 2→18px, 200ms cubic-bezier'],
+    },
+  },
+
+  ChoiceGroup: {
+    tier: 'Molecule',
+    description: 'Unified segmented control + pill radio. variant="seg" renders a sliding pill selector; variant="pill" renders spaced toggle-pill buttons. Both use normalized { value, label } options.',
+    props: [
+      { name: 'variant', type: "'seg'|'pill'", default: "'seg'" },
+      { name: 'options', type: 'Array<{value, label}>', default: 'required' },
+      { name: 'value',   type: 'any',          default: 'required' },
+      { name: 'onChange', type: 'function',    default: 'required' },
+    ],
+    states: [{ label: 'Default', props: {} }],
+    render: () => null,
+    snippet: () => `<ChoiceGroup variant="seg" options={[{value:'daily',label:'Daily'},{value:'weekly',label:'Weekly'}]} value={freq} onChange={setFreq} />`,
+    source: CreateReportPageSrc,
+    files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [{ name: 'Active pill border', hex: '#1779F7' }, { name: 'Active pill bg', hex: 'rgba(23,121,247,0.08)' }],
+      subComponents: [],
+      notes: ['Defined inline in CreateReportPage.jsx', 'seg: sliding indicator via calc() + CSS left transition, 220ms', 'pill: 1.5px border, 30px height, 20px border-radius', 'Replaces both SegControl and PillRadio patterns'],
+    },
+  },
+
+  Tag: {
+    tier: 'Atom',
+    description: 'Dismissible tag chip. Shows label text + × remove button. Coral hover on ×. Used for email recipients, prompt exclusions, and selected agent access tags.',
+    props: [
+      { name: 'label',    type: 'string',   default: 'required' },
+      { name: 'onRemove', type: 'function', default: 'required' },
+    ],
+    states: [{ label: 'Default', props: {} }],
+    render: () => null,
+    snippet: () => `<Tag label="user@example.com" onRemove={() => removeEmail(email)} />`,
+    source: CreateReportPageSrc,
+    files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [{ name: '× hover', hex: '#FF7056' }],
+      subComponents: [],
+      notes: ['Defined inline in CreateReportPage.jsx', 'maxWidth 260px with text-overflow: ellipsis', '× button: color transition to --c100 on hover'],
+    },
+  },
+
+  ToggleRow: {
+    tier: 'Molecule',
+    description: 'Labeled toggle row for Options section. Label + optional subtext on the left, Toggle on the right. Optional InfoTooltip next to label. Bottom border unless noBorder is set.',
+    props: [
+      { name: 'label',    type: 'string',   default: 'required' },
+      { name: 'subtext',  type: 'string',   default: 'undefined' },
+      { name: 'checked',  type: 'boolean',  default: 'required' },
+      { name: 'onChange', type: 'function', default: 'required' },
+      { name: 'noBorder', type: 'boolean',  default: 'false' },
+      { name: 'tooltip',  type: 'string',   default: 'undefined' },
+    ],
+    states: [{ label: 'Default', props: {} }],
+    render: () => null,
+    snippet: () => `<ToggleRow label="Stick to template?" tooltip="Prevents AI from deviating from template structure." checked={stick} onChange={setStick} />`,
+    source: CreateReportPageSrc,
+    files: [{ path: 'src/components/reports/CreateReportPage.jsx', src: CreateReportPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [],
+      subComponents: ['Toggle', 'InfoTooltip'],
+      notes: ['Defined inline in CreateReportPage.jsx', 'padding: 13px 0 with 1px bottom border (omitted when noBorder)', 'Last row in a group should set noBorder'],
+    },
+  },
+
   // ── CreateReportPage ────────────────────────────────────────────────────────
 
   CreateReportPage: {
