@@ -1,4 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+
+function navigate(path, state = {}) {
+  window.history.pushState(state, '', path)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
 import { BsPinFill, BsPin } from 'react-icons/bs'
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
@@ -905,7 +910,7 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
           </div>
 
           <Button variant="ghost" size="sm" leftIcon={<MoreIcon />} />
-          <Button size="sm" leftIcon={<PlusIcon />}>Create Report</Button>
+          <Button size="sm" leftIcon={<PlusIcon />} onClick={() => navigate('/reports/create')}>Create Report</Button>
         </div>
       </div>
 
