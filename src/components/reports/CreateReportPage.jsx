@@ -9,6 +9,24 @@ function navigate(path, state = {}) {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// ── Agent data & avatar helpers ───────────────────────────────────────────────
+const AVATAR_COLORS = ['#FF7056','#1779F7','#4BA373','#D799E2','#455F61','#6E95A0','#F59E0B']
+function strHash(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h }
+function avatarColor(name) { return AVATAR_COLORS[strHash(name) % AVATAR_COLORS.length] }
+function initials(name) { return name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase() }
+
+const PROJECT_AGENTS = [
+  { id: 46191, name: 'Martha Kellett',       team: 'Alpha' },
+  { id: 46210, name: 'Juan Wilson',          team: 'Beta'  },
+  { id: 46188, name: 'Laura Givens',         team: 'Alpha' },
+  { id: 46199, name: 'Vicki Speheger',       team: 'Delta' },
+  { id: 49681, name: 'Mackenzie Navarrette', team: 'Gamma' },
+  { id: 50536, name: 'Jerome Price',         team: 'Beta'  },
+  { id: 46195, name: 'Diane ONeill',         team: 'Alpha' },
+  { id: 46184, name: 'Capri Dawson',         team: 'Gamma' },
+  { id: 46185, name: 'Neo Depeyster',        team: 'Delta' },
+]
+
 // ── Keyframes injected once ───────────────────────────────────────────────────
 const SHIMMER_CSS = `
   @keyframes crShimmer {
@@ -453,8 +471,6 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
   const [execEnabled,    setExecEnabled]    = useState(false)
   const [execTime,       setExecTime]       = useState('00:00')
   const [lookback,       setLookback]       = useState(7)
-  const [exclusionInput, setExclusionInput] = useState('')
-  const [exclusions,     setExclusions]     = useState([])
   const [excludedDays,   setExcludedDays]   = useState([])
   const [daysDropOpen,   setDaysDropOpen]   = useState(false)
   const [revisions,      setRevisions]      = useState('')
@@ -466,17 +482,15 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
   const [experimentalMode, setExperimentalMode] = useState(false)
 
   // § Chart Setup
-  const [chartPrompt,      setChartPrompt]      = useState('')
-  const [chartType,        setChartType]        = useState('auto')
-  const [reportFormatOpen, setReportFormatOpen] = useState(false)
-  const [reportFormat,     setReportFormat]     = useState('')
-  const [previewState,     setPreviewState]     = useState('idle')  // idle|loading|ready|error
+  const [chartPrompt, setChartPrompt] = useState('')
+  const [chartType,   setChartType]   = useState('auto')
 
   // § Recipients
   const [emailInput,    setEmailInput]    = useState('')
   const [emailError,    setEmailError]    = useState('')
   const [emails,        setEmails]        = useState([])
-  const [accessControl, setAccessControl] = useState('')
+  const [accessAgents,  setAccessAgents]  = useState([])
+  const [accessDropOpen, setAccessDropOpen] = useState(false)
 
   // § Meta
   const [isDirty,        setIsDirty]        = useState(false)
@@ -490,15 +504,6 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
   function removePrompt(i)   { setIsDirty(true); setPrompts(p => p.filter((_, idx) => idx !== i)) }
   function updatePrompt(i,v) { setIsDirty(true); setPrompts(p => p.map((x, idx) => idx === i ? v : x)) }
 
-  // ── Exclusion helpers ──────────────────────────────────────────────────────
-  function addExclusion() {
-    if (exclusionInput && !exclusions.includes(exclusionInput)) {
-      setIsDirty(true)
-      setExclusions(p => [...p, exclusionInput])
-    }
-    setExclusionInput('')
-  }
-
   // ── Email helpers ──────────────────────────────────────────────────────────
   function addEmail() {
     const v = emailInput.trim()
@@ -509,15 +514,6 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
     setEmails(p => [...p, v])
     setEmailInput('')
     setEmailError('')
-  }
-
-  // ── Chart preview ──────────────────────────────────────────────────────────
-  function runPreview() {
-    setPreviewState('loading')
-    setTimeout(() => {
-      // Simulate: 90% success, 10% error
-      setPreviewState(Math.random() > 0.1 ? 'ready' : 'error')
-    }, 1500)
   }
 
   // ── Navigation guard ───────────────────────────────────────────────────────
@@ -531,13 +527,12 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
   const warnings = useMemo(() => {
     const w = []
     if (emails.length === 0) w.push('No email recipients set')
-    if (!reportFormat)       w.push('No report format chosen')
     return w
-  }, [emails, reportFormat])
+  }, [emails])
 
   // Badge counts for collapsible advanced sections
   const optionsBadge = [stickToTemplate, !isAIAccessible, useAgenticMethod, experimentalMode].filter(Boolean).length
-  const chartBadge   = [chartPrompt, chartType !== 'auto', reportFormat].filter(Boolean).length
+  const chartBadge   = [chartPrompt, chartType !== 'auto'].filter(Boolean).length
 
   return (
     <>
@@ -801,7 +796,7 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
                 />
               </Field>
 
-              <Field label="Exclusions" hint="— skip report on specific days or dates (optional)">
+              <Field label="Exclusions" hint="— skip report on these days of the week (optional)">
                 {/* Days of week multi-select */}
                 {(() => {
                   const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
@@ -881,30 +876,6 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
                     </div>
                   )
                 })()}
-                {/* Specific date exclusions */}
-                {exclusions.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
-                    {exclusions.map(d => (
-                      <Tag key={d} label={d} onRemove={() => {
-                        setIsDirty(true)
-                        setExclusions(p => p.filter(x => x !== d))
-                      }} />
-                    ))}
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    type="date"
-                    value={exclusionInput}
-                    onChange={e => setExclusionInput(e.target.value)}
-                    style={{ ...inputBase, width: 180, accentColor: 'var(--text-secondary)' }}
-                    onFocus={focusBorder}
-                    onBlur={e => blurBorder(e, false)}
-                  />
-                  <Button variant="ghost" size="sm" disabled={!exclusionInput} onClick={addExclusion}>
-                    Add date
-                  </Button>
-                </div>
               </Field>
 
               <Field label="Revisions" hint="(optional)">
@@ -967,15 +938,112 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
                 )}
               </Field>
 
-              <Field label="Access Control" hint="— who can see and edit this report (optional)">
-                <input
-                  value={accessControl}
-                  onChange={e => { setIsDirty(true); setAccessControl(e.target.value) }}
-                  placeholder="Search people or teams…"
-                  style={inputBase}
-                  onFocus={focusBorder}
-                  onBlur={e => blurBorder(e, false)}
-                />
+              <Field label="Access Control" hint="— agents who can view this report (max 5, optional)">
+                {/* Selected agent tags */}
+                {accessAgents.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                    {accessAgents.map(id => {
+                      const ag = PROJECT_AGENTS.find(a => a.id === id)
+                      if (!ag) return null
+                      return (
+                        <span key={id} style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 6,
+                          padding: '3px 8px 3px 4px',
+                          background: 'var(--bg-active)', borderRadius: 20,
+                          fontSize: 12, fontFamily: "'Byrd', sans-serif",
+                          color: 'var(--text-primary)',
+                        }}>
+                          <span style={{
+                            width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                            background: avatarColor(ag.name),
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 9, fontWeight: 600, color: '#fff', letterSpacing: '0.02em',
+                          }}>{initials(ag.name)}</span>
+                          {ag.name}
+                          <button
+                            onClick={() => { setIsDirty(true); setAccessAgents(p => p.filter(x => x !== id)) }}
+                            style={{
+                              background: 'none', border: 'none', cursor: 'pointer',
+                              padding: 0, lineHeight: 1, color: 'var(--text-muted)',
+                              fontSize: 14, display: 'flex', alignItems: 'center',
+                            }}
+                          >×</button>
+                        </span>
+                      )
+                    })}
+                  </div>
+                )}
+                {/* Dropdown trigger */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => { if (accessAgents.length < 5) setAccessDropOpen(v => !v) }}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center',
+                      justifyContent: 'space-between', gap: 8,
+                      padding: '0 12px', height: 36,
+                      background: 'var(--bg-canvas)',
+                      border: '1px solid var(--border-input)',
+                      borderRadius: accessDropOpen ? '8px 8px 0 0' : 8,
+                      cursor: accessAgents.length >= 5 ? 'not-allowed' : 'pointer',
+                      fontSize: 13, fontFamily: "'Byrd', sans-serif",
+                      color: 'var(--text-muted)', textAlign: 'left',
+                      opacity: accessAgents.length >= 5 ? 0.5 : 1,
+                      transition: 'border-radius 150ms ease',
+                    }}
+                  >
+                    <span>{accessAgents.length >= 5 ? 'Maximum 5 agents selected' : 'Add agent…'}</span>
+                    {accessAgents.length < 5 && <ChevronDownIcon open={accessDropOpen} />}
+                  </button>
+                  <div style={{
+                    overflow: 'hidden',
+                    maxHeight: accessDropOpen ? 320 : 0,
+                    transition: 'max-height 200ms ease',
+                    border: accessDropOpen ? '1px solid var(--border-input)' : 'none',
+                    borderTop: 'none', borderRadius: '0 0 8px 8px',
+                  }}>
+                    {PROJECT_AGENTS.filter(ag => !accessAgents.includes(ag.id)).map(ag => (
+                      <button
+                        key={ag.id}
+                        onClick={() => {
+                          if (accessAgents.length >= 5) return
+                          setIsDirty(true)
+                          setAccessAgents(p => [...p, ag.id])
+                          if (accessAgents.length + 1 >= 5) setAccessDropOpen(false)
+                        }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          width: '100%', padding: '8px 12px',
+                          border: 'none', cursor: 'pointer',
+                          background: 'var(--bg-canvas)',
+                          transition: 'background 100ms ease',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-canvas)' }}
+                      >
+                        <span style={{
+                          width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                          background: avatarColor(ag.name),
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 11, fontWeight: 600, color: '#fff', letterSpacing: '0.02em',
+                        }}>{initials(ag.name)}</span>
+                        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1 }}>
+                          <span style={{ fontSize: 13, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', fontWeight: 500 }}>
+                            {ag.name}
+                          </span>
+                          <span style={{ fontSize: 11, fontFamily: "'Byrd', sans-serif", color: 'var(--text-muted)' }}>
+                            Team {ag.team}
+                          </span>
+                        </span>
+                      </button>
+                    ))}
+                    {PROJECT_AGENTS.filter(ag => !accessAgents.includes(ag.id)).length === 0 && (
+                      <div style={{
+                        padding: '10px 12px', fontSize: 13, fontFamily: "'Byrd', sans-serif",
+                        color: 'var(--text-muted)', textAlign: 'center',
+                      }}>All agents added</div>
+                    )}
+                  </div>
+                </div>
               </Field>
             </Section>
 
@@ -1015,29 +1083,14 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
             <Section title="Chart Setup" collapsible defaultOpen={false} badge={chartBadge}>
 
               <Field label="Chart Prompt">
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    value={chartPrompt}
-                    onChange={e => {
-                      setIsDirty(true)
-                      setChartPrompt(e.target.value)
-                      if (previewState !== 'idle') setPreviewState('idle')
-                    }}
-                    placeholder="Describe how the chart should visualize the data…"
-                    style={{ ...inputBase, flex: 1 }}
-                    onFocus={focusBorder}
-                    onBlur={e => blurBorder(e, false)}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={!chartPrompt.trim() || previewState === 'loading'}
-                    onClick={runPreview}
-                  >
-                    {previewState === 'loading' ? 'Generating…' : 'Preview'}
-                  </Button>
-                </div>
-                <ChartPreview state={previewState === 'idle' && !chartPrompt.trim() ? 'idle' : previewState} onRetry={runPreview} />
+                <input
+                  value={chartPrompt}
+                  onChange={e => { setIsDirty(true); setChartPrompt(e.target.value) }}
+                  placeholder="Describe how the chart should visualize the data…"
+                  style={inputBase}
+                  onFocus={focusBorder}
+                  onBlur={e => blurBorder(e, false)}
+                />
               </Field>
 
               <Field label="Chart Type">
@@ -1054,54 +1107,6 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
                 />
               </Field>
 
-              <Field label="Report Format" hint="(optional)">
-                <div style={{
-                  border: '1px solid var(--border-input)',
-                  borderRadius: 8, overflow: 'hidden',
-                }}>
-                  <button
-                    onClick={() => setReportFormatOpen(v => !v)}
-                    style={{
-                      width: '100%', display: 'flex', alignItems: 'center',
-                      justifyContent: 'space-between', gap: 8,
-                      padding: '0 12px', height: 36,
-                      background: 'var(--bg-canvas)', border: 'none', cursor: 'pointer',
-                      fontSize: 13, fontFamily: "'Byrd', sans-serif",
-                      color: reportFormat ? 'var(--text-primary)' : 'var(--text-muted)',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <span>{reportFormat ? reportFormat.toUpperCase() : 'Select format…'}</span>
-                    <ChevronDownIcon open={reportFormatOpen} />
-                  </button>
-                  <div style={{
-                    overflow: 'hidden',
-                    maxHeight: reportFormatOpen ? 160 : 0,
-                    transition: 'max-height 200ms ease',
-                    borderTop: reportFormatOpen ? '1px solid var(--border-default)' : 'none',
-                  }}>
-                    {['pdf', 'csv', 'json', 'html'].map(fmt => (
-                      <button
-                        key={fmt}
-                        onClick={() => { setIsDirty(true); setReportFormat(fmt); setReportFormatOpen(false) }}
-                        style={{
-                          display: 'block', width: '100%', padding: '9px 12px',
-                          textAlign: 'left', border: 'none', cursor: 'pointer',
-                          background: reportFormat === fmt ? 'var(--bg-active)' : 'var(--bg-canvas)',
-                          fontSize: 13, fontFamily: "'Byrd', sans-serif",
-                          color: reportFormat === fmt ? 'var(--text-primary)' : 'var(--text-secondary)',
-                          fontWeight: reportFormat === fmt ? 500 : 400,
-                          transition: 'background 100ms ease',
-                        }}
-                        onMouseEnter={e => { if (reportFormat !== fmt) e.currentTarget.style.background = 'var(--bg-active)' }}
-                        onMouseLeave={e => { if (reportFormat !== fmt) e.currentTarget.style.background = 'var(--bg-canvas)' }}
-                      >
-                        {fmt.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </Field>
             </Section>
 
             <div style={{ height: 48 }} />
