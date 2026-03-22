@@ -569,12 +569,15 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
 
-        {/* ── Header ────────────────────────────────────────────────────────── */}
+        {/* ── Header — floating pill ────────────────────────────────────────── */}
         <div style={{
           flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
-          padding: '0 20px', height: 52,
-          borderBottom: '1px solid var(--border-input)',
+          padding: '0 16px', height: 52,
+          margin: '16px 16px 0',
           background: 'var(--bg-sidebar)',
+          border: '1px solid var(--border-default)',
+          borderRadius: 16,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
         }}>
           <button
             onClick={tryDiscard}
@@ -598,7 +601,7 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
           </svg>
 
           <span style={{
-            fontSize: 13, fontWeight: 500, color: 'var(--text-primary)',
+            fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)',
             fontFamily: "'Byrd', sans-serif",
           }}>Create Report</span>
 
@@ -622,7 +625,7 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
         </div>
 
         {/* ── Scrollable body ────────────────────────────────────────────────── */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 24px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           <div style={{
             maxWidth: 720, margin: '0 auto',
             display: 'flex', flexDirection: 'column', gap: 20,

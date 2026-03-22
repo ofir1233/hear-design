@@ -11,6 +11,7 @@ import ExplorePage from './components/data/ExplorePage.jsx'
 import ReportsPage from './components/reports/ReportsPage.jsx'
 import CreateReportPage from './components/reports/CreateReportPage.jsx'
 import AgentEvalPage from './components/agent-eval/AgentEvalPage.jsx'
+import SignalsPage from './components/signals/SignalsPage.jsx'
 import LabApp from './lab/LabApp.jsx'
 
 function getGreeting() {
@@ -608,6 +609,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         <ReportsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
       ) : activePage === 'agent-eval' ? (
         <AgentEvalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+      ) : activePage === 'signals' ? (
+        <SignalsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage !== 'dashboard' ? (
         /* Placeholder for unimplemented pages */
         <div style={{
@@ -922,9 +925,37 @@ export default function App() {
     setSignedIn(false)
   }
 
-  if (!signedIn) return <SignIn onSignIn={handleSignIn} />
-
   const sharedProps = { isDark, onThemeToggle: toggleTheme, companyConfig, onSignOut: handleSignOut, onProjectChange: handleProjectChange, userId, profileId }
+
+  if (!signedIn) {
+    return (
+      <>
+        <SignIn onSignIn={handleSignIn} />
+        {import.meta.env.DEV && (
+          <button
+            onClick={() => handleSignIn({ mode: 'lab' })}
+            title="Dev: skip to Lab"
+            style={{
+              position: 'fixed', top: 14, right: 14, zIndex: 9999,
+              width: 32, height: 32, borderRadius: 10,
+              background: 'rgba(255,112,86,0.12)',
+              border: '1.5px solid rgba(255,112,86,0.4)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'background 150ms ease, border-color 150ms ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,112,86,0.22)'; e.currentTarget.style.borderColor = '#FF7056' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,112,86,0.12)'; e.currentTarget.style.borderColor = 'rgba(255,112,86,0.4)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <circle cx="7" cy="5" r="2.5" stroke="#FF7056" strokeWidth="1.4"/>
+              <path d="M2 12c0-2.2 2.24-4 5-4s5 1.8 5 4" stroke="#FF7056" strokeWidth="1.4" strokeLinecap="round"/>
+            </svg>
+          </button>
+        )}
+      </>
+    )
+  }
+
   if (appMode === 'lab') return <LabApp {...sharedProps} />
   return <MainApp {...sharedProps} />
 }

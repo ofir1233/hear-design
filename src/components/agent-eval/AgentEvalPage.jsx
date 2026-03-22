@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
+import { MdRepeat } from 'react-icons/md'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
@@ -645,9 +646,12 @@ function FilterBar() {
     <>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '0 20px', height: 48, flexShrink: 0,
-        borderBottom: '1px solid var(--border-input)',
+        padding: '0 14px', height: 48, flexShrink: 0,
+        margin: '8px 16px 0',
         background: 'var(--bg-sidebar)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 12,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
       }}>
         {/* Preset selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
@@ -1199,13 +1203,8 @@ function PersonPicker({ label, people, selected, onToggle, placeholder }) {
 
 function FeedbackModal({ agent, onClose }) {
   const [selectedAgents, setSelectedAgents] = useState(agent ? [agent] : [])
-  const [selectedLeads,  setSelectedLeads]  = useState([])
-  const [notifyByMail,   setNotifyByMail]   = useState(false)
-
   const [schedType, setSchedType] = useState('one-time')
-  const [frequency, setFrequency] = useState('weekly')
   const [sendDate,  setSendDate]  = useState('')
-  const [message,   setMessage]   = useState('')
   const [sent,      setSent]      = useState(false)
 
   function handleSend() { setSent(true); setTimeout(onClose, 1400) }
@@ -1213,24 +1212,30 @@ function FeedbackModal({ agent, onClose }) {
   const inputStyle = {
     width: '100%', boxSizing: 'border-box',
     height: 36, padding: '0 10px',
-    background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)',
+    background: 'var(--bg-active)', border: '1px solid var(--border-default)',
     borderRadius: 7, fontSize: 13, color: 'var(--text-primary)',
     fontFamily: "'Byrd', sans-serif", outline: 'none',
+    accentColor: 'var(--text-secondary)',
     transition: 'border-color 150ms ease',
   }
 
   function toggleAgent(a) { setSelectedAgents(prev => prev.find(x => x.id === a.id) ? prev.filter(x => x.id !== a.id) : [...prev, a]) }
-  function toggleLead(l)  { setSelectedLeads(prev  => prev.find(x => x.id === l.id) ? prev.filter(x => x.id !== l.id) : [...prev, l]) }
+
+  const schedOpts = [
+    { id: 'one-time', label: 'One-time' },
+    { id: 'monthly',  label: 'Monthly'  },
+  ]
+  const activeIdx = schedOpts.findIndex(o => o.id === schedType)
 
   return (
     <Modal
       open
       onClose={onClose}
-      title="Send Feedback Form"
+      title="Export Report"
       footer={
         <>
           <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-          <Button size="sm" onClick={handleSend} disabled={sent || selectedAgents.length === 0 || selectedLeads.length === 0}>
+          <Button size="sm" onClick={handleSend} disabled={sent || selectedAgents.length === 0 || !sendDate}>
             {sent ? 'Sent ✓' : 'Confirm & Send'}
           </Button>
         </>
@@ -1247,109 +1252,90 @@ function FeedbackModal({ agent, onClose }) {
           placeholder="Search agents…"
         />
 
-        {/* Send report to — who receives it */}
-        <div>
-          <PersonPicker
-            label="Send report to"
-            people={MOCK_LEADS}
-            selected={selectedLeads}
-            onToggle={toggleLead}
-            placeholder="Search team leads & managers…"
-          />
-          {/* Notify by mail lives here — applies to the recipients */}
-          <div
-            onClick={() => setNotifyByMail(v => !v)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              marginTop: 10, paddingTop: 10,
-              borderTop: '1px solid var(--border-default)',
-              cursor: 'pointer', userSelect: 'none',
-            }}
-          >
-            <div style={{
-              width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-              border: `1.5px solid ${notifyByMail ? 'var(--b100)' : 'var(--n100, #606060)'}`,
-              background: notifyByMail ? 'var(--b100)' : 'transparent',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'all 120ms ease',
-            }}>
-              {notifyByMail && <svg width="9" height="7" viewBox="0 0 9 7" fill="none"><path d="M1 3.5L3.5 6L8 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-            </div>
-            <span style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)' }}>Notify by mail</span>
-          </div>
+        {/* Auto-routing info note */}
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 9,
+          padding: '9px 12px',
+          background: 'rgba(23, 121, 247, 0.07)',
+          border: '1px solid rgba(23, 121, 247, 0.18)',
+          borderRadius: 8,
+        }}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+            <circle cx="7" cy="7" r="6" stroke="#1779F7" strokeWidth="1.4"/>
+            <path d="M7 6.5v3.5" stroke="#1779F7" strokeWidth="1.4" strokeLinecap="round"/>
+            <circle cx="7" cy="4.5" r="0.75" fill="#1779F7"/>
+          </svg>
+          <span style={{ fontSize: 11.5, lineHeight: 1.55, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
+            Report is automatically sent to the agent's{' '}
+            <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>team lead</strong>
+            {' '}or{' '}
+            <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>organization admin</strong>.
+          </span>
         </div>
 
-        {/* Schedule type — segmented control */}
+        {/* Schedule type — sliding pill */}
         <div>
           <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Schedule</label>
           <div style={{
-            display: 'flex', gap: 3, padding: 3,
+            position: 'relative', display: 'flex', padding: 3,
             background: 'var(--bg-active)', border: '1px solid var(--border-default)',
             borderRadius: 9,
           }}>
-            {[
-              { id: 'one-time',  label: 'One-time' },
-              { id: 'recurring', label: 'Recurring' },
-            ].map(opt => (
+            {/* Animated sliding pill */}
+            <div style={{
+              position: 'absolute',
+              top: 3, bottom: 3,
+              left: `calc(3px + ${activeIdx} * (50% - 3px))`,
+              width: 'calc(50% - 3px)',
+              background: 'var(--bg-card)',
+              borderRadius: 6,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+              transition: 'left 220ms cubic-bezier(0.4, 0, 0.2, 1)',
+              pointerEvents: 'none',
+            }} />
+            {schedOpts.map(opt => (
               <button key={opt.id} onClick={() => setSchedType(opt.id)} style={{
                 flex: 1, height: 30, borderRadius: 6, fontSize: 12,
                 fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
-                border: 'none',
-                background: schedType === opt.id ? 'var(--bg-card)' : 'transparent',
+                border: 'none', background: 'transparent', position: 'relative', zIndex: 1,
                 color: schedType === opt.id ? 'var(--text-primary)' : 'var(--text-muted)',
                 fontWeight: schedType === opt.id ? 500 : 400,
-                boxShadow: schedType === opt.id ? '0 1px 3px rgba(0,0,0,0.18)' : 'none',
-                transition: 'all 150ms ease',
+                transition: 'color 220ms ease',
               }}>{opt.label}</button>
             ))}
           </div>
+
+          {/* Monthly contextual hint — animates in */}
+          <div style={{
+            overflow: 'hidden',
+            maxHeight: schedType === 'monthly' ? 34 : 0,
+            opacity: schedType === 'monthly' ? 1 : 0,
+            marginTop: schedType === 'monthly' ? 7 : 0,
+            transition: 'max-height 220ms ease, opacity 200ms ease, margin-top 220ms ease',
+          }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '4px 10px',
+              background: 'var(--bg-active)', border: '1px solid var(--border-default)',
+              borderRadius: 20,
+              fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+            }}>
+              <MdRepeat size={13} />
+              Repeats on the same day each month
+            </div>
+          </div>
         </div>
 
-        {/* Frequency (only for recurring) */}
-        {schedType === 'recurring' && (
-          <div>
-            <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Frequency</label>
-            <PresetSelect
-              fullWidth
-              options={[
-                { value: 'weekly',    label: 'Weekly' },
-                { value: 'biweekly', label: 'Bi-weekly' },
-                { value: 'monthly',  label: 'Monthly' },
-                { value: 'quarterly',label: 'Quarterly' },
-              ]}
-              value={frequency}
-              onChange={setFrequency}
-            />
-          </div>
-        )}
-
-        {/* Send date */}
+        {/* Send / Start date */}
         <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>
-            {schedType === 'recurring' ? 'Start date' : 'Send date'}
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6, transition: 'opacity 150ms ease' }}>
+            {schedType === 'monthly' ? 'Start date' : 'Send date'}
           </label>
           <input
             type="date"
             value={sendDate}
             onChange={e => setSendDate(e.target.value)}
             style={inputStyle}
-            onFocus={e  => { e.currentTarget.style.borderColor = 'var(--b100)' }}
-            onBlur={e   => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
-          />
-        </div>
-
-        {/* Message */}
-        <div>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", marginBottom: 6 }}>Message (optional)</label>
-          <textarea
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            placeholder="Add a personal note to the feedback form…"
-            rows={3}
-            style={{
-              ...inputStyle, height: 'auto', padding: '8px 10px',
-              resize: 'vertical', lineHeight: 1.5,
-            }}
             onFocus={e  => { e.currentTarget.style.borderColor = 'var(--b100)' }}
             onBlur={e   => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
           />
@@ -1371,11 +1357,15 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition, onOpe
       transition: sidebarTransition, background: 'var(--bg-canvas)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* Header — matches ExplorePage breadcrumb style */}
+      {/* Header — floating pill */}
       <div style={{
         flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
-        padding: '0 20px', height: 52,
-        borderBottom: '1px solid var(--border-input)', background: 'var(--bg-sidebar)',
+        padding: '0 16px', height: 52,
+        margin: '16px 16px 0',
+        background: 'var(--bg-sidebar)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 16,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
       }}>
         <button
           onClick={onBack}
@@ -1398,7 +1388,7 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition, onOpe
         </button>
         <span style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: "'Byrd', sans-serif", userSelect: 'none' }}>›</span>
         <span style={{
-          fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+          fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280,
         }}>
           {agent.name}
@@ -1412,7 +1402,7 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition, onOpe
       <FilterBar />
 
       {/* Scrollable content */}
-      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <InsightCard agent={agent} />
           <PerformanceChart data={chartData} />
@@ -1451,14 +1441,18 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
       transition: sidebarTransition, background: 'var(--bg-canvas)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* Header */}
+      {/* Header — floating pill */}
       <div style={{
-        flexShrink: 0, padding: '0 24px', height: 56,
+        flexShrink: 0, padding: '0 16px', height: 52,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid var(--border-default)', background: 'var(--bg-canvas)',
+        margin: '16px 16px 0',
+        background: 'var(--bg-sidebar)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 16,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Agent evaluation</span>
+          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Agent evaluation</span>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 5,
             padding: '3px 10px', background: '#1779F715', border: '1px solid #1779F740',
@@ -1491,7 +1485,7 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
       <FilterBar />
 
       {/* Scrollable content */}
-      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', marginTop: 8 }}>
         <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <PerformanceChart data={chartData} />
           <ScorePanel totalScore={90} />
