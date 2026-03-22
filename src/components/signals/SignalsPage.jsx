@@ -470,11 +470,18 @@ function ActionsCellRenderer({ data, context }) {
 
 function IdCellRenderer({ value }) {
   return (
-    <span style={{
-      fontFamily: "'Byrd', sans-serif", fontSize: 12,
-      color: 'var(--color-brand)', fontWeight: 500,
-      letterSpacing: '0.01em',
-    }}>
+    <span
+      onClick={e => e.stopPropagation()}
+      style={{
+        fontFamily: "'Byrd', sans-serif", fontSize: 12,
+        color: 'var(--b100)', fontWeight: 500,
+        letterSpacing: '0.01em',
+        textDecoration: 'underline',
+        textDecorationColor: 'rgba(23,121,247,0.35)',
+        textUnderlineOffset: 3,
+        cursor: 'pointer',
+      }}
+    >
       {value}
     </span>
   )
