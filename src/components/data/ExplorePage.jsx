@@ -1271,12 +1271,15 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
         transition: sidebarTransition,
       }}
     >
-      {/* ── Top header bar ─────────────────────────────────────────────── */}
+      {/* ── Top header bar — floating pill ─────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '0 20px', height: 52, flexShrink: 0,
-        borderBottom: '1px solid var(--border-input)',
+        padding: '0 16px', height: 52, flexShrink: 0,
+        margin: '16px 16px 0',
         background: 'var(--bg-sidebar)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 16,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
       }}>
         <button
           onClick={onBack}
@@ -1296,7 +1299,7 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
         </button>
         <span style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: "'Byrd', sans-serif", userSelect: 'none' }}>›</span>
         <span style={{
-          fontSize: 12, color: 'var(--text-muted)',
+          fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)',
           fontFamily: "'Byrd', sans-serif",
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           maxWidth: 280,
@@ -1306,7 +1309,7 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
       </div>
 
       {/* ── Scrollable content ─────────────────────────────────────────── */}
-      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '22px 28px 48px' }}>
+      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '22px 28px 48px', marginTop: 8 }}>
         <div style={{ maxWidth: 780, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           <HeroCard call={call} topic={topic} statusMeta={statusMeta} priorityMeta={priorityMeta} />
