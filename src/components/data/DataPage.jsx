@@ -615,12 +615,15 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
         transition: sidebarTransition,
       }}
     >
-      {/* ── Page Header ──────────────────────────────────────────────────── */}
+      {/* ── Page Header — floating pill ──────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        padding: '0 20px', height: 52, flexShrink: 0,
-        borderBottom: '1px solid var(--border-input)',
+        padding: '0 16px', height: 52, flexShrink: 0,
+        margin: '16px 16px 0',
         background: 'var(--bg-sidebar)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 16,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Data</span>
@@ -643,12 +646,15 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
         </div>
       </div>
 
-      {/* ── Filter Strip ─────────────────────────────────────────────────── */}
+      {/* ── Filter Strip — floating pill ─────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '0 20px', height: 48, flexShrink: 0,
-        borderBottom: '1px solid var(--border-input)',
+        padding: '0 14px', height: 48, flexShrink: 0,
+        margin: '8px 16px 0',
         background: 'var(--bg-sidebar)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 12,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
       }}>
         {/* Preset selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
@@ -745,7 +751,7 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
       </div>
 
       {/* ── AG Grid ──────────────────────────────────────────────────────── */}
-      <div data-inspector="DataGrid" style={{ flex: 1, overflow: 'hidden', padding: 0 }}>
+      <div data-inspector="DataGrid" style={{ flex: 1, overflow: 'hidden', padding: 0, border: '1px solid var(--border-default)', borderRadius: 16, margin: '16px 16px 16px' }}>
         <AgGridReact
           ref={gridRef}
           theme={isDark ? darkTheme : lightTheme}

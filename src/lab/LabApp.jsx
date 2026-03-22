@@ -11,10 +11,14 @@ import HearLogo    from '../components/HearLogo.jsx'
 import ChatBubble  from '../components/ChatBubble.jsx'
 import ChatInput   from '../components/ChatInput.jsx'
 import Sidebar     from './components/Sidebar.jsx'
+import Header      from './components/Header.jsx'
 import DataPage    from '../components/data/DataPage.jsx'
 import ExplorePage from '../components/data/ExplorePage.jsx'
 import ReportsPage from '../components/reports/ReportsPage.jsx'
+import CreateReportPage from '../components/reports/CreateReportPage.jsx'
 import AgentEvalPage from '../components/agent-eval/AgentEvalPage.jsx'
+import SignalsPage from '../components/signals/SignalsPage.jsx'
+import CreateSignalPage from '../components/signals/CreateSignalPage.jsx'
 
 // Inspector lives here — never in Demo
 const InspectorRoot = lazy(() => import('../inspector/index.jsx'))
@@ -559,10 +563,16 @@ Ask me anything about your operations, or explore a topic below to get started.`
           companyConfig={companyConfig}
           onOpenCall={openCall}
         />
+      ) : activePage === 'reports' && route.sub === 'create' ? (
+        <CreateReportPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'reports' ? (
         <ReportsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
       ) : activePage === 'agent-eval' ? (
         <AgentEvalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+      ) : activePage === 'signals' && route.sub === 'create' ? (
+        <CreateSignalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+      ) : activePage === 'signals' ? (
+        <SignalsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage !== 'dashboard' ? (
         <div style={{
           position: 'fixed', top: 0,
@@ -582,6 +592,17 @@ Ask me anything about your operations, or explore a topic below to get started.`
           className="min-h-screen flex flex-col items-center justify-center px-6"
           style={{ paddingLeft, transition: sidebarTransition }}
         >
+          <Header
+            style={{
+              left: effectiveSidebarWidth + 16,
+              transition: sidebarTransition,
+            }}
+            left={
+              <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
+                Dashboard
+              </span>
+            }
+          />
           <div
             className="flex flex-col items-center w-full max-w-2xl"
             style={{

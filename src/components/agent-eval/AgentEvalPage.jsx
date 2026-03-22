@@ -646,9 +646,12 @@ function FilterBar() {
     <>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8,
-        padding: '0 20px', height: 48, flexShrink: 0,
-        borderBottom: '1px solid var(--border-input)',
+        padding: '0 14px', height: 48, flexShrink: 0,
+        margin: '8px 16px 0',
         background: 'var(--bg-sidebar)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 12,
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
       }}>
         {/* Preset selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
@@ -1354,11 +1357,15 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition, onOpe
       transition: sidebarTransition, background: 'var(--bg-canvas)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* Header — matches ExplorePage breadcrumb style */}
+      {/* Header — floating pill */}
       <div style={{
         flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
-        padding: '0 20px', height: 52,
-        borderBottom: '1px solid var(--border-input)', background: 'var(--bg-sidebar)',
+        padding: '0 16px', height: 52,
+        margin: '16px 16px 0',
+        background: 'var(--bg-sidebar)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 16,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
       }}>
         <button
           onClick={onBack}
@@ -1381,7 +1388,7 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition, onOpe
         </button>
         <span style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: "'Byrd', sans-serif", userSelect: 'none' }}>›</span>
         <span style={{
-          fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+          fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280,
         }}>
           {agent.name}
@@ -1395,7 +1402,7 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition, onOpe
       <FilterBar />
 
       {/* Scrollable content */}
-      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <InsightCard agent={agent} />
           <PerformanceChart data={chartData} />
@@ -1434,14 +1441,18 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
       transition: sidebarTransition, background: 'var(--bg-canvas)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* Header */}
+      {/* Header — floating pill */}
       <div style={{
-        flexShrink: 0, padding: '0 24px', height: 56,
+        flexShrink: 0, padding: '0 16px', height: 52,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        borderBottom: '1px solid var(--border-default)', background: 'var(--bg-canvas)',
+        margin: '16px 16px 0',
+        background: 'var(--bg-sidebar)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 16,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Agent evaluation</span>
+          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Agent evaluation</span>
           <div style={{
             display: 'flex', alignItems: 'center', gap: 5,
             padding: '3px 10px', background: '#1779F715', border: '1px solid #1779F740',
@@ -1474,7 +1485,7 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
       <FilterBar />
 
       {/* Scrollable content */}
-      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', marginTop: 8 }}>
         <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <PerformanceChart data={chartData} />
           <ScorePanel totalScore={90} />

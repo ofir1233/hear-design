@@ -691,7 +691,10 @@ function PinnedReportCard({ report }) {
             color: report.sparkUp ? '#FF7056' : '#4BA373',
             fontFamily: "'Byrd', sans-serif",
           }}>
-            {report.sparkDelta} {report.sparkUp ? '↑' : '↓'}
+            {report.sparkDelta}&nbsp;
+            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', transform: report.sparkUp ? 'none' : 'rotate(180deg)' }}>
+              <path d="M4 7V1M1 4l3-3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </span>
         </div>
         <Sparkline data={report.sparkData} color={report.sparkColor} height={54} />
@@ -780,7 +783,7 @@ function PinnedReportsStrip({ reports }) {
       </div>
 
       {/* Cards */}
-      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 2 }}>
+      <div className="pinned-cards-scroll" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
         {reports.map(r => <PinnedReportCard key={r.id} report={r} />)}
       </div>
     </div>
@@ -863,12 +866,15 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
         transition: sidebarTransition,
       }}
     >
-      {/* ── Page Header ──────────────────────────────────────────────────── */}
+      {/* ── Page Header — floating pill ──────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
-        padding: '0 20px', height: 52, flexShrink: 0,
-        borderBottom: '1px solid var(--border-input)',
+        padding: '0 16px', height: 52, flexShrink: 0,
+        margin: '16px 16px 0',
         background: 'var(--bg-sidebar)',
+        border: '1px solid var(--border-default)',
+        borderRadius: 16,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Reports</span>
@@ -914,56 +920,14 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
         </div>
       </div>
 
-      {/* ── Filter Strip ─────────────────────────────────────────────────── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        padding: '0 20px', height: 48, flexShrink: 0,
-        borderBottom: '1px solid var(--border-input)',
-        background: 'var(--bg-sidebar)',
-        overflowX: 'auto',
-      }}>
-        <StatusTabs active={statusFilter} onChange={setStatus} counts={counts} />
-
-        <div style={{ flex: 1 }} />
-
-        {/* Search */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          height: 30, padding: '0 10px',
-          background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
-          borderRadius: 6, flexShrink: 0, width: 200,
-        }}>
-          <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-            <SearchIcon />
-          </span>
-          <input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search reports…"
-            style={{
-              flex: 1, background: 'transparent', border: 'none', outline: 'none',
-              fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
-              fontFamily: "'Byrd', sans-serif",
-            }}
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              style={{
-                display: 'flex', alignItems: 'center', background: 'none', border: 'none',
-                cursor: 'pointer', color: 'var(--text-secondary)', padding: 0, fontSize: 15, lineHeight: 1,
-              }}
-            >×</button>
-          )}
-        </div>
-      </div>
-
       {/* ── Pinned previews ─────────────────────────────────────────────── */}
-      <PinnedReportsStrip reports={pinnedReports} />
+      <div style={{ marginTop: 8 }}>
+        <PinnedReportsStrip reports={pinnedReports} />
+      </div>
 
       {/* ── Content ──────────────────────────────────────────────────────── */}
       {view === 'list' ? (
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', margin: '16px 16px 16px', border: '1px solid var(--border-default)', borderRadius: 16, background: 'var(--bg-sidebar)' }}>
           <TableHeader />
           <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto' }}>
             {filtered.length === 0

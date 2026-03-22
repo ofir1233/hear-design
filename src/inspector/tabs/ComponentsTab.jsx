@@ -678,7 +678,11 @@ export default function ComponentsTab() {
     // Re-scan whenever DOM nodes are added/removed (e.g. modals opening via portals)
     const obs = new MutationObserver(scan)
     obs.observe(document.body, { childList: true, subtree: true, attributeFilter: ['data-inspector'] })
-    return () => obs.disconnect()
+    // Re-scan after page navigation — LabApp uses pushState+popstate for routing.
+    // Wait one tick so React has finished swapping the page component in the DOM.
+    function onNav() { setTimeout(scan, 0) }
+    window.addEventListener('popstate', onNav)
+    return () => { obs.disconnect(); window.removeEventListener('popstate', onNav) }
   }, [])
 
   if (discovered.length === 0) {
