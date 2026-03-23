@@ -1575,7 +1575,7 @@ export const COMPONENT_DEFS = {
 
   ReportsPage: {
     tier: 'Organism',
-    description: 'Full Reports page. Pinned preview strip (sparkline cards) + status filter tabs + search + list/grid view. 22 mock reports. Pin/unpin from 3-dot row menu; pinned count badge updates live.',
+    description: 'Full Reports page. Pinned preview strip (sparkline cards) + status filter tabs + search + AG Grid list view. 22 mock reports. Pin/unpin from 3-dot RowMenu (portal-positioned); pinned count badge updates live.',
     props: [
       { name: 'isMobile',     type: 'boolean', default: 'false' },
       { name: 'sidebarWidth', type: 'number',  default: '272'   },
@@ -1599,30 +1599,36 @@ export const COMPONENT_DEFS = {
     files: [
       { path: 'src/components/reports/ReportsPage.jsx', src: ReportsPageSrc },
     ],
+    npm: ['ag-grid-community', 'ag-grid-react'],
     breakdown: {
       icons: [],
       colors: [
         { name: 'AI Generated border', hex: '#FF7056' },
         { name: 'Running / Completed', hex: '#4BA373' },
         { name: 'Failed border',       hex: '#DC2626' },
+        { name: 'AG Grid light bg',    hex: '#F5F5F3' },
+        { name: 'AG Grid dark bg',     hex: '#242424' },
       ],
-      subComponents: ['Badge', 'Button', 'StatusBadge', 'ReportRow', 'ReportCard', 'StatusTabs', 'PinnedReportCard', 'PinnedReportsStrip', 'RowMenu', 'Sparkline'],
+      subComponents: ['Badge', 'Button', 'ReportStatusBadge', 'ReportCard', 'ReportStatusTabs', 'PinnedReportCard', 'PinnedReportsStrip', 'RowMenu', 'Sparkline'],
       notes: [
+        'List view now uses AG Grid (community edition, themeQuartz) — hand-rolled ReportRow + TableHeader removed',
+        'AG Grid columns: # | Status | Report ID | Name | Trend | Schedule | (actions)',
+        'RowMenu is portal-positioned via getBoundingClientRect on the ⋮ btn — never clips in overflow containers',
+        'Dark/light AG Grid theme: lightTheme (bg #F5F5F3) / darkTheme (bg #242424) swapped via MutationObserver',
         'Pinned strip: 3 default pinned IDs driven by pinnedIds Set state',
         'Pin/unpin via RowMenu — strip count badge updates live; strip hides if all unpinned',
-        'List view: row number replaced by BsPinFill (coral) for pinned rows',
-        'Grid view: status-color border + glow box-shadow on hover',
+        'Grid card view still present: status-color border + glow box-shadow on hover',
         'Search filters across name, ID, and trend fields',
         'PinIcon: BsPinFill / BsPin from react-icons/bs',
       ],
     },
   },
 
-  // ── ReportRow ───────────────────────────────────────────────────────────────
+  // ── ReportRow — DEPRECATED (replaced by AG Grid) ────────────────────────────
 
   ReportRow: {
     tier: 'Molecule',
-    description: 'Single row in the Reports list view. Status badge + truncated ID + name + trend snippet + schedule pill. Pinned rows show BsPinFill in coral instead of row number. 3-dot RowMenu on hover with Pin/Unpin, Open, Delete.',
+    description: '⚠️ DEPRECATED — replaced by AG Grid rows in ReportsPage. Was a hand-rolled single row: Status badge + truncated ID + name + trend snippet + schedule pill. Pinned rows showed BsPinFill in coral instead of row number.',
     props: [
       { name: 'report',       type: 'Report',    default: 'required' },
       { name: 'index',        type: 'number',    default: 'required' },
@@ -2326,7 +2332,7 @@ export const COMPONENT_DEFS = {
 
   AgentScorePanel: {
     tier: 'Molecule',
-    description: 'Collapsible evaluation breakdown. Shows total score progress bar at top, then 3-column grid of skill categories (Professionalism, Sales Techniques, Communication). Each skill row has a ScoreBar with colored fill + average tick mark.',
+    description: 'Collapsible evaluation breakdown. Total score sits in a --bg-canvas inset card: label + "86/100" value on one row above the filled progress bar. Below: 3-column grid of skill categories (Professionalism, Sales Techniques, Communication). Each skill row has a ScoreBar with colored fill + average tick mark. Grid gap is 20px.',
     props: [
       { name: 'totalScore', type: 'number',  default: '86' },
       { name: 'title',      type: 'string',  default: '"Agent evaluation"' },
@@ -2387,11 +2393,16 @@ export const COMPONENT_DEFS = {
       ],
       subComponents: ['ScoreBar'],
       notes: [
-        'Total score bar always green when ≥70',
+        'TotalScoreBar: label ("total score") + numeric ("86/100") on one flex row above the bar — not inline-left',
+        'Total score bar lives inside a --bg-canvas inset card (borderRadius 10, --border-input border)',
+        'Cursor dot on total score bar uses --bg-sidebar for its ring border (correct in light + dark)',
+        'ScoreBar track uses --border-strong (#C8C8C8) for better contrast (was --border-default)',
         'ScoreBar average tick: thin 2px vertical line at avgPct%, opacity 0.5',
+        'Skill lock icons removed from each skill row — just name + score',
         'Each skill has a distinct average value — not a shared constant',
-        'Grid is always 3 columns regardless of category count',
+        'Grid is always 3 columns, gap 20px regardless of category count',
         'collapsible prop adds chevron toggle button in header',
+        'Uses --page-header-border + --page-header-shadow on panel root (token-driven chrome)',
       ],
     },
   },
@@ -2623,6 +2634,7 @@ export const COMPONENT_DEFS = {
     snippet: () => `// Routed via activePage === 'agent-eval' in App.jsx\n<AgentEvalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />`,
     source: AgentEvalPageSrc,
     files: [{ path: 'src/components/agent-eval/AgentEvalPage.jsx', src: AgentEvalPageSrc }],
+    npm: ['react-apexcharts', 'apexcharts', 'ag-grid-community', 'ag-grid-react'],
     breakdown: {
       colors: [
         { name: 'Cobalt (chart line/gradient)', hex: '#1779F7' },
@@ -2637,7 +2649,14 @@ export const COMPONENT_DEFS = {
         'Back button replicates ExplorePage breadcrumb style: bordered button + › separator',
         'Export button opens FeedbackModal (not a download)',
         'FilterBar in detail view is full DataPage parity: appliedChips, isDirty, presets, Save modal',
-        'Chart uses Recharts AreaChart + ResponsiveContainer — not hand-rolled SVG',
+        'Chart uses ApexCharts (react-apexcharts) — migrated from Recharts. Gradient fill, straight stroke, custom tooltip via options.tooltip.custom.',
+        'ApexCharts dark/light mode: MutationObserver on documentElement data-theme → re-renders with theme.mode "dark"/"light"',
+        'Chart header shows actual date range (data[0].date – data[last].date) instead of static "(Time Unit: Day)" label',
+        'Cards (chart, ScorePanel, InsightCard, SkillSection) use --page-header-border + --page-header-shadow tokens for consistent chrome in light/dark',
+        'TotalScoreBar redesigned: label + numeric "86/100" sit on one flex row ABOVE the bar (no longer inline left of bar)',
+        'Total score bar wrapped in --bg-canvas inset card (borderRadius 10, --border-input border)',
+        'ScorePanel inner grid gap 12→20; skill lock icons removed from each skill row',
+        'NameCell: optional showAvatar cellRendererParam (default true) — set false per column to suppress avatar circle',
         'MOCK_LEADS: 6 team leads/managers for Send-report-to picker',
         'All scroll containers use className="smooth-scroll" for blended scrollbars',
         'position:fixed layout — left offset = sidebarWidth prop (matches DataPage/ExplorePage)',
@@ -2854,7 +2873,9 @@ const bellRef = useRef(null)
       subComponents: ['SignalsGrid', 'SignalsStatusTabs', 'SignalsStatusBadge', 'SignalsToggle', 'SignalsRowMenu', 'Badge', 'Button'],
       notes: [
         'Layout: position:fixed, left = sidebarWidth — same offset pattern as DataPage/ReportsPage',
+        'Header uses --page-header-border + --page-header-shadow tokens (transparent/shadow in light, 1px border in dark)',
         'AG Grid: community edition with themeQuartz; light/dark theme swapped via MutationObserver on documentElement data-theme',
+        'AG Grid light theme bg corrected to #F5F5F3 (--bg-canvas); grid wrapper bg = --bg-sidebar',
         'Column defs: # | Auto Process (Toggle) | ID | Name | Type | Context | Created At | Executions | Status | Actions',
         'Quota indicator: red pill (9/10) — wire to API for real usage',
         'StatusTabs count badges hidden when count === 0',
@@ -2903,7 +2924,7 @@ const bellRef = useRef(null)
     breakdown: {
       icons: [],
       colors: [
-        { name: 'Light bg',        hex: '#FFFFFF' },
+        { name: 'Light bg',        hex: '#F5F5F3' },
         { name: 'Dark bg',         hex: '#242424' },
         { name: 'Row hover light', hex: '#E8E8E6' },
         { name: 'Row hover dark',  hex: '#2A2A2A' },
@@ -2913,6 +2934,8 @@ const bellRef = useRef(null)
       subComponents: ['ToggleCellRenderer', 'IdCellRenderer', 'SourceTagCellRenderer', 'StatusCellRenderer', 'ExecutionsCellRenderer', 'ActionsCellRenderer'],
       notes: [
         'Theme params: fontFamily Byrd, fontSize 13, wrapperBorderRadius 0',
+        'Light theme bg corrected to #F5F5F3 (--bg-canvas) — was #FFFFFF',
+        'Grid wrapper uses --page-header-border + --page-header-shadow + --bg-sidebar background',
         'Grid context: { onToggleAutoProcess, onTogglePause, onDelete } passed via context prop',
         'gridRef.current.api.exportDataAsCsv() triggered by Export button in header',
         'suppressCellFocus prevents AG Grid default blue outline on cell click',
@@ -3146,7 +3169,7 @@ const bellRef = useRef(null)
       subComponents: ['SignalCard', 'ModelDropdown', 'TypeDropdown', 'SignalItemRow'],
       notes: [
         'Layout: position:fixed, left = sidebarWidth with transition — same pattern as SignalsPage',
-        'Header: rounded card (borderRadius 16, bg-sidebar) — matches SignalsPage header style',
+        'Header: rounded card (borderRadius 16, bg-sidebar) uses --page-header-border + --page-header-shadow tokens',
         'Signal name: inline editable — placeholder "Untitled signal" via value/onChange pattern',
         'History button: ghost border style; Import button: purple sparkle pill',
         'Save button: coral (#FF7056) primary style in header right slot',
