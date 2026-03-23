@@ -1,4 +1,9 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
+import { AgGridReact } from 'ag-grid-react'
+import { ModuleRegistry, AllCommunityModule, themeQuartz, colorSchemeDark, colorSchemeLight } from 'ag-grid-community'
+
+ModuleRegistry.registerModules([AllCommunityModule])
 
 function navigate(path, state = {}) {
   window.history.pushState(state, '', path)
@@ -7,6 +12,45 @@ function navigate(path, state = {}) {
 import { BsPinFill, BsPin } from 'react-icons/bs'
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
+
+// ── AG Grid themes ─────────────────────────────────────────────────────────────
+const THEME_PARAMS = {
+  fontFamily: "'Byrd', sans-serif",
+  fontSize: 13,
+  cellHorizontalPaddingScale: 1.1,
+  wrapperBorderRadius: 0,
+}
+const lightTheme = themeQuartz.withPart(colorSchemeLight).withParams({
+  ...THEME_PARAMS,
+  backgroundColor:            '#F5F5F3',
+  foregroundColor:            '#181818',
+  headerBackgroundColor:      '#F5F5F3',
+  headerTextColor:            '#606060',
+  borderColor:                '#E5E7EB',
+  rowHoverColor:              '#E8E8E6',
+  selectedRowBackgroundColor: 'rgba(23,121,247,0.07)',
+  oddRowBackgroundColor:      '#F5F5F3',
+  headerColumnResizeHandleColor: '#D1D5DB',
+})
+const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
+  ...THEME_PARAMS,
+  backgroundColor:            '#242424',
+  foregroundColor:            '#F4F3F1',
+  headerBackgroundColor:      '#181818',
+  headerTextColor:            '#9B9B9B',
+  borderColor:                '#333333',
+  rowHoverColor:              '#2A2A2A',
+  selectedRowBackgroundColor: 'rgba(23,121,247,0.12)',
+  oddRowBackgroundColor:      '#242424',
+  headerColumnResizeHandleColor: '#444444',
+})
+
+const DEFAULT_COL_DEF = {
+  sortable: true,
+  resizable: true,
+  suppressMovable: false,
+  cellStyle: { display: 'flex', alignItems: 'center' },
+}
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -342,30 +386,6 @@ function StatusTabs({ active, onChange, counts }) {
   )
 }
 
-// ── Table header ───────────────────────────────────────────────────────────────
-
-const TH = { fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", letterSpacing: '0.06em', textTransform: 'uppercase' }
-
-function TableHeader() {
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center',
-      height: 36, flexShrink: 0,
-      background: 'var(--bg-sidebar)',
-      borderBottom: '1px solid var(--border-input)',
-      borderLeft: '3px solid transparent',
-      paddingLeft: 17,
-    }}>
-      <span style={{ ...TH, width: 32, flexShrink: 0 }}>#</span>
-      <span style={{ ...TH, width: 148, flexShrink: 0, paddingRight: 12 }}>Status</span>
-      <span style={{ ...TH, width: 176, flexShrink: 0, paddingRight: 16 }}>Report ID</span>
-      <span style={{ ...TH, flex: 1, minWidth: 0, paddingRight: 16 }}>Name</span>
-      <span style={{ ...TH, width: 280, flexShrink: 0, paddingRight: 16 }}>Trend</span>
-      <span style={{ ...TH, width: 96, flexShrink: 0, paddingRight: 8 }}>Schedule</span>
-      <span style={{ width: 40, flexShrink: 0 }} />
-    </div>
-  )
-}
 
 // ── RowMenu ───────────────────────────────────────────────────────────────────
 
@@ -395,21 +415,29 @@ function MenuRow({ icon, label, onClick, danger, highlight }) {
 
 function RowMenu({ isPinned, onTogglePin }) {
   const [open, setOpen] = useState(false)
-  const ref = useRef(null)
+  const [pos, setPos]   = useState({ top: 0, right: 0 })
+  const btnRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
     function onDown(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+      if (btnRef.current && !btnRef.current.contains(e.target)) setOpen(false)
     }
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [open])
 
+  function handleOpen(e) {
+    e.stopPropagation()
+    const r = btnRef.current.getBoundingClientRect()
+    setPos({ top: r.bottom + 4, right: window.innerWidth - r.right })
+    setOpen(o => !o)
+  }
+
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div ref={btnRef}>
       <button
-        onClick={e => { e.stopPropagation(); setOpen(o => !o) }}
+        onClick={handleOpen}
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: 26, height: 26, borderRadius: 5,
@@ -421,12 +449,12 @@ function RowMenu({ isPinned, onTogglePin }) {
         <MoreIcon />
       </button>
 
-      {open && (
+      {open && createPortal(
         <div style={{
-          position: 'absolute', right: 0, top: 'calc(100% + 4px)',
+          position: 'fixed', top: pos.top, right: pos.right,
           background: 'var(--bg-card)', border: '1px solid var(--border-default)',
-          borderRadius: 8, boxShadow: '0 8px 28px rgba(0,0,0,0.45)',
-          zIndex: 200, minWidth: 168, padding: '4px 0',
+          borderRadius: 8, boxShadow: '0 8px 28px rgba(0,0,0,0.25)',
+          zIndex: 9999, minWidth: 168, padding: '4px 0',
         }}>
           <MenuRow
             icon={isPinned ? <BsPinFill size={13} /> : <BsPin size={13} />}
@@ -446,92 +474,13 @@ function RowMenu({ isPinned, onTogglePin }) {
               <path d="M2 4h10M5 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M11 4l-.7 7.5a.5.5 0 0 1-.5.5H4.2a.5.5 0 0 1-.5-.5L3 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           } label="Delete" onClick={() => setOpen(false)} danger />
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
 }
 
-// ── ReportRow (list view) ──────────────────────────────────────────────────────
-
-function ReportRow({ report, index, isPinned, onTogglePin }) {
-  const [hovered, setHovered] = useState(false)
-  const cfg = STATUS_CFG[report.status] ?? STATUS_CFG['not-executed']
-
-  return (
-    <div
-      data-inspector="ReportRow"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: 'flex', alignItems: 'center',
-        height: 52, minHeight: 52, flexShrink: 0, position: 'relative',
-        borderBottom: '1px solid var(--border-input)',
-        borderLeft: `3px solid ${hovered ? cfg.border : 'transparent'}`,
-        background: hovered ? 'var(--bg-active)' : 'transparent',
-        transition: 'background 120ms ease, border-left-color 120ms ease',
-        cursor: 'pointer',
-        paddingLeft: 17,
-      }}
-    >
-      {/* Row # + pin dot */}
-      <span style={{ width: 32, flexShrink: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", display: 'flex', alignItems: 'center', gap: 4 }}>
-        {isPinned
-          ? <span style={{ color: 'var(--c100)', display: 'flex', alignItems: 'center' }}><BsPinFill size={12} /></span>
-          : index + 1
-        }
-      </span>
-
-      {/* Status */}
-      <div style={{ width: 148, flexShrink: 0, paddingRight: 12 }}>
-        <StatusBadge status={report.status} />
-      </div>
-
-      {/* Report ID */}
-      <span style={{
-        width: 176, flexShrink: 0, paddingRight: 16,
-        fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}>
-        {report.id.slice(0, 22)}…
-      </span>
-
-      {/* Name */}
-      <span style={{
-        flex: 1, minWidth: 0, paddingRight: 16,
-        fontSize: 13, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", fontWeight: 500,
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}>
-        {report.name}
-      </span>
-
-      {/* Trend */}
-      <span style={{
-        width: 280, flexShrink: 0, paddingRight: 16,
-        fontSize: 12, color: report.trend ? 'var(--text-secondary)' : 'var(--text-muted)',
-        fontFamily: "'Byrd', sans-serif",
-        fontStyle: report.trend ? 'normal' : 'italic',
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}>
-        {report.trend ?? 'No data yet'}
-      </span>
-
-      {/* Schedule */}
-      <div style={{ width: 96, flexShrink: 0, paddingRight: 8 }}>
-        <SchedulePill label={report.schedule} />
-      </div>
-
-      {/* More menu */}
-      <div style={{
-        width: 40, flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        opacity: hovered ? 1 : 0, transition: 'opacity 120ms ease',
-      }}>
-        <RowMenu isPinned={isPinned} onTogglePin={onTogglePin} />
-      </div>
-    </div>
-  )
-}
 
 // ── ReportCard (grid view) ─────────────────────────────────────────────────────
 
@@ -638,7 +587,7 @@ function PinnedReportCard({ report }) {
         overflow: 'hidden',
         cursor: 'pointer',
         transition: 'border-color 180ms ease, box-shadow 180ms ease',
-        boxShadow: hovered ? '0 6px 24px rgba(0,0,0,0.3)' : '0 1px 6px rgba(0,0,0,0.18)',
+        boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.12)' : '0 1px 4px rgba(0,0,0,0.08)',
       }}
     >
       {/* ─ Header ─ */}
@@ -759,7 +708,6 @@ function PinnedReportsStrip({ reports }) {
   return (
     <div style={{
       padding: '14px 20px 14px',
-      borderBottom: '1px solid var(--border-input)',
       background: 'var(--bg-canvas)',
       flexShrink: 0,
     }}>
@@ -783,7 +731,7 @@ function PinnedReportsStrip({ reports }) {
       </div>
 
       {/* Cards */}
-      <div className="pinned-cards-scroll" style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+      <div className="pinned-cards-scroll" style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '6px 4px 10px', margin: '-6px -4px -10px' }}>
         {reports.map(r => <PinnedReportCard key={r.id} report={r} />)}
       </div>
     </div>
@@ -804,23 +752,93 @@ function EmptyState() {
   )
 }
 
+// ── AG Grid column definitions ────────────────────────────────────────────────
+const COL_DEFS = [
+  {
+    headerName: '#', width: 52, sortable: false, resizable: false,
+    cellRenderer: ({ node, context }) => {
+      const pinned = context.pinnedIds.has(node.data.id)
+      return pinned
+        ? <span style={{ color: 'var(--c100)', display: 'flex', alignItems: 'center' }}><BsPinFill size={12} /></span>
+        : <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{node.rowIndex + 1}</span>
+    },
+  },
+  {
+    headerName: 'Status', field: 'status', width: 160,
+    cellRenderer: ({ value }) => <StatusBadge status={value === 'ai-generated' ? 'completed' : value} />,
+  },
+  {
+    headerName: 'Report ID', field: 'id', width: 180,
+    cellRenderer: ({ value }) => (
+      <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
+        {value.slice(0, 22)}…
+      </span>
+    ),
+  },
+  {
+    headerName: 'Name', field: 'name', flex: 1,
+    cellRenderer: ({ value, data }) => (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
+        <span style={{ fontSize: 13, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", fontWeight: 500,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {value}
+        </span>
+        {data?.status === 'ai-generated' && <AIBadge />}
+      </div>
+    ),
+  },
+  {
+    headerName: 'Trend', field: 'trend', width: 300,
+    cellRenderer: ({ value }) => (
+      <span style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif",
+        color: value ? 'var(--text-secondary)' : 'var(--text-muted)',
+        fontStyle: value ? 'normal' : 'italic',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {value ?? 'No data yet'}
+      </span>
+    ),
+  },
+  {
+    headerName: 'Schedule', field: 'schedule', width: 110,
+    cellRenderer: ({ value }) => <SchedulePill label={value} />,
+  },
+  {
+    headerName: '', width: 52, sortable: false, resizable: false,
+    cellRenderer: ({ data, context }) => (
+      <RowMenu isPinned={context.pinnedIds.has(data.id)} onTogglePin={() => context.togglePin(data.id)} />
+    ),
+  },
+]
+
 // ── ReportsPage ────────────────────────────────────────────────────────────────
 
 export default function ReportsPage({ isMobile = false, sidebarWidth = 272, sidebarTransition, companyConfig = null }) {
+  const gridRef = useRef(null)
   const [view, setView]             = useState('list')
   const [statusFilter, setStatus]   = useState('all')
   const [search, setSearch]         = useState('')
   const [pinnedIds, setPinnedIds]   = useState(new Set(DEFAULT_PINNED))
+  const [isDark, setIsDark]         = useState(() => document.documentElement.dataset.theme === 'dark')
+
+  useEffect(() => {
+    const obs = new MutationObserver(() =>
+      setIsDark(document.documentElement.dataset.theme === 'dark')
+    )
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
 
   const left = isMobile ? 0 : sidebarWidth
 
-  function togglePin(id) {
+  const togglePin = useCallback((id) => {
     setPinnedIds(prev => {
       const next = new Set(prev)
       next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
-  }
+  }, [])
+
+  const gridContext = useMemo(() => ({ pinnedIds, togglePin }), [pinnedIds, togglePin])
 
   // Build pinned card objects — merge MOCK_REPORTS base data with PREVIEW_DATA
   const pinnedReports = useMemo(() =>
@@ -872,9 +890,9 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
         padding: '0 16px', height: 52, flexShrink: 0,
         margin: '16px 16px 0',
         background: 'var(--bg-sidebar)',
-        border: '1px solid var(--border-default)',
+        border: 'var(--page-header-border)',
         borderRadius: 16,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+        boxShadow: 'var(--page-header-shadow)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Reports</span>
@@ -925,16 +943,27 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
         <PinnedReportsStrip reports={pinnedReports} />
       </div>
 
+      {pinnedReports.length > 0 && (
+        <div style={{ height: 1, background: 'var(--border-input)', margin: '0 16px' }} />
+      )}
+
       {/* ── Content ──────────────────────────────────────────────────────── */}
       {view === 'list' ? (
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', margin: '16px 16px 16px', border: '1px solid var(--border-default)', borderRadius: 16, background: 'var(--bg-sidebar)' }}>
-          <TableHeader />
-          <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto' }}>
-            {filtered.length === 0
-              ? <EmptyState />
-              : filtered.map((r, i) => <ReportRow key={r.id} report={r} index={i} isPinned={pinnedIds.has(r.id)} onTogglePin={() => togglePin(r.id)} />)
-            }
-          </div>
+        <div style={{ flex: 1, overflow: 'hidden', margin: '16px 16px 16px', borderRadius: 16, border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', background: 'var(--bg-sidebar)' }}>
+          <AgGridReact
+            ref={gridRef}
+            theme={isDark ? darkTheme : lightTheme}
+            className="hear-grid"
+            rowData={filtered}
+            columnDefs={COL_DEFS}
+            defaultColDef={DEFAULT_COL_DEF}
+            rowHeight={44}
+            headerHeight={38}
+            suppressCellFocus
+            context={gridContext}
+            getRowId={p => p.data.id}
+            noRowsOverlayComponent={EmptyState}
+          />
         </div>
       ) : (
         <div className="smooth-scroll" style={{
