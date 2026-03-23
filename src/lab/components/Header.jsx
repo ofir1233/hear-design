@@ -21,9 +21,9 @@ export default function Header({ left, center, right, style }) {
         padding: '0 16px',
 
         background: 'var(--bg-sidebar)',
-        border: '1px solid var(--border-default)',
+        border: 'var(--page-header-border)',
         borderRadius: 16,
-        boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
+        boxShadow: 'var(--page-header-shadow)',
 
         fontFamily: "'Byrd', sans-serif",
         ...style,

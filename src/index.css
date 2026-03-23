@@ -206,6 +206,8 @@
   --border-default: #E5E7EB;
   --border-input:   #D2D2D0;
   --sidebar-outline: rgba(0, 0, 0, 0.08);
+  --page-header-border: none;
+  --page-header-shadow: 0 0 0 1px var(--sidebar-outline);
 
   --color-brand:       var(--c100);
   --color-interactive: var(--b100);
@@ -285,6 +287,8 @@
   --border-default: #333333;
   --border-input:   #3C3C3C;
   --sidebar-outline: rgba(255, 255, 255, 0.08);
+  --page-header-border: 1px solid var(--border-default);
+  --page-header-shadow: 0 1px 4px rgba(0,0,0,0.07);
 
   --color-brand:       var(--c100);
   --color-interactive: var(--b80);
@@ -421,14 +425,14 @@ input::placeholder {
 .hear-grid.ag-theme-quartz {
   --ag-font-family: 'Byrd', sans-serif;
   --ag-font-size: 13px;
-  --ag-background-color: var(--bg-card);
+  --ag-background-color: var(--bg-sidebar);
   --ag-foreground-color: var(--text-primary);
   --ag-border-color: var(--border-default);
   --ag-header-background-color: var(--bg-canvas);
   --ag-header-foreground-color: var(--text-secondary);
   --ag-row-hover-color: var(--bg-active);
   --ag-selected-row-background-color: #1779F718;
-  --ag-odd-row-background-color: var(--bg-card);
+  --ag-odd-row-background-color: var(--bg-sidebar);
   --ag-cell-horizontal-padding: 14px;
   --ag-row-border-color: var(--border-default);
   --ag-header-column-separator-color: var(--border-default);

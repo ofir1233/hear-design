@@ -1277,9 +1277,9 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
         padding: '0 16px', height: 52, flexShrink: 0,
         margin: '16px 16px 0',
         background: 'var(--bg-sidebar)',
-        border: '1px solid var(--border-default)',
+        border: 'var(--page-header-border)',
         borderRadius: 16,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+        boxShadow: 'var(--page-header-shadow)',
       }}>
         <button
           onClick={onBack}

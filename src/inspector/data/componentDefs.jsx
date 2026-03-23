@@ -64,6 +64,11 @@ import CreateReportPageSrc  from '../../components/reports/CreateReportPage.jsx?
 import AgentEvalPageSrc           from '../../components/agent-eval/AgentEvalPage.jsx?raw'
 import NotificationsPopoverSrc    from '../../lab/components/NotificationsPopover.jsx?raw'
 
+import SignalsPage        from '../../components/signals/SignalsPage.jsx'
+import CreateSignalPage   from '../../components/signals/CreateSignalPage.jsx'
+import SignalsPageSrc       from '../../components/signals/SignalsPage.jsx?raw'
+import CreateSignalPageSrc  from '../../components/signals/CreateSignalPage.jsx?raw'
+
 // ─── Shared preview wrapper helpers ──────────────────────────────────────────
 
 const center = (children, bg = 'transparent') => (
@@ -2801,6 +2806,543 @@ const bellRef = useRef(null)
         'Popover enter: translateY(-8px)+scale(0.98) → identity (200ms); exit: reverse (150ms)',
         'Rows use hover bg (ROW_HOVER_BG = color-mix(--bg-active 32%, --bg-card)) — no border separators between items',
         'Type icon bg: color-mix(in srgb, tag-color 15%, transparent) — adapts to light/dark without fixed opacity values',
+      ],
+    },
+  },
+
+  // ── SignalsPage ─────────────────────────────────────────────────────────────
+
+  SignalsPage: {
+    tier: 'Organism',
+    description: 'Full Signals list page. Fixed-position layout with AG Grid community table. Status filter tabs (All / Active / Triggered / Paused / Error), search input, CSV export, quota indicator badge, and Create button. 15 mock signals.',
+    props: [
+      { name: 'isMobile',          type: 'boolean', default: 'false' },
+      { name: 'sidebarWidth',      type: 'number',  default: '272'   },
+      { name: 'sidebarTransition', type: 'string',  default: '"left 280ms ease"' },
+    ],
+    states: [
+      { label: 'Default', props: { isMobile: false, sidebarWidth: 0 } },
+    ],
+    render: () => containedPreview(
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        transform: 'scale(0.55)', transformOrigin: 'top left',
+        width: '182%', height: '182%',
+        pointerEvents: 'none',
+      }}>
+        <SignalsPage isMobile={false} sidebarWidth={0} />
+      </div>,
+      220,
+    ),
+    snippet: () => `<SignalsPage isMobile={isMobile} sidebarWidth={SIDEBAR_WIDTH} sidebarTransition={sidebarTransition} />`,
+    source: SignalsPageSrc,
+    files: [
+      { path: 'src/components/signals/SignalsPage.jsx', src: SignalsPageSrc },
+    ],
+    npm: ['ag-grid-community', 'ag-grid-react'],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'Active badge',    hex: '#4BA373' },
+        { name: 'Triggered badge', hex: '#F59E0B' },
+        { name: 'Paused badge',    hex: '#9B9B9B' },
+        { name: 'Error badge',     hex: '#EF4444' },
+        { name: 'Quota bar',       hex: '#DC2626' },
+        { name: 'AI Source tag',   hex: '#FF7056' },
+        { name: 'System tag',      hex: '#1779F7' },
+      ],
+      subComponents: ['SignalsGrid', 'SignalsStatusTabs', 'SignalsStatusBadge', 'SignalsToggle', 'SignalsRowMenu', 'Badge', 'Button'],
+      notes: [
+        'Layout: position:fixed, left = sidebarWidth — same offset pattern as DataPage/ReportsPage',
+        'AG Grid: community edition with themeQuartz; light/dark theme swapped via MutationObserver on documentElement data-theme',
+        'Column defs: # | Auto Process (Toggle) | ID | Name | Type | Context | Created At | Executions | Status | Actions',
+        'Quota indicator: red pill (9/10) — wire to API for real usage',
+        'StatusTabs count badges hidden when count === 0',
+        'Export button calls gridRef.current.api.exportDataAsCsv()',
+        'data-inspector="SignalsPage" on root, data-inspector="SignalsGrid" on grid wrapper',
+      ],
+    },
+  },
+
+  // ── SignalsGrid ──────────────────────────────────────────────────────────────
+
+  SignalsGrid: {
+    tier: 'Organism',
+    description: 'AG Grid community table inside SignalsPage. 9 columns with custom cell renderers: Toggle (auto-process), IdCell (coral ID), SourceTagCell (AI/System pill), StatusCell (Badge), ExecutionsCell (icon + count), ActionsCell (RowMenu). Themed with themeQuartz; dark mode via MutationObserver.',
+    props: [
+      { name: 'rowData',    type: 'Signal[]', default: 'MOCK_SIGNALS (15 rows)' },
+      { name: 'columnDefs', type: 'ColDef[]', default: 'internal COL_DEFS'      },
+      { name: 'rowHeight',  type: 'number',   default: '44'                      },
+      { name: 'headerHeight', type: 'number', default: '38'                      },
+    ],
+    states: [
+      { label: 'Default', props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, transform: 'scale(0.55)', transformOrigin: 'top left', width: '182%', height: '182%', pointerEvents: 'none' }}>
+        <SignalsPage isMobile={false} sidebarWidth={0} />
+      </div>,
+      200,
+    ),
+    snippet: () =>
+`<AgGridReact
+  ref={gridRef}
+  theme={isDark ? darkTheme : lightTheme}
+  className="hear-grid"
+  rowData={filtered}
+  columnDefs={colDefs}
+  defaultColDef={DEFAULT_COL_DEF}
+  rowHeight={44}
+  headerHeight={38}
+  context={gridContext}
+  suppressCellFocus
+/>`,
+    source: SignalsPageSrc,
+    files: [{ path: 'src/components/signals/SignalsPage.jsx', src: SignalsPageSrc }],
+    npm: ['ag-grid-community', 'ag-grid-react'],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'Light bg',        hex: '#FFFFFF' },
+        { name: 'Dark bg',         hex: '#242424' },
+        { name: 'Row hover light', hex: '#E8E8E6' },
+        { name: 'Row hover dark',  hex: '#2A2A2A' },
+        { name: 'Header text',     hex: '#606060' },
+        { name: 'Border',          hex: '#E5E7EB' },
+      ],
+      subComponents: ['ToggleCellRenderer', 'IdCellRenderer', 'SourceTagCellRenderer', 'StatusCellRenderer', 'ExecutionsCellRenderer', 'ActionsCellRenderer'],
+      notes: [
+        'Theme params: fontFamily Byrd, fontSize 13, wrapperBorderRadius 0',
+        'Grid context: { onToggleAutoProcess, onTogglePause, onDelete } passed via context prop',
+        'gridRef.current.api.exportDataAsCsv() triggered by Export button in header',
+        'suppressCellFocus prevents AG Grid default blue outline on cell click',
+        'data-inspector="SignalsGrid" on the wrapper div',
+      ],
+    },
+  },
+
+  // ── SignalsStatusBadge ──────────────────────────────────────────────────────
+
+  SignalsStatusBadge: {
+    tier: 'Atom',
+    description: '4-state signal status badge. Active (green), Triggered (amber), Paused (muted/grey), Error (red). Wraps the shared Badge component with tinted variant.',
+    props: [
+      { name: 'status', type: "'active'|'triggered'|'paused'|'error'", default: 'required' },
+    ],
+    states: [
+      { label: 'Active',    props: { status: 'active'    } },
+      { label: 'Triggered', props: { status: 'triggered' } },
+      { label: 'Paused',    props: { status: 'paused'    } },
+      { label: 'Error',     props: { status: 'error'     } },
+    ],
+    render: (p) => center(
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {p.status === 'active'    && <Badge variant="tinted" color="green">Active</Badge>}
+        {p.status === 'triggered' && <Badge variant="tinted" color="amber">Triggered</Badge>}
+        {p.status === 'paused'    && <Badge variant="tinted" color="teal">Paused</Badge>}
+        {p.status === 'error'     && <Badge variant="tinted" color="coral">Error</Badge>}
+      </div>
+    ),
+    snippet: (p) => `<StatusBadge status="${p.status}" />`,
+    source: SignalsPageSrc,
+    files: [{ path: 'src/components/signals/SignalsPage.jsx', src: SignalsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'Active',    hex: '#4BA373' },
+        { name: 'Triggered', hex: '#F59E0B' },
+        { name: 'Paused',    hex: '#9B9B9B' },
+        { name: 'Error',     hex: '#EF4444' },
+      ],
+      subComponents: ['Badge'],
+      notes: ['Wraps Badge with tinted variant — color mapped from STATUS_CFG constant', 'Defined inline in SignalsPage.jsx'],
+    },
+  },
+
+  // ── SignalsToggle ───────────────────────────────────────────────────────────
+
+  SignalsToggle: {
+    tier: 'Atom',
+    description: 'Auto-process toggle switch used in the AG Grid Auto Process column. Pill-shaped toggle: OFF = grey border, ON = cobalt background + blue glow ring. Thumb animates with spring cubic-bezier.',
+    props: [
+      { name: 'value',    type: 'boolean',             default: 'false'    },
+      { name: 'onChange', type: '(next: boolean) => void', default: 'undefined' },
+    ],
+    states: [
+      { label: 'Off', props: { value: false } },
+      { label: 'On',  props: { value: true  } },
+    ],
+    render: (p) => center(
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 12, fontFamily: "'Byrd',sans-serif", color: 'var(--text-muted)' }}>{p.value ? 'ON' : 'OFF'}</span>
+        <button style={{
+          position: 'relative', width: 42, height: 24, borderRadius: 12,
+          background: p.value ? 'var(--b100,#1779F7)' : 'var(--border-default)',
+          border: 'none', cursor: 'pointer', flexShrink: 0, outline: 'none', padding: 0,
+          transition: 'background 220ms ease',
+          boxShadow: p.value ? '0 0 0 3px rgba(23,121,247,0.15)' : 'none',
+        }}>
+          <span style={{
+            position: 'absolute', top: 3, left: p.value ? 21 : 3,
+            width: 18, height: 18, borderRadius: '50%', background: '#fff',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+            transition: 'left 200ms cubic-bezier(0.34,1.56,0.64,1)',
+          }} />
+        </button>
+      </div>
+    ),
+    snippet: (p) => `<Toggle value={${p.value}} onChange={next => updateSignal(id, { autoProcess: next })} />`,
+    source: SignalsPageSrc,
+    files: [{ path: 'src/components/signals/SignalsPage.jsx', src: SignalsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'ON track',  hex: 'var(--b100) / #1779F7' },
+        { name: 'OFF track', hex: 'var(--border-default)'  },
+        { name: 'Thumb',     hex: '#FFFFFF'                },
+        { name: 'Glow ring', hex: 'rgba(23,121,247,0.15)' },
+      ],
+      subComponents: [],
+      notes: [
+        'Thumb spring: cubic-bezier(0.34,1.56,0.64,1) — slight overshoot for tactile feel',
+        'e.stopPropagation() on click prevents row selection',
+        'Used inside ToggleCellRenderer AG Grid cell renderer',
+        'Defined inline in SignalsPage.jsx',
+      ],
+    },
+  },
+
+  // ── SignalsStatusTabs ────────────────────────────────────────────────────────
+
+  SignalsStatusTabs: {
+    tier: 'Molecule',
+    description: 'Filter tab bar for the Signals page. All / Active / Triggered / Paused / Error — each with a live count badge that hides when count is 0. Active tab: bg-active + border-default + bold text.',
+    props: [
+      { name: 'active',   type: 'string',     default: "'all'" },
+      { name: 'onChange', type: '() => void', default: 'required' },
+      { name: 'counts',   type: 'object',     default: 'required' },
+    ],
+    states: [
+      { label: 'All active',     props: { active: 'all',       onChange: () => {}, counts: { all: 15, active: 7, triggered: 3, paused: 3, error: 1 } } },
+      { label: 'Active active',  props: { active: 'active',    onChange: () => {}, counts: { all: 15, active: 7, triggered: 3, paused: 3, error: 1 } } },
+      { label: 'Error active',   props: { active: 'error',     onChange: () => {}, counts: { all: 15, active: 7, triggered: 3, paused: 3, error: 1 } } },
+    ],
+    render: (p) => center(
+      <div style={{ background: 'var(--bg-sidebar)', padding: '10px 16px', borderRadius: 8, border: '1px solid var(--border-input)', display: 'flex', gap: 2 }}>
+        {['All', 'Active', 'Triggered', 'Paused', 'Error'].map(label => {
+          const key = label.toLowerCase()
+          const isActive = p.active === key
+          const count = p.counts?.[key]
+          return (
+            <button key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 28, padding: '0 10px', borderRadius: 6, background: isActive ? 'var(--bg-active)' : 'transparent', border: isActive ? '1px solid var(--border-default)' : '1px solid transparent', color: isActive ? 'var(--text-primary)' : 'var(--text-muted)', fontSize: 12, fontWeight: isActive ? 600 : 400, fontFamily: "'Byrd', sans-serif", cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              {label}
+              {count > 0 && <span style={{ minWidth: 16, height: 16, padding: '0 4px', borderRadius: 99, background: isActive ? 'var(--border-default)' : 'var(--bg-active)', fontSize: 10, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>{count}</span>}
+            </button>
+          )
+        })}
+      </div>
+    ),
+    snippet: () => `<StatusTabs active={statusFilter} onChange={setStatusFilter} counts={counts} />`,
+    source: SignalsPageSrc,
+    files: [{ path: 'src/components/signals/SignalsPage.jsx', src: SignalsPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [],
+      subComponents: [],
+      notes: [
+        'Count badge hidden when count === 0',
+        'Active tab: bg-active + border-default background',
+        'Hover on inactive tabs: text-secondary + bg-active via onMouseEnter/Leave',
+        'Defined inline in SignalsPage.jsx',
+      ],
+    },
+  },
+
+  // ── SignalsRowMenu ────────────────────────────────────────────────────────────
+
+  SignalsRowMenu: {
+    tier: 'Molecule',
+    description: '3-dot context menu for signal grid rows. Options: Run Revision, Export, Export Configuration, Clone, Edit, Talk, History, View, then Delete (danger red). Portal-rendered fixed dropdown anchored to the ⋮ button via getBoundingClientRect.',
+    props: [
+      { name: 'onEdit',        type: '() => void', default: 'undefined' },
+      { name: 'onDuplicate',   type: '() => void', default: 'undefined' },
+      { name: 'onTogglePause', type: '() => void', default: 'undefined' },
+      { name: 'isPaused',      type: 'boolean',    default: 'false'     },
+      { name: 'onDelete',      type: '() => void', default: 'undefined' },
+    ],
+    states: [
+      { label: 'Closed', props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, transform: 'scale(0.55)', transformOrigin: 'top left', width: '182%', height: '182%', pointerEvents: 'none' }}>
+        <SignalsPage isMobile={false} sidebarWidth={0} />
+      </div>,
+      160,
+    ),
+    snippet: () => `<RowMenu onEdit={onEdit} onTogglePause={onTogglePause} isPaused={isPaused} onDelete={onDelete} />`,
+    source: SignalsPageSrc,
+    files: [{ path: 'src/components/signals/SignalsPage.jsx', src: SignalsPageSrc }],
+    breakdown: {
+      icons: ['RunRevisionIcon', 'ExportIcon', 'CopyIcon', 'CloneIcon', 'EditIcon', 'TalkIcon', 'HistoryIcon', 'ViewIcon', 'TrashIcon'],
+      colors: [
+        { name: 'Delete danger',  hex: '#DC2626' },
+        { name: 'Divider line',   hex: 'var(--border-input)' },
+        { name: 'Dropdown bg',    hex: 'var(--bg-card)'      },
+        { name: 'Dropdown border',hex: 'var(--border-default)'},
+      ],
+      subComponents: ['MenuRow'],
+      notes: [
+        '8 menu items: Run Revision | Export | Export Configuration | Clone | Edit | Talk | History | View',
+        'Separator (1px border-input) before Delete',
+        'Portal: createPortal(…, document.body) for z-index isolation',
+        'Anchor: getBoundingClientRect() on ⋮ button — top: r.bottom+4, right: innerWidth-r.right',
+        'Outside mousedown closes (document listener added/removed on open/close)',
+        'Trigger button: 26×26 rounded square, bg-active + border on hover',
+        'Defined inline in SignalsPage.jsx',
+      ],
+    },
+  },
+
+  // ── CreateSignalPage ─────────────────────────────────────────────────────────
+
+  CreateSignalPage: {
+    tier: 'Organism',
+    description: 'Full Create/Edit Signal page. Fixed layout with rounded header bar (back button + editable signal name + History/Import buttons + Save CTA). Main content: single Card with signal name input, ModelDropdown, description textarea, and a dynamic list of expandable ItemRows.',
+    props: [
+      { name: 'sidebarWidth',      type: 'number', default: '0'   },
+      { name: 'sidebarTransition', type: 'string', default: '"left 280ms ease"' },
+    ],
+    states: [
+      { label: 'Default', props: { sidebarWidth: 0 } },
+    ],
+    render: () => containedPreview(
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        transform: 'scale(0.55)', transformOrigin: 'top left',
+        width: '182%', height: '182%',
+        pointerEvents: 'none',
+      }}>
+        <CreateSignalPage sidebarWidth={0} />
+      </div>,
+      280,
+    ),
+    snippet: () => `<CreateSignalPage sidebarWidth={sidebarWidth} sidebarTransition={sidebarTransition} />`,
+    source: CreateSignalPageSrc,
+    files: [
+      { path: 'src/components/signals/CreateSignalPage.jsx', src: CreateSignalPageSrc },
+    ],
+    npm: [],
+    breakdown: {
+      icons: ['BackIcon', 'PlayIcon', 'SparkleIcon', 'InfoIcon', 'DragHandle', 'TrashIcon', 'ChevronIcon', 'PlusIcon', 'HistoryIcon'],
+      colors: [
+        { name: 'Save button (coral)',       hex: '#FF7056'               },
+        { name: 'History button border',     hex: 'var(--border-default)' },
+        { name: 'Import button (purple)',    hex: 'rgba(215,153,226,0.12) → rgba(215,153,226,0.30) border' },
+        { name: 'Import label',             hex: '#C178D4'               },
+        { name: 'Model highlighted options',hex: '#C178D4'               },
+        { name: 'Item row bg',              hex: 'var(--bg-canvas)'      },
+        { name: 'Delete hover red',         hex: '#E53E3E'               },
+      ],
+      subComponents: ['SignalCard', 'ModelDropdown', 'TypeDropdown', 'SignalItemRow'],
+      notes: [
+        'Layout: position:fixed, left = sidebarWidth with transition — same pattern as SignalsPage',
+        'Header: rounded card (borderRadius 16, bg-sidebar) — matches SignalsPage header style',
+        'Signal name: inline editable — placeholder "Untitled signal" via value/onChange pattern',
+        'History button: ghost border style; Import button: purple sparkle pill',
+        'Save button: coral (#FF7056) primary style in header right slot',
+        'Items list: dynamic array with addItem / deleteItem — first item not deletable by design',
+        'data-inspector="CreateSignalPage" on root div',
+      ],
+    },
+  },
+
+  // ── SignalCard ───────────────────────────────────────────────────────────────
+
+  SignalCard: {
+    tier: 'Molecule',
+    description: 'Styled container card used inside CreateSignalPage. bg-sidebar background, 1px border-default border, borderRadius 16, padding 18/20px. Wraps signal name input, model dropdown, description field, and the items list.',
+    props: [
+      { name: 'children', type: 'ReactNode', default: 'required' },
+    ],
+    states: [
+      { label: 'Default', props: {} },
+    ],
+    render: () => center(
+      <div style={{ width: 340, background: 'var(--bg-sidebar)', border: '1px solid var(--border-default)', borderRadius: 16, padding: '18px 20px' }}>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd',sans-serif" }}>
+          Signal name · Model dropdown · Description textarea · Items list
+        </div>
+      </div>
+    ),
+    snippet: () => `<Card>\n  {/* signal name, model, description, items */}\n</Card>`,
+    source: CreateSignalPageSrc,
+    files: [{ path: 'src/components/signals/CreateSignalPage.jsx', src: CreateSignalPageSrc }],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'Card bg',     hex: 'var(--bg-sidebar)'      },
+        { name: 'Card border', hex: 'var(--border-default)'  },
+      ],
+      subComponents: [],
+      notes: ['Simple wrapper — no logic, only layout and surface styling', 'Defined inline in CreateSignalPage.jsx'],
+    },
+  },
+
+  // ── ModelDropdown ────────────────────────────────────────────────────────────
+
+  ModelDropdown: {
+    tier: 'Molecule',
+    description: 'AI model selector pill in CreateSignalPage. Purple sparkle pill trigger; portal dropdown lists 15 model options. Highlighted models (Yoko-1-mini, Yoko-1, Llama-3.3-70B, Tomy-1, Tomy-Vanila) shown in purple. Selected model bold.',
+    props: [
+      { name: 'value',    type: 'string',             default: "'Yoko-1'" },
+      { name: 'onChange', type: '(model) => void',    default: 'required' },
+    ],
+    states: [
+      { label: 'Closed', props: { value: 'Yoko-1' } },
+    ],
+    render: (p) => center(
+      <button style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        height: 32, padding: '0 12px', flexShrink: 0,
+        background: 'rgba(215,153,226,0.12)',
+        border: '1px solid rgba(215,153,226,0.30)',
+        borderRadius: 20, cursor: 'pointer',
+        fontSize: 12, fontWeight: 500, color: '#C178D4',
+        fontFamily: "'Byrd', sans-serif",
+      }}>
+        <span style={{ fontSize: 10 }}>✦</span>
+        {p.value ?? 'Yoko-1'}
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+      </button>
+    ),
+    snippet: (p) => `<ModelDropdown value="${p.value}" onChange={setModel} />`,
+    source: CreateSignalPageSrc,
+    files: [{ path: 'src/components/signals/CreateSignalPage.jsx', src: CreateSignalPageSrc }],
+    breakdown: {
+      icons: ['SparkleIcon', 'ChevronIcon'],
+      colors: [
+        { name: 'Pill bg',              hex: 'rgba(215,153,226,0.12)' },
+        { name: 'Pill border',          hex: 'rgba(215,153,226,0.30)' },
+        { name: 'Pill text',            hex: '#C178D4'                },
+        { name: 'Highlighted options',  hex: '#C178D4'                },
+      ],
+      subComponents: [],
+      notes: [
+        'MODEL_HIGHLIGHTED set: Yoko-1-mini, Yoko-1, Llama-3.3-70B, Tomy-1, Tomy-Vanila',
+        'Dropdown: maxHeight 340px with scrollbarWidth:thin for long list',
+        'Portal: createPortal(…, document.body) — fixed position, z-index 9999',
+        'Outside click listener added/removed on open/close',
+        'Defined inline in CreateSignalPage.jsx',
+      ],
+    },
+  },
+
+  // ── TypeDropdown ─────────────────────────────────────────────────────────────
+
+  TypeDropdown: {
+    tier: 'Atom',
+    description: 'Data type selector for signal item fields. Options: String / Boolean / Number / List. Full-width compact dropdown with uppercase value display. Border highlights cobalt (--b100) on open.',
+    props: [
+      { name: 'value',    type: "'String'|'Boolean'|'Number'|'List'", default: "'String'" },
+      { name: 'onChange', type: '(type) => void',                     default: 'required' },
+    ],
+    states: [
+      { label: 'String',  props: { value: 'String'  } },
+      { label: 'Boolean', props: { value: 'Boolean' } },
+      { label: 'Number',  props: { value: 'Number'  } },
+      { label: 'List',    props: { value: 'List'    } },
+    ],
+    render: (p) => center(
+      <div style={{ width: 120 }}>
+        <button style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          width: '100%', height: 34, padding: '0 10px',
+          background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+          borderRadius: 8, cursor: 'pointer',
+          fontSize: 12, fontWeight: 700, color: 'var(--text-primary)',
+          fontFamily: "'Byrd', sans-serif", letterSpacing: '0.04em',
+        }}>
+          <span>{(p.value ?? 'String').toUpperCase()}</span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        </button>
+      </div>
+    ),
+    snippet: (p) => `<TypeDropdown value="${p.value}" onChange={setItemType} />`,
+    source: CreateSignalPageSrc,
+    files: [{ path: 'src/components/signals/CreateSignalPage.jsx', src: CreateSignalPageSrc }],
+    breakdown: {
+      icons: ['ChevronIcon'],
+      colors: [
+        { name: 'Open border', hex: 'var(--b100) / #1779F7' },
+        { name: 'Dropdown bg', hex: 'var(--bg-card)'        },
+      ],
+      subComponents: [],
+      notes: [
+        'TYPE_OPTIONS: [String, Boolean, Number, List]',
+        'Value shown UPPERCASE — actual stored value is title-case (String, not STRING)',
+        'Dropdown: fixed position via getBoundingClientRect — top/left/width',
+        'Selected item: bold + text-primary; others: text-secondary',
+        'Defined inline in CreateSignalPage.jsx',
+      ],
+    },
+  },
+
+  // ── SignalItemRow ────────────────────────────────────────────────────────────
+
+  SignalItemRow: {
+    tier: 'Molecule',
+    description: 'Expandable configuration row in CreateSignalPage items list. Collapsed: drag handle + label + trash button + chevron. Expanded: 2-column grid — left (Name input + Key input + TypeDropdown) + right (Description textarea). Chevron animates 180° on expand.',
+    props: [
+      { name: 'label',    type: 'string',     default: "'Item 1'" },
+      { name: 'onDelete', type: '() => void', default: 'required' },
+    ],
+    states: [
+      { label: 'Collapsed', props: { label: 'Item 1' } },
+      { label: 'Expanded',  props: { label: 'Item 1' } },
+    ],
+    render: (p) => center(
+      <div style={{ width: 400, border: '1px solid var(--border-default)', borderRadius: 10, background: 'var(--bg-canvas)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', cursor: 'pointer', userSelect: 'none' }}>
+          <span style={{ color: 'var(--text-muted)', flexShrink: 0, opacity: 0.5 }}>
+            <svg width="12" height="16" viewBox="0 0 12 16" fill="none">
+              <circle cx="4" cy="4"  r="1.2" fill="currentColor"/><circle cx="8" cy="4"  r="1.2" fill="currentColor"/>
+              <circle cx="4" cy="8"  r="1.2" fill="currentColor"/><circle cx="8" cy="8"  r="1.2" fill="currentColor"/>
+              <circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="8" cy="12" r="1.2" fill="currentColor"/>
+            </svg>
+          </span>
+          <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: "'Byrd',sans-serif" }}>
+            {p.label ?? 'Item 1'}
+          </span>
+          <button style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1.5 3.5h10M5 3.5V2.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v1M10.5 3.5l-.7 7a1 1 0 0 1-1 .9H4.2a1 1 0 0 1-1-.9l-.7-7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </span>
+        </div>
+      </div>
+    ),
+    snippet: (p) => `<ItemRow label="${p.label}" onDelete={() => deleteItem(item.id)} />`,
+    source: CreateSignalPageSrc,
+    files: [{ path: 'src/components/signals/CreateSignalPage.jsx', src: CreateSignalPageSrc }],
+    breakdown: {
+      icons: ['DragHandle', 'TrashIcon', 'ChevronIcon'],
+      colors: [
+        { name: 'Row bg',           hex: 'var(--bg-canvas)'          },
+        { name: 'Row border',       hex: 'var(--border-default)'     },
+        { name: 'Delete hover bg',  hex: 'rgba(229,62,62,0.08)'     },
+        { name: 'Delete hover text',hex: '#E53E3E'                   },
+        { name: 'Input focus',      hex: 'var(--b100) / #1779F7'     },
+      ],
+      subComponents: ['TypeDropdown'],
+      notes: [
+        'Expanded body: 2-col grid 1fr/1.8fr — left has Name+Key+TypeDropdown, right has Description textarea',
+        'ChevronIcon rotates 180° via style.transform when open=true (200ms ease)',
+        'TrashIcon hover: color → #E53E3E + background → rgba(229,62,62,0.08)',
+        'inputBase shared style: bg-canvas, border-input, borderRadius 8, Byrd font',
+        'focusBorder / blurBorder handlers on all inputs for interactive border color',
+        'e.stopPropagation() on trash click to prevent row toggle',
+        'Defined inline in CreateSignalPage.jsx',
       ],
     },
   },

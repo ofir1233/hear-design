@@ -575,9 +575,9 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
           padding: '0 16px', height: 52,
           margin: '16px 16px 0',
           background: 'var(--bg-sidebar)',
-          border: '1px solid var(--border-default)',
+          border: 'var(--page-header-border)',
           borderRadius: 16,
-          boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+          boxShadow: 'var(--page-header-shadow)',
         }}>
           <button
             onClick={tryDiscard}
@@ -670,7 +670,30 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
                 const borderClr  = atLimit ? '#E53E3E' : nearLimit ? 'var(--c100)' : undefined
 
                 return (
-                  <Field key={i} label={prompts.length > 1 ? `Prompt ${i + 1}` : 'Report Prompt'}>
+                  <div key={i} data-inspector="Field" style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <label style={{
+                        fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)',
+                        fontFamily: "'Byrd', sans-serif",
+                      }}>
+                        {prompts.length > 1 ? `Prompt ${i + 1}` : 'Report Prompt'}
+                      </label>
+                      {prompts.length > 1 && (
+                        <button
+                          onClick={() => removePrompt(i)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 4,
+                            background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                            fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+                            transition: 'color 120ms ease',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.color = 'var(--c100)' }}
+                          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)' }}
+                        >
+                          <TrashIcon /> Remove
+                        </button>
+                      )}
+                    </div>
                     <div style={{ position: 'relative' }}>
                       <textarea
                         value={p}
@@ -678,7 +701,7 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
                         placeholder="Describe what this prompt should analyze or generate…"
                         rows={4}
                         style={{
-                          ...inputBase, height: 'auto', padding: '10px 12px 30px',
+                          ...inputBase, height: 'auto', padding: '10px 12px 24px',
                           resize: 'vertical', lineHeight: 1.6,
                           borderColor: borderClr || 'var(--border-input)',
                           transition: 'border-color 150ms ease',
@@ -709,43 +732,30 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
                           )}
                         </div>
 
-                        {prompts.length > 1 && (
-                          <button
-                            onClick={() => removePrompt(i)}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 4,
-                              pointerEvents: 'all', fontSize: 11, color: 'var(--text-muted)',
-                              fontFamily: "'Byrd', sans-serif",
-                              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                              transition: 'color 120ms ease',
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--c100)' }}
-                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)' }}
-                          >
-                            <TrashIcon /> Remove
-                          </button>
-                        )}
                       </div>
                     </div>
-                  </Field>
+                  </div>
                 )
               })}
 
-              <button
-                onClick={addPrompt}
-                style={{
-                  alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 6,
-                  height: 30, padding: '0 12px',
-                  background: 'none', border: '1.5px dashed var(--border-default)',
-                  borderRadius: 8, cursor: 'pointer',
-                  fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
-                  transition: 'border-color 150ms ease, color 150ms ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--b100)'; e.currentTarget.style.color = 'var(--b100)' }}
-                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-default)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-              >
-                <PlusSmIcon /> Add Prompt
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={addPrompt}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    height: 30, padding: '0 12px',
+                    background: 'none', border: '1.5px dashed var(--border-default)',
+                    borderRadius: 8, cursor: 'pointer',
+                    fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
+                    transition: 'border-color 150ms ease, color 150ms ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--b100)'; e.currentTarget.style.color = 'var(--b100)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-default)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                >
+                  <PlusSmIcon /> Add Prompt
+                </button>
+
+              </div>
             </Section>
 
             {/* ── TIER 2: Standard — open by default, collapsible ─────────── */}

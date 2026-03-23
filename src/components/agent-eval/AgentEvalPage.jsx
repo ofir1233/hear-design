@@ -1,8 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { MdRepeat } from 'react-icons/md'
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from 'recharts'
+import ReactApexChart from 'react-apexcharts'
 import { AgGridReact } from 'ag-grid-react'
 import { ModuleRegistry, AllCommunityModule, themeQuartz, colorSchemeDark, colorSchemeLight } from 'ag-grid-community'
 import Button from '../Button.jsx'
@@ -19,14 +17,14 @@ const THEME_PARAMS = {
 }
 const lightTheme = themeQuartz.withPart(colorSchemeLight).withParams({
   ...THEME_PARAMS,
-  backgroundColor:               '#FFFFFF',
+  backgroundColor:               '#F5F5F3',
   foregroundColor:               '#181818',
-  headerBackgroundColor:         '#FFFFFF',
+  headerBackgroundColor:         '#F5F5F3',
   headerTextColor:               '#606060',
   borderColor:                   '#E5E7EB',
   rowHoverColor:                 '#E8E8E6',
   selectedRowBackgroundColor:    'rgba(23,121,247,0.07)',
-  oddRowBackgroundColor:         '#FFFFFF',
+  oddRowBackgroundColor:         '#F5F5F3',
   headerColumnResizeHandleColor: '#D1D5DB',
 })
 const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
@@ -244,7 +242,7 @@ function ScoreBar({ score, average, max = 100 }) {
   const avgPct = average != null ? Math.min(100, (average / max) * 100) : null
   const color  = scoreColor(score)
   return (
-    <div style={{ position: 'relative', height: 5, background: 'var(--border-default)', borderRadius: 999, marginTop: 5 }}>
+    <div style={{ position: 'relative', height: 5, background: 'var(--border-strong, #C8C8C8)', borderRadius: 999, marginTop: 5 }}>
       <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: color, borderRadius: 999 }} />
       {/* Average tick — distinct position per skill */}
       {avgPct != null && (
@@ -270,101 +268,105 @@ function TotalScoreBar({ score, max = 100 }) {
   const pct = Math.min(100, (score / max) * 100)
   const color = scoreColor(score)
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-secondary)', minWidth: 90 }}>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <rect x="1.5" y="4" width="9" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.2"/>
-          <path d="M4 4V2.5a2 2 0 014 0V4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
-        </svg>
-        total score
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>total score</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{score}/100</span>
       </div>
-      <div style={{ flex: 1, position: 'relative', height: 6, background: 'var(--border-default)', borderRadius: 999 }}>
+      <div style={{ position: 'relative', height: 6, background: 'var(--border-strong, #C8C8C8)', borderRadius: 999 }}>
         <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: color, borderRadius: 999 }} />
         <div style={{
           position: 'absolute', top: '50%', left: `${pct}%`,
           transform: 'translate(-50%, -50%)',
           width: 10, height: 10, borderRadius: '50%',
-          background: color, border: '2px solid var(--bg-card)',
+          background: color, border: '2px solid var(--bg-sidebar)',
           boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
         }} />
       </div>
-      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', flexShrink: 0 }}>{score}/100</span>
     </div>
   )
 }
 
-// ── Performance chart (SVG) ───────────────────────────────────────────────────
-
-function ChartTooltip({ active, payload }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div style={{
-      background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
-      borderRadius: 8, padding: '8px 14px',
-      boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-    }}>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2, fontFamily: "'Byrd', sans-serif" }}>
-        {payload[0]?.payload?.date}
-      </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: '#1779F7', lineHeight: 1.2, fontFamily: "'Byrd', sans-serif" }}>
-        {payload[0]?.value}
-      </div>
-      <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>score</div>
-    </div>
-  )
-}
+// ── Performance chart (ApexCharts) ────────────────────────────────────────────
 
 function PerformanceChart({ data }) {
+  const [isDark, setIsDark] = useState(() => document.documentElement.dataset.theme === 'dark')
+  useEffect(() => {
+    const obs = new MutationObserver(() => setIsDark(document.documentElement.dataset.theme === 'dark'))
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
+
+  const categories = data.map(d => d.date)
+  const scores = data.map(d => d.score)
+
+  const options = {
+    chart: {
+      type: 'area',
+      toolbar: { show: false },
+      zoom: { enabled: false },
+      background: 'transparent',
+      fontFamily: "'Byrd', sans-serif",
+      animations: { enabled: false },
+    },
+    theme: { mode: isDark ? 'dark' : 'light' },
+    colors: ['#1779F7'],
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.28,
+        opacityTo: 0.01,
+        stops: [0, 100],
+      },
+    },
+    stroke: { curve: 'straight', width: 2.5 },
+    markers: { size: 4, strokeColors: isDark ? '#242424' : '#F5F5F3', strokeWidth: 2, hover: { size: 6 } },
+    xaxis: {
+      categories,
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+      labels: { style: { fontSize: '11px', colors: '#9B9B9B' } },
+    },
+    yaxis: {
+      min: 50,
+      max: 100,
+      tickAmount: 4,
+      labels: { style: { fontSize: '11px', colors: '#9B9B9B' }, offsetX: -16 },
+    },
+    grid: {
+      borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+      xaxis: { lines: { show: false } },
+      yaxis: { lines: { show: true } },
+      padding: { left: 0, right: 8, top: 12, bottom: 0 },
+    },
+    dataLabels: { enabled: false },
+    tooltip: {
+      custom: ({ series, seriesIndex, dataPointIndex }) => {
+        const val = series[seriesIndex][dataPointIndex]
+        const date = categories[dataPointIndex]
+        const bg = isDark ? '#2A2A2A' : '#FFFFFF'
+        const border = isDark ? '#333333' : '#E5E7EB'
+        const muted = isDark ? '#9B9B9B' : '#9B9B9B'
+        return `<div style="background:${bg};border:1px solid ${border};border-radius:8px;padding:10px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.15);font-family:'Byrd',sans-serif;">
+          <div style="font-size:11px;color:${muted};margin-bottom:2px;">${date}</div>
+          <div style="font-size:26px;font-weight:700;color:#1779F7;line-height:1.1;">${val}</div>
+          <div style="font-size:11px;color:${muted};margin-top:2px;">score</div>
+        </div>`
+      },
+    },
+    legend: { show: false },
+  }
+
+  const series = [{ name: 'Score', data: scores }]
+
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px 12px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div style={{ background: 'var(--bg-sidebar)', border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', borderRadius: 12, padding: '20px 24px 8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Agent's Performance by score</span>
-        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>(Time Unit :Day)</span>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{data[0]?.date} – {data[data.length - 1]?.date}</span>
       </div>
-      <ResponsiveContainer width="100%" height={210}>
-        <AreaChart data={data} margin={{ top: 5, right: 8, bottom: 0, left: -10 }}>
-          <defs>
-            <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor="#1779F7" stopOpacity={0.28} />
-              <stop offset="100%" stopColor="#1779F7" stopOpacity={0.01} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid
-            strokeDasharray="0"
-            stroke="var(--border-default)"
-            strokeOpacity={0.6}
-            vertical={false}
-          />
-          <XAxis
-            dataKey="date"
-            tick={{ fontSize: 11, fill: '#9B9B9B', fontFamily: "'Byrd', sans-serif" }}
-            axisLine={false}
-            tickLine={false}
-            dy={8}
-          />
-          <YAxis
-            domain={[50, 100]}
-            ticks={[60, 70, 80, 90, 100]}
-            tick={{ fontSize: 11, fill: '#9B9B9B', fontFamily: "'Byrd', sans-serif" }}
-            axisLine={false}
-            tickLine={false}
-            width={30}
-          />
-          <Tooltip
-            content={<ChartTooltip />}
-            cursor={{ stroke: '#1779F7', strokeWidth: 1.5, strokeDasharray: '5 4', strokeOpacity: 0.5 }}
-          />
-          <Area
-            type="monotone"
-            dataKey="score"
-            stroke="#1779F7"
-            strokeWidth={2.5}
-            fill="url(#scoreGrad)"
-            dot={false}
-            activeDot={{ r: 5, fill: '#1779F7', stroke: 'var(--bg-card)', strokeWidth: 2.5 }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
+      <ReactApexChart options={options} series={series} type="area" height={210} />
     </div>
   )
 }
@@ -375,7 +377,7 @@ function ScorePanel({ totalScore = 90, title = 'Overall score', collapsible = fa
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div data-inspector="AgentScorePanel" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
+    <div data-inspector="AgentScorePanel" style={{ background: 'var(--bg-sidebar)', border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', borderRadius: 12, padding: '20px 24px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: collapsed ? 0 : 16 }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</span>
         {collapsible && (
@@ -392,8 +394,10 @@ function ScorePanel({ totalScore = 90, title = 'Overall score', collapsible = fa
 
       {!collapsed && (
         <>
-          <TotalScoreBar score={totalScore} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginTop: 20 }}>
+          <div style={{ background: 'var(--bg-canvas)', border: '1px solid var(--border-input)', borderRadius: 10, padding: '12px 16px' }}>
+            <TotalScoreBar score={totalScore} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginTop: 20 }}>
             {CATEGORIES.map(cat => (
               <div key={cat.name} style={{
                 background: 'var(--bg-canvas)',
@@ -406,11 +410,7 @@ function ScorePanel({ totalScore = 90, title = 'Overall score', collapsible = fa
                   <div key={skill.name} style={{ marginBottom: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0, flex: 1 }}>
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0 }}>
-                          <rect x="1.5" y="4" width="9" height="6.5" rx="1" stroke="var(--text-muted)" strokeWidth="1.1"/>
-                          <path d="M4 4V2.5a2 2 0 014 0V4" stroke="var(--text-muted)" strokeWidth="1.1" strokeLinecap="round"/>
-                        </svg>
-                        <span style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{skill.name}</span>
+<span style={{ fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{skill.name}</span>
                       </div>
                       <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', flexShrink: 0 }}>{skill.score}/100</span>
                     </div>
@@ -801,16 +801,19 @@ function FilterBar() {
 
 // ── AG Grid cell renderers for EntityTable ────────────────────────────────────
 
-function NameCell({ value, data }) {
+function NameCell({ value, data, colDef }) {
   if (!data) return null
+  const showAvatar = colDef?.cellRendererParams?.showAvatar !== false
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, height: '100%' }}>
-      <div style={{
-        width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-        background: avatarColor(value),
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 10, fontWeight: 700, color: '#fff', fontFamily: "'Byrd', sans-serif",
-      }}>{initials(value)}</div>
+      {showAvatar && (
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+          background: avatarColor(value),
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 10, fontWeight: 700, color: '#fff', fontFamily: "'Byrd', sans-serif",
+        }}>{initials(value)}</div>
+      )}
       <span style={{ color: '#1779F7', fontWeight: 500, fontFamily: "'Byrd', sans-serif" }}>{value}</span>
     </div>
   )
@@ -821,7 +824,7 @@ function ScoreCell({ value }) {
   return <span style={{ fontWeight: 600, color: scoreColor(value), fontFamily: "'Byrd', sans-serif" }}>{value}</span>
 }
 
-function EntityTable({ title, rows, onRowClick }) {
+function EntityTable({ title, rows, onRowClick, showAvatar = true }) {
   const [isDark, setIsDark] = useState(() => document.documentElement.dataset.theme === 'dark')
   const [search,  setSearch]  = useState('')
 
@@ -838,7 +841,7 @@ function EntityTable({ title, rows, onRowClick }) {
   }, [rows, search])
 
   const colDefs = useMemo(() => [
-    { field: 'name',          headerName: 'ID',                   flex: 1, minWidth: 180, cellRenderer: NameCell },
+    { field: 'name',          headerName: 'ID',                   flex: 1, minWidth: 180, cellRenderer: NameCell, cellRendererParams: { showAvatar } },
     { field: 'lastCallDate',  headerName: 'LAST CALL DATE',       width: 210 },
     { field: 'avgHandleTime', headerName: 'AVG HANDLE TIME',      width: 170 },
     { field: 'avgScore',      headerName: 'AVG SCORE',            width: 130, cellRenderer: ScoreCell },
@@ -848,7 +851,7 @@ function EntityTable({ title, rows, onRowClick }) {
   const gridHeight = 38 + rowCount * 44 + 2 // headerHeight + rows + border
 
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
+    <div style={{ background: 'var(--bg-sidebar)', border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', borderRadius: 12, padding: '20px 24px' }}>
       <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12, fontFamily: "'Byrd', sans-serif" }}>{title}</div>
 
       {/* Search */}
@@ -871,7 +874,7 @@ function EntityTable({ title, rows, onRowClick }) {
       </div>
 
       {/* AG Grid */}
-      <div className="hear-grid" style={{ height: gridHeight, width: '100%', borderRadius: 8, overflow: 'hidden' }}>
+      <div className="hear-grid" style={{ height: gridHeight, width: '100%', borderRadius: 8, overflow: 'hidden', background: 'var(--bg-sidebar)' }}>
         <AgGridReact
           theme={isDark ? darkTheme : lightTheme}
           className="hear-grid"
@@ -893,7 +896,7 @@ function EntityTable({ title, rows, onRowClick }) {
 
 function InsightCard({ agent }) {
   return (
-    <div data-inspector="InsightCard" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, padding: '20px 24px' }}>
+    <div data-inspector="InsightCard" style={{ background: 'var(--bg-sidebar)', border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', borderRadius: 12, padding: '20px 24px' }}>
       <div style={{ display: 'flex', gap: 20, alignItems: 'stretch' }}>
 
         {/* Left: bordered inset panel */}
@@ -967,7 +970,7 @@ function SkillSection({ section, onOpenCall }) {
   const [expanded, setExpanded] = useState(true)
 
   return (
-    <div data-inspector="SkillSection" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 12, overflow: 'hidden' }}>
+    <div data-inspector="SkillSection" style={{ background: 'var(--bg-sidebar)', border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', borderRadius: 12, overflow: 'hidden' }}>
       <button
         onClick={() => setExpanded(e => !e)}
         style={{
@@ -1013,11 +1016,11 @@ function SkillSection({ section, onOpenCall }) {
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       padding: '7px 10px', borderRadius: 7,
-                      background: 'var(--bg-card)', border: '1px solid var(--border-default)',
+                      background: 'var(--bg-active)', border: '1px solid var(--border-default)',
                       cursor: onOpenCall ? 'pointer' : 'default', transition: 'background 120ms',
                     }}
                     onMouseEnter={e => { if (onOpenCall) e.currentTarget.style.background = 'var(--bg-canvas)' }}
-                    onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-card)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-active)'}
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
                       <rect x="1" y="1" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.2"/>
@@ -1287,7 +1290,7 @@ function FeedbackModal({ agent, onClose }) {
               top: 3, bottom: 3,
               left: `calc(3px + ${activeIdx} * (50% - 3px))`,
               width: 'calc(50% - 3px)',
-              background: 'var(--bg-card)',
+              background: 'var(--bg-sidebar)',
               borderRadius: 6,
               boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
               transition: 'left 220ms cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1363,9 +1366,9 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition, onOpe
         padding: '0 16px', height: 52,
         margin: '16px 16px 0',
         background: 'var(--bg-sidebar)',
-        border: '1px solid var(--border-default)',
+        border: 'var(--page-header-border)',
         borderRadius: 16,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+        boxShadow: 'var(--page-header-shadow)',
       }}>
         <button
           onClick={onBack}
@@ -1447,9 +1450,9 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         margin: '16px 16px 0',
         background: 'var(--bg-sidebar)',
-        border: '1px solid var(--border-default)',
+        border: 'var(--page-header-border)',
         borderRadius: 16,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+        boxShadow: 'var(--page-header-shadow)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Agent evaluation</span>
@@ -1466,7 +1469,6 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Button variant="primary" size="sm">Upload</Button>
           <button style={{
             background: 'none', border: 'none', cursor: 'pointer',
             color: 'var(--text-secondary)', display: 'flex', alignItems: 'center',
@@ -1489,7 +1491,7 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
         <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <PerformanceChart data={chartData} />
           <ScorePanel totalScore={90} />
-          <EntityTable title="Teams" rows={MOCK_TEAMS} />
+          <EntityTable title="Teams" rows={MOCK_TEAMS} showAvatar={false} />
           <EntityTable title="Agent Performance" rows={MOCK_AGENTS} onRowClick={setSelectedAgent} />
         </div>
       </div>

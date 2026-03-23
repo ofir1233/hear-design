@@ -24,14 +24,14 @@ const THEME_PARAMS = {
 }
 const lightTheme = themeQuartz.withPart(colorSchemeLight).withParams({
   ...THEME_PARAMS,
-  backgroundColor:            '#FFFFFF',
+  backgroundColor:            '#F5F5F3',
   foregroundColor:            '#181818',
-  headerBackgroundColor:      '#FFFFFF',
+  headerBackgroundColor:      '#F5F5F3',
   headerTextColor:            '#606060',
   borderColor:                '#E5E7EB',
   rowHoverColor:              '#E8E8E6',
   selectedRowBackgroundColor: 'rgba(23,121,247,0.07)',
-  oddRowBackgroundColor:      '#FFFFFF',
+  oddRowBackgroundColor:      '#F5F5F3',
   headerColumnResizeHandleColor: '#D1D5DB',
 })
 const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
@@ -470,11 +470,18 @@ function ActionsCellRenderer({ data, context }) {
 
 function IdCellRenderer({ value }) {
   return (
-    <span style={{
-      fontFamily: "'Byrd', sans-serif", fontSize: 12,
-      color: 'var(--color-brand)', fontWeight: 500,
-      letterSpacing: '0.01em',
-    }}>
+    <span
+      onClick={e => e.stopPropagation()}
+      style={{
+        fontFamily: "'Byrd', sans-serif", fontSize: 12,
+        color: 'var(--b100)', fontWeight: 500,
+        letterSpacing: '0.01em',
+        textDecoration: 'underline',
+        textDecorationColor: 'rgba(23,121,247,0.35)',
+        textUnderlineOffset: 3,
+        cursor: 'pointer',
+      }}
+    >
       {value}
     </span>
   )
@@ -626,9 +633,9 @@ export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTrans
         padding: '0 16px', height: 52, flexShrink: 0,
         margin: '16px 16px 0',
         background: 'var(--bg-sidebar)',
-        border: '1px solid var(--border-default)',
+        border: 'var(--page-header-border)',
         borderRadius: 16,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+        boxShadow: 'var(--page-header-shadow)',
       }}>
         {/* Left: title + count */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
@@ -683,9 +690,11 @@ export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTrans
         data-inspector="SignalsGrid"
         style={{
           flex: 1, overflow: 'hidden', padding: 0,
-          border: '1px solid var(--border-default)',
+          border: 'var(--page-header-border)',
+          boxShadow: 'var(--page-header-shadow)',
           borderRadius: 16,
           margin: '16px 16px 16px',
+          background: 'var(--bg-sidebar)',
         }}
       >
         <AgGridReact
