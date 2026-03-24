@@ -600,7 +600,7 @@ const NAV_ITEMS = [
 
 const DESIGN_LAB = { id: '__design_lab__', label: 'Design Lab' }
 
-export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', onProjectChange, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onShareSession, onNewChat }) {
+export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', onProjectChange, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onShareSession, onNewChat, defaultOrgScope = 'project' }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
   const [historyAnim, setHistoryAnim]   = useState(null) // null | 'in' | 'out'
   const [allHistoryOpen, setAllHistoryOpen] = useState(false)
@@ -634,6 +634,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
   const projectRef = useRef(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const bellRef = useRef(null)
+  const [orgScope, setOrgScope] = useState(defaultOrgScope) // 'project' | 'org'
 
   const isDemo = !!(userId?.includes('@') && companyConfig)
 
@@ -735,9 +736,83 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
             <img src={isDark ? '/powered-by-hear-dark.svg' : '/powered-by-hear.svg'} alt="Powered by Hear" style={{ height: 17, opacity: 0.7 }} />
           </div>
 
+          {/* Scope toggle: Project | Org */}
+          <div style={{ padding: '0 24px 12px' }}>
+            <div style={{
+              display: 'flex',
+              background: 'var(--bg-active)',
+              borderRadius: 8,
+              padding: 3,
+              gap: 2,
+            }}>
+              {[
+                { id: 'project', label: 'Project' },
+                { id: 'org',     label: 'Org' },
+              ].map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => { setOrgScope(id); if (id === 'org') setProjectOpen(false) }}
+                  style={{
+                    flex: 1,
+                    height: 28,
+                    border: 'none',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 12,
+                    fontWeight: orgScope === id ? 500 : 400,
+                    background: orgScope === id ? 'var(--bg-sidebar)' : 'transparent',
+                    color: orgScope === id ? 'var(--text-primary)' : 'var(--text-muted)',
+                    boxShadow: orgScope === id ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+                    transition: 'background 160ms ease, color 160ms ease, box-shadow 160ms ease',
+                    userSelect: 'none',
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Project selector + bell */}
           <div style={{ padding: '0 24px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <div ref={projectRef} style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+
+              {/* Org mode: all-projects display */}
+              <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0,
+                opacity: orgScope === 'org' ? 1 : 0,
+                pointerEvents: orgScope === 'org' ? 'auto' : 'none',
+                transition: 'opacity 200ms ease',
+                display: 'flex', alignItems: 'center', height: 40,
+                padding: '0 12px',
+                border: '1.5px solid var(--border-input)',
+                borderRadius: 8,
+                gap: 8,
+                fontSize: 13,
+                color: 'var(--text-primary)',
+              }}>
+                {/* Building / org icon */}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, color: 'var(--text-muted)' }}>
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <path d="M3 9h18M9 21V9"/>
+                </svg>
+                <span style={{ flex: 1, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  All Projects
+                </span>
+                <span style={{
+                  fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                  textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4,
+                  background: 'rgba(23,121,247,0.12)', color: '#1779F7',
+                  lineHeight: 1.4, flexShrink: 0,
+                }}>Org</span>
+              </div>
+
+              {/* Project mode: normal selector */}
+              <div style={{
+                opacity: orgScope === 'project' ? 1 : 0,
+                pointerEvents: orgScope === 'project' ? 'auto' : 'none',
+                transition: 'opacity 200ms ease',
+              }}>
               <div
                 onClick={() => { if (!projectOpen) setProjectOpenKey(k => k + 1); setProjectOpen(o => !o) }}
                 style={{
@@ -828,6 +903,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                   </div>
                 </div>
               </div>
+              </div>{/* end project-mode wrapper */}
             </div>
             <div style={{ position: 'relative', flexShrink: 0 }}>
               <button

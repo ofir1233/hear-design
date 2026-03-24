@@ -69,6 +69,11 @@ import CreateSignalPage   from '../../components/signals/CreateSignalPage.jsx'
 import SignalsPageSrc       from '../../components/signals/SignalsPage.jsx?raw'
 import CreateSignalPageSrc  from '../../components/signals/CreateSignalPage.jsx?raw'
 
+import InsightsPanel    from '../../components/dashboard/InsightsPanel.jsx'
+import Header           from '../../lab/components/Header.jsx'
+import InsightsPanelSrc from '../../components/dashboard/InsightsPanel.jsx?raw'
+import HeaderSrc        from '../../lab/components/Header.jsx?raw'
+
 // ─── Shared preview wrapper helpers ──────────────────────────────────────────
 
 const center = (children, bg = 'transparent') => (
@@ -619,18 +624,20 @@ export const COMPONENT_DEFS = {
 
   Sidebar: {
     tier: 'Organism',
-    description: '13-item floating navigation sidebar (Lab). Floats 16px from top/left/bottom with 16px border radius and subtle outline. Draggable divider above History lets you clip nav items. Collapsible on desktop, full-screen drawer on mobile.',
+    description: '13-item floating navigation sidebar (Lab). Floats 16px from top/left/bottom with 16px border radius and subtle outline. Scope toggle (Project | Org) sits above the project selector — switching to Org collapses the project dropdown and shows an "All Projects" display with a blue Org badge. Draggable divider above History lets you clip nav items. Collapsible on desktop, full-screen drawer on mobile.',
     props: [
-      { name: 'isMobile',      type: 'boolean',    default: 'false' },
-      { name: 'mobileOpen',    type: 'boolean',    default: 'false' },
-      { name: 'onMobileClose', type: '() => void', default: 'undefined' },
-      { name: 'collapsed',     type: 'boolean',    default: 'false' },
+      { name: 'isMobile',        type: 'boolean',             default: 'false' },
+      { name: 'mobileOpen',      type: 'boolean',             default: 'false' },
+      { name: 'onMobileClose',   type: '() => void',          default: 'undefined' },
+      { name: 'collapsed',       type: 'boolean',             default: 'false' },
+      { name: 'defaultOrgScope', type: "'project' | 'org'",   default: "'project'" },
     ],
     states: [
-      { label: 'Desktop open',     props: { isMobile: false, collapsed: false } },
-      { label: 'Desktop collapsed', props: { isMobile: false, collapsed: true } },
-      { label: 'Mobile open',      props: { isMobile: true, mobileOpen: true } },
-      { label: 'Mobile closed',    props: { isMobile: true, mobileOpen: false } },
+      { label: 'Desktop open',      props: { isMobile: false, collapsed: false, defaultOrgScope: 'project' } },
+      { label: 'Desktop collapsed', props: { isMobile: false, collapsed: true,  defaultOrgScope: 'project' } },
+      { label: 'Scope: Org',        props: { isMobile: false, collapsed: false, defaultOrgScope: 'org' } },
+      { label: 'Mobile open',       props: { isMobile: true,  mobileOpen: true,  defaultOrgScope: 'project' } },
+      { label: 'Mobile closed',     props: { isMobile: true,  mobileOpen: false, defaultOrgScope: 'project' } },
     ],
     // contain:paint makes position:fixed children relative to this box
     render: (p) => containedPreview(
@@ -640,7 +647,7 @@ export const COMPONENT_DEFS = {
         width: 320, height: '100vh',
         pointerEvents: 'none',
       }}>
-        <Sidebar {...p} onMobileClose={() => {}} />
+        <Sidebar key={p.defaultOrgScope} {...p} onMobileClose={() => {}} />
       </div>,
       172,
     ),
@@ -648,6 +655,97 @@ export const COMPONENT_DEFS = {
       `<Sidebar\n  isMobile={isMobile}\n  mobileOpen={sidebarOpen}\n  onMobileClose={() => setSidebarOpen(false)}\n  collapsed={sidebarCollapsed}\n  onToggleCollapse={() => setSidebarCollapsed(c => !c)}\n/>`,
     source: SidebarSrc,
     files: [
+      { path: 'snippet: ScopeToggle.jsx', src:
+`// ─── Scope Toggle: Project | Org ─────────────────────────────────────────────
+// Drop this above your project selector. orgScope is local state; expose
+// defaultOrgScope prop if you need to seed it from outside (e.g. inspector).
+//
+// Feature flag: show_all_org_calls — only render for Super Admin / Internal User
+
+const [orgScope, setOrgScope] = useState('project') // 'project' | 'org'
+
+// ── Toggle pill ───────────────────────────────────────────────────────────────
+<div style={{ padding: '0 24px 12px' }}>
+  <div style={{
+    display: 'flex',
+    background: 'var(--bg-active)',
+    borderRadius: 8,
+    padding: 3,
+    gap: 2,
+  }}>
+    {[
+      { id: 'project', label: 'Project' },
+      { id: 'org',     label: 'Org' },
+    ].map(({ id, label }) => (
+      <button
+        key={id}
+        onClick={() => { setOrgScope(id); if (id === 'org') setProjectOpen(false) }}
+        style={{
+          flex: 1,
+          height: 28,
+          border: 'none',
+          borderRadius: 6,
+          cursor: 'pointer',
+          fontSize: 12,
+          fontWeight: orgScope === id ? 500 : 400,
+          background: orgScope === id ? 'var(--bg-sidebar)' : 'transparent',
+          color: orgScope === id ? 'var(--text-primary)' : 'var(--text-muted)',
+          boxShadow: orgScope === id ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+          transition: 'background 160ms ease, color 160ms ease, box-shadow 160ms ease',
+          userSelect: 'none',
+        }}
+      >
+        {label}
+      </button>
+    ))}
+  </div>
+</div>
+
+// ── Inside your project selector wrapper (same relative container) ─────────────
+
+{/* Org mode: "All Projects" display — absolute, crossfades in */}
+<div style={{
+  position: 'absolute', top: 0, left: 0, right: 0,
+  opacity: orgScope === 'org' ? 1 : 0,
+  pointerEvents: orgScope === 'org' ? 'auto' : 'none',
+  transition: 'opacity 200ms ease',
+  display: 'flex', alignItems: 'center', height: 40,
+  padding: '0 12px',
+  border: '1.5px solid var(--border-input)',
+  borderRadius: 8,
+  gap: 8,
+  fontSize: 13,
+  color: 'var(--text-primary)',
+}}>
+  {/* Building / org icon */}
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ flexShrink: 0, color: 'var(--text-muted)' }}>
+    <rect x="3" y="3" width="18" height="18" rx="2"/>
+    <path d="M3 9h18M9 21V9"/>
+  </svg>
+  <span style={{ flex: 1, fontWeight: 500, whiteSpace: 'nowrap',
+    overflow: 'hidden', textOverflow: 'ellipsis' }}>
+    All Projects
+  </span>
+  <span style={{
+    fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+    textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4,
+    background: 'rgba(23,121,247,0.12)', color: '#1779F7',
+    lineHeight: 1.4, flexShrink: 0,
+  }}>Org</span>
+</div>
+
+{/* Project mode: normal selector — fades out when org is active */}
+<div style={{
+  opacity: orgScope === 'project' ? 1 : 0,
+  pointerEvents: orgScope === 'project' ? 'auto' : 'none',
+  transition: 'opacity 200ms ease',
+}}>
+  {/* ...your existing project selector markup here... */}
+</div>
+` },
       { path: 'src/lab/components/Sidebar.jsx',  src: SidebarSrc },
       { path: 'src/components/HearLogo.jsx',     src: HearLogoSrc },
       { path: 'src/components/icons/index.jsx',  src: IconsSrc },
@@ -669,13 +767,18 @@ export const COMPONENT_DEFS = {
         { name: '--border-default',  hex: '#E5E7EB' },
         { name: '--sidebar-outline', hex: 'rgba(0,0,0,0.08)' },
         { name: '--color-brand',     hex: '#FF7056' },
+        { name: 'B100 (org badge)',  hex: '#1779F7' },
       ],
       subComponents: ['HearLogo', 'NavItem', 'SessionItem'],
       notes: [
         'LAB VERSION — lives in src/lab/components/Sidebar.jsx',
+        'INSPECTOR / STORYBOOK: always Design Lab config — no companyConfig or userId passed, so isDemo=false and project list shows "Design Lab" only',
         'Floating: position fixed top:16 left:16 height:calc(100vh-32px)',
         'Panel: borderRadius:16 + boxShadow outline via --sidebar-outline token',
         'Nav: Chat, Data, Reports, Signals, Alerts, Agent Evaluation, Knowledge, Magic API, AI Tasks, Customers, Actions, Marketplace, Settings',
+        'Scope toggle (Project | Org): pill above project selector; bg-active track, raised bg-sidebar active tab, 160ms ease transition',
+        'Org mode: project selector crossfades out (opacity 200ms) → "All Projects" row with building icon + blue ORG badge fades in via absolute positioning',
+        'defaultOrgScope prop seeds initial state (default: "project") — useful for Inspector/Storybook previews',
         'Draggable divider above History: drag up/down to clip visible nav items',
         'MagicApiIcon / ActionsIcon / MarketplaceIcon defined inline (not in icons/index.jsx)',
         'Collapse width: 272px → 0px (transition 250ms ease)',
@@ -3671,4 +3774,133 @@ const bellRef = useRef(null)
       ],
     },
   },
+
+  // ── Header ────────────────────────────────────────────────────────────────
+
+  Header: {
+    tier: 'Organism',
+    description: 'Floating page header (Lab). Fixed top:16 left:16 right:16, height 52px, borderRadius:16. Three named slots: left (flex:1), center (optional, shrink:0), right (optional, flex:1 justify-end). Uses --bg-sidebar background + --page-header-border + --page-header-shadow tokens. All page content sits below it with paddingTop ≥ 68px.',
+    props: [
+      { name: 'left',   type: 'ReactNode', default: 'undefined' },
+      { name: 'center', type: 'ReactNode', default: 'undefined' },
+      { name: 'right',  type: 'ReactNode', default: 'undefined' },
+      { name: 'style',  type: 'CSSProperties', default: 'undefined' },
+    ],
+    states: [
+      {
+        label: 'Left only',
+        preview: () => containedPreview(
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
+            <Header left={<span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Page Title</span>} />
+          </div>, 68
+        ),
+      },
+      {
+        label: 'Left + Right',
+        preview: () => containedPreview(
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
+            <Header
+              left={<span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Reports</span>}
+              right={<span style={{ fontSize: 12, color: 'var(--text-secondary)', border: '1px solid var(--border-input)', padding: '4px 12px', borderRadius: 7 }}>+ New Report</span>}
+            />
+          </div>, 68
+        ),
+      },
+      {
+        label: 'Left + Center + Right',
+        preview: () => containedPreview(
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, transform: 'scale(0.75)', transformOrigin: 'top left', width: '133%' }}>
+            <Header
+              left={<span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>Data</span>}
+              center={<span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Acme Corp · Q1 2024</span>}
+              right={<span style={{ fontSize: 12, color: 'var(--text-secondary)', border: '1px solid var(--border-input)', padding: '4px 12px', borderRadius: 7 }}>Filters</span>}
+            />
+          </div>, 68
+        ),
+      },
+    ],
+    snippet: () =>
+      `<Header\n  left={<span>Page Title</span>}\n  right={<button>Action</button>}\n/>`,
+    source: HeaderSrc,
+    files: [
+      { path: 'src/lab/components/Header.jsx', src: HeaderSrc },
+    ],
+    npm: [],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: '--bg-sidebar',           hex: '#F5F5F3' },
+        { name: '--page-header-border',   hex: 'var token' },
+        { name: '--page-header-shadow',   hex: 'var token' },
+      ],
+      subComponents: [],
+      notes: [
+        'LAB VERSION — lives in src/lab/components/Header.jsx',
+        'Fixed: top:16 left:16 right:16 height:52 zIndex:80',
+        'Page content needs paddingTop ≥ 68px to clear the header',
+        'Slots: left (flex:1), center (optional shrink:0), right (optional flex:1 justify-end)',
+        'style prop merged last — can override any token',
+        'data-inspector="Header" on root div — context-aware inspector auto-detects it',
+      ],
+    },
+  },
+
+  // ── InsightsPanel ──────────────────────────────────────────────────────────
+
+  InsightsPanel: {
+    tier: 'Organism',
+    description: '6-widget dashboard grid for the Chat/Home page. Renders in a 2-col grid: Call Volume (sparkline), CSAT (week bars), Trending Topics (wide, bar chart), Top Performer, Open Escalations, Churn Risk. All numbers are seeded deterministically from config.companyName so they\'re stable across reloads. Inspector always previews with Design Lab defaults (null config → "Demo Company" seed).',
+    props: [
+      { name: 'config', type: '{ companyName?: string, commonTopics?: string[] } | null', default: 'null' },
+    ],
+    states: [
+      {
+        label: 'Design Lab defaults',
+        preview: () => (
+          <div style={{ padding: '16px', background: 'var(--bg-canvas)', overflow: 'auto', maxHeight: 420 }}>
+            <InsightsPanel config={null} />
+          </div>
+        ),
+      },
+      {
+        label: 'Named company',
+        preview: () => (
+          <div style={{ padding: '16px', background: 'var(--bg-canvas)', overflow: 'auto', maxHeight: 420 }}>
+            <InsightsPanel config={{ companyName: 'Acme Corp', commonTopics: ['Billing Dispute', 'Account Access', 'Refund Request', 'Technical Issue', 'Delivery Status'] }} />
+          </div>
+        ),
+      },
+    ],
+    snippet: () =>
+      `// config is null in Design Lab; pass companyConfig from LabApp in production\n<InsightsPanel config={companyConfig} />`,
+    source: InsightsPanelSrc,
+    files: [
+      { path: 'src/components/dashboard/InsightsPanel.jsx', src: InsightsPanelSrc },
+    ],
+    npm: [],
+    breakdown: {
+      icons: [],
+      colors: [
+        { name: 'C100 (widget accent)', hex: '#FF7056' },
+        { name: 'G100 (positive trend)', hex: '#4BA373' },
+        { name: '--bg-card',     hex: 'var token' },
+        { name: '--bg-active',   hex: 'var token' },
+        { name: '--text-primary', hex: '#181818' },
+        { name: '--text-muted',   hex: 'var token' },
+        { name: '--border-default', hex: 'var token' },
+      ],
+      subComponents: [],
+      notes: [
+        'Inspector always previews with null config — resolves to "Demo Company" seed',
+        'Numbers seeded via hashStr(companyName) — deterministic, stable across reloads',
+        '6 widgets: Call Volume, CSAT, Trending Topics (wide), Top Performer, Open Escalations, Churn Risk',
+        'Widget hover activates coral accent: sparkline, bar fill, avatar, topic bars, churn bar all change color',
+        'Animations: widgetIn (entry), barRise, livePulse, dotPulse, topicBar — all keyframe-based',
+        'Trending Topics uses top 4 entries from config.commonTopics (falls back to default 5-topic set)',
+        'Agent pool hardcoded (Sarah Chen, Marcus Reid, Priya Nair…) — picked by seeded index',
+        'No network calls — all data synthetic',
+      ],
+    },
+  },
+
 }

@@ -17,7 +17,7 @@
  *   Sidebar.jsx renders its own <button> markup with duplicated inline styles
  *   instead of importing Atoms/Nav Item. Hear Logo IS imported correctly.
  */
-import Sidebar from '../../Sidebar.jsx'
+import Sidebar from '../../../lab/components/Sidebar.jsx'
 
 export default {
   title: 'Organisms/Sidebar',
@@ -28,15 +28,15 @@ export default {
     docs: {
       description: {
         component:
-          '**Tier: Organisms** — Main navigation panel. ' +
-          'Fixed `272px` sidebar on desktop; full-width drawer overlay on mobile. ' +
-          'Contains: project selector, 11 nav items, Storybook dev link, history section, user profile. ' +
+          '**Tier: Organisms** — Lab floating navigation sidebar. ' +
+          'Floats `16px` from edges, `borderRadius: 16`, subtle outline. 13 nav items. ' +
+          '\n\n**Scope toggle (Project | Org)** sits above the project selector. ' +
+          'Switching to Org crossfades the project dropdown out and shows an "All Projects" display with a blue Org badge. ' +
+          'Seed the initial state via `defaultOrgScope` prop (`"project"` | `"org"`).' +
           '\n\n**Atoms composed:** `Atoms/Hear Logo` (injected correctly). ' +
           '\n\n> ⚠️ **ARCHITECTURAL DRIFT** — `Sidebar.jsx` renders its own `<button>` markup ' +
           'with duplicated inline styles instead of importing `Atoms/Nav Item`. ' +
-          'Style changes to `Atoms/Nav Item` will NOT propagate to this organism silently. ' +
-          '**Resolution required:** Replace the internal button markup in `Sidebar.jsx` ' +
-          'with the exported `NavItem` component from `src/components/NavItem.jsx` (to be created).',
+          'Style changes to `Atoms/Nav Item` will NOT propagate to this organism silently.',
       },
     },
   },
@@ -49,6 +49,11 @@ export default {
       control: 'boolean',
       description: 'Controls mobile drawer visibility (only relevant when `isMobile` is true)',
     },
+    defaultOrgScope: {
+      control: { type: 'radio' },
+      options: ['project', 'org'],
+      description: 'Seeds the initial scope toggle state. "project" = normal project selector; "org" = All Projects display.',
+    },
     onMobileClose: {
       action: 'onMobileClose',
       description: 'Callback fired when the mobile backdrop or close button is clicked',
@@ -56,9 +61,25 @@ export default {
   },
 }
 
-/** Desktop full sidebar — default rendering context. */
+/** Desktop full sidebar — default rendering context, project scope active. */
 export const Desktop = {
-  args: { isMobile: false, mobileOpen: false },
+  args: { isMobile: false, mobileOpen: false, defaultOrgScope: 'project' },
+}
+
+/** Org scope active — project selector is replaced by "All Projects" display with blue Org badge. */
+export const ScopeOrg = {
+  args: { isMobile: false, mobileOpen: false, defaultOrgScope: 'org' },
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Org scope active. The `Project | Org` toggle is set to Org: ' +
+          'the project selector crossfades out (200ms opacity) and an "All Projects" ' +
+          'row with a grid icon and blue `ORG` badge fades in via absolute positioning. ' +
+          'Available to Super Admins and Internal Users only (feature flag: `show_all_org_calls`).',
+      },
+    },
+  },
 }
 
 /**
