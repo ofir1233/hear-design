@@ -12,6 +12,7 @@ import ReportsPage from './components/reports/ReportsPage.jsx'
 import CreateReportPage from './components/reports/CreateReportPage.jsx'
 import AgentEvalPage from './components/agent-eval/AgentEvalPage.jsx'
 import SignalsPage from './components/signals/SignalsPage.jsx'
+import CreateSignalPage from './components/signals/CreateSignalPage.jsx'
 import LabApp from './lab/LabApp.jsx'
 
 function getGreeting() {
@@ -128,6 +129,7 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])
+
 
   function setActivePage(page) {
     navigate(`/${page}`)

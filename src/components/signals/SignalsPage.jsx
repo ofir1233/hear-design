@@ -1,5 +1,9 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { createPortal } from 'react-dom'
+import CreateSignalPage from './CreateSignalPage.jsx'
+
+// Direct reference to the state setter — bypasses AG Grid context entirely
+let _setEditingSignal = null
 
 function navigate(path, state = {}) {
   window.history.pushState(state, '', path)
@@ -14,6 +18,7 @@ import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
 
 ModuleRegistry.registerModules([AllCommunityModule])
+
 
 // ── AG Grid themes (mirrors DataPage) ────────────────────────────────────────
 const THEME_PARAMS = {
@@ -462,6 +467,7 @@ function ActionsCellRenderer({ data, context }) {
   return (
     <RowMenu
       isPaused={data.status === 'paused'}
+      onEdit={() => _setEditingSignal?.(data)}
       onTogglePause={() => context?.onTogglePause?.(data.id)}
       onDelete={() => context?.onDelete?.(data.id)}
     />
@@ -497,6 +503,10 @@ const DEFAULT_COL_DEF = {
 
 // ── SignalsPage ───────────────────────────────────────────────────────────────
 export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTransition }) {
+  // ── All hooks first (React rules) ────────────────────────────────────────────
+  const [editingSignal, setEditingSignal] = useState(null)
+  _setEditingSignal = setEditingSignal
+
   const gridRef   = useRef(null)
   const [signals, setSignals] = useState(MOCK_SIGNALS)
   const [statusFilter, setStatusFilter] = useState('all')
@@ -512,7 +522,6 @@ export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTrans
 
   const left = isMobile ? 0 : sidebarWidth
 
-  // ── Callbacks ────────────────────────────────────────────────────────────────
   const onToggleAutoProcess = useCallback((id, next) => {
     setSignals(prev => prev.map(s => s.id === id ? { ...s, autoProcess: next } : s))
   }, [])
@@ -529,6 +538,30 @@ export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTrans
   }, [])
 
   const gridContext = { onToggleAutoProcess, onTogglePause, onDelete }
+
+  const colDefs = useMemo(() => [
+    { headerName: '#', valueGetter: 'node.rowIndex + 1', width: 52, sortable: false, resizable: false, cellStyle: { display: 'flex', alignItems: 'center', color: 'var(--text-muted)', fontSize: 12 } },
+    { headerName: 'Auto Process', field: 'autoProcess', width: 120, sortable: false, cellRenderer: ToggleCellRenderer, cellStyle: { display: 'flex', alignItems: 'center' } },
+    { headerName: 'ID', field: 'id', width: 178, cellRenderer: IdCellRenderer },
+    { headerName: 'Name', field: 'name', flex: 1, minWidth: 180 },
+    { headerName: 'Type', field: 'source', width: 148, sortable: false, cellRenderer: SourceTagCellRenderer, cellStyle: { display: 'flex', alignItems: 'center' } },
+    { headerName: 'Context', field: 'context', flex: 2, minWidth: 220, cellStyle: { display: 'flex', alignItems: 'center', color: 'var(--text-secondary)' } },
+    { headerName: 'Created At', field: 'createdAt', width: 158, cellStyle: { display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', fontSize: 12 } },
+    { headerName: 'Executions', field: 'executions', width: 110, cellRenderer: ExecutionsCellRenderer, cellStyle: { display: 'flex', alignItems: 'center' } },
+    { headerName: '', field: 'actions', width: 52, sortable: false, resizable: false, cellRenderer: ActionsCellRenderer, cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+  ], [])
+
+  // ── Show edit page if a signal is being edited ────────────────────────────
+  if (editingSignal) {
+    return (
+      <CreateSignalPage
+        sidebarWidth={sidebarWidth}
+        sidebarTransition={sidebarTransition}
+        editSignal={editingSignal}
+        onBack={() => setEditingSignal(null)}
+      />
+    )
+  }
 
   // ── Filtering ─────────────────────────────────────────────────────────────────
   const filtered = signals.filter(s => {
@@ -548,74 +581,6 @@ export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTrans
     error:     signals.filter(s => s.status === 'error').length,
   }
 
-  // ── Column defs (stable ref) ──────────────────────────────────────────────────
-  const colDefs = [
-    {
-      headerName: '#',
-      valueGetter: 'node.rowIndex + 1',
-      width: 52,
-      sortable: false,
-      resizable: false,
-      cellStyle: { display: 'flex', alignItems: 'center', color: 'var(--text-muted)', fontSize: 12 },
-    },
-    {
-      headerName: 'Auto Process',
-      field: 'autoProcess',
-      width: 120,
-      sortable: false,
-      cellRenderer: ToggleCellRenderer,
-      cellStyle: { display: 'flex', alignItems: 'center' },
-    },
-    {
-      headerName: 'ID',
-      field: 'id',
-      width: 178,
-      cellRenderer: IdCellRenderer,
-    },
-    {
-      headerName: 'Name',
-      field: 'name',
-      flex: 1,
-      minWidth: 180,
-    },
-    {
-      headerName: 'Type',
-      field: 'source',
-      width: 148,
-      sortable: false,
-      cellRenderer: SourceTagCellRenderer,
-      cellStyle: { display: 'flex', alignItems: 'center' },
-    },
-    {
-      headerName: 'Context',
-      field: 'context',
-      flex: 2,
-      minWidth: 220,
-      cellStyle: { display: 'flex', alignItems: 'center', color: 'var(--text-secondary)' },
-    },
-    {
-      headerName: 'Created At',
-      field: 'createdAt',
-      width: 158,
-      cellStyle: { display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', fontSize: 12 },
-    },
-    {
-      headerName: 'Executions',
-      field: 'executions',
-      width: 110,
-      cellRenderer: ExecutionsCellRenderer,
-      cellStyle: { display: 'flex', alignItems: 'center' },
-    },
-    {
-      headerName: '',
-      field: 'actions',
-      width: 52,
-      sortable: false,
-      resizable: false,
-      cellRenderer: ActionsCellRenderer,
-      cellStyle: { display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    },
-  ]
 
   return (
     <div
