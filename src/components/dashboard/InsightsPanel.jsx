@@ -385,7 +385,7 @@ export default function InsightsPanel({ config }) {
         }
       `}</style>
 
-      <div style={{
+      <div data-inspector="InsightsPanel" style={{
         display:             'grid',
         gridTemplateColumns: '1fr 1fr',
         gap:                 10,

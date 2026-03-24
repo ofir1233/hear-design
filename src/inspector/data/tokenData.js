@@ -120,10 +120,12 @@ export const COLOR_FAMILIES = [
       { name: '--text-secondary',     label: 'text-secondary',    hex: '#606060' },
       { name: '--text-muted',         label: 'text-muted',        hex: '#9B9B9B' },
       { name: '--text-inverse',       label: 'text-inverse',      hex: '#F4F3F1' },
-      { name: '--border-default',     label: 'border-default',    hex: '#E5E7EB' },
-      { name: '--border-input',       label: 'border-input',      hex: '#C4C4C4' },
-      { name: '--color-brand',        label: 'color-brand',       hex: '#FF7056' },
-      { name: '--color-interactive',  label: 'color-interactive', hex: '#1779F7' },
+      { name: '--border-default',       label: 'border-default',      hex: '#E5E7EB' },
+      { name: '--border-input',         label: 'border-input',        hex: '#C4C4C4' },
+      { name: '--page-header-border',   label: 'page-header-border',  hex: 'none (light) / 1px solid #333 (dark)' },
+      { name: '--page-header-shadow',   label: 'page-header-shadow',  hex: '0 0 0 1px rgba(0,0,0,0.08) (light) / 0 1px 4px (dark)' },
+      { name: '--color-brand',          label: 'color-brand',         hex: '#FF7056' },
+      { name: '--color-interactive',    label: 'color-interactive',   hex: '#1779F7' },
     ],
   },
 ]
@@ -160,4 +162,5 @@ export const KEYFRAMES = [
   { name: 'dot-bounce',   description: 'Thinking indicator — vertical bounce loop' },
   { name: 'slideInRight', description: 'Related topic row — slide from right' },
   { name: 'btn-spin',     description: 'Button loading spinner — continuous 360° rotation' },
+  { name: 'spark-pulse',  description: 'Sparkline end-dot halo — scale + opacity pulse (used in PinnedReportCard)' },
 ]
