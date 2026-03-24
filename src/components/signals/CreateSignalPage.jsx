@@ -301,12 +301,22 @@ function TypeDropdown({ value, onChange }) {
   )
 }
 
-function ItemRow({ label, onDelete }) {
-  const [open, setOpen] = useState(false)
-  const [itemName, setItemName] = useState('')
+function ItemRow({ label, onDelete, initialName = '', initialDesc = '' }) {
+  const [open, setOpen] = useState(!!initialName)
+  const [rowLabel, setRowLabel] = useState(label)
+  const [itemName, setItemName] = useState(initialName)
   const [itemKey, setItemKey] = useState('')
   const [itemType, setItemType] = useState('String')
-  const [itemDesc, setItemDesc] = useState('')
+  const [itemDesc, setItemDesc] = useState(initialDesc)
+
+  // Sync when parent updates initialName/initialDesc (e.g. after editSignal loads)
+  useEffect(() => { if (initialName) { setItemName(initialName); setRowLabel(initialName) } }, [initialName])
+  useEffect(() => { if (initialDesc) setItemDesc(initialDesc) }, [initialDesc])
+
+  function handleNameChange(val) {
+    setItemName(val)
+    setRowLabel(val)  // keep header label in sync
+  }
 
   return (
     <div style={{
@@ -325,12 +335,21 @@ function ItemRow({ label, onDelete }) {
         <span style={{ color: 'var(--text-muted)', cursor: 'grab', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
           <DragHandle />
         </span>
-        <span style={{
-          flex: 1, fontSize: 13, fontWeight: 500,
-          color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
-        }}>
-          {label}
-        </span>
+        <input
+          value={rowLabel}
+          onChange={e => setRowLabel(e.target.value)}
+          onClick={e => e.stopPropagation()}
+          style={{
+            flex: 1, fontSize: 13, fontWeight: 500,
+            color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+            background: 'none', border: 'none', outline: 'none',
+            padding: '2px 4px', borderRadius: 4,
+            cursor: 'text',
+            transition: 'background 120ms ease',
+          }}
+          onFocus={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+          onBlur={e => { e.currentTarget.style.background = 'none' }}
+        />
         <button
           onClick={e => { e.stopPropagation(); onDelete() }}
           style={{
@@ -361,7 +380,7 @@ function ItemRow({ label, onDelete }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <input
               value={itemName}
-              onChange={e => setItemName(e.target.value)}
+              onChange={e => handleNameChange(e.target.value)}
               placeholder="Name"
               style={{ ...inputBase, height: 34, padding: '0 10px', fontSize: 13 }}
               onFocus={focusBorder}
@@ -399,12 +418,21 @@ function ItemRow({ label, onDelete }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function CreateSignalPage({ sidebarWidth = 0, sidebarTransition = 'left 280ms ease' }) {
+export default function CreateSignalPage({ sidebarWidth = 0, sidebarTransition = 'left 280ms ease', editSignal = null, onBack }) {
+  const isEditing = !!editSignal
   const [name, setName] = useState('')
   const [model, setModel] = useState('Yoko-1')
   const [description, setDescription] = useState('')
   const [items, setItems] = useState([{ id: 1, label: 'Item 1' }])
   const [nextId, setNextId] = useState(2)
+
+  useEffect(() => {
+    if (editSignal) {
+      setName(editSignal.name ?? '')
+      setDescription(editSignal.context ?? '')
+      setItems([{ id: 1, label: editSignal.name, initialName: editSignal.name, initialDesc: editSignal.context }])
+    }
+  }, [editSignal])
 
   function addItem() {
     setItems(prev => [...prev, { id: nextId, label: `Item ${nextId}` }])
@@ -437,7 +465,7 @@ export default function CreateSignalPage({ sidebarWidth = 0, sidebarTransition =
       }}>
         {/* Back button */}
         <button
-          onClick={() => navigate('/signals')}
+          onClick={() => onBack ? onBack() : navigate('/signals')}
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
             height: 28, padding: '0 10px',
@@ -525,7 +553,7 @@ export default function CreateSignalPage({ sidebarWidth = 0, sidebarTransition =
           onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
           onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
         >
-          Save
+          {isEditing ? 'Save Changes' : 'Save'}
         </button>
       </div>
 
@@ -583,6 +611,8 @@ export default function CreateSignalPage({ sidebarWidth = 0, sidebarTransition =
               <ItemRow
                 key={it.id}
                 label={it.label}
+                initialName={it.initialName ?? ''}
+                initialDesc={it.initialDesc ?? ''}
                 onDelete={() => deleteItem(it.id)}
               />
             ))}
