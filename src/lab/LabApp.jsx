@@ -20,6 +20,8 @@ import AgentEvalPage from '../components/agent-eval/AgentEvalPage.jsx'
 import SignalsPage from '../components/signals/SignalsPage.jsx'
 import CreateSignalPage from '../components/signals/CreateSignalPage.jsx'
 import KnowledgePage from '../components/knowledge/KnowledgePage.jsx'
+import OrganizationPage from '../components/settings/OrganizationPage.jsx'
+import Badge from '../components/Badge.jsx'
 
 // Inspector lives here — never in Demo
 const InspectorRoot = lazy(() => import('../inspector/index.jsx'))
@@ -32,6 +34,55 @@ function getGreeting() {
 }
 
 const SIDEBAR_WIDTH = 288 // 272px panel + 16px left margin
+
+const SETTINGS_TAB_META = {
+  'organization':   { label: 'Organization',   desc: 'Manage your organization profile and preferences' },
+  'teams':          { label: 'Teams',           desc: 'Create and manage teams within your organization' },
+  'projects':       { label: 'Projects',        desc: 'Configure projects and their settings' },
+  'profile':        { label: 'Profile',         desc: 'Update your personal profile and account details' },
+  'actions':        { label: 'Actions',         desc: 'Define and manage automated actions' },
+  'billing':        { label: 'Billing',         desc: 'Manage your subscription, invoices and payment methods' },
+  'usage':          { label: 'Usage',           desc: 'Monitor usage across your organization' },
+  'user-analytics': { label: 'User Analytics',  desc: 'Insights into user activity and engagement' },
+  'integrations':   { label: 'Integrations',    desc: 'Connect third-party tools and services' },
+  'it-admin':       { label: 'IT Admin',        desc: 'Security, SSO, and infrastructure settings' },
+  'marketplace':    { label: 'Marketplace',     desc: 'Browse and install apps and extensions' },
+}
+
+function SettingsTabHeader({ tab }) {
+  const meta = SETTINGS_TAB_META[tab] ?? { label: tab, desc: '' }
+  return (
+    <div style={{ marginBottom: 28 }}>
+      <div style={{
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+        paddingBottom: 16, borderBottom: '1px solid var(--border-default)',
+      }}>
+        <div>
+          <div style={{
+            fontSize: 20, fontWeight: 700, color: 'var(--text-primary)',
+            fontFamily: "'Byrd', sans-serif", lineHeight: 1.2,
+          }}>
+            {meta.label}
+          </div>
+          <div style={{
+            fontSize: 13, color: 'var(--text-muted)',
+            fontFamily: "'Byrd', sans-serif", marginTop: 4,
+          }}>
+            {meta.desc}
+          </div>
+        </div>
+        {tab === 'organization' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, paddingTop: 2 }}>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>Org ID</span>
+            <Badge variant="tinted" color="coral" shape="rect" uppercase={false}>
+              65f96f19e688fdd512b3226a
+            </Badge>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function buildRequestCards(config) {
   const name   = config?.companyName || 'your company'
@@ -492,6 +543,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
       })
   }
 
+  const [settingsTab, setSettingsTab] = useState('organization')
+
   const effectiveSidebarWidth = isMobile ? 0 : (sidebarCollapsed ? 0 : SIDEBAR_WIDTH)
   const sidebarTransition     = 'left 250ms cubic-bezier(0.4,0,0.2,1), padding-left 250ms cubic-bezier(0.4,0,0.2,1), width 250ms cubic-bezier(0.4,0,0.2,1)'
   const paddingLeft           = isMobile ? '1.5rem' : `calc(${effectiveSidebarWidth}px + 1.5rem)`
@@ -525,6 +578,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         onDeleteSession={handleDeleteSession}
         onRenameSession={handleRenameSession}
         onNewChat={handleNewChat}
+        settingsTab={settingsTab}
+        onSettingsTabChange={setSettingsTab}
       />
 
       {isMobile && (
@@ -576,6 +631,55 @@ Ask me anything about your operations, or explore a topic below to get started.`
         <SignalsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'knowledge' ? (
         <KnowledgePage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+      ) : activePage === 'settings' ? (
+        <div style={{ position: 'fixed', top: 0, left: effectiveSidebarWidth, right: 0, bottom: 0, transition: sidebarTransition, background: 'var(--bg-canvas)' }}>
+          <Header
+            style={{ left: effectiveSidebarWidth + 16, transition: sidebarTransition }}
+            left={
+              <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
+                Settings
+                <span style={{ fontWeight: 400, color: 'var(--text-muted)', margin: '0 6px' }}>›</span>
+                <span style={{ color: 'var(--c100)' }}>
+                  {settingsTab.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                </span>
+              </span>
+            }
+            right={
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button style={{
+                  height: 34, padding: '0 14px',
+                  border: '1px solid var(--border-default)', borderRadius: 8,
+                  background: 'transparent', color: 'var(--text-primary)',
+                  fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                  fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
+                }}>Add Organization</button>
+                <button style={{
+                  height: 34, padding: '0 14px',
+                  border: '1px solid var(--border-default)', borderRadius: 8,
+                  background: 'transparent', color: 'var(--text-primary)',
+                  fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                  fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
+                }}>Delete Organization</button>
+              </div>
+            }
+          />
+          {/* Content */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflowY: 'auto', paddingTop: 84 }}>
+            <div style={{ maxWidth: 860, margin: '0 auto', padding: '24px 40px 48px' }}>
+              <SettingsTabHeader tab={settingsTab} />
+              {settingsTab === 'organization' ? (
+                <OrganizationPage />
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, flexDirection: 'column', gap: 8 }}>
+                  <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>
+                    {settingsTab.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                  </span>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', opacity: 0.6 }}>Coming soon</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       ) : activePage !== 'dashboard' ? (
         <div style={{
           position: 'fixed', top: 0,

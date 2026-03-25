@@ -598,9 +598,35 @@ const NAV_ITEMS = [
   { id: 'settings',    label: 'Settings',         Icon: SettingsIcon    },
 ]
 
+function IcOrg()          { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> }
+function IcTeams()        { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="6" cy="5" r="2" stroke="currentColor" strokeWidth="1.5"/><path d="M2 13c0-2.209 1.791-4 4-4s4 1.791 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><circle cx="12" cy="5" r="1.5" stroke="currentColor" strokeWidth="1.3"/><path d="M14 13c0-1.657-1-3-2-3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/></svg> }
+function IcProjects()     { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.5"/><rect x="9" y="2" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.5"/><rect x="2" y="9" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.5"/><path d="M9 11.5h5M11.5 9v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> }
+function IcProfile()      { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.5"/><path d="M3 14c0-2.761 2.239-5 5-5s5 2.239 5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> }
+function IcActions()      { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M9 2L5 9h4l-2 5 6-7H9l2-5z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg> }
+function IcBilling()      { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="3.5" width="13" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M1.5 7h13" stroke="currentColor" strokeWidth="1.5"/><rect x="3.5" y="9.5" width="4" height="1.5" rx="0.5" fill="currentColor"/></svg> }
+function IcUsage()        { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 13V9M6 13V6M10 13V4M14 13V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> }
+function IcUserAnalytics(){ return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="5" r="2" stroke="currentColor" strokeWidth="1.5"/><path d="M1 13c0-2.209 1.791-4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/><path d="M10 10.5l1.5 1.5 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg> }
+function IcIntegrations() { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 2h4M8 2v3M4 5h8a1 1 0 011 1v1H3V6a1 1 0 011-1zM3 7h10v6a1 1 0 01-1 1H4a1 1 0 01-1-1V7z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/></svg> }
+function IcITAdmin()      { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1 2.5 2.5.5-1.8 1.8.4 2.7L8 8.2l-2.1 1.3.4-2.7L4.5 5l2.5-.5L8 2z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/><path d="M4 13h8M8 10v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> }
+function IcMarketplace()  { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2.5 6h11M3 6l1.5-4h7L13 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/><rect x="2" y="6" width="12" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.4"/><path d="M6 9.5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg> }
+
+const SETTINGS_TABS = [
+  { id: 'organization',   label: 'Organization',   Icon: IcOrg           },
+  { id: 'teams',          label: 'Teams',          Icon: IcTeams         },
+  { id: 'projects',       label: 'Projects',       Icon: IcProjects      },
+  { id: 'profile',        label: 'Profile',        Icon: IcProfile       },
+  { id: 'actions',        label: 'Actions',        Icon: IcActions       },
+  { id: 'billing',        label: 'Billing',        Icon: IcBilling       },
+  { id: 'usage',          label: 'Usage',          Icon: IcUsage         },
+  { id: 'user-analytics', label: 'User Analytics', Icon: IcUserAnalytics },
+  { id: 'integrations',   label: 'Integrations',   Icon: IcIntegrations  },
+  { id: 'it-admin',       label: 'IT Admin',       Icon: IcITAdmin       },
+  { id: 'marketplace',    label: 'Marketplace',    Icon: IcMarketplace   },
+]
+
 const DESIGN_LAB = { id: '__design_lab__', label: 'Design Lab' }
 
-export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', onProjectChange, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onShareSession, onNewChat, defaultOrgScope = 'project' }) {
+export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', onProjectChange, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onShareSession, onNewChat, defaultOrgScope = 'project', settingsTab = 'organization', onSettingsTabChange }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
   const [historyAnim, setHistoryAnim]   = useState(null) // null | 'in' | 'out'
   const [allHistoryOpen, setAllHistoryOpen] = useState(false)
@@ -736,42 +762,28 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
             <img src={isDark ? '/powered-by-hear-dark.svg' : '/powered-by-hear.svg'} alt="Powered by Hear" style={{ height: 17, opacity: 0.7 }} />
           </div>
 
-          {/* Scope toggle: Project | Org */}
-          <div style={{ padding: '0 24px 12px' }}>
-            <div style={{
-              display: 'flex',
-              background: 'var(--bg-active)',
-              borderRadius: 8,
-              padding: 3,
-              gap: 2,
-            }}>
-              {[
-                { id: 'project', label: 'Project' },
-                { id: 'org',     label: 'Org' },
-              ].map(({ id, label }) => (
-                <button
-                  key={id}
-                  onClick={() => { setOrgScope(id); if (id === 'org') setProjectOpen(false) }}
-                  style={{
-                    flex: 1,
-                    height: 28,
-                    border: 'none',
-                    borderRadius: 6,
-                    cursor: 'pointer',
-                    fontSize: 12,
-                    fontWeight: orgScope === id ? 500 : 400,
-                    background: orgScope === id ? 'var(--bg-sidebar)' : 'transparent',
-                    color: orgScope === id ? 'var(--text-primary)' : 'var(--text-muted)',
-                    boxShadow: orgScope === id ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
-                    transition: 'background 160ms ease, color 160ms ease, box-shadow 160ms ease',
-                    userSelect: 'none',
-                  }}
-                >
-                  {label}
-                </button>
-              ))}
+          {/* Scope toggle: Project | Org — hidden in settings */}
+          {activeNav !== 'settings' && (
+            <div style={{ padding: '0 24px 12px' }}>
+              <div style={{ display: 'flex', background: 'var(--bg-active)', borderRadius: 8, padding: 3, gap: 2 }}>
+                {[{ id: 'project', label: 'Project' }, { id: 'org', label: 'Org' }].map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => { setOrgScope(id); if (id === 'org') setProjectOpen(false) }}
+                    style={{
+                      flex: 1, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer',
+                      fontSize: 12, fontWeight: orgScope === id ? 500 : 400,
+                      background: orgScope === id ? 'var(--bg-sidebar)' : 'transparent',
+                      color: orgScope === id ? 'var(--text-primary)' : 'var(--text-muted)',
+                      boxShadow: orgScope === id ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+                      transition: 'background 160ms ease, color 160ms ease, box-shadow 160ms ease',
+                      userSelect: 'none',
+                    }}
+                  >{label}</button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Project selector + bell */}
           <div style={{ padding: '0 24px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -905,43 +917,42 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               </div>
               </div>{/* end project-mode wrapper */}
             </div>
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <button
-                ref={bellRef}
-                onClick={() => setNotifOpen(v => !v)}
-                style={{
-                  position: 'relative',
-                  width: 40, height: 40,
-                  background: notifOpen ? 'var(--bg-active)' : 'transparent',
-                  border: `1.5px solid ${notifOpen ? 'var(--border-default)' : 'var(--border-input)'}`,
-                  borderRadius: 9.6,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer',
-                  color: notifOpen ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  transition: 'background 140ms ease, color 140ms ease, border-color 140ms ease',
-                }}
-              >
-                <BellIcon />
-                <span style={{
-                  position: 'absolute', top: -3, right: -3,
-                  background: '#E8613A',
-                  color: '#fff',
-                  fontSize: 9,
-                  fontWeight: 700,
-                  minWidth: 16, height: 16,
-                  padding: '0 3px',
-                  borderRadius: 999,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  outline: '2px solid var(--bg-sidebar)',
-                  animation: 'notif-pulse 2s ease-out infinite',
-                }}>2</span>
-              </button>
-              <NotificationsPopover
-                open={notifOpen}
-                anchorRef={bellRef}
-                onClose={() => setNotifOpen(false)}
-              />
-            </div>
+            {/* Bell — hidden in settings */}
+            {activeNav !== 'settings' && (
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <button
+                  ref={bellRef}
+                  onClick={() => setNotifOpen(v => !v)}
+                  style={{
+                    position: 'relative', width: 40, height: 40,
+                    background: notifOpen ? 'var(--bg-active)' : 'transparent',
+                    border: `1.5px solid ${notifOpen ? 'var(--border-default)' : 'var(--border-input)'}`,
+                    borderRadius: 9.6,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: notifOpen ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    transition: 'background 140ms ease, color 140ms ease, border-color 140ms ease',
+                  }}
+                >
+                  <BellIcon />
+                  <span style={{
+                    position: 'absolute', top: -3, right: -3,
+                    background: '#E8613A', color: '#fff',
+                    fontSize: 9, fontWeight: 700,
+                    minWidth: 16, height: 16, padding: '0 3px',
+                    borderRadius: 999,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    outline: '2px solid var(--bg-sidebar)',
+                    animation: 'notif-pulse 2s ease-out infinite',
+                  }}>2</span>
+                </button>
+                <NotificationsPopover
+                  open={notifOpen}
+                  anchorRef={bellRef}
+                  onClose={() => setNotifOpen(false)}
+                />
+              </div>
+            )}
           </div>
 
           <div style={{ height: 1, background: 'var(--border-input)', margin: '0 24px 8px', flexShrink: 0 }} />
@@ -949,45 +960,98 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           {/* ── Scrollable middle: nav + history ───────────────────────────── */}
           <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-          {/* Nav items */}
-          <nav ref={navRef} className="smooth-scroll" style={{ padding: '0 24px', overflowY: 'auto', flex: '0 1 auto', minHeight: 80, height: navHeight ?? undefined }}>
-            {NAV_ITEMS.map(({ id, label, Icon }) => {
-              const active = activeNav === id
-              return (
+          {/* Nav items — main nav or settings sub-nav */}
+          {activeNav === 'settings' ? (
+            <nav className="smooth-scroll" style={{ padding: '0 24px', overflowY: 'auto', flex: '0 1 auto', minHeight: 80 }}>
+              {SETTINGS_TABS.map(({ id, label, Icon }) => {
+                const active = id === settingsTab
+                return (
+                  <button
+                    key={id}
+                    onClick={() => onSettingsTabChange?.(id)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '9px 12px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: active ? 'rgba(23,121,247,0.12)' : 'transparent',
+                      color: active ? '#1779F7' : 'var(--text-secondary)',
+                      fontSize: 13.5,
+                      fontWeight: active ? 500 : 400,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      marginBottom: 2,
+                      transition: 'background 150ms ease, color 150ms ease',
+                    }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-active)' }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <Icon />
+                    {label}
+                  </button>
+                )
+              })}
+              <div style={{ marginTop: 8, paddingBottom: 4 }}>
                 <button
-                  key={id}
-                  onClick={() => onNavChange?.(id)}
+                  onClick={() => onNavChange?.('dashboard')}
                   style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    border: 'none',
-                    background: active ? 'rgba(91,163,255,0.12)' : 'transparent',
-                    color: active ? '#5BA3FF' : 'var(--text-secondary)',
-                    fontSize: 13.5,
-                    fontWeight: 400,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    marginBottom: 1,
-                    transition: 'background 150ms ease, color 150ms ease',
+                    width: '100%', height: 40,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: '#1779F7', color: '#fff',
+                    border: 'none', borderRadius: 8,
+                    fontSize: 14, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: "'Byrd', sans-serif",
                   }}
-                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-active)' }}
-                  onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
                 >
-                  <Icon />
-                  {label}
+                  Back
                 </button>
-              )
-            })}
-          </nav>
+              </div>
+            </nav>
+          ) : (
+            <nav ref={navRef} className="smooth-scroll" style={{ padding: '0 24px', overflowY: 'auto', flex: '0 1 auto', minHeight: 80, height: navHeight ?? undefined }}>
+              {NAV_ITEMS.map(({ id, label, Icon }) => {
+                const active = activeNav === id
+                return (
+                  <button
+                    key={id}
+                    onClick={() => onNavChange?.(id)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: active ? 'rgba(91,163,255,0.12)' : 'transparent',
+                      color: active ? '#5BA3FF' : 'var(--text-secondary)',
+                      fontSize: 13.5,
+                      fontWeight: 400,
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      marginBottom: 1,
+                      transition: 'background 150ms ease, color 150ms ease',
+                    }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-active)' }}
+                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <Icon />
+                    {label}
+                  </button>
+                )
+              })}
+            </nav>
+          )}
 
-          {/* ── Storybook Dev Link (disabled) ───────────────────────────────────── */}
-          <div style={{ padding: '6px 24px 4px', position: 'relative' }}>
-            <StorybookDisabledButton />
-          </div>
+          {/* ── Storybook Dev Link — hidden in settings ──────────────────────────── */}
+          {activeNav !== 'settings' && (
+            <div style={{ padding: '6px 24px 4px', position: 'relative' }}>
+              <StorybookDisabledButton />
+            </div>
+          )}
           {/* ── end Storybook Dev Link ─────────────────────────────────────────── */}
 
           {activeNav === 'dashboard' && (
