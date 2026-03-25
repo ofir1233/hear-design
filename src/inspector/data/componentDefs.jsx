@@ -69,6 +69,9 @@ import CreateSignalPage   from '../../components/signals/CreateSignalPage.jsx'
 import SignalsPageSrc       from '../../components/signals/SignalsPage.jsx?raw'
 import CreateSignalPageSrc  from '../../components/signals/CreateSignalPage.jsx?raw'
 
+import KnowledgePage    from '../../components/knowledge/KnowledgePage.jsx'
+import KnowledgePageSrc from '../../components/knowledge/KnowledgePage.jsx?raw'
+
 import InsightsPanel    from '../../components/dashboard/InsightsPanel.jsx'
 import Header           from '../../lab/components/Header.jsx'
 import InsightsPanelSrc from '../../components/dashboard/InsightsPanel.jsx?raw'
@@ -3899,6 +3902,137 @@ const bellRef = useRef(null)
         'Trending Topics uses top 4 entries from config.commonTopics (falls back to default 5-topic set)',
         'Agent pool hardcoded (Sarah Chen, Marcus Reid, Priya Nair…) — picked by seeded index',
         'No network calls — all data synthetic',
+      ],
+    },
+  },
+
+  // ── KnowledgePage ─────────────────────────────────────────────────────────────
+
+  KnowledgePage: {
+    tier: 'Page',
+    description: 'Full Knowledge management page. Fixed-position two-panel layout: left file tree (268px) with collapsible Documents and Glossary sections; right panel switches between DocViewer and GlossaryEditor. Header: breadcrumb, search, Format Content button, 3-dot portal menu (Upload + Create Glossary).',
+    props: [
+      { name: 'sidebarWidth',      type: 'number', default: '0' },
+      { name: 'sidebarTransition', type: 'string', default: "'left 280ms ease'" },
+    ],
+    states: [
+      { label: 'Document selected', props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, transform: 'scale(0.55)', transformOrigin: 'top left', width: '182%', height: '182%', pointerEvents: 'none' }}>
+        <KnowledgePage sidebarWidth={0} />
+      </div>,
+      240,
+    ),
+    snippet: () => `<KnowledgePage sidebarWidth={sidebarWidth} sidebarTransition={sidebarTransition} />`,
+    source: KnowledgePageSrc,
+    files: [
+      { path: 'src/components/knowledge/KnowledgePage.jsx', src: KnowledgePageSrc },
+    ],
+    npm: [],
+    breakdown: {
+      icons: ['SearchIcon', 'MoreIcon', 'UploadIcon', 'GPlusIcon', 'ChevronUpIcon', 'ChevronDownIcon', 'ChevronRightSmall', 'BreadcrumbChevron', 'FolderIcon', 'FileTextIcon', 'FormatIcon', 'GDragHandle', 'GTrashIcon', 'GChevronIcon'],
+      colors: [
+        { name: 'Folder icon',           hex: '#FF7056' },
+        { name: 'Selected item border',  hex: '#FF7056' },
+        { name: 'Format Content button', hex: '#FF7056' },
+        { name: '--k-border light',      hex: '#D4D6D9' },
+        { name: '--k-border dark',       hex: '#3C3C3C' },
+        { name: '--bg-sidebar',          hex: 'var token' },
+        { name: '--bg-canvas',           hex: 'var token' },
+        { name: '--bg-active',           hex: 'var token' },
+        { name: '--text-primary',        hex: 'var token' },
+        { name: '--text-secondary',      hex: 'var token' },
+      ],
+      subComponents: ['KnowledgeFileTree', 'KnowledgeGlossaryEditor', 'SectionHeader', 'FolderRow', 'FileRow', 'DocViewer', 'GlossaryItemRow', 'GlossaryEditor', 'KMoreMenu'],
+      notes: [
+        'Layout: position:fixed, left = sidebarWidth with transition — same pattern as SignalsPage',
+        'Header: rounded card (borderRadius 16, bg-sidebar, height 52) — breadcrumb + search + Format Content + KMoreMenu',
+        'Breadcrumb: "Knowledge > [filename or glossary name]" in text-secondary when selection active',
+        'Left panel (268px): Documents + Glossary sections, SectionHeader uses uppercase text-secondary label (no colored bg)',
+        'Documents: FolderRow (coral folder icon, bg-active + medium weight when expanded, vertical connector line for children) → FileRow (coral left border 2px when selected)',
+        'Glossary: 3 named glossaries (Support Operations, Compliance & Privacy, SLA & Performance) as FileRow items; clicking opens GlossaryEditor',
+        'Right panel: activeSection===\'documents\' → DocViewer; activeSection===\'glossary\' → GlossaryEditor keyed by selectedGlossary.id',
+        'GlossaryEditor: list of GlossaryItemRow + dashed "New Term +" button (coral hover) — same DNA as SignalItemRow',
+        'GlossaryItemRow: DragHandle + inline editable label + TrashIcon + animated ChevronIcon; expanded = Term input (left) + Definition textarea (right) in 2-col grid',
+        'KMoreMenu: portal dropdown, kDropIn 150ms + staggered kItemIn per row. Items: Upload (20ms), Create Glossary (50ms)',
+        '--k-border CSS var: #D4D6D9 light / #3C3C3C dark — injected via <style> in page root',
+        'data-inspector="KnowledgePage" on root, data-inspector="KnowledgeFileTree" on left panel',
+      ],
+    },
+  },
+
+  KnowledgeFileTree: {
+    tier: 'Molecule',
+    description: 'Left panel of KnowledgePage. 268px wide. Collapsible Documents section (4 folders, 9 files) and Glossary section (3 named glossaries). SectionHeader uses small uppercase text-secondary label. Folder rows show coral folder icon and vertical child connector. Selected item has coral left border.',
+    props: [
+      { name: 'activeSection',    type: "'documents' | 'glossary'", default: "'documents'" },
+      { name: 'selectedFile',     type: 'FileNode | null',          default: 'null' },
+      { name: 'selectedGlossary', type: 'GlossaryNode | null',      default: 'null' },
+    ],
+    states: [
+      { label: 'Document selected', props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, transform: 'scale(0.55)', transformOrigin: 'top left', width: '182%', height: '182%', pointerEvents: 'none' }}>
+        <KnowledgePage sidebarWidth={0} />
+      </div>,
+      200,
+    ),
+    snippet: () => `{/* Left panel rendered inline in KnowledgePage */}`,
+    source: KnowledgePageSrc,
+    files: [{ path: 'src/components/knowledge/KnowledgePage.jsx', src: KnowledgePageSrc }],
+    breakdown: {
+      icons: ['ChevronUpIcon', 'ChevronDownIcon', 'ChevronRightSmall', 'FolderIcon', 'FileTextIcon'],
+      colors: [
+        { name: 'Folder icon',          hex: '#FF7056' },
+        { name: 'Selected left border', hex: '#FF7056' },
+      ],
+      subComponents: [],
+      notes: [
+        'SectionHeader: 11px uppercase text-secondary, no background fill; active section gets bg-active tint',
+        'FolderRow: expanded = bg-active persists + font-weight 500; children wrapped in borderLeft connector line (marginLeft 22)',
+        'FileRow: coral left border (2px) + bg-active when selected; applies to both document files and glossary rows',
+        'Vertical connector line: marginLeft 22px + borderLeft 1px solid border-default on the children container',
+        'Defined inline in KnowledgePage.jsx',
+      ],
+    },
+  },
+
+  GlossaryItemRow: {
+    tier: 'Molecule',
+    description: 'Expandable term row inside GlossaryEditor. Same pattern as SignalItemRow from CreateSignalPage: DragHandle + inline editable label + TrashIcon + animated ChevronIcon. Expanded: 2-col grid with Term input (left) and Definition textarea (right). Border uses --k-border token.',
+    props: [
+      { name: 'item',     type: '{ id, term, definition }', default: 'required' },
+      { name: 'onDelete', type: 'function',                 default: 'required' },
+    ],
+    states: [
+      { label: 'Collapsed', props: {} },
+    ],
+    render: () => containedPreview(
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, transform: 'scale(0.55)', transformOrigin: 'top left', width: '182%', height: '182%', pointerEvents: 'none' }}>
+        <KnowledgePage sidebarWidth={0} />
+      </div>,
+      180,
+    ),
+    snippet: () => `<GlossaryItemRow item={item} onDelete={() => deleteItem(item.id)} />`,
+    source: KnowledgePageSrc,
+    files: [{ path: 'src/components/knowledge/KnowledgePage.jsx', src: KnowledgePageSrc }],
+    breakdown: {
+      icons: ['GDragHandle', 'GTrashIcon', 'GChevronIcon'],
+      colors: [
+        { name: '--k-border light', hex: '#D4D6D9' },
+        { name: '--k-border dark',  hex: '#3C3C3C' },
+        { name: 'Trash hover',      hex: '#E53E3E' },
+      ],
+      subComponents: [],
+      notes: [
+        'Mirrors SignalItemRow from CreateSignalPage — same drag handle, trash, chevron, inline label edit pattern',
+        'Expanded body: gridTemplateColumns 1fr 1.8fr — Term input left, Definition textarea right',
+        'gInputBase: 1.5px solid var(--k-border), borderRadius 8, bg-canvas',
+        'Trash hover: red tint (rgba(229,62,62,0.08)) — identical to SignalItemRow',
+        'GChevronIcon animates 180deg rotation on open (200ms ease)',
+        'Defined inline in KnowledgePage.jsx',
       ],
     },
   },

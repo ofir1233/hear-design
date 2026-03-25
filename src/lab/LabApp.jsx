@@ -19,6 +19,7 @@ import CreateReportPage from '../components/reports/CreateReportPage.jsx'
 import AgentEvalPage from '../components/agent-eval/AgentEvalPage.jsx'
 import SignalsPage from '../components/signals/SignalsPage.jsx'
 import CreateSignalPage from '../components/signals/CreateSignalPage.jsx'
+import KnowledgePage from '../components/knowledge/KnowledgePage.jsx'
 
 // Inspector lives here — never in Demo
 const InspectorRoot = lazy(() => import('../inspector/index.jsx'))
@@ -573,6 +574,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         <CreateSignalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'signals' ? (
         <SignalsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+      ) : activePage === 'knowledge' ? (
+        <KnowledgePage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage !== 'dashboard' ? (
         <div style={{
           position: 'fixed', top: 0,
