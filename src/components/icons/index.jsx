@@ -265,6 +265,61 @@ export function NavigateIcon() {
   )
 }
 
+// ─── Chat Actions ─────────────────────────────────────────────────────────────
+
+const _S = { stroke: 'currentColor', strokeWidth: '1.5', strokeLinecap: 'round', strokeLinejoin: 'round' }
+
+export function ThumbUpIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M5 7.5V13H2.5C2.22 13 2 12.78 2 12.5V8C2 7.72 2.22 7.5 2.5 7.5H5ZM8.5 2.5C8.5 2.5 7 5 7 7.5V13H12L13.5 8.5V7H9.5L10.5 4.5C10.78 3.7 10.3 2.8 9.5 2.5H8.5Z" {..._S}/>
+    </svg>
+  )
+}
+
+export function ThumbDownIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M11 8.5V3H13.5C13.78 3 14 3.22 14 3.5V8C14 8.28 13.78 8.5 13.5 8.5H11ZM7.5 13.5C7.5 13.5 9 11 9 8.5V3H4L2.5 7.5V9H6.5L5.5 11.5C5.22 12.3 5.7 13.2 6.5 13.5H7.5Z" {..._S}/>
+    </svg>
+  )
+}
+
+export function RegenerateIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M2.5 8A5.5 5.5 0 108 2.5c-1.8 0-3.38.86-4.38 2.18M2.5 2v2.7H5.2" {..._S}/>
+    </svg>
+  )
+}
+
+export function CopyIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <rect x="5" y="5" width="8" height="9" rx="1.5" {..._S}/>
+      <path d="M11 5V3.5A1.5 1.5 0 009.5 2H4A1.5 1.5 0 002.5 3.5V9A1.5 1.5 0 004 10.5H5" {..._S}/>
+    </svg>
+  )
+}
+
+export function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M3 8.5l3.5 3.5 6.5-7" {..._S}/>
+    </svg>
+  )
+}
+
+export function ChatMoreIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="3.5" r="1.2" fill="currentColor"/>
+      <circle cx="8" cy="8" r="1.2" fill="currentColor"/>
+      <circle cx="8" cy="12.5" r="1.2" fill="currentColor"/>
+    </svg>
+  )
+}
+
 /** ESC key icon (was named CloseIcon in ChatInput.jsx) */
 export function EscIcon() {
   return (

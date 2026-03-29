@@ -377,7 +377,7 @@ function ScorePanel({ totalScore = 90, title = 'Overall score', collapsible = fa
   const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <div data-inspector="AgentScorePanel" style={{ background: 'var(--bg-sidebar)', border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', borderRadius: 12, padding: '20px 24px' }}>
+    <div data-inspector="AgentScorePanel" style={{ background: 'var(--bg-sidebar)', border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', borderRadius: 12, padding: '20px 24px', overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: collapsed ? 0 : 16 }}>
         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{title}</span>
         {collapsible && (
@@ -397,13 +397,14 @@ function ScorePanel({ totalScore = 90, title = 'Overall score', collapsible = fa
           <div style={{ background: 'var(--bg-canvas)', border: '1px solid var(--border-input)', borderRadius: 10, padding: '12px 16px' }}>
             <TotalScoreBar score={totalScore} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginTop: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 20, marginTop: 20 }}>
             {CATEGORIES.map(cat => (
               <div key={cat.name} style={{
                 background: 'var(--bg-canvas)',
                 border: '1px solid var(--border-input)',
                 borderRadius: 10,
                 padding: '14px 16px',
+                minWidth: 0, overflow: 'hidden',
               }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{cat.name}</div>
                 {cat.skills.map(skill => (
@@ -1487,7 +1488,7 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
       <FilterBar />
 
       {/* Scrollable content */}
-      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', marginTop: 8 }}>
+      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '20px 24px', marginTop: 8 }}>
         <div style={{ maxWidth: 1100, width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <PerformanceChart data={chartData} />
           <ScorePanel totalScore={90} />

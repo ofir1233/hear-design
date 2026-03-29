@@ -17,6 +17,7 @@ import {
   BellIcon, ChevronIcon, CollapseArrow, DotsIcon,
   MoonIcon, AccessibilityIcon, LogoutIcon,
   MicIcon, SubmitIcon, AttachIcon, ReturnIcon, NavigateIcon, EscIcon,
+  ThumbUpIcon, ThumbDownIcon, RegenerateIcon, CopyIcon, CheckIcon, ChatMoreIcon,
 } from '../../icons'
 
 // ─── Google icon (third-party brand, not in our icons/) ───────────────────────
@@ -212,6 +213,15 @@ export const AllIcons = {
         <IconCard name="Return ↵" exportName="ReturnIcon" colorNote="currentColor"><ReturnIcon /></IconCard>
         <IconCard name="Navigate ↑↓" exportName="NavigateIcon" colorNote="currentColor"><NavigateIcon /></IconCard>
         <IconCard name="ESC" exportName="EscIcon" colorNote="currentColor"><EscIcon /></IconCard>
+      </Section>
+
+      <Section title="Chat Actions">
+        <IconCard name="Thumb Up" exportName="ThumbUpIcon" colorNote="currentColor"><ThumbUpIcon /></IconCard>
+        <IconCard name="Thumb Down" exportName="ThumbDownIcon" colorNote="currentColor"><ThumbDownIcon /></IconCard>
+        <IconCard name="Regenerate" exportName="RegenerateIcon" colorNote="currentColor"><RegenerateIcon /></IconCard>
+        <IconCard name="Copy" exportName="CopyIcon" colorNote="currentColor"><CopyIcon /></IconCard>
+        <IconCard name="Check" exportName="CheckIcon" colorNote="currentColor"><CheckIcon /></IconCard>
+        <IconCard name="More (Vertical)" exportName="ChatMoreIcon" colorNote="currentColor"><ChatMoreIcon /></IconCard>
       </Section>
 
       <Section title="Third-party">

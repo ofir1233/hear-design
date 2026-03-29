@@ -22,6 +22,7 @@ import CreateSignalPage from '../components/signals/CreateSignalPage.jsx'
 import KnowledgePage from '../components/knowledge/KnowledgePage.jsx'
 import OrganizationPage from '../components/settings/OrganizationPage.jsx'
 import Badge from '../components/Badge.jsx'
+import DailyBriefing from './components/DailyBriefing.jsx'
 
 // Inspector lives here — never in Demo
 const InspectorRoot = lazy(() => import('../inspector/index.jsx'))
@@ -192,7 +193,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
   function closeExplore() { navigate('/data') }
 
   const [sidebarOpen, setSidebarOpen]         = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebar_collapsed') === 'true')
   const [submitted, setSubmitted]              = useState(false)
   const [settled, setSettled]                  = useState(false)
   const [loading, setLoading]                  = useState(false)
@@ -545,7 +546,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
 
   const [settingsTab, setSettingsTab] = useState('organization')
 
-  const effectiveSidebarWidth = isMobile ? 0 : (sidebarCollapsed ? 0 : SIDEBAR_WIDTH)
+  const effectiveSidebarWidth = isMobile ? 0 : (sidebarCollapsed ? 72 : SIDEBAR_WIDTH)
   const sidebarTransition     = 'left 250ms cubic-bezier(0.4,0,0.2,1), padding-left 250ms cubic-bezier(0.4,0,0.2,1), width 250ms cubic-bezier(0.4,0,0.2,1)'
   const paddingLeft           = isMobile ? '1.5rem' : `calc(${effectiveSidebarWidth}px + 1.5rem)`
 
@@ -566,7 +567,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
           }
         }}
         collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+        onToggleCollapse={() => setSidebarCollapsed(c => { const next = !c; localStorage.setItem('sidebar_collapsed', next); return next })}
         onSignOut={onSignOut}
         companyConfig={companyConfig}
         userId={userId}
@@ -697,7 +698,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
       ) : (
         <div
           className="min-h-screen flex flex-col items-center justify-center px-6"
-          style={{ paddingLeft, transition: sidebarTransition }}
+          style={{ paddingLeft, paddingTop: 84, paddingBottom: 84, transition: sidebarTransition }}
         >
           <Header
             style={{
@@ -784,7 +785,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
                       : 'none',
                     zIndex: 50,
                   }
-                : { width: '100%', maxWidth: '42rem' }
+                : { width: '100%', maxWidth: '42rem', position: 'relative', zIndex: 10 }
             }
             onTransitionEnd={(e) => {
               if (
@@ -806,59 +807,20 @@ Ask me anything about your operations, or explore a topic below to get started.`
           </div>
 
           {!submitted && (
-            <div style={{
-              width: '100%', maxWidth: '42rem', marginTop: '1.5rem',
-              opacity: (mentionActive || uploadActive) ? 0 : 1,
-              transition: 'opacity 200ms ease',
-              pointerEvents: (mentionActive || uploadActive) ? 'none' : 'auto',
-            }}>
-              <div ref={dashTabContentRef} style={{ position: 'relative' }}>
-                <div style={{
-                  position: 'absolute', top: 0, left: 0, right: 0, height: 72,
-                  background: 'linear-gradient(to bottom, var(--bg-canvas) 0%, transparent 100%)',
-                  pointerEvents: 'none', zIndex: 3,
-                  opacity: cardsScrolled ? 1 : 0, transition: 'opacity 350ms ease',
-                }} />
-                <div
-                  ref={cardsRef}
-                  className="cards-scroll"
-                  data-scrolling={cardsScrolling}
-                  onScroll={e => {
-                    setCardsScrolled(e.currentTarget.scrollTop > 0)
-                    setCardsScrolling(true)
-                    clearTimeout(cardsScrollTimeout.current)
-                    cardsScrollTimeout.current = setTimeout(() => setCardsScrolling(false), 800)
-                  }}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))',
-                    gap: 12, maxHeight: 280, overflowY: 'auto', paddingBottom: 40,
-                  }}
-                >
-                  {requests.map((req, i) => (
-                    <div
-                      key={i}
-                      className="request-card"
-                      style={{ borderRadius: 12, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer' }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span className="card-title" style={{ fontSize: 13, fontWeight: 600 }}>Request {req.id}</span>
-                          <span className="card-tag" style={{ fontSize: 11, borderRadius: 999, border: '1px solid', padding: '2px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '12ch' }}>{req.tag}</span>
-                        </div>
-                        <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}><ExternalLinkIcon /></span>
-                      </div>
-                      <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>{req.description}</p>
-                    </div>
-                  ))}
-                </div>
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0, height: 96,
-                  background: 'linear-gradient(to bottom, transparent 0%, var(--bg-canvas) 100%)',
-                  pointerEvents: 'none', zIndex: 3,
-                }} />
-              </div>
-            </div>
+            <DailyBriefing
+              sidebarWidth={effectiveSidebarWidth}
+              onPin={prompt => {
+                const userMsg = { role: 'user', text: prompt }
+                setMessages(prev => [...prev, userMsg])
+                setChatDefaultText('')
+                setSubmitted(true)
+                setSettled(true)
+                setMessages(prev => [...prev, {
+                  role: 'ai',
+                  text: "Here's your daily briefing summary:\n\nSentiment is tracking up and escalations are down vs. the 7-day average. The main area to watch is the spike in delivery-related contacts — up 34% vs. the 7-day average, likely tied to yesterday's logistics partner outage.\n\n**Key highlights:**\n- Calls handled: 1,284 (+12%)\n- Avg sentiment: 72% (+3pts)\n- Escalations: 23 (−8%)\n- Top agent: Martha Kellett at 94% CSAT\n\nWould you like to drill into any of these areas?"
+                }])
+              }}
+            />
           )}
 
           {submitted && settled && (

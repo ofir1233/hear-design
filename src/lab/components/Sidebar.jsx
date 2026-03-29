@@ -583,19 +583,19 @@ function StorybookDisabledButton() {
 
 
 const NAV_ITEMS = [
-  { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon        },
-  { id: 'data',        label: 'Data',             Icon: DataIcon        },
-  { id: 'reports',     label: 'Reports',          Icon: ReportsIcon     },
-  { id: 'signals',     label: 'Signals',          Icon: SignalsIcon     },
-  { id: 'alerts',      label: 'Alerts',           Icon: AlertsIcon      },
-  { id: 'agent-eval',  label: 'Agent Evaluation', Icon: AgentIcon       },
-  { id: 'knowledge',   label: 'Knowledge',        Icon: KnowledgeIcon   },
-  { id: 'magic-api',   label: 'Magic API',        Icon: MagicApiIcon    },
-  { id: 'ai-task',     label: 'AI Tasks',         Icon: AiTaskIcon      },
-  { id: 'customers',   label: 'Customers',        Icon: CustomersIcon   },
-  { id: 'actions',     label: 'Actions',          Icon: ActionsIcon     },
-  { id: 'marketplace', label: 'Marketplace',      Icon: MarketplaceIcon },
-  { id: 'settings',    label: 'Settings',         Icon: SettingsIcon    },
+  { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon,        group: 'MAIN'         },
+  { id: 'data',        label: 'Data',             Icon: DataIcon,        group: 'MAIN'         },
+  { id: 'reports',     label: 'Reports',          Icon: ReportsIcon,     group: 'MAIN'         },
+  { id: 'signals',     label: 'Signals',          Icon: SignalsIcon,     group: 'INTELLIGENCE' },
+  { id: 'alerts',      label: 'Alerts',           Icon: AlertsIcon,      group: 'INTELLIGENCE' },
+  { id: 'agent-eval',  label: 'Agent Evaluation', Icon: AgentIcon,       group: 'INTELLIGENCE' },
+  { id: 'knowledge',   label: 'Knowledge',        Icon: KnowledgeIcon,   group: 'INTELLIGENCE' },
+  { id: 'magic-api',   label: 'Magic API',        Icon: MagicApiIcon,    group: 'INTELLIGENCE' },
+  { id: 'ai-task',     label: 'AI Tasks',         Icon: AiTaskIcon,      group: 'INTELLIGENCE' },
+  { id: 'customers',   label: 'Customers',        Icon: CustomersIcon,   group: 'OPERATIONS'   },
+  { id: 'actions',     label: 'Actions',          Icon: ActionsIcon,     group: 'OPERATIONS'   },
+  { id: 'marketplace', label: 'Marketplace',      Icon: MarketplaceIcon, group: 'OPERATIONS'   },
+  { id: 'settings',    label: 'Settings',         Icon: SettingsIcon,    group: 'SETTINGS'     },
 ]
 
 function IcOrg()          { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> }
@@ -721,18 +721,103 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
 
     <div data-inspector="Sidebar" style={{ display: 'flex', alignItems: 'stretch', position: 'fixed', top: 16, left: 16, height: 'calc(100vh - 32px)', zIndex: 100 }}>
 
+      {/* ── Mini icon rail (collapsed) ───────────────────────────────────── */}
+      {!isMobile && (
+        <div style={{
+          width: isOpen ? 0 : 56, flexShrink: 0,
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          background: 'var(--bg-sidebar)',
+          borderRadius: 16, height: '100%',
+          boxShadow: isOpen ? 'none' : '0 0 0 1px var(--sidebar-outline)',
+          padding: '16px 0 12px',
+          overflow: 'hidden',
+          transition: 'width 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms ease, opacity 200ms ease',
+          opacity: isOpen ? 0 : 1,
+        }}>
+          {/* Logo mark — inline SVG so we can size it precisely */}
+          <div style={{ marginBottom: 16, width: 22, height: 19, flexShrink: 0 }}>
+            <svg viewBox="0 0 69 60" fill="none" xmlns="http://www.w3.org/2000/svg" width="22" height="19">
+              <path d="M63.6202 25.6905C66.431 26.6546 69 26.1754 69 28.5414C69 30.9074 65.4639 29.2245 61.4139 32.459C57.364 35.6935 56.1551 40.0061 53.4954 45.4868C50.8357 50.9675 46.5138 61.4496 39.1091 59.8324C31.7043 58.2151 34.2129 46.1157 34.0618 41.1741C33.9106 36.2325 33.2457 32.5189 29.2865 32.0696C25.3272 31.6204 23.0302 34.6153 20.7332 38.2391C18.4363 41.863 16.502 49.3802 11.0315 47.7629C5.5611 46.1457 9.3088 36.1726 7.46518 33.2077C5.62155 30.2427 3.17346 30.1886 2.29698 30.1886C1.4205 30.1886 8.16629e-06 29.7394 0 28.5714C-8.16629e-06 27.4033 1.26938 27.0739 2.29698 27.0739C3.32457 27.0739 4.60326 27.2375 7.19317 26.5291C13.6307 24.7681 12.8147 11.2251 20.1288 11.5845C27.0146 11.9229 23.4533 26.0798 30.0118 26.0798C36.5703 26.0798 38.7464 18.5027 41.4665 12.8424C44.1866 7.18205 49.4152 -1.32349 56.1551 0.173941C62.8949 1.67137 60.5677 14.1302 60.1445 18.0535C59.7214 21.9768 60.8095 24.7264 63.6202 25.6905Z" fill="#FF7056"/>
+            </svg>
+          </div>
+
+          {/* Nav icons */}
+          <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, overflowY: 'auto', padding: '0 6px' }}>
+            {NAV_ITEMS.map(({ id, label, Icon, group }, i) => {
+              const active = activeNav === id
+              const isFirstInGroup = i === 0 || NAV_ITEMS[i - 1].group !== group
+              const isSettings = group === 'SETTINGS'
+              return (
+                <div key={id} style={{ width: '100%' }}>
+                  {isSettings && (
+                    <div style={{ height: 1, background: 'var(--border-default)', margin: '6px 4px 8px' }} />
+                  )}
+                  {isFirstInGroup && !isSettings && i !== 0 && (
+                    <div style={{ height: 1, background: 'var(--border-default)', margin: '4px 4px 6px', opacity: 0.5 }} />
+                  )}
+                  <button
+                    title={label}
+                    onClick={() => onNavChange?.(id)}
+                    style={{
+                      width: '100%', height: 38,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: 'none', borderRadius: 9, cursor: 'pointer',
+                      background: active ? 'rgba(91,163,255,0.14)' : 'transparent',
+                      color: active ? '#5BA3FF' : 'var(--text-muted)',
+                      transition: 'background 140ms ease, color 140ms ease',
+                      position: 'relative',
+                    }}
+                    onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
+                    onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' } }}
+                  >
+                    <Icon />
+                    {/* Active indicator dot */}
+                    {active && (
+                      <span style={{
+                        position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)',
+                        width: 4, height: 4, borderRadius: '50%',
+                        background: '#5BA3FF',
+                      }} />
+                    )}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Expand button */}
+          <button
+            onClick={() => onToggleCollapse?.()}
+            title="Expand sidebar"
+            style={{
+              marginTop: 8,
+              width: 36, height: 28,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'none', border: '1px solid var(--border-default)',
+              borderRadius: 7, cursor: 'pointer',
+              color: 'var(--text-muted)',
+              transition: 'background 130ms ease, color 130ms ease, border-color 130ms ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.borderColor = 'var(--text-muted)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.borderColor = 'var(--border-default)' }}
+          >
+            <CollapseArrow collapsed={false} />
+          </button>
+        </div>
+      )}
+
       {/* Sidebar panel */}
       <div
         style={{
           width: isOpen ? 272 : 0,
           overflow: 'hidden',
-          transition: 'width 250ms cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'width 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms ease',
           display: 'flex',
           flexDirection: 'column',
           background: 'var(--bg-sidebar)',
           borderRadius: 16,
           height: '100%',
-          boxShadow: '0 0 0 1px var(--sidebar-outline)',
+          boxShadow: isOpen ? '0 0 0 1px var(--sidebar-outline)' : 'none',
         }}
       >
         <div style={{ position: 'relative', width: 272, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', borderRadius: 16 }}>
@@ -1012,35 +1097,52 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
             </nav>
           ) : (
             <nav ref={navRef} className="smooth-scroll" style={{ padding: '0 24px', overflowY: 'auto', flex: '0 1 auto', minHeight: 80, height: navHeight ?? undefined }}>
-              {NAV_ITEMS.map(({ id, label, Icon }) => {
+              {NAV_ITEMS.map(({ id, label, Icon, group }, i) => {
                 const active = activeNav === id
+                const isFirstInGroup = i === 0 || NAV_ITEMS[i - 1].group !== group
+                const isSettings = group === 'SETTINGS'
                 return (
-                  <button
-                    key={id}
-                    onClick={() => onNavChange?.(id)}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '8px 12px',
-                      borderRadius: 8,
-                      border: 'none',
-                      background: active ? 'rgba(91,163,255,0.12)' : 'transparent',
-                      color: active ? '#5BA3FF' : 'var(--text-secondary)',
-                      fontSize: 13.5,
-                      fontWeight: 400,
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      marginBottom: 1,
-                      transition: 'background 150ms ease, color 150ms ease',
-                    }}
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-active)' }}
-                    onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
-                  >
-                    <Icon />
-                    {label}
-                  </button>
+                  <div key={id}>
+                    {isSettings && (
+                      <div style={{ margin: '8px 0 4px', borderTop: '1px solid var(--border-default)' }} />
+                    )}
+                    {isFirstInGroup && !isSettings && (
+                      <div style={{
+                        padding: '10px 12px 4px',
+                        fontSize: 10, fontWeight: 600, letterSpacing: '0.08em',
+                        textTransform: 'uppercase', color: 'var(--text-muted)',
+                        fontFamily: "'Byrd', sans-serif",
+                        marginTop: i === 0 ? 0 : 4,
+                      }}>
+                        {group}
+                      </div>
+                    )}
+                    <button
+                      onClick={() => onNavChange?.(id)}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: '8px 12px',
+                        borderRadius: 8,
+                        border: 'none',
+                        background: active ? 'rgba(91,163,255,0.12)' : 'transparent',
+                        color: active ? '#5BA3FF' : 'var(--text-secondary)',
+                        fontSize: 13.5,
+                        fontWeight: 400,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        marginBottom: 1,
+                        transition: 'background 150ms ease, color 150ms ease',
+                      }}
+                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-active)' }}
+                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                    >
+                      <Icon />
+                      {label}
+                    </button>
+                  </div>
                 )
               })}
             </nav>
@@ -1269,8 +1371,8 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
         </div>
       </div>
 
-      {/* Collapse tab — desktop only */}
-      {!isMobile && (
+      {/* Collapse tab — desktop only, shown only when expanded */}
+      {!isMobile && isOpen && (
         <button
           onClick={() => onToggleCollapse?.()}
           style={{
