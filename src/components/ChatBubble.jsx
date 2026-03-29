@@ -139,10 +139,11 @@ export default function ChatBubble({
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: 6,
-                transition: 'background 120ms ease',
+                color: 'var(--text-muted)',
+                transition: 'background 120ms ease, color 120ms ease',
               }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
             >
               {icon}
             </button>

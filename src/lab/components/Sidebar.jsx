@@ -725,10 +725,12 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
       {!isMobile && (
         <div style={{
           width: isOpen ? 0 : 56, flexShrink: 0,
+          border: 'var(--page-header-border)',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           background: 'var(--bg-sidebar)',
           borderRadius: 16, height: '100%',
-          boxShadow: isOpen ? 'none' : '0 0 0 1px var(--sidebar-outline)',
+          border: isOpen ? 'none' : 'var(--page-header-border)',
+          boxShadow: isOpen ? 'none' : 'var(--page-header-shadow)',
           padding: '16px 0 12px',
           overflow: 'hidden',
           transition: 'width 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms ease, opacity 200ms ease',
@@ -817,7 +819,8 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           background: 'var(--bg-sidebar)',
           borderRadius: 16,
           height: '100%',
-          boxShadow: isOpen ? '0 0 0 1px var(--sidebar-outline)' : 'none',
+          border: isOpen ? 'var(--page-header-border)' : 'none',
+          boxShadow: isOpen ? 'var(--page-header-shadow)' : 'none',
         }}
       >
         <div style={{ position: 'relative', width: 272, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', borderRadius: 16 }}>

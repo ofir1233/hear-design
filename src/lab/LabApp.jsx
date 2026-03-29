@@ -825,12 +825,12 @@ Ask me anything about your operations, or explore a topic below to get started.`
 
           {submitted && settled && (
             <div className="smooth-scroll" style={{
-              position: 'fixed', top: 0,
+              position: 'fixed', top: 92,
               left: effectiveSidebarWidth,
               right: 0, bottom: 80,
               overflowY: 'auto',
               transition: sidebarTransition,
-              padding: '40px 24px 160px',
+              padding: '24px 24px 160px',
               display: 'flex', flexDirection: 'column', gap: 16,
             }}>
               <div style={{ width: '100%', maxWidth: '42rem', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
