@@ -866,8 +866,8 @@ export default function ActionsPage({ sidebarWidth = 0, sidebarTransition = '' }
         )}
       </div>
 
-      {/* Kanban board */}
-      <div className="smooth-scroll" style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', display: 'flex' }}>
+      {/* Kanban board — columns separated by full-height 1px dividers */}
+      <div className="smooth-scroll" style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', display: 'flex', minWidth: 0 }}>
         {COLUMN_DEFS.map((col, ci) => {
           const colItems = visible.filter(it => it.status === col.id)
           const isLast = ci === COLUMN_DEFS.length - 1
@@ -875,13 +875,20 @@ export default function ActionsPage({ sidebarWidth = 0, sidebarTransition = '' }
             <div key={col.id} style={{
               flex: '1 1 0', minWidth: 260,
               display: 'flex', flexDirection: 'column',
-              borderRight: isLast ? 'none' : '1px solid var(--border-default)',
-              padding: '20px 20px 0',
+              position: 'relative',
             }}>
+              {/* Full-height thin divider on the right (except last) */}
+              {!isLast && (
+                <div style={{
+                  position: 'absolute', top: 0, right: 0, bottom: 0,
+                  width: 1, background: 'var(--border-default)', zIndex: 1,
+                }} />
+              )}
+
               {/* Column header */}
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                marginBottom: 14,
+                padding: '20px 20px 14px',
               }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{col.label}</span>
                 <span style={{
@@ -895,7 +902,7 @@ export default function ActionsPage({ sidebarWidth = 0, sidebarTransition = '' }
               </div>
 
               {/* Cards */}
-              <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 20 }}>
+              <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, padding: '0 16px 20px' }}>
                 {colItems.map(item => (
                   <KanbanCard key={item.id} item={item} onClick={setActiveItem} />
                 ))}
