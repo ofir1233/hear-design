@@ -25,7 +25,7 @@ const statusColor = v =>
   v === 'IN PROGRESS' ? T.cobalt :
   v === 'DONE'        ? T.green  :
   v === 'CANCELLED'   ? T.sage   :
-  '#6B7280'  // PENDING → clear mid-grey
+  '#4B5563'  // PENDING → dark grey
 
 // Avatar bg — kept as hex since these are arbitrary identity colors, not semantic
 const AVATAR_COLORS = {
@@ -781,7 +781,7 @@ function FilterDropdown({ label, options, value, onChange }) {
         color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
         whiteSpace: 'nowrap',
       }}>
-        {value ? `${label}: ${value}` : label} <ChevronDown />
+        {value ? `${label}: ${value}` : label} <span style={{ display: 'inline-flex', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms ease' }}><ChevronDown /></span>
       </button>
       {open && (
         <div style={{
@@ -848,7 +848,7 @@ function AssigneeFilterDropdown({ value, onChange }) {
         color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
         whiteSpace: 'nowrap',
       }}>
-        Assignee {open ? '∧' : <ChevronDown />}
+        Assignee <span style={{ display: 'inline-flex', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms ease' }}><ChevronDown /></span>
       </button>
       {open && (
         <div style={{
