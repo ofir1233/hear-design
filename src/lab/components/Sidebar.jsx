@@ -595,7 +595,6 @@ const NAV_ITEMS = [
   { id: 'customers',   label: 'Customers',        Icon: CustomersIcon,   group: 'OPERATIONS'   },
   { id: 'actions',     label: 'Actions',          Icon: ActionsIcon,     group: 'OPERATIONS'   },
   { id: 'marketplace', label: 'Marketplace',      Icon: MarketplaceIcon, group: 'OPERATIONS'   },
-  { id: 'settings',    label: 'Settings',         Icon: SettingsIcon,    group: 'SETTINGS'     },
 ]
 
 function IcOrg()          { return <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg> }
@@ -748,13 +747,9 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
             {NAV_ITEMS.map(({ id, label, Icon, group }, i) => {
               const active = activeNav === id
               const isFirstInGroup = i === 0 || NAV_ITEMS[i - 1].group !== group
-              const isSettings = group === 'SETTINGS'
               return (
                 <div key={id} style={{ width: '100%' }}>
-                  {isSettings && (
-                    <div style={{ height: 1, background: 'var(--border-default)', margin: '6px 4px 8px' }} />
-                  )}
-                  {isFirstInGroup && !isSettings && i !== 0 && (
+                  {isFirstInGroup && i !== 0 && (
                     <div style={{ height: 1, background: 'var(--border-default)', margin: '4px 4px 6px', opacity: 0.5 }} />
                   )}
                   <button
@@ -785,6 +780,27 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                 </div>
               )
             })}
+          </div>
+
+          {/* Settings icon — pinned above expand button */}
+          <div style={{ width: '100%', padding: '0 6px' }}>
+            <div style={{ height: 1, background: 'var(--border-default)', margin: '6px 4px 8px' }} />
+            <button
+              title="Settings"
+              onClick={() => onNavChange?.('settings')}
+              style={{
+                width: '100%', height: 38,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: 'none', borderRadius: 9, cursor: 'pointer',
+                background: activeNav === 'settings' ? 'rgba(91,163,255,0.14)' : 'transparent',
+                color: activeNav === 'settings' ? '#5BA3FF' : 'var(--text-muted)',
+                transition: 'background 140ms ease, color 140ms ease',
+              }}
+              onMouseEnter={e => { if (activeNav !== 'settings') { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
+              onMouseLeave={e => { if (activeNav !== 'settings') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' } }}
+            >
+              <SettingsIcon />
+            </button>
           </div>
 
           {/* Expand button */}
@@ -1103,13 +1119,9 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               {NAV_ITEMS.map(({ id, label, Icon, group }, i) => {
                 const active = activeNav === id
                 const isFirstInGroup = i === 0 || NAV_ITEMS[i - 1].group !== group
-                const isSettings = group === 'SETTINGS'
                 return (
                   <div key={id}>
-                    {isSettings && (
-                      <div style={{ margin: '8px 0 4px', borderTop: '1px solid var(--border-default)' }} />
-                    )}
-                    {isFirstInGroup && !isSettings && (
+                    {isFirstInGroup && (
                       <div style={{
                         padding: '10px 12px 4px',
                         fontSize: 10, fontWeight: 600, letterSpacing: '0.08em',
@@ -1326,8 +1338,27 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               </div>
             </div>
 
-            {/* Bottom action icons — Moon/Sun toggle + Impersonate + Logout */}
+            {/* Bottom action icons — Settings + Moon/Sun toggle + Impersonate + Logout */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Settings */}
+              <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <button
+                  onClick={() => onNavChange?.('settings')}
+                  style={{
+                    flex: 1, background: 'transparent', border: 'none', cursor: 'pointer',
+                    color: activeNav === 'settings' ? 'var(--text-primary)' : 'var(--text-muted)',
+                    padding: '6px 0',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'color 150ms ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = activeNav === 'settings' ? 'var(--text-primary)' : 'var(--text-muted)' }}
+                >
+                  <SettingsIcon />
+                </button>
+              </div>
+              <div style={{ width: 1, height: 20, background: 'var(--border-input)', flexShrink: 0 }} />
+
               {/* Theme toggle */}
               <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <button
