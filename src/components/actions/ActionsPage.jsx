@@ -25,7 +25,7 @@ const statusColor = v =>
   v === 'IN PROGRESS' ? T.cobalt :
   v === 'DONE'        ? T.green  :
   v === 'CANCELLED'   ? T.sage   :
-  T.coral  // PENDING
+  'var(--d40)'  // PENDING → neutral grey (#A3A3A3)
 
 // Avatar bg — kept as hex since these are arbitrary identity colors, not semantic
 const AVATAR_COLORS = {
