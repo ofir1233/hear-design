@@ -707,28 +707,31 @@ function KanbanCard({ item, onClick }) {
       style={{
         background: 'var(--bg-card)',
         border: `1px solid ${hovered ? 'var(--border-strong, #d1d5db)' : 'var(--border-default)'}`,
-        borderRadius: 10,
-        padding: '14px 14px 12px',
+        borderRadius: 12,
+        padding: '16px 16px 14px',
         cursor: 'pointer',
         transition: 'border-color 150ms ease, box-shadow 150ms ease',
         boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.10)' : '0 1px 3px rgba(0,0,0,0.05)',
       }}
     >
-      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 6px', fontFamily: "'Byrd', sans-serif" }}>
+      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 8px', fontFamily: "'Byrd', sans-serif" }}>
         {item.title}
       </p>
-      <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 12px', lineHeight: 1.55, fontFamily: "'Byrd', sans-serif" }}>
+      <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 16px', lineHeight: 1.6, fontFamily: "'Byrd', sans-serif" }}>
         <Mention text={item.text} />
       </p>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <Avatar initials={item.assignee.initials} color={item.assignee.color} size={24} />
-          <div>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>{item.assignee.name}</p>
-            <p style={{ margin: 0, fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{item.date}</p>
+      {/* Footer: avatar+name on left, badge on right — each on its own line if needed */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <Avatar initials={item.assignee.initials} color={item.assignee.color} size={28} />
+          <div style={{ minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.assignee.name}</p>
+            <p style={{ margin: 0, fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap' }}>{item.date}</p>
           </div>
         </div>
-        <PriorityBadge value={item.priority} />
+        <div style={{ flexShrink: 0 }}>
+          <PriorityBadge value={item.priority} />
+        </div>
       </div>
     </div>
   )
