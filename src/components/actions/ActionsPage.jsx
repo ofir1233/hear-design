@@ -193,7 +193,25 @@ function ExternalLinkIcon() {
 
 // ── Inline dropdowns ──────────────────────────────────────────────────────────
 
-function InlineDropdown({ label, value, options, onChange, colorFn }) {
+function OptionPill({ label, color, chevron = false }) {
+  const MUTED = '#9ca3af'
+  const bg = color || MUTED
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      height: 26, padding: '0 10px',
+      background: bg, borderRadius: 20,
+      fontSize: 12, fontWeight: 700, color: '#fff',
+      fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
+      cursor: 'pointer',
+    }}>
+      {label}
+      {chevron && <ChevronDown />}
+    </span>
+  )
+}
+
+function InlineDropdown({ value, options, onChange, colorFn }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   useEffect(() => {
@@ -203,37 +221,35 @@ function InlineDropdown({ label, value, options, onChange, colorFn }) {
     return () => document.removeEventListener('mousedown', h)
   }, [open])
 
-  const color = colorFn ? colorFn(value) : 'var(--text-primary)'
+  const activeColor = colorFn ? colorFn(value) : null
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button onClick={() => setOpen(o => !o)} style={{
-        display: 'flex', alignItems: 'center', gap: 4,
-        background: 'none', border: '1px solid var(--border-default)',
-        borderRadius: 6, padding: '3px 8px', cursor: 'pointer',
-        fontSize: 12, fontWeight: 600, color,
-        fontFamily: "'Byrd', sans-serif",
-        whiteSpace: 'nowrap',
+        background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+        display: 'flex', alignItems: 'center',
       }}>
-        {value} <ChevronDown />
+        <OptionPill label={value} color={activeColor} chevron />
       </button>
       {open && (
         <div style={{
-          position: 'absolute', top: 'calc(100% + 4px)', left: 0, minWidth: 120,
+          position: 'absolute', top: 'calc(100% + 6px)', left: 0, minWidth: 150,
           background: 'var(--bg-card)', border: '1px solid var(--border-default)',
-          borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 500, padding: '4px 0',
+          borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,0.18)', zIndex: 500, padding: '8px',
+          display: 'flex', flexDirection: 'column', gap: 6,
         }}>
+          {/* None option */}
+          <button onClick={() => { onChange(options[0]); setOpen(false) }} style={{
+            background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left',
+          }}>
+            <OptionPill label="None" color={null} />
+          </button>
           {options.map(opt => (
             <button key={opt} onClick={() => { onChange(opt); setOpen(false) }} style={{
-              display: 'block', width: '100%', textAlign: 'left',
-              padding: '7px 14px', background: 'none', border: 'none',
-              fontSize: 12, fontWeight: opt === value ? 700 : 400,
-              color: opt === value ? 'var(--text-primary)' : 'var(--text-secondary)',
-              cursor: 'pointer', fontFamily: "'Byrd', sans-serif",
-            }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-active)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            >{opt}</button>
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left',
+            }}>
+              <OptionPill label={opt} color={colorFn ? colorFn(opt) : null} />
+            </button>
           ))}
         </div>
       )}
