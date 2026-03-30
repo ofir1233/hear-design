@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { ThumbUpIcon, CopyIcon } from '../icons'
+import { ThumbUpIcon, ThumbDownIcon, CopyIcon } from '../icons'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
