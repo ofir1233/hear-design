@@ -549,16 +549,21 @@ function ActionItemModal({ item, onClose }) {
             </span>
             <PriorityBadge value={priority} size="sm" />
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {/* Prominent "View call" CTA */}
             <button style={{
-              width: 28, height: 28, borderRadius: 7,
-              background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 120ms ease, color 120ms ease',
+              display: 'flex', alignItems: 'center', gap: 6,
+              height: 32, padding: '0 14px',
+              background: COBALT, border: 'none', borderRadius: 8,
+              cursor: 'pointer', color: '#fff',
+              fontSize: 12, fontWeight: 600, fontFamily: "'Byrd', sans-serif",
+              whiteSpace: 'nowrap',
+              transition: 'opacity 150ms ease',
             }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
             >
+              View call
               <ExternalLinkIcon />
             </button>
             <button onClick={onClose} style={{
