@@ -21,6 +21,7 @@ import SignalsPage from '../components/signals/SignalsPage.jsx'
 import CreateSignalPage from '../components/signals/CreateSignalPage.jsx'
 import KnowledgePage from '../components/knowledge/KnowledgePage.jsx'
 import OrganizationPage from '../components/settings/OrganizationPage.jsx'
+import ActionsPage from '../components/actions/ActionsPage.jsx'
 import Badge from '../components/Badge.jsx'
 import DailyBriefing from './components/DailyBriefing.jsx'
 
@@ -632,6 +633,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         <SignalsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'knowledge' ? (
         <KnowledgePage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+      ) : activePage === 'actions' ? (
+        <ActionsPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'settings' ? (
         <div style={{ position: 'fixed', top: 0, left: effectiveSidebarWidth, right: 0, bottom: 0, transition: sidebarTransition, background: 'var(--bg-canvas)' }}>
           <Header
