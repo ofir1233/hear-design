@@ -720,18 +720,17 @@ function KanbanCard({ item, onClick }) {
       <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 16px', lineHeight: 1.6, fontFamily: "'Byrd', sans-serif" }}>
         <Mention text={item.text} />
       </p>
-      {/* Footer: avatar+name on left, badge on right — each on its own line if needed */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-          <Avatar initials={item.assignee.initials} color={item.assignee.color} size={28} />
-          <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.assignee.name}</p>
-            <p style={{ margin: 0, fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap' }}>{item.date}</p>
-          </div>
+      {/* Footer row 1: avatar + name + date */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <Avatar initials={item.assignee.initials} color={item.assignee.color} size={28} />
+        <div>
+          <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>{item.assignee.name}</p>
+          <p style={{ margin: 0, fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{item.date}</p>
         </div>
-        <div style={{ flexShrink: 0 }}>
-          <PriorityBadge value={item.priority} />
-        </div>
+      </div>
+      {/* Footer row 2: badge right-aligned */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <PriorityBadge value={item.priority} />
       </div>
     </div>
   )
