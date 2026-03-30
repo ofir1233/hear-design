@@ -815,26 +815,102 @@ function FilterDropdown({ label, options, value, onChange }) {
   )
 }
 
+// ── AssigneeFilterDropdown ─────────────────────────────────────────────────────
+
+function AssigneeFilterDropdown({ value, onChange }) {
+  // value: Set of checked options ('Assignee' | 'Mentioned')
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [open])
+
+  const OPTS = ['Assignee', 'Mentioned']
+  const active = value.size > 0
+
+  function toggle(opt) {
+    const next = new Set(value)
+    next.has(opt) ? next.delete(opt) : next.add(opt)
+    onChange(next)
+  }
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        height: 30, padding: '0 11px',
+        background: active ? 'var(--bg-active)' : 'none',
+        border: '1px solid var(--border-default)', borderRadius: 7,
+        cursor: 'pointer', fontSize: 12, fontWeight: active ? 600 : 400,
+        color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+        whiteSpace: 'nowrap',
+      }}>
+        Assignee {open ? '∧' : <ChevronDown />}
+      </button>
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, minWidth: 160,
+          background: 'var(--bg-card)', border: '1px solid var(--border-default)',
+          borderRadius: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 400, padding: '8px',
+        }}>
+          {OPTS.map(opt => {
+            const checked = value.has(opt)
+            return (
+              <label key={opt} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '8px 10px', borderRadius: 7, cursor: 'pointer',
+                transition: 'background 120ms ease',
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-active)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
+              >
+                {/* Custom checkbox */}
+                <span style={{
+                  width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                  border: checked ? 'none' : '1.5px solid var(--border-input)',
+                  background: checked ? 'var(--color-interactive)' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 150ms ease, border 150ms ease',
+                }}>
+                  {checked && (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                      <path d="M2 5l2.5 2.5L8 3" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </span>
+                <input type="checkbox" checked={checked} onChange={() => toggle(opt)} style={{ display: 'none' }} />
+                <span style={{ fontSize: 13, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", fontWeight: checked ? 600 : 400 }}>
+                  {opt}
+                </span>
+              </label>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── ActionsPage ────────────────────────────────────────────────────────────────
 
 export default function ActionsPage({ sidebarWidth = 0, sidebarTransition = '' }) {
   const [items, setItems] = useState(MOCK_ACTIONS)
-  const [activeItem, setActiveItem]     = useState(null)
-  const [filterAssignee, setFilterAssignee] = useState(null)
+  const [activeItem, setActiveItem]         = useState(null)
+  const [filterAssignee, setFilterAssignee] = useState(new Set()) // Set<'Assignee'|'Mentioned'>
   const [filterStatus,   setFilterStatus]   = useState(null)
   const [filterPriority, setFilterPriority] = useState(null)
 
-  const assigneeNames = [...new Set(ALL_AGENTS.map(a => a.name))]
-
   // Apply filters
   const visible = items.filter(it => {
-    if (filterAssignee && it.assignee.name !== filterAssignee) return false
-    if (filterStatus   && it.status   !== filterStatus)          return false
-    if (filterPriority && it.priority !== filterPriority)        return false
+    if (filterStatus   && it.status   !== filterStatus)   return false
+    if (filterPriority && it.priority !== filterPriority) return false
     return true
   })
 
-  const anyFilter = filterAssignee || filterStatus || filterPriority
+  const anyFilter = filterAssignee.size > 0 || filterStatus || filterPriority
 
   return (
     <div style={{
@@ -861,7 +937,7 @@ export default function ActionsPage({ sidebarWidth = 0, sidebarTransition = '' }
         background: 'var(--bg-canvas)',
         flexShrink: 0,
       }}>
-        <FilterDropdown label="Assignee" options={assigneeNames} value={filterAssignee} onChange={setFilterAssignee} />
+        <AssigneeFilterDropdown value={filterAssignee} onChange={setFilterAssignee} />
         <FilterDropdown label="Status"   options={STATUS_OPTIONS}   value={filterStatus}   onChange={setFilterStatus} />
         <FilterDropdown label="Priority" options={PRIORITY_OPTIONS} value={filterPriority} onChange={setFilterPriority} />
 
@@ -885,7 +961,7 @@ export default function ActionsPage({ sidebarWidth = 0, sidebarTransition = '' }
         </div>
 
         {anyFilter && (
-          <button onClick={() => { setFilterAssignee(null); setFilterStatus(null); setFilterPriority(null) }} style={{
+          <button onClick={() => { setFilterAssignee(new Set()); setFilterStatus(null); setFilterPriority(null) }} style={{
             background: 'none', border: 'none', cursor: 'pointer',
             fontSize: 12, color: 'var(--color-interactive)', fontFamily: "'Byrd', sans-serif", padding: '0 4px',
           }}>
