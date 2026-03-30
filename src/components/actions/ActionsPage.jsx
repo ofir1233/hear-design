@@ -720,17 +720,18 @@ function KanbanCard({ item, onClick }) {
       <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 16px', lineHeight: 1.6, fontFamily: "'Byrd', sans-serif" }}>
         <Mention text={item.text} />
       </p>
-      {/* Footer: avatar | name+badge / date */}
+      {/* Footer row 1: avatar + name + date */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Avatar initials={item.assignee.initials} color={item.assignee.color} size={28} />
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.assignee.name}</p>
-            <PriorityBadge value={item.priority} />
-          </div>
+        <div>
+          <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>{item.assignee.name}</p>
           <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{item.date}</p>
         </div>
       </div>
+      {/* Divider with side inset */}
+      <div style={{ margin: '10px -4px 10px', borderTop: '1px solid var(--border-default)' }} />
+      {/* Footer row 2: badge left-aligned */}
+      <PriorityBadge value={item.priority} />
     </div>
   )
 }
