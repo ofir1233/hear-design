@@ -2,16 +2,36 @@ import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Header from '../../lab/components/Header.jsx'
 
-// ── Constants ──────────────────────────────────────────────────────────────────
+// ── Design system tokens (mirrors src/index.css) ──────────────────────────────
+// Raw palette — use CSS vars in styles; keep hex only where CSS vars can't be used
+// (e.g. rgba() math, JS-only contexts)
 
-const COBALT = '#1779F7'
-const GREEN  = '#4BA373'
-const AMBER  = '#F59E0B'
+const T = {
+  cobalt:  'var(--b100)',   // #1779F7  — interactive / in-progress
+  coral:   'var(--c100)',   // #FF7056  — brand / high-priority / pending
+  green:   'var(--g100)',   // #4BA373  — positive / done / low
+  lilac:   'var(--l100)',   // #D799E2  — soft accent
+  sage:    'var(--s100)',   // #B09495  — cancelled / muted accent
+  muted:   'var(--bg-active)',
+}
 
+// Priority & status color maps — using design system tokens
+const priorityColor = v =>
+  v === 'HIGH'   ? T.coral  :
+  v === 'MEDIUM' ? T.cobalt :
+  T.green  // LOW
+
+const statusColor = v =>
+  v === 'IN PROGRESS' ? T.cobalt :
+  v === 'DONE'        ? T.green  :
+  v === 'CANCELLED'   ? T.sage   :
+  T.coral  // PENDING
+
+// Avatar bg — kept as hex since these are arbitrary identity colors, not semantic
 const AVATAR_COLORS = {
   blue:   '#1779F7', green:  '#4BA373', peach:  '#FF7056',
-  lilac:  '#9B6DD6', teal:   '#3BA8A8', orange: '#F59E0B',
-  pink:   '#E56BAD', purple: '#7C5FD6', red:    '#EF4444',
+  lilac:  '#9B6DD6', teal:   '#6E95A0', orange: '#FF8D78',
+  pink:   '#D799E2', purple: '#9B6DD6', red:    '#FF7056',
 }
 
 const ALL_AGENTS = [
@@ -113,13 +133,13 @@ function Avatar({ initials, color, size = 28 }) {
 }
 
 function PriorityBadge({ value, size = 'sm' }) {
-  const color = value === 'HIGH' ? '#EF4444' : value === 'MEDIUM' ? AMBER : GREEN
+  const bg = priorityColor(value)
   const fs = size === 'sm' ? 10 : 11
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center',
       height: size === 'sm' ? 20 : 22, padding: '0 8px',
-      background: color, borderRadius: 20,
+      background: bg, borderRadius: 20,
       fontSize: fs, fontWeight: 700, color: '#fff',
       fontFamily: "'Byrd', sans-serif", letterSpacing: '0.04em',
       whiteSpace: 'nowrap',
@@ -130,12 +150,13 @@ function PriorityBadge({ value, size = 'sm' }) {
 }
 
 function StatusBadge({ value }) {
-  const color = value === 'DONE' ? GREEN : value === 'IN PROGRESS' ? COBALT : value === 'CANCELLED' ? '#EF4444' : AMBER
+  const color = statusColor(value)
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center',
       height: 22, padding: '0 10px',
-      background: `${color}18`, border: `1px solid ${color}40`,
+      background: 'var(--bg-active)',
+      border: '1px solid var(--border-default)',
       borderRadius: 7, fontSize: 11, fontWeight: 700, color,
       fontFamily: "'Byrd', sans-serif", letterSpacing: '0.04em',
       whiteSpace: 'nowrap',
@@ -151,7 +172,7 @@ function Mention({ text }) {
     <>
       {parts.map((part, i) =>
         part.startsWith('@')
-          ? <span key={i} style={{ color: COBALT, fontWeight: 600 }}>{part}</span>
+          ? <span key={i} style={{ color: 'var(--color-interactive)', fontWeight: 600 }}>{part}</span>
           : part
       )}
     </>
@@ -194,14 +215,15 @@ function ExternalLinkIcon() {
 // ── Inline dropdowns ──────────────────────────────────────────────────────────
 
 function OptionPill({ label, color, chevron = false }) {
-  const MUTED = '#9ca3af'
-  const bg = color || MUTED
+  const isNone = !color
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,
       height: 26, padding: '0 10px',
-      background: bg, borderRadius: 20,
-      fontSize: 12, fontWeight: 700, color: '#fff',
+      background: isNone ? 'var(--bg-active)' : color,
+      borderRadius: 20,
+      fontSize: 12, fontWeight: 700,
+      color: isNone ? 'var(--text-muted)' : '#fff',
       fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
       cursor: 'pointer',
     }}>
@@ -398,14 +420,14 @@ function CommentComposer({ placeholder = 'Leave a comment… Type @ to mention s
       }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none' }}>
           <input type="checkbox" checked={assigned} onChange={e => setAssigned(e.target.checked)}
-            style={{ accentColor: COBALT, width: 14, height: 14, cursor: 'pointer' }} />
+            style={{ accentColor: 'var(--color-interactive)', width: 14, height: 14, cursor: 'pointer' }} />
           <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>Assign Comment</span>
         </label>
         <button
           onClick={submit}
           style={{
             width: 28, height: 28, borderRadius: '50%',
-            background: text.trim() ? COBALT : 'var(--bg-active)',
+            background: text.trim() ? 'var(--color-interactive)' : 'var(--bg-active)',
             border: 'none', cursor: text.trim() ? 'pointer' : 'default',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'background 150ms ease',
@@ -510,8 +532,7 @@ function ActionItemModal({ item, onClose }) {
     }])
   }
 
-  const priorityColor = v => v === 'HIGH' ? '#EF4444' : v === 'MEDIUM' ? AMBER : GREEN
-  const statusColor   = v => v === 'DONE' ? GREEN : v === 'IN PROGRESS' ? COBALT : v === 'CANCELLED' ? '#EF4444' : AMBER
+  // use module-level priorityColor / statusColor (design system tokens)
 
   return createPortal(
     <>
@@ -554,7 +575,7 @@ function ActionItemModal({ item, onClose }) {
             <button style={{
               display: 'flex', alignItems: 'center', gap: 6,
               height: 32, padding: '0 14px',
-              background: COBALT, border: 'none', borderRadius: 8,
+              background: 'var(--color-brand)', border: 'none', borderRadius: 8,
               cursor: 'pointer', color: '#fff',
               fontSize: 12, fontWeight: 600, fontFamily: "'Byrd', sans-serif",
               whiteSpace: 'nowrap',
@@ -866,7 +887,7 @@ export default function ActionsPage({ sidebarWidth = 0, sidebarTransition = '' }
         {anyFilter && (
           <button onClick={() => { setFilterAssignee(null); setFilterStatus(null); setFilterPriority(null) }} style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 12, color: COBALT, fontFamily: "'Byrd', sans-serif", padding: '0 4px',
+            fontSize: 12, color: 'var(--color-interactive)', fontFamily: "'Byrd', sans-serif", padding: '0 4px',
           }}>
             Clear filters
           </button>
