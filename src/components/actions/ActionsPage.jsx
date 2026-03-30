@@ -809,12 +809,13 @@ export default function ActionsPage({ sidebarWidth = 0, sidebarTransition = '' }
         }
       />
 
-      {/* Filter bar */}
+      {/* Filter bar — sits below fixed header (top:16 + height:52 + gap:12 = 80) */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-        padding: '64px 24px 12px',
+        padding: '80px 24px 12px',
         borderBottom: '1px solid var(--border-default)',
         background: 'var(--bg-canvas)',
+        flexShrink: 0,
       }}>
         <FilterDropdown label="Assignee" options={assigneeNames} value={filterAssignee} onChange={setFilterAssignee} />
         <FilterDropdown label="Status"   options={STATUS_OPTIONS}   value={filterStatus}   onChange={setFilterStatus} />
@@ -850,50 +851,51 @@ export default function ActionsPage({ sidebarWidth = 0, sidebarTransition = '' }
       </div>
 
       {/* Kanban board */}
-      <div className="smooth-scroll" style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', padding: '20px 20px 0' }}>
-        <div style={{ display: 'flex', gap: 14, height: '100%', minWidth: 720 }}>
-          {COLUMN_DEFS.map(col => {
-            const colItems = visible.filter(it => it.status === col.id)
-            return (
-              <div key={col.id} style={{
-                flex: '1 1 0', minWidth: 240, maxWidth: 340,
-                display: 'flex', flexDirection: 'column',
+      <div className="smooth-scroll" style={{ flex: 1, overflowX: 'auto', overflowY: 'hidden', display: 'flex' }}>
+        {COLUMN_DEFS.map((col, ci) => {
+          const colItems = visible.filter(it => it.status === col.id)
+          const isLast = ci === COLUMN_DEFS.length - 1
+          return (
+            <div key={col.id} style={{
+              flex: '1 1 0', minWidth: 260,
+              display: 'flex', flexDirection: 'column',
+              borderRight: isLast ? 'none' : '1px solid var(--border-default)',
+              padding: '20px 20px 0',
+            }}>
+              {/* Column header */}
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                marginBottom: 14,
               }}>
-                {/* Column header */}
-                <div style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  marginBottom: 12,
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{col.label}</span>
+                <span style={{
+                  minWidth: 22, height: 22, borderRadius: 11,
+                  background: 'var(--bg-active)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', padding: '0 6px',
                 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{col.label}</span>
-                  <span style={{
-                    minWidth: 22, height: 22, borderRadius: 11,
-                    background: 'var(--bg-active)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', padding: '0 6px',
-                  }}>
-                    {colItems.length}
-                  </span>
-                </div>
-
-                {/* Cards */}
-                <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 20 }}>
-                  {colItems.map(item => (
-                    <KanbanCard key={item.id} item={item} onClick={setActiveItem} />
-                  ))}
-                  {colItems.length === 0 && (
-                    <div style={{
-                      border: '1px dashed var(--border-default)', borderRadius: 10,
-                      padding: '24px 16px', textAlign: 'center',
-                      fontSize: 12, color: 'var(--text-muted)',
-                    }}>
-                      No items
-                    </div>
-                  )}
-                </div>
+                  {colItems.length}
+                </span>
               </div>
-            )
-          })}
-        </div>
+
+              {/* Cards */}
+              <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 20 }}>
+                {colItems.map(item => (
+                  <KanbanCard key={item.id} item={item} onClick={setActiveItem} />
+                ))}
+                {colItems.length === 0 && (
+                  <div style={{
+                    border: '1px dashed var(--border-default)', borderRadius: 10,
+                    padding: '24px 16px', textAlign: 'center',
+                    fontSize: 12, color: 'var(--text-muted)',
+                  }}>
+                    No items
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* Modal */}
