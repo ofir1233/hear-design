@@ -129,21 +129,22 @@ function TrashIcon() {
   )
 }
 
-function LogoUpload({ orgName }) {
-  const [logo, setLogo]         = useState(null)
+const LOGO_MODES = ['Light', 'Dark']
+
+function LogoUploadSlot({ mode, logo, onSet, onClear }) {
   const [dragging, setDragging] = useState(false)
   const [error, setError]       = useState(null)
   const inputRef = useRef(null)
 
   const ACCEPT = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp']
   const MAX_MB = 2
+  const isDark = mode === 'Dark'
 
   function processFile(file) {
     setError(null)
     if (!ACCEPT.includes(file.type)) { setError('Only PNG, JPG, SVG or WebP files are supported.'); return }
     if (file.size > MAX_MB * 1024 * 1024) { setError(`File must be under ${MAX_MB}MB.`); return }
-    const url = URL.createObjectURL(file)
-    setLogo({ url, name: file.name, size: (file.size / 1024).toFixed(0) + ' KB' })
+    onSet({ url: URL.createObjectURL(file), name: file.name, size: (file.size / 1024).toFixed(0) + ' KB' })
   }
 
   function onFileInput(e) {
@@ -158,80 +159,153 @@ function LogoUpload({ orgName }) {
     if (file) processFile(file)
   }
 
-  const initials = orgName
-    ? orgName.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase()
-    : 'ORG'
+  // Preview background: checkered pattern simulates transparency, tinted by mode
+  const previewBg = isDark ? '#1a1c1e' : '#f5f5f7'
+  const previewBorder = isDark ? '#2e3035' : '#e0e0e3'
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-      <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
-        Organization Logo
-      </label>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{
-          width: 64, height: 64, borderRadius: 14, flexShrink: 0,
-          background: logo ? 'transparent' : 'var(--bg-active)',
-          border: '1px solid var(--border-default)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          overflow: 'hidden',
-        }}>
-          {logo
-            ? <img src={logo.url} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            : <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{initials}</span>
-          }
-        </div>
-
-        <div
-          onClick={() => inputRef.current?.click()}
-          onDragOver={e => { e.preventDefault(); setDragging(true) }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={onDrop}
-          style={{
-            flex: 1,
-            border: `1.5px dashed ${dragging ? 'var(--b100)' : 'var(--border-input)'}`,
-            borderRadius: 10, padding: '14px 16px', cursor: 'pointer',
-            background: dragging ? 'rgba(23,121,247,0.04)' : 'var(--bg-canvas)',
-            transition: 'border-color 150ms ease, background 150ms ease',
-            display: 'flex', alignItems: 'center', gap: 12,
-          }}
-        >
-          <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}><UploadIcon /></span>
-          <div style={{ minWidth: 0 }}>
-            {logo ? (
-              <div>
-                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{logo.name}</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{logo.size} · Click to replace</p>
-              </div>
-            ) : (
-              <div>
-                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Click to upload or drag & drop</p>
-                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>PNG, JPG, SVG or WebP · max {MAX_MB}MB · recommended 256×256</p>
-              </div>
-            )}
-          </div>
-          {logo && (
-            <button
-              onClick={e => { e.stopPropagation(); setLogo(null); setError(null) }}
-              style={{
-                marginLeft: 'auto', flexShrink: 0, background: 'none', border: 'none',
-                cursor: 'pointer', color: 'var(--text-muted)', display: 'flex',
-                alignItems: 'center', padding: 4, borderRadius: 6,
-                transition: 'color 120ms ease, background 120ms ease',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
-              title="Remove logo"
-            >
-              <TrashIcon />
-            </button>
-          )}
-        </div>
-
-        <input ref={inputRef} type="file" accept={ACCEPT.join(',')} onChange={onFileInput} style={{ display: 'none' }} />
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+      {/* Preview box */}
+      <div style={{
+        width: 64, height: 64, borderRadius: 12, flexShrink: 0,
+        background: logo ? previewBg : 'var(--bg-active)',
+        border: `1px solid ${logo ? previewBorder : 'var(--border-default)'}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        overflow: 'hidden', transition: 'background 200ms ease, border-color 200ms ease',
+      }}>
+        {logo
+          ? <img src={logo.url} alt={`${mode} logo`} style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
+          : <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", letterSpacing: '0.03em' }}>
+              {isDark ? '☾' : '☀︎'}
+            </span>
+        }
       </div>
 
-      {error && <p style={{ margin: 0, fontSize: 11, color: 'var(--c100)', fontFamily: "'Byrd', sans-serif" }}>{error}</p>}
+      {/* Drop zone */}
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); setDragging(true) }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+        style={{
+          flex: 1,
+          border: `1.5px dashed ${dragging ? 'var(--b100)' : 'var(--border-input)'}`,
+          borderRadius: 10, padding: '12px 14px', cursor: 'pointer',
+          background: dragging ? 'rgba(23,121,247,0.04)' : 'var(--bg-canvas)',
+          transition: 'border-color 150ms ease, background 150ms ease',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}
+      >
+        <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}><UploadIcon /></span>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          {logo ? (
+            <>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{logo.name}</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{logo.size} · Click to replace</p>
+            </>
+          ) : (
+            <>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Click to upload or drag & drop</p>
+              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>PNG, JPG, SVG or WebP · max {MAX_MB}MB</p>
+            </>
+          )}
+        </div>
+        {logo && (
+          <button
+            onClick={e => { e.stopPropagation(); onClear(); setError(null) }}
+            title="Remove"
+            style={{
+              flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
+              padding: 4, borderRadius: 6,
+              transition: 'color 120ms ease, background 120ms ease',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--c100)'; e.currentTarget.style.background = 'var(--bg-active)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
+          >
+            <TrashIcon />
+          </button>
+        )}
+      </div>
+
+      <input ref={inputRef} type="file" accept={ACCEPT.join(',')} onChange={onFileInput} style={{ display: 'none' }} />
+
+      {error && <p style={{ margin: '6px 0 0', fontSize: 11, color: 'var(--c100)', fontFamily: "'Byrd', sans-serif" }}>{error}</p>}
+    </div>
+  )
+}
+
+function LogoUpload() {
+  const [activeMode, setActiveMode] = useState('Light')
+  const [logos, setLogos] = useState({ Light: null, Dark: null })
+
+  function setLogo(mode, logo) { setLogos(prev => ({ ...prev, [mode]: logo })) }
+  function clearLogo(mode)     { setLogos(prev => ({ ...prev, [mode]: null })) }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+      {/* Label row + mode tab switcher */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
+          Organization Logo
+        </label>
+
+        {/* Pill tab switcher */}
+        <div style={{
+          display: 'flex', gap: 2, padding: 3,
+          background: 'var(--bg-active)', borderRadius: 8,
+          border: '1px solid var(--border-input)',
+        }}>
+          {LOGO_MODES.map(mode => {
+            const isActive = activeMode === mode
+            const hasLogo  = !!logos[mode]
+            return (
+              <button
+                key={mode}
+                onClick={() => setActiveMode(mode)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  height: 24, padding: '0 10px', borderRadius: 6, border: 'none',
+                  cursor: 'pointer', fontSize: 12, fontWeight: isActive ? 600 : 400,
+                  fontFamily: "'Byrd', sans-serif",
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
+                  background: isActive ? 'var(--bg-canvas)' : 'none',
+                  boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                  transition: 'background 150ms ease, color 150ms ease, box-shadow 150ms ease',
+                }}
+              >
+                <span style={{ fontSize: 10 }}>{mode === 'Light' ? '☀︎' : '☾'}</span>
+                {mode}
+                {hasLogo && (
+                  <span style={{
+                    width: 5, height: 5, borderRadius: '50%',
+                    background: 'var(--g100)', flexShrink: 0,
+                  }} />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Active slot */}
+      <LogoUploadSlot
+        key={activeMode}
+        mode={activeMode}
+        logo={logos[activeMode]}
+        onSet={logo => setLogo(activeMode, logo)}
+        onClear={() => clearLogo(activeMode)}
+      />
+
+      {/* Hint if only one is set */}
+      {(logos.Light || logos.Dark) && !(logos.Light && logos.Dark) && (
+        <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
+          {logos.Light
+            ? '☾ Add a Dark mode version so your logo looks great on dark backgrounds.'
+            : '☀︎ Add a Light mode version for use on light backgrounds.'}
+        </p>
+      )}
     </div>
   )
 }
@@ -1118,7 +1192,7 @@ export default function OrganizationPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-      <LogoUpload orgName={orgName} />
+      <LogoUpload />
 
       <Field label="Organization Name">
         <input
