@@ -547,7 +547,9 @@ Ask me anything about your operations, or explore a topic below to get started.`
 
   const [settingsTab, setSettingsTab] = useState('organization')
 
-  const effectiveSidebarWidth = isMobile ? 0 : (sidebarCollapsed ? 72 : SIDEBAR_WIDTH)
+  // On mobile: hamburger is left:16 width:52 → right edge at 68px. Add 16px gap → header at 84px.
+  // effectiveSidebarWidth drives header left (value + 16), so 68 gives left:84.
+  const effectiveSidebarWidth = isMobile ? 68 : (sidebarCollapsed ? 72 : SIDEBAR_WIDTH)
   const sidebarTransition     = 'left 250ms cubic-bezier(0.4,0,0.2,1), padding-left 250ms cubic-bezier(0.4,0,0.2,1), width 250ms cubic-bezier(0.4,0,0.2,1)'
   const paddingLeft           = isMobile ? '1.5rem' : `calc(${effectiveSidebarWidth}px + 1.5rem)`
 
@@ -589,10 +591,11 @@ Ask me anything about your operations, or explore a topic below to get started.`
           onClick={() => setSidebarOpen(true)}
           style={{
             position: 'fixed', top: 16, left: 16, zIndex: 90,
-            width: 40, height: 40,
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-default)',
-            borderRadius: 10,
+            width: 52, height: 52,
+            background: 'var(--bg-sidebar)',
+            border: 'var(--page-header-border)',
+            borderRadius: 16,
+            boxShadow: 'var(--page-header-shadow)',
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             gap: 5, cursor: 'pointer',
