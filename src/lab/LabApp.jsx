@@ -21,6 +21,7 @@ import SignalsPage from '../components/signals/SignalsPage.jsx'
 import CreateSignalPage from '../components/signals/CreateSignalPage.jsx'
 import KnowledgePage from '../components/knowledge/KnowledgePage.jsx'
 import OrganizationPage from '../components/settings/OrganizationPage.jsx'
+import ProjectsPage, { PROJECT_NAMES } from '../components/settings/ProjectsPage.jsx'
 import ActionsPage from '../components/actions/ActionsPage.jsx'
 import Badge from '../components/Badge.jsx'
 import DailyBriefing from './components/DailyBriefing.jsx'
@@ -51,7 +52,7 @@ const SETTINGS_TAB_META = {
   'marketplace':    { label: 'Marketplace',     desc: 'Browse and install apps and extensions' },
 }
 
-function SettingsTabHeader({ tab }) {
+function SettingsTabHeader({ tab, rightSlot }) {
   const meta = SETTINGS_TAB_META[tab] ?? { label: tab, desc: '' }
   return (
     <div style={{ marginBottom: 28 }}>
@@ -81,6 +82,7 @@ function SettingsTabHeader({ tab }) {
             </Badge>
           </div>
         )}
+        {rightSlot}
       </div>
     </div>
   )
@@ -546,6 +548,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
   }
 
   const [settingsTab, setSettingsTab] = useState('organization')
+  const [selectedProject, setSelectedProject] = useState(PROJECT_NAMES[0])
 
   // On mobile: hamburger is left:16 width:52 → right edge at 68px. Add 16px gap → header at 84px.
   // effectiveSidebarWidth drives header left (value + 16), so 68 gives left:84.
@@ -673,9 +676,35 @@ Ask me anything about your operations, or explore a topic below to get started.`
           {/* Content */}
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflowY: 'auto', paddingTop: 84 }}>
             <div style={{ maxWidth: 860, margin: '0 auto', padding: '24px 40px 48px' }}>
-              <SettingsTabHeader tab={settingsTab} />
+              <SettingsTabHeader
+                tab={settingsTab}
+                rightSlot={settingsTab === 'projects' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>Select project</span>
+                    <select
+                      value={selectedProject}
+                      onChange={e => setSelectedProject(e.target.value)}
+                      style={{
+                        height: 34, padding: '0 28px 0 10px',
+                        background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+                        borderRadius: 8, fontSize: 13, color: 'var(--text-primary)',
+                        fontFamily: "'Byrd', sans-serif", outline: 'none', cursor: 'pointer',
+                        appearance: 'none', minWidth: 180,
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23888' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+                        backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center',
+                      }}
+                    >
+                      {PROJECT_NAMES.map(p => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+              />
               {settingsTab === 'organization' ? (
                 <OrganizationPage />
+              ) : settingsTab === 'projects' ? (
+                <ProjectsPage selectedProject={selectedProject} onProjectChange={setSelectedProject} />
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300, flexDirection: 'column', gap: 8 }}>
                   <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>

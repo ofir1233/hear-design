@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { ThumbUpIcon, ThumbDownIcon, CopyIcon } from '../icons'
+import CallPanel from './CallPanel.jsx'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -37,8 +38,8 @@ function CommentIcon() {
 
 function EditIcon() {
   return (
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-      <path d="M2 17.7996V8.19996C2 7.6564 1.99893 7.18821 2.03028 6.80445C2.06258 6.40918 2.13437 6.01581 2.32715 5.63746C2.61475 5.0731 3.07334 4.61451 3.6377 4.32691C4.01605 4.13413 4.40941 4.06234 4.80469 4.03004C5.18845 3.99869 5.65664 3.99977 6.2002 3.99977H9C9.55229 3.99977 10 4.44748 10 4.99977C10 5.55205 9.55229 5.99977 9 5.99977H6.2002C5.62366 5.99977 5.25124 6.00103 4.96778 6.02418C4.69598 6.04638 4.59528 6.08398 4.5459 6.10914C4.35779 6.205 4.20524 6.35755 4.10938 6.54566C4.08422 6.59505 4.04662 6.69574 4.02442 6.96754C4.00127 7.251 4 7.62342 4 8.19996V17.7996C4 18.3761 4.00127 18.7487 4.02442 19.032C4.04661 19.3035 4.08417 19.4044 4.10938 19.4539C4.20555 19.6424 4.35841 19.7958 4.5459 19.8914C4.59521 19.9164 4.69595 19.9542 4.9668 19.9763C5.24974 19.9994 5.62182 19.9998 6.19727 19.9998H15.8027C16.3779 19.9998 16.7496 19.9994 17.0322 19.9763C17.3025 19.9542 17.4037 19.9165 17.4531 19.8914C17.6415 19.7954 17.7958 19.6408 17.8916 19.4529C17.9167 19.4034 17.9545 19.3028 17.9766 19.033C17.9997 18.7502 18 18.378 18 17.8025V14.9998C18 14.4475 18.4477 13.9998 19 13.9998C19.5523 13.9998 20 14.4475 20 14.9998V17.8025C20 18.3447 20.001 18.812 19.9697 19.1951C19.9374 19.5899 19.8655 19.983 19.6729 20.3611C19.3851 20.9258 18.9256 21.3851 18.3613 21.6726C17.9833 21.8653 17.5902 21.9372 17.1953 21.9695C16.8123 22.0008 16.345 21.9998 15.8027 21.9998H6.19727C5.6548 21.9998 5.187 22.0008 4.80372 21.9695C4.40889 21.9372 4.01581 21.8653 3.6377 21.6726C3.0729 21.3848 2.61446 20.9257 2.32715 20.3621C2.13441 19.9838 2.06259 19.5903 2.03028 19.1951C1.99893 18.8115 2 18.3431 2 17.7996ZM17.3691 2.22437C17.7619 1.90402 18.3409 1.92662 18.707 2.29273L21.707 5.29273C22.0976 5.68326 22.0976 6.31627 21.707 6.7068L12.707 15.7068C12.5195 15.8943 12.2652 15.9998 12 15.9998H9C8.44772 15.9998 8 15.5521 8 14.9998V11.9998C8 11.7345 8.10544 11.4803 8.29297 11.2927L17.293 2.29273L17.3691 2.22437ZM10 12.4138V13.9998H11.5859L16.5859 8.99977L15 7.41383L10 12.4138ZM16.4141 5.99977L18 7.5857L19.5859 5.99977L18 4.41383L16.4141 5.99977Z" fill="#9ca3af"/>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M11 2.5l2.5 2.5-7 7H4V9.5l7-7z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
@@ -173,10 +174,11 @@ function IconBtn({ children, title, onClick }) {
         padding: 4, borderRadius: 6,
         background: 'none', border: 'none',
         cursor: 'pointer',
-        transition: 'background 120ms ease',
+        color: 'var(--text-muted)',
+        transition: 'background 120ms ease, color 120ms ease',
       }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
     >
       {children}
     </button>
@@ -233,12 +235,20 @@ function TagPill({ text, variant }) {
   )
 }
 
-function HeroCard({ call, topic, statusMeta, priorityMeta }) {
+function HeroCard({ call, topic, statusMeta, priorityMeta, onOpenPanel }) {
   const [showTags, setShowTags] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editDraft, setEditDraft] = useState('')
 
-  const summaryText = call.summary || 'The customer contacted enterprise support ahead of their Q2 contract renewal to discuss volume discount tiers for a 500+ seat license expansion. The agent reviewed current tier pricing, confirmed eligibility for a 15% volume discount, and identified an upsell opportunity for the Premium Analytics add-on. The call was escalated to the regional sales manager to approve a custom pricing package. A follow-up proposal is scheduled for next Wednesday. The customer expressed strong intent to expand across two additional subsidiaries by Q3.'
-  const truncated = summaryText.length > 200 && !expanded
+  const defaultSummary = 'The customer contacted enterprise support ahead of their Q2 contract renewal to discuss volume discount tiers for a 500+ seat license expansion. The agent reviewed current tier pricing, confirmed eligibility for a 15% volume discount, and identified an upsell opportunity for the Premium Analytics add-on. The call was escalated to the regional sales manager to approve a custom pricing package. A follow-up proposal is scheduled for next Wednesday. The customer expressed strong intent to expand across two additional subsidiaries by Q3.'
+  const [savedSummary, setSavedSummary] = useState(call.summary || defaultSummary)
+  const summaryText = savedSummary
+  const truncated = summaryText.length > 200 && !expanded && !editing
+
+  function startEdit() { setEditDraft(summaryText); setEditing(true) }
+  function cancelEdit() { setEditing(false) }
+  function saveEdit() { setSavedSummary(editDraft); setEditing(false) }
 
   return (
     <SectionCard data-inspector="HeroCard">
@@ -274,7 +284,7 @@ function HeroCard({ call, topic, statusMeta, priorityMeta }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0, paddingTop: 2 }}>
-          <button style={{
+          <button onClick={onOpenPanel} style={{
             display: 'flex', alignItems: 'center', gap: 6,
             height: 32, padding: '0 13px',
             background: 'var(--bg-canvas)', border: '1px solid var(--border-default)',
@@ -339,25 +349,55 @@ function HeroCard({ call, topic, statusMeta, priorityMeta }) {
               <IconBtn title="Dislike"><ThumbDownIcon /></IconBtn>
               <IconBtn title="Like"><ThumbUpIcon /></IconBtn>
               <IconBtn title="Copy"><CopyIcon /></IconBtn>
-              <IconBtn title="Edit"><EditIcon /></IconBtn>
+              <IconBtn title="Edit" onClick={startEdit}><EditIcon /></IconBtn>
             </div>
           </div>
         }
       />
 
       <div style={{ padding: '0 20px 18px' }}>
-        <p style={{
-          margin: 0, fontSize: 13.5, lineHeight: 1.7,
-          color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
-        }}>
-          {truncated ? summaryText.slice(0, 200) + '… ' : summaryText + ' '}
-          <span
-            onClick={() => setExpanded(e => !e)}
-            style={{ color: COBALT, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
-          >
-            {truncated ? 'Show all.' : 'Show less.'}
-          </span>
-        </p>
+        {editing ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <textarea
+              value={editDraft}
+              onChange={e => setEditDraft(e.target.value)}
+              autoFocus
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                minHeight: 120, padding: '10px 12px',
+                background: 'var(--bg-canvas)', border: '1px solid var(--b100)',
+                borderRadius: 8, fontSize: 13.5, lineHeight: 1.7,
+                color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+                resize: 'vertical', outline: 'none',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={saveEdit} style={{
+                height: 30, padding: '0 14px', borderRadius: 7,
+                background: 'var(--b100)', border: 'none', cursor: 'pointer',
+                fontSize: 12, fontWeight: 600, color: '#fff', fontFamily: "'Byrd', sans-serif",
+              }}>Save</button>
+              <button onClick={cancelEdit} style={{
+                height: 30, padding: '0 14px', borderRadius: 7,
+                background: 'none', border: '1px solid var(--border-default)', cursor: 'pointer',
+                fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
+              }}>Cancel</button>
+            </div>
+          </div>
+        ) : (
+          <p style={{
+            margin: 0, fontSize: 13.5, lineHeight: 1.7,
+            color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif",
+          }}>
+            {truncated ? summaryText.slice(0, 200) + '… ' : summaryText + ' '}
+            <span
+              onClick={() => setExpanded(e => !e)}
+              style={{ color: COBALT, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              {truncated ? 'Show all.' : 'Show less.'}
+            </span>
+          </p>
+        )}
 
         <div style={{
           display: 'grid',
@@ -447,29 +487,21 @@ function QuickStatsRow({ call }) {
       icon: <StopwatchIcon />,
       label: 'Handle Time',
       value: '22 mins',
-      color: COBALT,
-      bg: `${COBALT}0E`,
     },
     {
       icon: <SentimentIcon />,
       label: 'Overall Sentiment',
       value: 'Neutral',
-      color: sentimentColor,
-      bg: 'var(--bg-active)',
     },
     {
       icon: <ShieldIcon />,
       label: 'Compliance',
       value: '91/100',
-      color: GREEN,
-      bg: `${GREEN}0E`,
     },
     {
       icon: <StarIcon />,
       label: 'Agent Score',
       value: '76/100',
-      color: AMBER,
-      bg: `${AMBER}0E`,
     },
   ]
 
@@ -487,9 +519,9 @@ function QuickStatsRow({ call }) {
           {/* Icon bubble */}
           <div style={{
             width: 38, height: 38, borderRadius: 10,
-            background: s.bg,
+            background: 'var(--bg-active)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: s.color === 'var(--text-secondary)' || s.color === 'var(--text-muted)' ? 'var(--text-secondary)' : s.color,
+            color: 'var(--text-secondary)',
           }}>
             {s.icon}
           </div>
@@ -504,7 +536,7 @@ function QuickStatsRow({ call }) {
             </div>
             <div style={{
               fontSize: 18, fontWeight: 700,
-              color: s.color,
+              color: 'var(--text-primary)',
               fontFamily: "'Byrd', sans-serif",
               lineHeight: 1,
             }}>
@@ -1236,6 +1268,7 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
   const topic = topicWords
   const statusMeta   = STATUS_META[call.status]
   const priorityMeta = PRIORITY_META[call.priority]
+  const [panelOpen, setPanelOpen] = useState(false)
 
   return (
     <div
@@ -1289,7 +1322,7 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
       <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '22px 28px 48px', marginTop: 8 }}>
         <div style={{ maxWidth: 780, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-          <HeroCard call={call} topic={topic} statusMeta={statusMeta} priorityMeta={priorityMeta} />
+          <HeroCard call={call} topic={topic} statusMeta={statusMeta} priorityMeta={priorityMeta} onOpenPanel={() => setPanelOpen(true)} />
           <QuickStatsRow call={call} />
           <CallMetricsSection call={call} />
           <AgentEvaluationSection call={call} />
@@ -1299,6 +1332,14 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
 
         </div>
       </div>
+
+      {panelOpen && (
+        <CallPanel
+          call={call}
+          topic={topic}
+          onClose={() => setPanelOpen(false)}
+        />
+      )}
     </div>
   )
 }

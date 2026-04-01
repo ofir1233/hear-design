@@ -42,7 +42,18 @@
       "Bash(cmd.exe /c \"where npm 2>&1 && npm --version 2>&1\")",
       "Bash(cmd.exe /c \"C:/Program Files/nodejs/npm.cmd --version 2>&1 || C:/Users/ofirn/AppData/Roaming/nvm/current/npm.cmd --version 2>&1\")",
       "Read(//c/Program Files/nodejs//**)",
-      "Bash(\"/c/Program Files/nodejs/npm\" --version)"
+      "Bash(\"/c/Program Files/nodejs/npm\" --version)",
+      "Bash(GIT_TERMINAL_PROMPT=0 git push github main:master 2>&1; echo \"EXIT:$?\")",
+      "Bash(git remote:*)",
+      "Bash(git config:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(GIT_TERMINAL_PROMPT=0 git push github main:master --force; echo \"EXIT:$?\")",
+      "Bash(security find-internet-password:*)",
+      "Read(//Users/ofirnona/**)",
+      "Bash(security find-generic-password:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)"
     ]
   }
 }
