@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import Button from '../Button'
 
 // ── Shared primitives ───────────────────────────────────────────────────────────
 
@@ -24,7 +25,7 @@ function ChevronIcon({ open }) {
   )
 }
 
-function Dropdown({ value, options, onChange }) {
+function Dropdown({ value, options, onChange, placeholder }) {
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState(null)
   const btnRef = useRef(null)
@@ -59,12 +60,12 @@ function Dropdown({ value, options, onChange }) {
           background: 'var(--bg-canvas)',
           border: `1px solid ${open ? 'var(--b100)' : 'var(--border-input)'}`,
           borderRadius: 8, cursor: 'pointer',
-          fontSize: 13, color: 'var(--text-primary)',
+          fontSize: 13, color: value ? 'var(--text-primary)' : 'var(--text-muted)',
           fontFamily: "'Byrd', sans-serif",
           transition: 'border-color 150ms ease',
         }}
       >
-        <span>{value}</span>
+        <span>{value || placeholder}</span>
         <ChevronIcon open={open} />
       </button>
 
@@ -181,7 +182,13 @@ const DATA_TYPES = ['AUDIO', 'VIDEO', 'TEXT']
 
 const CUSTOMER_ID_OPTIONS = ['caller_phone_number', 'agent_id', 'customer_email']
 
-const PAGE_FILTER_TABS = ['Data Page', 'Agent Evaluation', 'Customers']
+const PAGE_FILTER_TABS = ['Data Page', 'Agent Evaluation Page', 'Customers Page']
+
+const PAGE_FILTER_FIELDS = {
+  ROOT: ['_id', 'name', 'created_at', 'audio_length', 'processing_status', 'team'],
+}
+
+const FILTER_OPERATORS = ['is', 'is not', 'contains', 'does not contain', 'is empty', 'is not empty']
 
 const METADATA_SUGGESTIONS = [
   { key: 'dispatcher_code',          sample: '188223'      },
@@ -303,21 +310,10 @@ function SectionHeader({ title, subtitle }) {
 
 // ── ProjectAccess ───────────────────────────────────────────────────────────────
 
-function ProjectAccess({ members, setMembers }) {
-  const [selectedMember, setSelectedMember] = useState(ALL_ORG_MEMBERS[0].name)
+function ProjectAccess() {
+  const [selectedMember, setSelectedMember] = useState(ALL_ORG_MEMBERS[0].email)
 
-  function addMember() {
-    const found = ALL_ORG_MEMBERS.find(m => m.name === selectedMember)
-    if (!found) return
-    if (members.some(m => m.id === found.id)) return
-    setMembers(prev => [...prev, found])
-  }
-
-  function removeMember(id) {
-    setMembers(prev => prev.filter(m => m.id !== id))
-  }
-
-  const availableNames = ALL_ORG_MEMBERS.map(m => m.name)
+  const availableEmails = ALL_ORG_MEMBERS.map(m => m.email)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -329,75 +325,10 @@ function ProjectAccess({ members, setMembers }) {
       {/* Add user row */}
       <div style={{ display: 'flex', gap: 8 }}>
         <div style={{ flex: 1 }}>
-          <Dropdown value={selectedMember} options={availableNames} onChange={setSelectedMember} />
+          <Dropdown value={selectedMember} options={availableEmails} onChange={setSelectedMember} />
         </div>
-        <button
-          onClick={addMember}
-          style={{
-            height: 36, padding: '0 16px', flexShrink: 0,
-            background: 'var(--b100)', border: 'none', borderRadius: 8,
-            fontSize: 13, fontWeight: 600, color: '#fff',
-            fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
-            transition: 'opacity 150ms ease', whiteSpace: 'nowrap',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = '0.88' }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
-        >
-          Add User
-        </button>
+        <Button variant="primary" size="sm">Add User</Button>
       </div>
-
-      {/* Member list */}
-      {members.length > 0 && (
-        <div style={{ border: '1px solid var(--border-default)', borderRadius: 10, overflow: 'hidden' }}>
-          {members.map((user, i) => (
-            <div
-              key={user.id}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '10px 14px',
-                borderTop: i > 0 ? '1px solid var(--border-default)' : 'none',
-                background: 'var(--bg-canvas)',
-                transition: 'background 100ms ease',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-canvas)' }}
-            >
-              <UserAvatar user={user} size={32} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user.name}
-                </p>
-                <p style={{ margin: '1px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {user.email}
-                </p>
-              </div>
-              {/* Active badge */}
-              <span style={{
-                fontSize: 11, fontWeight: 600, padding: '2px 9px', borderRadius: 20,
-                background: 'rgba(75,163,115,0.12)', color: '#4BA373',
-                fontFamily: "'Byrd', sans-serif", flexShrink: 0,
-              }}>
-                Active
-              </span>
-              <button
-                onClick={() => removeMember(user.id)}
-                title="Remove member"
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
-                  padding: 4, borderRadius: 6, flexShrink: 0,
-                  transition: 'color 120ms ease, background 120ms ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.color = 'var(--c100)'; e.currentTarget.style.background = 'var(--bg-active)' }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
-              >
-                <TrashIcon />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
@@ -560,20 +491,7 @@ function MetaFieldRow({ field, onDelete, onChange }) {
           }} />
         </button>
 
-        <button
-          onClick={e => { e.stopPropagation(); onDelete() }}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 24, height: 24, borderRadius: 5,
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: 'var(--text-muted)', flexShrink: 0,
-            transition: 'color 120ms ease, background 120ms ease',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.color = '#E53E3E'; e.currentTarget.style.background = 'rgba(229,62,62,0.08)' }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
-        >
-          <TrashIcon />
-        </button>
+        <Button variant="ghost" size="sm" onClick={e => { e.stopPropagation(); onDelete() }} leftIcon={<TrashIcon />} />
 
         <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
           <ChevronIcon open={open} />
@@ -747,17 +665,15 @@ let filterNextId = 1
 
 function PageDefaultFilters() {
   const [activeTab, setActiveTab] = useState('Data Page')
-  const [filtersByTab, setFiltersByTab] = useState({
-    'Data Page': [],
-    'Agent Evaluation': [],
-    'Customers': [],
-  })
+  const [filtersByTab, setFiltersByTab] = useState(
+    Object.fromEntries(PAGE_FILTER_TABS.map(t => [t, []]))
+  )
 
   function addFilter(tab) {
     const id = filterNextId++
     setFiltersByTab(prev => ({
       ...prev,
-      [tab]: [...prev[tab], { id, key: '', value: '' }],
+      [tab]: [...prev[tab], { id, field: '', operator: '', value: '' }],
     }))
   }
 
@@ -768,107 +684,129 @@ function PageDefaultFilters() {
     }))
   }
 
-  function updateFilter(tab, id, field, val) {
+  function updateFilter(tab, id, key, val) {
     setFiltersByTab(prev => ({
       ...prev,
-      [tab]: prev[tab].map(f => f.id === id ? { ...f, [field]: val } : f),
+      [tab]: prev[tab].map(f => f.id === id ? { ...f, [key]: val } : f),
     }))
   }
 
   const filters = filtersByTab[activeTab]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <SectionHeader title="Page Default Filters" />
 
-      {/* Tab bar */}
-      <div style={{
-        display: 'inline-flex', gap: 2, padding: 3,
-        background: 'var(--bg-active)', borderRadius: 8,
-        border: '1px solid var(--border-input)',
-        alignSelf: 'flex-start',
-      }}>
-        {PAGE_FILTER_TABS.map(tab => {
-          const isActive = activeTab === tab
-          return (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                height: 26, padding: '0 14px', borderRadius: 6, border: 'none',
-                cursor: 'pointer', fontSize: 12, fontWeight: isActive ? 600 : 400,
-                fontFamily: "'Byrd', sans-serif",
-                color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
-                background: isActive ? 'var(--bg-canvas)' : 'none',
-                boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                transition: 'background 150ms ease, color 150ms ease, box-shadow 150ms ease',
-              }}
-            >
-              {tab}
-            </button>
-          )
-        })}
+      {/* Underline tab bar */}
+      <div style={{ borderBottom: '1px solid var(--border-default)' }}>
+        <div style={{ display: 'flex', gap: 24 }}>
+          {PAGE_FILTER_TABS.map(tab => {
+            const isActive = activeTab === tab
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  padding: '0 0 10px', fontSize: 13,
+                  fontWeight: isActive ? 600 : 400,
+                  fontFamily: "'Byrd', sans-serif",
+                  color: isActive ? 'var(--b100)' : 'var(--text-muted)',
+                  borderBottom: isActive ? '2px solid var(--b100)' : '2px solid transparent',
+                  marginBottom: -1,
+                  transition: 'color 150ms ease, border-color 150ms ease',
+                }}
+              >
+                {tab}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Filter list */}
+      {/* Filter list or empty state */}
       {filters.length === 0 ? (
         <p style={{ margin: 0, fontSize: 13, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
-          No filters set.
+          No default filters. Add one to pre-filter this page on load.
         </p>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {filters.map(f => (
-            <div key={f.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <input
-                value={f.key}
-                onChange={e => updateFilter(activeTab, f.id, 'key', e.target.value)}
-                placeholder="Key…"
-                style={{ ...inputBase, flex: 1 }}
-                onFocus={focusBorder}
-                onBlur={blurBorder}
-              />
+        <div style={{
+          border: '1px solid var(--border-default)', borderRadius: 10, overflow: 'hidden',
+        }}>
+          {filters.map((f, i) => (
+            <div
+              key={f.id}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '14px 20px',
+                borderTop: i > 0 ? '1px solid var(--border-default)' : 'none',
+                background: 'var(--bg-canvas)',
+              }}
+            >
+              {/* WHERE / AND connector label */}
+              <span style={{
+                width: 36, flexShrink: 0, textAlign: 'right', marginRight: 8,
+                fontSize: 11, fontWeight: 600, letterSpacing: '0.04em',
+                color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+                textTransform: 'uppercase',
+              }}>
+                {i === 0 ? 'Where' : 'And'}
+              </span>
+
+              {/* Field */}
+              <div style={{ width: 160, flexShrink: 0 }}>
+                <Dropdown
+                  value={f.field}
+                  placeholder="Select field"
+                  options={PAGE_FILTER_FIELDS.ROOT}
+                  onChange={val => updateFilter(activeTab, f.id, 'field', val)}
+                />
+              </div>
+
+              {/* Operator */}
+              <div style={{ width: 140, flexShrink: 0, opacity: f.field ? 1 : 0.4, pointerEvents: f.field ? 'auto' : 'none' }}>
+                <Dropdown
+                  value={f.operator}
+                  placeholder="is"
+                  options={FILTER_OPERATORS}
+                  onChange={val => updateFilter(activeTab, f.id, 'operator', val)}
+                />
+              </div>
+
+              {/* Value */}
               <input
                 value={f.value}
                 onChange={e => updateFilter(activeTab, f.id, 'value', e.target.value)}
-                placeholder="Value…"
+                placeholder="Value"
                 style={{ ...inputBase, flex: 1 }}
                 onFocus={focusBorder}
                 onBlur={blurBorder}
               />
-              <button
+
+              {/* Remove */}
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => removeFilter(activeTab, f.id)}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
-                  padding: 4, borderRadius: 6, flexShrink: 0,
-                  transition: 'color 120ms ease, background 120ms ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.color = 'var(--c100)'; e.currentTarget.style.background = 'var(--bg-active)' }}
-                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
               >
-                <TrashIcon />
-              </button>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </Button>
             </div>
           ))}
         </div>
       )}
 
-      {/* Add Filter */}
-      <button
-        onClick={() => addFilter(activeTab)}
-        style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          color: 'var(--b100)', fontSize: 13, fontFamily: "'Byrd', sans-serif",
-          fontWeight: 500, padding: 0, textAlign: 'left',
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          transition: 'opacity 120ms ease',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.opacity = '0.75' }}
-        onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
-      >
-        + Add Filter
-      </button>
+      {/* Footer: + Add Filter + Save */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Button variant="ghost" size="sm" onClick={() => addFilter(activeTab)}>
+          + Add Filter
+        </Button>
+        <Button variant="primary" size="sm">
+          Save
+        </Button>
+      </div>
     </div>
   )
 }
@@ -907,22 +845,7 @@ function TeamsSection({ teams, setTeams }) {
           onFocus={focusBorder}
           onBlur={blurBorder}
         />
-        <button
-          onClick={addTeam}
-          style={{
-            width: 36, height: 36, flexShrink: 0,
-            background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
-            borderRadius: 8, cursor: 'pointer',
-            fontSize: 18, fontWeight: 600, color: 'var(--text-secondary)',
-            fontFamily: "'Byrd', sans-serif",
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            transition: 'background 120ms ease, border-color 120ms ease',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.borderColor = 'var(--b100)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-canvas)'; e.currentTarget.style.borderColor = 'var(--border-input)' }}
-        >
-          +
-        </button>
+        <Button variant="secondary" size="sm" onClick={addTeam}>+</Button>
       </div>
 
       {/* Team pills */}
@@ -1054,10 +977,7 @@ export default function ProjectsPage({ selectedProject, onProjectChange }) {
       <Divider />
 
       {/* Project Access */}
-      <ProjectAccess
-        members={p.members}
-        setMembers={v => update('members', typeof v === 'function' ? v(p.members) : v)}
-      />
+      <ProjectAccess />
 
       <Divider />
 

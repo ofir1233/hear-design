@@ -14,12 +14,12 @@ const VARIANTS = {
   },
   secondary: {
     bg:       'transparent',
-    bgHover:  'var(--b20)',
-    bgActive: 'var(--b20)',
-    color:    'var(--b100)',
-    border:   '1.5px solid var(--b100)',
-    spinTrack: 'var(--b30)',
-    spinArc:   'var(--b100)',
+    bgHover:  'var(--bg-active)',
+    bgActive: 'var(--bg-active)',
+    color:    'var(--text-primary)',
+    border:   '1.5px solid var(--border-default)',
+    spinTrack: 'var(--border-default)',
+    spinArc:   'var(--text-primary)',
   },
   ghost: {
     bg:       'transparent',

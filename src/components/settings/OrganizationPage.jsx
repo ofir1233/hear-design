@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import Button from '../Button'
 
 const inputBase = {
   width: '100%', boxSizing: 'border-box',
@@ -556,20 +557,7 @@ function GroupManagePanel({ role, users, pending, onChangeRole, onRemove, onRevo
           borderBottom: '1px solid var(--border-default)',
           flexShrink: 0,
         }}>
-          <button
-            onClick={onClose}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 30, height: 30, borderRadius: 8,
-              background: 'none', border: '1px solid var(--border-input)',
-              cursor: 'pointer', color: 'var(--text-secondary)',
-              flexShrink: 0, transition: 'background 120ms ease',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
-          >
-            <BackIcon />
-          </button>
+          <Button variant="secondary" size="sm" onClick={onClose} leftIcon={<BackIcon />} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
               {role}s
@@ -608,20 +596,7 @@ function GroupManagePanel({ role, users, pending, onChangeRole, onRemove, onRevo
                 onBlur={blurBorder}
               />
             </div>
-            <button
-              onClick={sendInvite}
-              style={{
-                height: 36, padding: '0 14px', flexShrink: 0,
-                background: 'var(--b100)', border: 'none', borderRadius: 8,
-                fontSize: 13, fontWeight: 600, color: '#fff',
-                fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
-                transition: 'opacity 150ms ease', whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.opacity = '0.88' }}
-              onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
-            >
-              + Invite
-            </button>
+            <Button variant="primary" size="sm" onClick={sendInvite}>+ Invite</Button>
           </div>
           {inviteError && (
             <p style={{ margin: 0, fontSize: 11, color: 'var(--c100)', fontFamily: "'Byrd', sans-serif" }}>
@@ -687,20 +662,7 @@ function GroupManagePanel({ role, users, pending, onChangeRole, onRemove, onRevo
                     }}>
                       Pending
                     </span>
-                    <button
-                      onClick={() => onRevokePending(p.id)}
-                      title="Revoke"
-                      style={{
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
-                        padding: 4, borderRadius: 6,
-                        transition: 'color 120ms ease, background 120ms ease',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.color = 'var(--c100)'; e.currentTarget.style.background = 'var(--bg-active)' }}
-                      onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
-                    >
-                      <XIcon />
-                    </button>
+                    <Button variant="ghost" size="sm" onClick={() => onRevokePending(p.id)} leftIcon={<XIcon />} />
                   </div>
                 ))}
               </div>
@@ -740,20 +702,7 @@ function GroupManagePanel({ role, users, pending, onChangeRole, onRemove, onRevo
                     </p>
                   </div>
                   <RoleDropdown value={user.role} onChange={newRole => onChangeRole(user.id, newRole)} />
-                  <button
-                    onClick={() => onRemove(user.id)}
-                    title="Remove member"
-                    style={{
-                      background: 'none', border: 'none', cursor: 'pointer',
-                      color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
-                      padding: 4, borderRadius: 6, flexShrink: 0,
-                      transition: 'color 120ms ease, background 120ms ease',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--c100)'; e.currentTarget.style.background = 'var(--bg-active)' }}
-                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
-                  >
-                    <XIcon />
-                  </button>
+                  <Button variant="ghost" size="sm" onClick={() => onRemove(user.id)} leftIcon={<XIcon />} />
                 </div>
               ))}
             </div>
@@ -863,20 +812,7 @@ function UserManagement() {
         <div style={{ width: 120 }}>
           <Dropdown value={inviteRole} options={ROLES} onChange={setInviteRole} />
         </div>
-        <button
-          onClick={sendTopInvite}
-          style={{
-            height: 36, padding: '0 16px', flexShrink: 0,
-            background: 'var(--b100)', border: 'none', borderRadius: 8,
-            fontSize: 13, fontWeight: 600, color: '#fff',
-            fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
-            transition: 'opacity 150ms ease', whiteSpace: 'nowrap',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = '0.88' }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
-        >
-          + Invite
-        </button>
+        <Button variant="primary" size="sm" onClick={sendTopInvite}>+ Invite</Button>
       </div>
 
       {inviteError && (
@@ -911,24 +847,7 @@ function UserManagement() {
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setManagingRole('__pending__')}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              height: 30, padding: '0 12px',
-              background: 'var(--bg-active)', border: '1px solid var(--border-input)',
-              borderRadius: 8, cursor: 'pointer',
-              fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)',
-              fontFamily: "'Byrd', sans-serif", transition: 'background 120ms ease',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--border-input)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-          >
-            View all
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M4.5 3l3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <Button variant="secondary" size="sm" onClick={() => setManagingRole('__pending__')}>View all</Button>
         </div>
       )}
 
@@ -1025,20 +944,7 @@ function UserManagement() {
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '16px 20px', borderBottom: '1px solid var(--border-default)', flexShrink: 0,
             }}>
-              <button
-                onClick={() => setManagingRole(null)}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: 30, height: 30, borderRadius: 8,
-                  background: 'none', border: '1px solid var(--border-input)',
-                  cursor: 'pointer', color: 'var(--text-secondary)',
-                  transition: 'background 120ms ease',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
-              >
-                <BackIcon />
-              </button>
+              <Button variant="secondary" size="sm" onClick={() => setManagingRole(null)} leftIcon={<BackIcon />} />
               <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
                 Pending Invitations
               </p>
@@ -1080,20 +986,7 @@ function UserManagement() {
                           Invited as {p.role}
                         </p>
                       </div>
-                      <button
-                        onClick={() => revokePending(p.id)}
-                        title="Revoke"
-                        style={{
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
-                          padding: 4, borderRadius: 6,
-                          transition: 'color 120ms ease, background 120ms ease',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.color = 'var(--c100)'; e.currentTarget.style.background = 'var(--bg-active)' }}
-                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'none' }}
-                      >
-                        <XIcon />
-                      </button>
+                      <Button variant="ghost" size="sm" onClick={() => revokePending(p.id)} leftIcon={<XIcon />} />
                     </div>
                   ))}
                 </div>

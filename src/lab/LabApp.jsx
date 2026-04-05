@@ -22,8 +22,10 @@ import CreateSignalPage from '../components/signals/CreateSignalPage.jsx'
 import KnowledgePage from '../components/knowledge/KnowledgePage.jsx'
 import OrganizationPage from '../components/settings/OrganizationPage.jsx'
 import ProjectsPage, { PROJECT_NAMES } from '../components/settings/ProjectsPage.jsx'
+import TeamsPage from '../components/settings/TeamsPage.jsx'
 import ActionsPage from '../components/actions/ActionsPage.jsx'
 import Badge from '../components/Badge.jsx'
+import Button from '../components/Button.jsx'
 import DailyBriefing from './components/DailyBriefing.jsx'
 
 // Inspector lives here — never in Demo
@@ -656,20 +658,20 @@ Ask me anything about your operations, or explore a topic below to get started.`
             }
             right={
               <div style={{ display: 'flex', gap: 8 }}>
-                <button style={{
-                  height: 34, padding: '0 14px',
-                  border: '1px solid var(--border-default)', borderRadius: 8,
-                  background: 'transparent', color: 'var(--text-primary)',
-                  fontSize: 13, fontWeight: 500, cursor: 'pointer',
-                  fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
-                }}>Add Organization</button>
-                <button style={{
-                  height: 34, padding: '0 14px',
-                  border: '1px solid var(--border-default)', borderRadius: 8,
-                  background: 'transparent', color: 'var(--text-primary)',
-                  fontSize: 13, fontWeight: 500, cursor: 'pointer',
-                  fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
-                }}>Delete Organization</button>
+                {settingsTab === 'teams' ? (
+                  <Button variant="primary" size="sm">Add Team</Button>
+                ) : settingsTab === 'projects' ? (
+                  <>
+                    <Button variant="secondary" size="sm">Clone Project</Button>
+                    <Button variant="secondary" size="sm">Create Project</Button>
+                    <Button variant="danger" size="sm">Delete Project</Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="secondary" size="sm">Add Organization</Button>
+                    <Button variant="secondary" size="sm">Delete Organization</Button>
+                  </>
+                )}
               </div>
             }
           />
@@ -703,6 +705,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
               />
               {settingsTab === 'organization' ? (
                 <OrganizationPage />
+              ) : settingsTab === 'teams' ? (
+                <TeamsPage />
               ) : settingsTab === 'projects' ? (
                 <ProjectsPage selectedProject={selectedProject} onProjectChange={setSelectedProject} />
               ) : (

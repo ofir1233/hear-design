@@ -35,7 +35,7 @@ export default {
       description: {
         component:
           '**Tier: Atom** — First-class reusable button for the Hear design system. ' +
-          '\n\n**Variants:** `primary` (blue fill) · `secondary` (blue outline) · `ghost` (transparent) · `danger` (red fill)' +
+          '\n\n**Variants:** `primary` (blue fill) · `secondary` (neutral outline, adapts to light/dark mode) · `ghost` (transparent) · `danger` (red fill)' +
           '\n\n**Sizes:** `sm` 32px · `md` 40px (default) · `lg` 48px' +
           '\n\n**States:** default · hover · active · `disabled` · `loading`' +
           '\n\n**Icons:** Pass any icon component to `leftIcon` or `rightIcon`. Omit `children` with only `leftIcon` for a square icon-only button.',
@@ -102,7 +102,7 @@ export const AllVariants = {
   parameters: {
     docs: {
       description: {
-        story: '`primary` for the main CTA · `secondary` for supporting actions · `ghost` for low-emphasis actions · `danger` for destructive operations.',
+        story: '`primary` for the main CTA · `secondary` for supporting actions (neutral outline, text follows light/dark mode) · `ghost` for low-emphasis actions · `danger` for destructive operations.',
       },
     },
   },
