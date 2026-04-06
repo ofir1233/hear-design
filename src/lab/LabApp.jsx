@@ -25,6 +25,8 @@ import ProjectsPage, { PROJECT_NAMES } from '../components/settings/ProjectsPage
 import TeamsPage from '../components/settings/TeamsPage.jsx'
 import PromptsPage from '../components/settings/PromptsPage.jsx'
 import ProfilePage from '../components/settings/ProfilePage.jsx'
+import BillingPage from '../components/settings/BillingPage.jsx'
+import UsagePage from '../components/settings/UsagePage.jsx'
 import ActionsPage from '../components/actions/ActionsPage.jsx'
 import Badge from '../components/Badge.jsx'
 import Button from '../components/Button.jsx'
@@ -667,6 +669,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
                   <Button variant="primary" size="sm">Create Prompt</Button>
                 ) : settingsTab === 'profile' ? (
                   <Button variant="primary" size="sm">Update Profile</Button>
+                ) : settingsTab === 'billing' ? (
+                  <Button variant="primary" size="sm">Add Card</Button>
                 ) : settingsTab === 'projects' ? (
                   <>
                     <Button variant="secondary" size="sm">Clone Project</Button>
@@ -718,6 +722,10 @@ Ask me anything about your operations, or explore a topic below to get started.`
                 <PromptsPage />
               ) : settingsTab === 'profile' ? (
                 <ProfilePage />
+              ) : settingsTab === 'billing' ? (
+                <BillingPage isDark={isDark} />
+              ) : settingsTab === 'usage' ? (
+                <UsagePage isDark={isDark} />
               ) : settingsTab === 'projects' ? (
                 <ProjectsPage selectedProject={selectedProject} onProjectChange={setSelectedProject} />
               ) : (

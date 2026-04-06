@@ -50,7 +50,7 @@ export default function Modal({ open, onClose, title, children, footer, width = 
         style={{
           width,
           maxWidth:     'calc(100vw - 40px)',
-          background:   'var(--bg-card)',
+          background:   'var(--bg-elevated)',
           border:       '1px solid var(--border-default)',
           borderRadius: 12,
           boxShadow:    '0 20px 60px rgba(0,0,0,0.22)',
