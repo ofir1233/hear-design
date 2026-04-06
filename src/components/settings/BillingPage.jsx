@@ -215,20 +215,28 @@ function CardRow({ card, onRemove, onSetDefault }) {
 // ── Invoices AG Grid ──────────────────────────────────────────────────────────
 
 function StatusCell({ value }) {
-  return <Badge variant="tinted" color={value === 'Paid' ? 'green' : 'coral'}>{value}</Badge>
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+      <Badge variant="tinted" color={value === 'Paid' ? 'green' : 'coral'}>{value}</Badge>
+    </div>
+  )
 }
 
 function DownloadCell() {
-  return <Button variant="ghost" size="sm" onClick={() => {}}>Download</Button>
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+      <Button variant="ghost" size="sm" onClick={() => {}}>Download</Button>
+    </div>
+  )
 }
 
 function InvoicesGrid({ invoices, isDark }) {
   const colDefs = useMemo(() => [
-    { field: 'id',     headerName: 'Invoice',  width: 140, sortable: true  },
-    { field: 'date',   headerName: 'Date',     width: 150, sortable: true  },
-    { field: 'amount', headerName: 'Amount',   width: 120, sortable: true  },
-    { field: 'status', headerName: 'Status',   width: 130, cellRenderer: StatusCell },
-    { field: 'pdf',    headerName: 'PDF',      width: 130, cellRenderer: DownloadCell, sortable: false },
+    { field: 'id',     headerName: 'Invoice',  flex: 1,   minWidth: 120, sortable: true  },
+    { field: 'date',   headerName: 'Date',     width: 140, sortable: true  },
+    { field: 'amount', headerName: 'Amount',   width: 110, sortable: true  },
+    { field: 'status', headerName: 'Status',   width: 120, cellRenderer: StatusCell },
+    { field: 'pdf',    headerName: 'PDF',      width: 120, cellRenderer: DownloadCell, sortable: false },
   ], [])
 
   const defaultColDef = useMemo(() => ({
@@ -246,6 +254,7 @@ function InvoicesGrid({ invoices, isDark }) {
         rowHeight={44}
         headerHeight={38}
         suppressCellFocus
+        domLayout="normal"
       />
     </div>
   )
