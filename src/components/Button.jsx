@@ -4,9 +4,9 @@ import { useState } from 'react'
 
 const VARIANTS = {
   primary: {
-    bg:       'var(--c100)',
-    bgHover:  'var(--c80)',
-    bgActive: 'var(--c60)',
+    bg:       'var(--b100)',
+    bgHover:  'var(--b80)',
+    bgActive: 'var(--b60)',
     color:    '#FFFFFF',
     border:   'none',
     spinTrack: 'rgba(255,255,255,0.30)',

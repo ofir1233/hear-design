@@ -23,6 +23,8 @@ import KnowledgePage from '../components/knowledge/KnowledgePage.jsx'
 import OrganizationPage from '../components/settings/OrganizationPage.jsx'
 import ProjectsPage, { PROJECT_NAMES } from '../components/settings/ProjectsPage.jsx'
 import TeamsPage from '../components/settings/TeamsPage.jsx'
+import PromptsPage from '../components/settings/PromptsPage.jsx'
+import ProfilePage from '../components/settings/ProfilePage.jsx'
 import ActionsPage from '../components/actions/ActionsPage.jsx'
 import Badge from '../components/Badge.jsx'
 import Button from '../components/Button.jsx'
@@ -43,6 +45,7 @@ const SIDEBAR_WIDTH = 288 // 272px panel + 16px left margin
 const SETTINGS_TAB_META = {
   'organization':   { label: 'Organization',   desc: 'Manage your organization profile and preferences' },
   'teams':          { label: 'Teams',           desc: 'Create and manage teams within your organization' },
+  'prompts':        { label: 'Prompts Management', desc: 'Manage system, organization, and project-level prompts and their definitions' },
   'projects':       { label: 'Projects',        desc: 'Configure projects and their settings' },
   'profile':        { label: 'Profile',         desc: 'Update your personal profile and account details' },
   'actions':        { label: 'Actions',         desc: 'Define and manage automated actions' },
@@ -660,6 +663,10 @@ Ask me anything about your operations, or explore a topic below to get started.`
               <div style={{ display: 'flex', gap: 8 }}>
                 {settingsTab === 'teams' ? (
                   <Button variant="primary" size="sm">Add Team</Button>
+                ) : settingsTab === 'prompts' ? (
+                  <Button variant="primary" size="sm">Create Prompt</Button>
+                ) : settingsTab === 'profile' ? (
+                  <Button variant="primary" size="sm">Update Profile</Button>
                 ) : settingsTab === 'projects' ? (
                   <>
                     <Button variant="secondary" size="sm">Clone Project</Button>
@@ -707,6 +714,10 @@ Ask me anything about your operations, or explore a topic below to get started.`
                 <OrganizationPage />
               ) : settingsTab === 'teams' ? (
                 <TeamsPage />
+              ) : settingsTab === 'prompts' ? (
+                <PromptsPage />
+              ) : settingsTab === 'profile' ? (
+                <ProfilePage />
               ) : settingsTab === 'projects' ? (
                 <ProjectsPage selectedProject={selectedProject} onProjectChange={setSelectedProject} />
               ) : (

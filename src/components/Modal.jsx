@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 // ── Modal ──────────────────────────────────────────────────────────────────────
 //
@@ -33,13 +34,13 @@ export default function Modal({ open, onClose, title, children, footer, width = 
 
   if (!open) return null
 
-  return (
+  return createPortal(
     <div
       onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}
       style={{
-        position:       'fixed', inset: 0, zIndex: 800,
+        position:       'fixed', inset: 0, zIndex: 10000,
         display:        'flex', alignItems: 'center', justifyContent: 'center',
-        background:     'rgba(0,0,0,0.40)',
+        background:     'rgba(0,0,0,0.85)',
         opacity:        entered ? 1 : 0,
         transition:     'opacity 180ms ease',
       }}
@@ -49,7 +50,7 @@ export default function Modal({ open, onClose, title, children, footer, width = 
         style={{
           width,
           maxWidth:     'calc(100vw - 40px)',
-          background:   'var(--bg-elevated)',
+          background:   'var(--bg-card)',
           border:       '1px solid var(--border-default)',
           borderRadius: 12,
           boxShadow:    '0 20px 60px rgba(0,0,0,0.22)',
@@ -104,6 +105,7 @@ export default function Modal({ open, onClose, title, children, footer, width = 
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
