@@ -5,7 +5,7 @@ import {
   HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon, ComplianceIcon,
   AgentIcon, KnowledgeIcon, AiTaskIcon, CustomersIcon, SettingsIcon,
   BellIcon, ChevronIcon, CollapseArrow, DotsIcon,
-  MoonIcon, AccessibilityIcon, LogoutIcon,
+  MoonIcon, AccessibilityIcon, LogoutIcon, TopicsIcon,
 } from './icons'
 
 // Sun icon — shown when dark mode is active (click to return to light)
@@ -582,6 +582,7 @@ function StorybookDisabledButton() {
 const NAV_ITEMS = [
   { id: 'dashboard',   label: 'Dashboard',        Icon: HomeIcon       },
   { id: 'data',        label: 'Data',              Icon: DataIcon       },
+  { id: 'topics',      label: 'Topics',            Icon: TopicsIcon     },
   { id: 'reports',     label: 'Reports',           Icon: ReportsIcon    },
   { id: 'signals',     label: 'Signals',           Icon: SignalsIcon    },
   { id: 'alerts',      label: 'Alerts',            Icon: AlertsIcon     },

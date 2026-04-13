@@ -11,6 +11,7 @@ import ExplorePage from './components/data/ExplorePage.jsx'
 import ReportsPage from './components/reports/ReportsPage.jsx'
 import CreateReportPage from './components/reports/CreateReportPage.jsx'
 import AgentEvalPage from './components/agent-eval/AgentEvalPage.jsx'
+import TopicsPage from './components/topics/TopicsPage.jsx'
 import SignalsPage from './components/signals/SignalsPage.jsx'
 import CreateSignalPage from './components/signals/CreateSignalPage.jsx'
 import LabApp from './lab/LabApp.jsx'
@@ -605,6 +606,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
           companyConfig={companyConfig}
           onOpenCall={openCall}
         />
+      ) : activePage === 'topics' ? (
+        <TopicsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'reports' && route.sub === 'create' ? (
         <CreateReportPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'reports' ? (

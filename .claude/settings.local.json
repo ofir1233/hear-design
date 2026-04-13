@@ -53,7 +53,9 @@
       "Read(//Users/ofirnona/**)",
       "Bash(security find-generic-password:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(gh pr:*)",
+      "Bash(open:*)"
     ]
   }
 }

@@ -5,7 +5,7 @@ import NotificationsPopover from './NotificationsPopover.jsx'
 import {
   HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon,
   AgentIcon, KnowledgeIcon, AiTaskIcon, CustomersIcon, SettingsIcon,
-  MagicApiIcon, ActionsIcon, MarketplaceIcon,
+  MagicApiIcon, ActionsIcon, MarketplaceIcon, TopicsIcon,
   BellIcon, ChevronIcon, CollapseArrow, DotsIcon,
   MoonIcon, AccessibilityIcon, LogoutIcon,
 } from '../../components/icons'
@@ -585,6 +585,7 @@ function StorybookDisabledButton() {
 const NAV_ITEMS = [
   { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon,        group: 'MAIN'         },
   { id: 'data',        label: 'Data',             Icon: DataIcon,        group: 'MAIN'         },
+  { id: 'topics',      label: 'Topics',           Icon: TopicsIcon,      group: 'MAIN'         },
   { id: 'reports',     label: 'Reports',          Icon: ReportsIcon,     group: 'MAIN'         },
   { id: 'signals',     label: 'Signals',          Icon: SignalsIcon,     group: 'INTELLIGENCE' },
   { id: 'alerts',      label: 'Alerts',           Icon: AlertsIcon,      group: 'INTELLIGENCE' },

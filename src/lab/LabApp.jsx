@@ -28,6 +28,7 @@ import ProfilePage from '../components/settings/ProfilePage.jsx'
 import BillingPage from '../components/settings/BillingPage.jsx'
 import UsagePage from '../components/settings/UsagePage.jsx'
 import ActionsPage from '../components/actions/ActionsPage.jsx'
+import TopicsPage from '../components/topics/TopicsPage.jsx'
 import Badge from '../components/Badge.jsx'
 import Button from '../components/Button.jsx'
 import DailyBriefing from './components/DailyBriefing.jsx'
@@ -644,6 +645,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         <CreateSignalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'signals' ? (
         <SignalsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+      ) : activePage === 'topics' ? (
+        <TopicsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'knowledge' ? (
         <KnowledgePage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'actions' ? (
