@@ -73,10 +73,11 @@ function ImpersonateButton() {
 
   return (
     <>
+      <div className="with-tooltip" style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+      <span className="tooltip">{active ? `Impersonating: ${active.name}` : 'Impersonate user'}</span>
       <button
         ref={btnRef}
         onClick={() => setOpen(v => !v)}
-        title={active ? `Impersonating: ${active.name}` : 'Impersonate user'}
         style={{
           flex: 1,
           background: 'transparent',
@@ -101,6 +102,7 @@ function ImpersonateButton() {
           }} />
         )}
       </button>
+      </div>
 
       {open && createPortal(
         <div
@@ -294,8 +296,8 @@ function SessionItem({ session, isActive, isNewlyNamed, onSelect, onDelete, onRe
   const dropdownRef = useRef(null)
   const inputRef    = useRef(null)
 
-  const isPending    = !session.title  // empty title = waiting for LLM
-  const displayTitle = useTypewriter(session.title, isNewlyNamed && !isPending)
+  const isPending    = !session.title && session.pending === true
+  const displayTitle = useTypewriter(session.title || 'New conversation', isNewlyNamed && !isPending)
 
   // Close menu on outside click
   useEffect(() => {
@@ -626,7 +628,12 @@ const SETTINGS_TABS = [
   { id: 'marketplace',    label: 'Marketplace',    Icon: IcMarketplace   },
 ]
 
-const DESIGN_LAB = { id: '__design_lab__', label: 'Design Lab' }
+const DESIGN_LAB_PROJECTS = [
+  { id: '__audi__',          label: 'Audi',            color: '#FF7056', admin: true },
+  { id: '__sales_support__', label: 'Sales & Support', color: '#1779F7' },
+  { id: '__finance__',       label: 'Finance',         color: '#7C5CFC' },
+  { id: '__it_ops__',        label: 'IT Operations',   color: '#0AB884' },
+]
 
 export default function Sidebar({ isMobile = false, mobileOpen = false, onMobileClose, isDark = false, onThemeToggle, activeNav = 'dashboard', onNavChange, collapsed = false, onToggleCollapse, onSignOut, companyConfig = null, userId = '', onProjectChange, sessions = [], activeSessionId = null, newlyNamedId = null, onSelectSession, onDeleteSession, onRenameSession, onShareSession, onNewChat, defaultOrgScope = 'project', settingsTab = 'organization', onSettingsTabChange }) {
   const [historyOpen, setHistoryOpen]   = useState(true)
@@ -659,14 +666,19 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
   }
   const [projectOpen, setProjectOpen]   = useState(false)
   const [projectOpenKey, setProjectOpenKey] = useState(0)
+  const [selectedLabProjectId, setSelectedLabProjectId] = useState(DESIGN_LAB_PROJECTS[0].id)
+  const [langOpen, setLangOpen] = useState(false)
+  const [selectedLang, setSelectedLang] = useState({ code: 'HE', label: 'Hebrew' })
+  const langRef = useRef(null)
   const projectRef = useRef(null)
   const [notifOpen, setNotifOpen] = useState(false)
+  const [notifUnseen, setNotifUnseen] = useState(true)
   const bellRef = useRef(null)
   const [orgScope, setOrgScope] = useState(defaultOrgScope) // 'project' | 'org'
 
   const isDemo = !!(userId?.includes('@') && companyConfig)
 
-  // Build project list from localStorage demo profiles, or fallback to Design Lab
+  // Build project list from localStorage demo profiles, or fallback to design lab projects
   const projects = useMemo(() => {
     if (isDemo) {
       try {
@@ -674,11 +686,12 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
         if (cached.length > 0) return cached.map(p => ({ id: p.id, label: p.name, profile: p }))
       } catch { /* fall through */ }
     }
-    return [DESIGN_LAB]
+    return DESIGN_LAB_PROJECTS
   }, [isDemo, userId])
 
-  const currentLabel = companyConfig?.companyName || 'Design Lab'
-  const selectedProject = projects.find(p => p.label === currentLabel) ?? projects[0]
+  const selectedProject = isDemo
+    ? (projects.find(p => p.label === (companyConfig?.companyName || '')) ?? projects[0])
+    : (projects.find(p => p.id === selectedLabProjectId) ?? projects[0])
 
   useEffect(() => {
     if (!projectOpen) return
@@ -690,6 +703,17 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [projectOpen])
+
+  useEffect(() => {
+    if (!langOpen) return
+    function handleClick(e) {
+      if (langRef.current && !langRef.current.contains(e.target)) {
+        setLangOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [langOpen])
 
   function toggleHistory() {
     clearTimeout(historyTimerRef.current)
@@ -910,11 +934,24 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                 fontSize: 13,
                 color: 'var(--text-primary)',
               }}>
-                {/* Building / org icon */}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, color: 'var(--text-muted)' }}>
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <path d="M3 9h18M9 21V9"/>
-                </svg>
+                {/* Stacked project avatars */}
+                <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                  {DESIGN_LAB_PROJECTS.map((p, i) => (
+                    <div key={p.id} title={p.label} style={{
+                      width: 20, height: 20, borderRadius: '50%',
+                      background: p.color,
+                      border: '1.5px solid var(--bg-sidebar)',
+                      marginLeft: i === 0 ? 0 : -6,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 8, fontWeight: 700, color: '#fff',
+                      flexShrink: 0,
+                      position: 'relative',
+                      zIndex: DESIGN_LAB_PROJECTS.length - i,
+                    }}>
+                      {p.label[0]}
+                    </div>
+                  ))}
+                </div>
                 <span style={{ flex: 1, fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   All Projects
                 </span>
@@ -950,6 +987,12 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                   gap: 6,
                 }}
               >
+                {selectedProject?.color && (
+                  <div style={{
+                    width: 8, height: 8, borderRadius: '50%',
+                    background: selectedProject.color, flexShrink: 0,
+                  }} />
+                )}
                 <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedProject?.label}</span>
                 {isDemo && (
                   <span style={{
@@ -990,7 +1033,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                         return (
                           <div
                             key={project.id}
-                            onClick={() => { setProjectOpen(false); if (!isCurrent && project.profile) onProjectChange?.(project.profile) }}
+                            onClick={() => { setProjectOpen(false); if (!isCurrent) { if (project.profile) onProjectChange?.(project.profile); else setSelectedLabProjectId(project.id) } }}
                             style={{
                               padding: '9px 12px',
                               fontSize: 13,
@@ -999,13 +1042,27 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                               background: isCurrent ? 'var(--bg-active)' : 'transparent',
                               cursor: isCurrent ? 'default' : 'pointer',
                               transition: 'background 120ms ease',
-                              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                              display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8,
                               animation: `dropdownItemIn 140ms cubic-bezier(0.22,1,0.36,1) ${20 + pi * 30}ms both`,
                             }}
                             onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-active)' }}
                             onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
                           >
+                            {project.color && (
+                              <div style={{
+                                width: 8, height: 8, borderRadius: '50%',
+                                background: project.color, flexShrink: 0,
+                              }} />
+                            )}
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{project.label}</span>
+                            {project.admin && (
+                              <span style={{
+                                fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
+                                textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4,
+                                background: 'rgba(255,112,86,0.12)', color: 'var(--color-brand)',
+                                lineHeight: 1.4, flexShrink: 0, marginLeft: 'auto',
+                              }}>Admin</span>
+                            )}
                             {isDemo && (
                               <span style={{
                                 fontSize: 9, fontWeight: 700, letterSpacing: '0.06em',
@@ -1029,7 +1086,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               <div style={{ position: 'relative', flexShrink: 0 }}>
                 <button
                   ref={bellRef}
-                  onClick={() => setNotifOpen(v => !v)}
+                  onClick={() => { setNotifOpen(v => !v); setNotifUnseen(false) }}
                   style={{
                     position: 'relative', width: 40, height: 40,
                     background: notifOpen ? 'var(--bg-active)' : 'transparent',
@@ -1042,16 +1099,18 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                   }}
                 >
                   <BellIcon />
-                  <span style={{
-                    position: 'absolute', top: -3, right: -3,
-                    background: '#E8613A', color: '#fff',
-                    fontSize: 9, fontWeight: 700,
-                    minWidth: 16, height: 16, padding: '0 3px',
-                    borderRadius: 999,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    outline: '2px solid var(--bg-sidebar)',
-                    animation: 'notif-pulse 2s ease-out infinite',
-                  }}>2</span>
+                  {notifUnseen && (
+                    <span style={{
+                      position: 'absolute', top: -3, right: -3,
+                      background: '#E8613A', color: '#fff',
+                      fontSize: 9, fontWeight: 700,
+                      minWidth: 16, height: 16, padding: '0 3px',
+                      borderRadius: 999,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      outline: '2px solid var(--bg-sidebar)',
+                      animation: 'notif-pulse 2s ease-out infinite',
+                    }}>2</span>
+                  )}
                 </button>
                 <NotificationsPopover
                   open={notifOpen}
@@ -1230,7 +1289,10 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                     onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
                     onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
                   >
-                    <PlusIcon />
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
                   </button>
                 </div>
 
@@ -1256,43 +1318,19 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                     />
                   ))}
 
-                  {/* All history toggle */}
-                  {olderSessions.length > 0 && (
-                    <>
-                      <button
-                        onClick={() => setAllHistoryOpen(o => !o)}
-                        style={{
-                          width: '100%', display: 'flex', alignItems: 'center', gap: 6,
-                          padding: '5px 12px', marginTop: 2,
-                          background: 'transparent', border: 'none', borderRadius: 6,
-                          cursor: 'pointer', color: 'var(--text-muted)', fontSize: 11,
-                          fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase',
-                          transition: 'color 150ms ease, background 150ms ease',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
-                        onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' }}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                          style={{ transform: allHistoryOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 200ms ease', flexShrink: 0 }}>
-                          <polyline points="6 9 12 15 18 9"/>
-                        </svg>
-                        All history
-                        <span style={{ marginLeft: 'auto', fontWeight: 400, opacity: 0.6 }}>{olderSessions.length}</span>
-                      </button>
-                      {allHistoryOpen && olderSessions.map(session => (
-                        <SessionItem
-                          key={session.id}
-                          session={session}
-                          isActive={session.id === activeSessionId}
-                          isNewlyNamed={session.id === newlyNamedId}
-                          onSelect={onSelectSession}
-                          onDelete={onDeleteSession}
-                          onRename={onRenameSession}
-                          onShare={onShareSession}
-                        />
-                      ))}
-                    </>
-                  )}
+                  {/* Older sessions — shown flat */}
+                  {olderSessions.map(session => (
+                    <SessionItem
+                      key={session.id}
+                      session={session}
+                      isActive={session.id === activeSessionId}
+                      isNewlyNamed={session.id === newlyNamedId}
+                      onSelect={onSelectSession}
+                      onDelete={onDeleteSession}
+                      onRename={onRenameSession}
+                      onShare={onShareSession}
+                    />
+                  ))}
                 </div>}
               </div>
             )
@@ -1324,27 +1362,96 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                 outline: '2px solid rgba(0,0,0,0.15)',
               }}>{(localStorage.getItem('hear-user-name') || 'U').slice(0, 2).toUpperCase()}</div>
               <span style={{ flex: 1, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{localStorage.getItem('hear-user-name') || 'You'}</span>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '3px 8px',
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-default)',
-                borderRadius: 6,
-                fontSize: 12,
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                flexShrink: 0,
-              }}>
-                HE <ChevronIcon open={false} />
+              <div ref={langRef} style={{ position: 'relative', flexShrink: 0 }}>
+                <div
+                  onClick={() => setLangOpen(o => !o)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    padding: '5px 10px',
+                    background: langOpen ? 'var(--bg-active)' : 'var(--bg-card)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 6, fontSize: 13,
+                    color: 'var(--text-primary)', cursor: 'pointer',
+                    transition: 'background 150ms ease',
+                  }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                    <path d="M22.4219 20.325L18.2032 10.1062C18.1253 9.9175 17.9931 9.75616 17.8234 9.64263C17.6537 9.52911 17.4541 9.46851 17.25 9.46851C17.0458 9.46851 16.8463 9.52911 16.6766 9.64263C16.5069 9.75616 16.3747 9.9175 16.2968 10.1062L12.078 20.325C12.0256 20.4503 11.9984 20.5847 11.9981 20.7206C11.9977 20.8564 12.0242 20.991 12.076 21.1166C12.1279 21.2422 12.204 21.3563 12.3001 21.4523C12.3961 21.5484 12.5102 21.6245 12.6358 21.6764C12.7613 21.7282 12.8959 21.7547 13.0318 21.7544C13.1676 21.7541 13.3021 21.7269 13.4274 21.6745C13.5527 21.622 13.6665 21.5453 13.762 21.4488C13.8576 21.3523 13.9332 21.2378 13.9844 21.112L14.8437 19.0312H19.6563L20.5155 21.112C20.5934 21.3008 20.7256 21.4622 20.8954 21.5758C21.0651 21.6894 21.2647 21.75 21.469 21.75C21.6384 21.7499 21.8052 21.708 21.9547 21.6281C22.1041 21.5482 22.2315 21.4327 22.3257 21.2918C22.4199 21.1509 22.4779 20.989 22.4946 20.8204C22.5113 20.6517 22.4862 20.4816 22.4215 20.325H22.4219ZM15.6954 16.9687L17.2502 13.2023L18.8051 16.9687H15.6954Z" fill="currentColor"/>
+                    <path d="M12.555 16.0744C12.7152 15.8531 12.7811 15.5772 12.7381 15.3074C12.6951 15.0376 12.5468 14.7959 12.3258 14.6353C12.3164 14.6283 11.6227 14.1136 10.6153 13.0073C12.4739 10.4911 13.5267 7.62844 13.9561 6.28125H15.4688C15.7423 6.28125 16.0046 6.1726 16.198 5.9792C16.3913 5.78581 16.5 5.5235 16.5 5.25C16.5 4.9765 16.3913 4.71419 16.198 4.5208C16.0046 4.3274 15.7423 4.21875 15.4688 4.21875H10.0312V3.28125C10.0312 3.00775 9.9226 2.74544 9.7292 2.55205C9.53581 2.35865 9.2735 2.25 9 2.25C8.7265 2.25 8.46419 2.35865 8.2708 2.55205C8.0774 2.74544 7.96875 3.00775 7.96875 3.28125V4.21875H2.53125C2.25775 4.21875 1.99544 4.3274 1.80205 4.5208C1.60865 4.71419 1.5 4.9765 1.5 5.25C1.5 5.5235 1.60865 5.78581 1.80205 5.9792C1.99544 6.1726 2.25775 6.28125 2.53125 6.28125H11.7773C11.3311 7.54453 10.5094 9.53906 9.25594 11.3606C7.78359 9.40688 7.23656 8.14266 7.23234 8.13234C7.12456 7.88324 6.92291 7.68668 6.67114 7.58529C6.41937 7.4839 6.13778 7.48585 5.88743 7.59072C5.63709 7.6956 5.43819 7.89494 5.33387 8.14551C5.22954 8.39608 5.22821 8.67767 5.33016 8.92922C5.35734 8.99391 6.01219 10.5338 7.80797 12.8634C7.85109 12.9192 7.89375 12.9736 7.93641 13.028C6.09703 15.1069 4.29234 16.3964 3.53719 16.8127C3.29706 16.9436 3.1188 17.1646 3.04162 17.427C2.96444 17.6894 2.99465 17.9718 3.12563 18.2119C3.2566 18.452 3.47759 18.6303 3.74 18.7074C4.0024 18.7846 4.28472 18.7544 4.52484 18.6234C4.62609 18.5681 6.80297 17.363 9.28875 14.6114C10.3444 15.7402 11.07 16.2727 11.1136 16.3036C11.2233 16.3833 11.3476 16.4405 11.4794 16.4721C11.6113 16.5037 11.748 16.509 11.8819 16.4876C12.0158 16.4663 12.1442 16.4188 12.2597 16.3478C12.3751 16.2768 12.4755 16.1837 12.555 16.0739V16.0744Z" fill="currentColor"/>
+                  </svg>
+                  {selectedLang.code} <ChevronIcon open={langOpen} />
+                </div>
+                {/* Language dropdown */}
+                <div style={{
+                  position: 'absolute', bottom: 'calc(100% + 12px)', right: 0,
+                  zIndex: 300,
+                  display: 'grid',
+                  gridTemplateRows: langOpen ? '1fr' : '0fr',
+                  transition: 'grid-template-rows 160ms cubic-bezier(0.22, 1, 0.36, 1)',
+                  pointerEvents: langOpen ? 'auto' : 'none',
+                  minWidth: 160,
+                }}>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-default)',
+                      borderRadius: 8,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                      overflow: 'hidden',
+                      opacity: langOpen ? 1 : 0,
+                      transform: langOpen ? 'translateY(0)' : 'translateY(4px)',
+                      transition: 'opacity 130ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1)',
+                    }}>
+                      {[
+                        { code: 'HE', label: 'Hebrew',     flag: '🇮🇱' },
+                        { code: 'EN', label: 'English',    flag: '🇺🇸' },
+                        { code: 'AR', label: 'Arabic',     flag: '🇸🇦' },
+                        { code: 'FR', label: 'French',     flag: '🇫🇷' },
+                        { code: 'DE', label: 'German',     flag: '🇩🇪' },
+                        { code: 'ES', label: 'Spanish',    flag: '🇪🇸' },
+                        { code: 'PT', label: 'Portuguese', flag: '🇵🇹' },
+                        { code: 'RU', label: 'Russian',    flag: '🇷🇺' },
+                        { code: 'ZH', label: 'Chinese',    flag: '🇨🇳' },
+                        { code: 'JA', label: 'Japanese',   flag: '🇯🇵' },
+                      ].map((lang, i) => {
+                        const isCurrent = lang.code === selectedLang.code
+                        return (
+                          <div
+                            key={lang.code}
+                            onClick={() => { setSelectedLang(lang); setLangOpen(false) }}
+                            style={{
+                              padding: '8px 12px',
+                              fontSize: 13,
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                              color: isCurrent ? 'var(--text-primary)' : 'var(--text-secondary)',
+                              fontWeight: isCurrent ? 600 : 400,
+                              background: isCurrent ? 'var(--bg-active)' : 'transparent',
+                              cursor: isCurrent ? 'default' : 'pointer',
+                              transition: 'background 120ms ease',
+                              animation: `dropdownItemIn 140ms cubic-bezier(0.22,1,0.36,1) ${i * 20}ms both`,
+                            }}
+                            onMouseEnter={e => { if (!isCurrent) e.currentTarget.style.background = 'var(--bg-active)' }}
+                            onMouseLeave={e => { if (!isCurrent) e.currentTarget.style.background = 'transparent' }}
+                          >
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 16, lineHeight: 1 }}>{lang.flag}</span>
+                              {lang.label}
+                            </span>
+                            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 500 }}>{lang.code}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Bottom action icons — Settings + Moon/Sun toggle + Impersonate + Logout */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {/* Settings */}
-              <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+              <div className="with-tooltip" style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <span className="tooltip">Settings</span>
                 <button
                   onClick={() => onNavChange?.('settings')}
                   style={{
@@ -1363,7 +1470,8 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               <div style={{ width: 1, height: 20, background: 'var(--border-input)', flexShrink: 0 }} />
 
               {/* Theme toggle */}
-              <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+              <div className="with-tooltip" style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <span className="tooltip">{isDark ? 'Light mode' : 'Dark mode'}</span>
                 <button
                   onClick={onThemeToggle}
                   style={{
@@ -1386,7 +1494,8 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
               </div>
 
               {/* Logout */}
-              <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+              <div className="with-tooltip" style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                <span className="tooltip">Sign out</span>
                 <div style={{ width: 1, height: 20, background: 'var(--border-input)', flexShrink: 0 }} />
                 <button
                   onClick={onSignOut}

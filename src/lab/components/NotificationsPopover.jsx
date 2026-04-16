@@ -189,10 +189,9 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, onNavigate, entering }
     <div
       role="listitem"
       style={{
-        position: 'relative',
         display: 'flex',
         gap: 11,
-        padding: '11px 14px 12px 12px',
+        padding: '11px 10px 12px 12px',
         background: hovered ? ROW_HOVER_BG : 'transparent',
         cursor: hasNav ? 'pointer' : 'default',
         transition: 'background 140ms ease, opacity 220ms ease, transform 220ms ease',
@@ -229,7 +228,6 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, onNavigate, entering }
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
-          paddingRight: 20,
         }}>
           {notif.title}
         </div>
@@ -273,96 +271,40 @@ function NotifItem({ notif, index, onDismiss, onMarkRead, onNavigate, entering }
               background: 'var(--text-muted)',
               flexShrink: 0,
               opacity: 0.6,
-            }}>
-              <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Unread</span>
-            </div>
-          )}
-          {/* Navigation path hint for navigable types */}
-          {hasNav && (
-            <span style={{
-              marginLeft: 'auto',
-              fontSize: 10, fontWeight: 500,
-              color: hovered ? cfg.color : 'var(--text-muted)',
-              opacity: hovered ? 0.9 : 0.45,
-              fontFamily: 'monospace',
-              letterSpacing: '-0.01em',
-              whiteSpace: 'nowrap',
-              paddingRight: hovered ? 14 : 0,
-              transition: 'color 140ms, opacity 140ms, padding-right 140ms',
-            }}>
-              {notif.navTo}
-            </span>
+            }} />
           )}
         </div>
       </div>
 
-      {/* Chevron arrow — navigable items only, visible on hover */}
-      {hasNav && hovered && (
-        <div style={{
-          position: 'absolute',
-          top: '50%', right: 10,
-          transform: 'translateY(-50%)',
-          color: cfg.color,
-          opacity: 0.7,
-          display: 'flex', alignItems: 'center',
-          pointerEvents: 'none',
-        }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </div>
-      )}
-
-      {/* Dismiss × — shown on hover for non-nav items */}
-      {hovered && !hasNav && (
+      {/* Dismiss column — always occupies space, × visible on hover */}
+      <div style={{
+        flexShrink: 0,
+        display: 'flex',
+        alignItems: 'flex-start',
+        paddingTop: 2,
+      }}>
         <button
           onClick={handleDismiss}
           aria-label={`Dismiss: ${notif.title}`}
           style={{
-            position: 'absolute',
-            top: 8, right: 8,
-            width: 20, height: 20,
+            width: 22, height: 22,
             borderRadius: 5,
             border: '1px solid var(--border-default)',
             background: 'var(--bg-card)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer',
             color: 'var(--text-muted)',
-            fontSize: 13, lineHeight: 1, padding: 0,
-            transition: 'color 120ms, background 120ms',
+            fontSize: 14, lineHeight: 1, padding: 0,
+            opacity: hovered ? 1 : 0,
+            transition: 'opacity 140ms ease, color 120ms, background 120ms',
+            pointerEvents: hovered ? 'auto' : 'none',
           }}
-          onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
+          onMouseEnter={e => { e.stopPropagation(); e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
           onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'var(--bg-card)' }}
         >
           ×
         </button>
-      )}
-
-      {/* Dismiss for navigable items — small × always accessible at top-right */}
-      {hasNav && (
-        <button
-          onClick={handleDismiss}
-          aria-label={`Dismiss: ${notif.title}`}
-          style={{
-            position: 'absolute',
-            top: 8, right: 8,
-            width: 18, height: 18,
-            borderRadius: 4,
-            border: 'none',
-            background: 'transparent',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer',
-            color: 'var(--text-muted)',
-            fontSize: 13, lineHeight: 1, padding: 0,
-            opacity: hovered ? 0.7 : 0.3,
-            transition: 'opacity 120ms',
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-          onMouseLeave={e => e.currentTarget.style.opacity = hovered ? '0.7' : '0.3'}
-        >
-          ×
-        </button>
-      )}
+      </div>
     </div>
   )
 }

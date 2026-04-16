@@ -139,8 +139,40 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
   const [activeIndex, setActiveIndex]   = useState(0)
   const [uploadOpen, setUploadOpen]     = useState(initialUploadOpen)
   const [listening, setListening] = useState(false)
+  const [glowPos, setGlowPos] = useState(null)
   const textareaRef    = useRef(null)
   const recognitionRef = useRef(null)
+  const glowWrapperRef = useRef(null)
+
+  const GLOW_PROXIMITY = 120 // px from edge to start showing
+
+  useEffect(() => {
+    function handleGlobalMouseMove(e) {
+      const el = glowWrapperRef.current
+      if (!el) return
+      const rect = el.getBoundingClientRect()
+
+      // Distance from mouse to nearest edge of the box
+      const dx = Math.max(0, rect.left - e.clientX, e.clientX - rect.right)
+      const dy = Math.max(0, rect.top  - e.clientY, e.clientY - rect.bottom)
+      const dist = Math.sqrt(dx * dx + dy * dy)
+
+      if (dist > GLOW_PROXIMITY) {
+        setGlowPos(null)
+        return
+      }
+
+      const intensity = 1 - dist / GLOW_PROXIMITY
+      setGlowPos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+        intensity,
+      })
+    }
+
+    window.addEventListener('mousemove', handleGlobalMouseMove)
+    return () => window.removeEventListener('mousemove', handleGlobalMouseMove)
+  }, [])
 
   const activePrompts    = (suggestedPrompts?.length >= 3) ? suggestedPrompts : PROMPTS
   const typewriterActive = !text && !focused && !settled && !loading
@@ -310,20 +342,37 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
       {/* Drag indicator dot */}
       <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 border-fuchsia-500" style={{ zIndex: 10 }} />
 
-      {/* Card */}
+      {/* Card — gradient border wrapper tracks mouse */}
       <div
-        className="border overflow-hidden"
+        ref={glowWrapperRef}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
         style={{
-          background: 'var(--bg-card)',
-          borderColor: hovered ? 'var(--border-default)' : 'var(--bg-active)',
-          boxShadow: '0 2px 8px 0 rgba(0,0,0,0.06)',
-          transition: 'border-color 200ms ease, border-radius 200ms ease',
+          padding: '1px',
           borderRadius: (mentionOpen || uploadOpen)
             ? (settled ? '0 0 1rem 1rem' : '1rem 1rem 0 0')
             : '1rem',
+          background: glowPos
+            ? `radial-gradient(circle at ${glowPos.x}px ${glowPos.y}px,
+                rgba(255,112,86,${glowPos.intensity}) 0%,
+                rgba(255,112,86,${glowPos.intensity * 0.35}) 30%,
+                var(--border-default) 60%)`
+            : 'var(--border-input)',
+          transition: 'border-radius 200ms ease',
+          boxShadow: glowPos
+            ? `0 0 ${24 * glowPos.intensity}px rgba(255,112,86,${0.15 * glowPos.intensity})`
+            : '0 2px 8px 0 rgba(0,0,0,0.06)',
         }}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
+      >
+      <div
+        className="overflow-hidden"
+        style={{
+          background: 'var(--bg-card)',
+          boxShadow: 'none',
+          borderRadius: (mentionOpen || uploadOpen)
+            ? (settled ? '0 0 calc(1rem - 1px) calc(1rem - 1px)' : 'calc(1rem - 1px) calc(1rem - 1px) 0 0')
+            : 'calc(1rem - 1px)',
+        }}
       >
         <div className="px-5 pt-5 pb-4">
           {/* Textarea + animated typewriter placeholder */}
@@ -458,6 +507,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Mention dropdown — floats below or above depending on settled */}
