@@ -587,7 +587,7 @@ function StorybookDisabledButton() {
 const NAV_ITEMS = [
   { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon,        group: 'MAIN'         },
   { id: 'data',        label: 'Data',             Icon: DataIcon,        group: 'MAIN'         },
-  { id: 'topics',      label: 'Topics',           Icon: TopicsIcon,      group: 'MAIN'         },
+  { id: 'topics',      label: 'Topics',           Icon: TopicsIcon,      group: 'MAIN',        disabled: true },
   { id: 'reports',     label: 'Reports',          Icon: ReportsIcon,     group: 'MAIN'         },
   { id: 'signals',     label: 'Signals',          Icon: SignalsIcon,     group: 'INTELLIGENCE' },
   { id: 'alerts',      label: 'Alerts',           Icon: AlertsIcon,      group: 'INTELLIGENCE' },
@@ -771,31 +771,33 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
 
           {/* Nav icons */}
           <div style={{ flex: 1, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, overflowY: 'auto', padding: '0 6px' }}>
-            {NAV_ITEMS.map(({ id, label, Icon, group }, i) => {
+            {NAV_ITEMS.map(({ id, label, Icon, group, disabled }, i) => {
               const active = activeNav === id
               const isFirstInGroup = i === 0 || NAV_ITEMS[i - 1].group !== group
               return (
-                <div key={id} style={{ width: '100%' }}>
+                <div key={id} className={disabled ? 'with-tooltip' : ''} style={{ width: '100%' }}>
+                  {disabled && <span className="tooltip">Under construction</span>}
                   {isFirstInGroup && i !== 0 && (
                     <div style={{ height: 1, background: 'var(--border-default)', margin: '4px 4px 6px', opacity: 0.5 }} />
                   )}
                   <button
-                    title={label}
-                    onClick={() => onNavChange?.(id)}
+                    title={disabled ? undefined : label}
+                    onClick={disabled ? undefined : () => onNavChange?.(id)}
                     style={{
                       width: '100%', height: 38,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      border: 'none', borderRadius: 9, cursor: 'pointer',
+                      border: 'none', borderRadius: 9,
+                      cursor: disabled ? 'not-allowed' : 'pointer',
                       background: active ? 'rgba(91,163,255,0.14)' : 'transparent',
-                      color: active ? '#5BA3FF' : 'var(--text-muted)',
+                      color: disabled ? 'var(--text-muted)' : active ? '#5BA3FF' : 'var(--text-muted)',
+                      opacity: disabled ? 0.35 : 1,
                       transition: 'background 140ms ease, color 140ms ease',
                       position: 'relative',
                     }}
-                    onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
-                    onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' } }}
+                    onMouseEnter={e => { if (!active && !disabled) { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
+                    onMouseLeave={e => { if (!active && !disabled) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)' } }}
                   >
                     <Icon />
-                    {/* Active indicator dot */}
                     {active && (
                       <span style={{
                         position: 'absolute', right: 5, top: '50%', transform: 'translateY(-50%)',
@@ -1178,7 +1180,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
             </nav>
           ) : (
             <nav ref={navRef} className="smooth-scroll" style={{ padding: '0 24px', overflowY: 'auto', flex: '0 1 auto', minHeight: 80, height: navHeight ?? undefined }}>
-              {NAV_ITEMS.map(({ id, label, Icon, group }, i) => {
+              {NAV_ITEMS.map(({ id, label, Icon, group, disabled }, i) => {
                 const active = activeNav === id
                 const isFirstInGroup = i === 0 || NAV_ITEMS[i - 1].group !== group
                 return (
@@ -1195,7 +1197,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                       </div>
                     )}
                     <button
-                      onClick={() => onNavChange?.(id)}
+                      onClick={disabled ? undefined : () => onNavChange?.(id)}
                       style={{
                         width: '100%',
                         display: 'flex',
@@ -1205,19 +1207,30 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                         borderRadius: 8,
                         border: 'none',
                         background: active ? 'rgba(91,163,255,0.12)' : 'transparent',
-                        color: active ? '#5BA3FF' : 'var(--text-secondary)',
+                        color: disabled ? 'var(--text-muted)' : active ? '#5BA3FF' : 'var(--text-secondary)',
                         fontSize: 13.5,
                         fontWeight: 400,
-                        cursor: 'pointer',
+                        cursor: disabled ? 'not-allowed' : 'pointer',
                         textAlign: 'left',
                         marginBottom: 1,
+                        opacity: disabled ? 0.35 : 1,
                         transition: 'background 150ms ease, color 150ms ease',
                       }}
-                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-active)' }}
-                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                      onMouseEnter={e => { if (!active && !disabled) e.currentTarget.style.background = 'var(--bg-active)' }}
+                      onMouseLeave={e => { if (!active && !disabled) e.currentTarget.style.background = 'transparent' }}
                     >
                       <Icon />
                       {label}
+                      {disabled && (
+                        <span style={{
+                          marginLeft: 'auto',
+                          fontSize: 9, fontWeight: 700, letterSpacing: '0.05em',
+                          textTransform: 'uppercase', padding: '2px 5px', borderRadius: 4,
+                          background: 'rgba(255,255,255,0.06)',
+                          color: 'var(--text-muted)',
+                          lineHeight: 1.4, flexShrink: 0,
+                        }}>Soon</span>
+                      )}
                     </button>
                   </div>
                 )

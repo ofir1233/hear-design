@@ -591,13 +591,10 @@ function PinnedReportCard({ report }) {
       }}
     >
       {/* ─ Header ─ */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 14px 0', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '14px 14px 0' }}>
         <StatusBadge status={report.status} />
         <SchedulePill label={report.schedule} />
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap' }}>
-          {report.lastRun}
-        </span>
         <button
           onClick={e => e.stopPropagation()}
           style={{
@@ -608,7 +605,6 @@ function PinnedReportCard({ report }) {
             color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 600,
             fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
             transition: 'background 150ms ease',
-            whiteSpace: 'nowrap',
           }}
         >
           Open ↗
@@ -616,9 +612,9 @@ function PinnedReportCard({ report }) {
       </div>
 
       {/* ─ Title ─ */}
-      <div style={{ padding: '5px 14px 0' }}>
+      <div style={{ padding: '8px 14px 0' }}>
         <p style={{
-          margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)',
+          margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)',
           fontFamily: "'Byrd', sans-serif",
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
@@ -626,76 +622,32 @@ function PinnedReportCard({ report }) {
         </p>
       </div>
 
-      {/* ─ Sparkline zone ─ */}
-      <div style={{ padding: '8px 14px 4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
-          <span style={{
-            fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
-            letterSpacing: '0.05em', textTransform: 'uppercase',
-          }}>
-            {report.sparkLabel}
-          </span>
-          <span style={{
-            fontSize: 11, fontWeight: 700,
-            color: report.sparkUp ? '#FF7056' : '#4BA373',
-            fontFamily: "'Byrd', sans-serif",
-          }}>
-            {report.sparkDelta}&nbsp;
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" style={{ display: 'inline-block', verticalAlign: 'middle', transform: report.sparkUp ? 'none' : 'rotate(180deg)' }}>
-              <path d="M4 7V1M1 4l3-3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </span>
-        </div>
-        <Sparkline data={report.sparkData} color={report.sparkColor} height={54} />
+      {/* ─ Sparkline ─ */}
+      <div style={{ padding: '10px 14px 6px' }}>
+        <Sparkline data={report.sparkData} color={report.sparkColor} height={52} />
       </div>
 
       {/* ─ Stats row ─ */}
-      <div style={{ display: 'flex', padding: '6px 8px' }}>
+      <div style={{ display: 'flex', padding: '4px 8px 14px' }}>
         {report.stats.map((s, i) => (
           <div key={i} style={{
-            flex: 1, textAlign: 'center', padding: '4px 6px',
+            flex: 1, textAlign: 'center', padding: '6px 8px',
             borderRight: i < report.stats.length - 1 ? '1px solid var(--border-input)' : 'none',
           }}>
             <div style={{
-              fontSize: 13, fontWeight: 700, color: 'var(--text-primary)',
+              fontSize: 15, fontWeight: 700, color: 'var(--text-primary)',
               fontFamily: "'Byrd', sans-serif", lineHeight: 1.2,
             }}>
               {s.value}
             </div>
             <div style={{
-              fontSize: 9.5, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
-              letterSpacing: '0.03em', marginTop: 2, whiteSpace: 'nowrap',
+              fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+              marginTop: 3, whiteSpace: 'nowrap',
             }}>
               {s.label}
             </div>
           </div>
         ))}
-      </div>
-
-      {/* ─ Footer ─ */}
-      <div style={{
-        borderTop: '1px solid var(--border-input)',
-        padding: '7px 14px',
-        display: 'flex', alignItems: 'center', gap: 8,
-      }}>
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, color: 'var(--text-muted)' }}>
-          <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.2" />
-          <path d="M6 3.5V6l1.5 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span style={{ fontSize: 10.5, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
-          {report.schedule}
-        </span>
-        <span style={{ color: 'var(--border-default)', fontSize: 11, lineHeight: 1 }}>·</span>
-        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, color: 'var(--text-muted)' }}>
-          <rect x="1.5" y="5" width="9" height="6" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
-          <path d="M4 5V3.5a2 2 0 0 1 4 0V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-        <span style={{
-          fontSize: 10.5, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
-          fontVariantNumeric: 'tabular-nums', letterSpacing: '0.02em',
-        }}>
-          {report.apiKey}
-        </span>
       </div>
     </div>
   )

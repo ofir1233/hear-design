@@ -8,6 +8,24 @@ import EmailForm from './sign-in/EmailForm.jsx'
 import DemoFlow from './demo/DemoFlow.jsx'
 import DevFlow from './dev/DevFlow.jsx'
 
+const USER_CACHE_KEY = 'hear-user-v1'
+
+function getCachedUser(sub) {
+  try {
+    const raw = localStorage.getItem(USER_CACHE_KEY)
+    if (!raw) return null
+    const cached = JSON.parse(raw)
+    if (cached.sub !== sub) return null
+    return cached
+  } catch { return null }
+}
+
+function setCachedUser(profile) {
+  try {
+    localStorage.setItem(USER_CACHE_KEY, JSON.stringify(profile))
+  } catch {}
+}
+
 export default function SignIn({ onSignIn }) {
   const [env, setEnv] = useState(() => {
     const params = new URLSearchParams(window.location.search)
@@ -18,14 +36,48 @@ export default function SignIn({ onSignIn }) {
   const [googleError, setGoogleError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  // ── Name step ────────────────────────────────────────────────────
+  const [step, setStep] = useState('auth') // 'auth' | 'name'
+  const [pendingUser, setPendingUser] = useState(null) // Google userinfo
+  const [nameValue, setNameValue] = useState('')
+  const [nameError, setNameError] = useState('')
+  const nameInputRef = useRef(null)
+
+  // Focus name input when step switches
+  useEffect(() => {
+    if (step === 'name') {
+      setTimeout(() => nameInputRef.current?.focus(), 350)
+    }
+  }, [step])
+
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setLoading(true)
       try {
-        await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         })
-        onSignIn({ mode: 'lab' })
+        const userInfo = await res.json()
+
+        // Check if we already know this user
+        const cached = getCachedUser(userInfo.sub)
+        if (cached?.name) {
+          onSignIn({ mode: 'lab', name: cached.name, email: userInfo.email, picture: userInfo.picture })
+          return
+        }
+
+        // New user — show name step
+        setPendingUser(userInfo)
+        setNameValue(userInfo.name || '')
+        setLoading(false)
+
+        // Animate form out then switch step
+        const form = formRef.current
+        gsap.to(form, {
+          opacity: 0, y: -14, filter: 'blur(8px)',
+          duration: 0.3, ease: 'power2.in',
+          onComplete: () => setStep('name'),
+        })
       } catch {
         setGoogleError('Sign-in failed. Please try again.')
         setLoading(false)
@@ -36,6 +88,24 @@ export default function SignIn({ onSignIn }) {
       setLoading(false)
     },
   })
+
+  function handleConfirmName() {
+    const trimmed = nameValue.trim()
+    if (!trimmed) {
+      setNameError('Please enter your name.')
+      return
+    }
+    const profile = {
+      sub: pendingUser.sub,
+      name: trimmed,
+      email: pendingUser.email,
+      picture: pendingUser.picture,
+    }
+    setCachedUser(profile)
+    // Store for sidebar display
+    localStorage.setItem('hear-user-name', trimmed)
+    onSignIn({ mode: 'lab', ...profile })
+  }
 
   // ── Demo Google login (any account) ─────────────────────────────
   const [demoUser, setDemoUser] = useState(null)
@@ -70,6 +140,16 @@ export default function SignIn({ onSignIn }) {
       onComplete: () => { formReady.current = true },
     })
   }, [])
+
+  // Animate name step in after step switches
+  useEffect(() => {
+    if (step !== 'name') return
+    const form = formRef.current
+    gsap.fromTo(form,
+      { opacity: 0, y: 20, filter: 'blur(8px)' },
+      { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.45, ease: 'expo.out' }
+    )
+  }, [step])
 
   // ── Form re-entrance on tab switch ───────────────────────────────
   useLayoutEffect(() => {
@@ -122,13 +202,71 @@ export default function SignIn({ onSignIn }) {
 
           {/* Left panel */}
           <div style={{ flex: '0 0 340px', width: 340, display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 24, paddingBottom: 24, minHeight: 'clamp(420px, 65vh, 540px)' }}>
-            <SignInHero env={env} onEnvChange={setEnv} />
+            <SignInHero env={env} onEnvChange={step === 'auth' ? setEnv : undefined} />
 
             <div
               ref={formRef}
               style={{ display: 'flex', flexDirection: 'column', gap: 10, overflow: 'hidden' }}
             >
-              {env === 'Demo' ? (
+              {/* ── Name step ── */}
+              {step === 'name' ? (
+                <>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '0 0 2px' }}>
+                    What should we call you?
+                  </p>
+                  <input
+                    ref={nameInputRef}
+                    type="text"
+                    value={nameValue}
+                    onChange={e => { setNameValue(e.target.value); setNameError('') }}
+                    onKeyDown={e => e.key === 'Enter' && handleConfirmName()}
+                    placeholder="Your name"
+                    style={{
+                      width: '100%',
+                      padding: '11px 14px',
+                      border: nameError
+                        ? '1px solid rgba(255,100,100,0.6)'
+                        : '1px solid rgba(255,255,255,0.14)',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      color: 'rgba(255,255,255,0.9)',
+                      background: 'rgba(255,255,255,0.06)',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      fontFamily: "'Byrd', sans-serif",
+                      transition: 'border-color 150ms ease',
+                    }}
+                    onFocus={e => { if (!nameError) e.target.style.borderColor = 'rgba(255,255,255,0.35)' }}
+                    onBlur={e => { if (!nameError) e.target.style.borderColor = 'rgba(255,255,255,0.14)' }}
+                  />
+                  {nameError && (
+                    <p style={{ fontSize: 11, color: 'rgba(255,100,100,0.9)', margin: 0 }}>{nameError}</p>
+                  )}
+                  <button
+                    onClick={handleConfirmName}
+                    style={{
+                      width: '100%',
+                      padding: '11px 0',
+                      background: 'rgba(255,255,255,0.9)',
+                      color: '#000',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontFamily: "'Byrd', sans-serif",
+                      transition: 'background 150ms ease',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = '#fff'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.9)'}
+                  >
+                    Continue
+                  </button>
+                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textAlign: 'center', margin: 0 }}>
+                    We'll remember you for next time.
+                  </p>
+                </>
+              ) : env === 'Demo' ? (
                 <>
                   <DemoFlow
                     googleUser={demoUser}

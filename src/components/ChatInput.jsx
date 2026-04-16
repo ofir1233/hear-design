@@ -425,17 +425,49 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
 
           {/* Bottom row */}
           <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center gap-3" style={{ color: 'var(--text-muted)' }}>
-              <button
-                onClick={() => { setUploadOpen(o => !o); setMentionQuery(null) }}
-                className="transition-colors text-2xl font-thin leading-none"
-                style={{ color: 'var(--text-muted)' }}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
-                aria-label="Add attachment"
-              >
-                +
-              </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {[
+                {
+                  label: 'Add attachment',
+                  active: uploadOpen,
+                  onClick: () => { setUploadOpen(o => !o); setMentionQuery(null) },
+                  icon: (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                  ),
+                },
+                {
+                  label: 'Mention',
+                  active: mentionQuery !== null,
+                  onClick: openMention,
+                  icon: (
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="4"/>
+                      <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/>
+                    </svg>
+                  ),
+                },
+              ].map(({ label, active, onClick, icon }) => (
+                <button
+                  key={label}
+                  aria-label={label}
+                  onClick={onClick}
+                  style={{
+                    width: 28, height: 28,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: active ? 'var(--bg-active)' : 'transparent',
+                    border: 'none', borderRadius: 6, cursor: 'pointer',
+                    color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+                    transition: 'color 150ms ease, background 150ms ease',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = active ? 'var(--text-primary)' : 'var(--text-muted)'; e.currentTarget.style.background = active ? 'var(--bg-active)' : 'transparent' }}
+                >
+                  {icon}
+                </button>
+              ))}
             </div>
 
             {/* Right: voice / submit cross-fade */}
@@ -444,7 +476,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
                 aria-label="Voice input"
                 onClick={toggleListening}
                 style={{
-                  transition: 'opacity 200ms ease, transform 200ms ease, background 200ms ease',
+                  transition: 'opacity 200ms ease, transform 200ms ease, background 200ms ease, color 150ms ease',
                   opacity: (text.trim() || loading) ? 0 : 1,
                   transform: (text.trim() || loading) ? 'scale(0.8)' : 'scale(1)',
                   pointerEvents: (text.trim() || loading) ? 'none' : 'auto',
@@ -453,6 +485,8 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
                   borderRadius: 10,
                 }}
                 className="absolute inset-0 flex items-center justify-center"
+                onMouseEnter={e => { if (!listening) e.currentTarget.style.color = 'var(--text-primary)' }}
+                onMouseLeave={e => { if (!listening) e.currentTarget.style.color = 'var(--text-muted)' }}
               >
                 {listening ? <WaveAnimation /> : <MicIcon />}
               </button>

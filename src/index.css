@@ -27,6 +27,11 @@
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+/* Right-side tooltip variant */
+.with-tooltip:hover .tooltip[style*="left: calc(100%"] {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
 
 /* ── Keyframes ─────────────────────────────────────────────────────────────── */
 @keyframes pending-dot {
