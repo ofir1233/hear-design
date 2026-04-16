@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* ── Logo radiance animation ─────────────────────────────────────────────────── */
+
+/* ── Settled chat placeholder ───────────────────────────────────────────────── */
+.smooth-scroll::placeholder {
+  color: var(--text-muted);
+  opacity: 0.55;
+}
+
 /* ── Custom tooltip ─────────────────────────────────────────────────────────── */
 .with-tooltip {
   position: relative;

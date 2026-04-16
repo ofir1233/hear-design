@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { gsap } from 'gsap'
 import { MicIcon, ReturnIcon, NavigateIcon, EscIcon, AttachIcon } from './icons'
 
 const PROMPTS = [
@@ -130,7 +131,7 @@ function getActiveMention(text, cursorPos) {
   return { query: match[1], start: match.index }
 }
 
-export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
+export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, onFocusChange, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
   const [text, setText]           = useState(defaultText)
   const [hovered, setHovered]     = useState(false)
   const [focused, setFocused]     = useState(false)
@@ -140,9 +141,11 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
   const [uploadOpen, setUploadOpen]     = useState(initialUploadOpen)
   const [listening, setListening] = useState(false)
   const [glowPos, setGlowPos] = useState(null)
-  const textareaRef    = useRef(null)
-  const recognitionRef = useRef(null)
-  const glowWrapperRef = useRef(null)
+  const textareaRef          = useRef(null)
+  const recognitionRef       = useRef(null)
+  const glowWrapperRef       = useRef(null)
+  const settledPlaceholderRef  = useRef(null)
+  const typewriterRef          = useRef(null)
 
   const GLOW_PROXIMITY = 120 // px from edge to start showing
 
@@ -176,6 +179,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
 
   const activePrompts    = (suggestedPrompts?.length >= 3) ? suggestedPrompts : PROMPTS
   const typewriterActive = !text && !focused && !settled && !loading
+  const typewriterVisible = !settled && !loading
   const { display: typedHint, blink } = useTypewriter(typewriterActive, activePrompts)
 
   function toggleListening() {
@@ -230,6 +234,68 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
     el.style.height = 'auto'
     el.style.height = `${el.scrollHeight}px`
   }, [text])
+
+  // Set initial hidden state for typewriter placeholder
+  useEffect(() => {
+    if (typewriterRef.current) gsap.set(typewriterRef.current, { opacity: 0, y: 6, filter: 'blur(4px)' })
+  }, [])
+
+  // Animate typewriter placeholder in/out
+  useEffect(() => {
+    const el = typewriterRef.current
+    if (!el) return
+    gsap.killTweensOf(el)
+    if (typewriterActive) {
+      gsap.to(el, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.35, ease: 'expo.out' })
+    } else {
+      gsap.to(el, { opacity: 0, y: -6, filter: 'blur(4px)', duration: 0.22, ease: 'power2.in' })
+    }
+  }, [typewriterActive])
+
+  // Set initial hidden state for settled placeholder
+  useEffect(() => {
+    if (settledPlaceholderRef.current) gsap.set(settledPlaceholderRef.current, { opacity: 0, y: 6, filter: 'blur(4px)' })
+  }, [settled])
+
+  // Animate settled placeholder in/out
+  useEffect(() => {
+    const el = settledPlaceholderRef.current
+    if (!el) return
+    if (focused || text) {
+      gsap.to(el, { opacity: 0, y: -6, filter: 'blur(4px)', duration: 0.22, ease: 'power2.in' })
+    } else {
+      gsap.fromTo(el,
+        { opacity: 0, y: 6, filter: 'blur(4px)' },
+        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.35, ease: 'expo.out' }
+      )
+    }
+  }, [focused, text, settled])
+
+  // Expand / collapse textarea height on focus — only before conversation starts
+  const LINE_HEIGHT = 26 // px per line (text-base leading-relaxed)
+  useEffect(() => {
+    const el = textareaRef.current
+    if (!el) return
+    // Once settled at the bottom, keep compact regardless of focus
+    if (settled) return
+    gsap.to(el, {
+      minHeight: focused ? LINE_HEIGHT * 4 : LINE_HEIGHT,
+      duration: 0.4, ease: 'expo.out',
+      onUpdate: () => {
+        if (el.scrollHeight > parseFloat(el.style.minHeight || 0)) {
+          el.style.height = `${el.scrollHeight}px`
+        }
+      },
+    })
+  }, [focused, settled])
+
+  // Force compact on settle (input moves to bottom fixed position)
+  useEffect(() => {
+    if (!settled) return
+    const el = textareaRef.current
+    if (!el) return
+    gsap.to(el, { minHeight: LINE_HEIGHT, duration: 0.35, ease: 'expo.out' })
+  }, [settled])
 
   const filteredItems = mentionQuery === null
     ? []
@@ -332,6 +398,9 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
     setText('')
     setMentionQuery(null)
     setUploadOpen(false)
+    // Snap textarea to compact before the input transitions to the bottom
+    gsap.killTweensOf(textareaRef.current)
+    gsap.set(textareaRef.current, { minHeight: LINE_HEIGHT, height: 'auto' })
     onSubmit?.(message)
   }
 
@@ -339,42 +408,64 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
 
   return (
     <div data-inspector="ChatInput" className="relative w-full max-w-2xl mx-auto">
-      {/* Drag indicator dot */}
-      <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-2 border-fuchsia-500" style={{ zIndex: 10 }} />
 
-      {/* Card — gradient border wrapper tracks mouse */}
+      {/* Card — two-layer gradient border: orange (mouse) crossfades to blue (focused) */}
       <div
         ref={glowWrapperRef}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
+          position: 'relative',
           padding: '1px',
           borderRadius: (mentionOpen || uploadOpen)
             ? (settled ? '0 0 1rem 1rem' : '1rem 1rem 0 0')
             : '1rem',
-          background: glowPos
-            ? `radial-gradient(circle at ${glowPos.x}px ${glowPos.y}px,
-                rgba(255,112,86,${glowPos.intensity}) 0%,
-                rgba(255,112,86,${glowPos.intensity * 0.35}) 30%,
-                var(--border-default) 60%)`
-            : 'var(--border-input)',
-          transition: 'border-radius 200ms ease',
-          boxShadow: glowPos
-            ? `0 0 ${24 * glowPos.intensity}px rgba(255,112,86,${0.15 * glowPos.intensity})`
-            : '0 2px 8px 0 rgba(0,0,0,0.06)',
+          transition: `border-radius 200ms ease, box-shadow 350ms ease ${focused ? '420ms' : '0ms'}`,
+          boxShadow: focused
+            ? '0 0 0 3px rgba(23,121,247,0.1), 0 4px 28px rgba(23,121,247,0.18)'
+            : glowPos
+              ? `0 0 ${24 * glowPos.intensity}px rgba(255,112,86,${0.15 * glowPos.intensity})`
+              : '0 2px 8px 0 rgba(0,0,0,0.06)',
         }}
       >
+        {/* Layer 1 — orange border: shows during animation, crossfades to blue at t=420ms */}
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: 'inherit',
+          background: focused
+            ? 'rgba(255,112,86,0.8)'
+            : glowPos
+              ? `radial-gradient(circle at ${glowPos.x}px ${glowPos.y}px,
+                  rgba(255,112,86,${glowPos.intensity}) 0%,
+                  rgba(255,112,86,${glowPos.intensity * 0.35}) 30%,
+                  var(--border-default) 60%)`
+              : 'var(--border-input)',
+          opacity: focused ? 0 : 1,
+          transition: 'opacity 350ms ease',
+          transitionDelay: focused ? '420ms' : '0ms',
+          pointerEvents: 'none',
+        }} />
+
+        {/* Layer 2 — blue active border (fades in on focus, delayed to sync with logo color change) */}
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: 'inherit',
+          background: '#1779F7',
+          opacity: focused ? 1 : 0,
+          transition: 'opacity 350ms ease',
+          transitionDelay: focused ? '420ms' : '0ms',
+          pointerEvents: 'none',
+        }} />
+
       <div
         className="overflow-hidden"
         style={{
+          position: 'relative', zIndex: 1,
           background: 'var(--bg-card)',
-          boxShadow: 'none',
           borderRadius: (mentionOpen || uploadOpen)
             ? (settled ? '0 0 calc(1rem - 1px) calc(1rem - 1px)' : 'calc(1rem - 1px) calc(1rem - 1px) 0 0')
             : 'calc(1rem - 1px)',
         }}
       >
-        <div className="px-5 pt-5 pb-4">
+        <div className="px-5" style={{ paddingTop: (!settled && focused) ? 20 : 10, paddingBottom: (!settled && focused) ? 16 : 10, transition: 'padding 400ms ease' }}>
           {/* Textarea + animated typewriter placeholder */}
           <div style={{ position: 'relative' }}>
             <textarea
@@ -383,14 +474,31 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
               value={text}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
+              onFocus={() => { setFocused(true); onFocusChange?.(true) }}
+              onBlur={() => { setFocused(false); onFocusChange?.(false) }}
               placeholder=""
               className="smooth-scroll w-full resize-none bg-transparent outline-none text-base leading-relaxed min-h-[28px] max-h-48 overflow-y-auto"
-              style={{ color: 'var(--text-primary)' }}
+              style={{ color: 'var(--text-primary)', caretColor: 'var(--text-primary)' }}
             />
-            {typewriterActive && (
+            {settled && (
               <div
+                ref={settledPlaceholderRef}
+                aria-hidden="true"
+                style={{
+                  position: 'absolute', top: 0, left: 0, right: 0,
+                  pointerEvents: 'none',
+                  color: 'var(--text-muted)',
+                  fontSize: '1rem', lineHeight: 1.625,
+                  fontFamily: "'Byrd', sans-serif",
+                  userSelect: 'none',
+                }}
+              >
+                What else can I dig into for you?
+              </div>
+            )}
+            {typewriterVisible && (
+              <div
+                ref={typewriterRef}
                 aria-hidden="true"
                 style={{
                   position:   'absolute',
@@ -424,7 +532,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
           </div>
 
           {/* Bottom row */}
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between" style={{ marginTop: (!settled && focused) ? 16 : 6, transition: 'margin-top 400ms ease' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               {[
                 {
@@ -494,15 +602,27 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, l
               <button
                 aria-label="Submit"
                 onClick={() => { handleSubmit() }}
-                className="absolute inset-0 flex items-center justify-center overflow-hidden hover:opacity-90"
+                className="absolute inset-0 flex items-center justify-center overflow-hidden"
                 style={{
                   background: '#007AFF',
                   borderRadius: 8,
-                  transition: 'opacity 200ms ease, transform 200ms ease',
+                  transition: 'opacity 200ms ease, transform 200ms ease, background 150ms ease, box-shadow 150ms ease',
                   opacity: (text.trim() || loading) ? 1 : 0,
                   transform: (text.trim() || loading) ? 'scale(1)' : 'scale(0.8)',
                   pointerEvents: (text.trim() || loading) ? 'auto' : 'none',
                 }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = '#1779F7'
+                  e.currentTarget.style.boxShadow = '0 0 0 4px rgba(23,121,247,0.25), 0 4px 16px rgba(23,121,247,0.4)'
+                  gsap.to(e.currentTarget, { scale: 1.08, duration: 0.2, ease: 'back.out(2)' })
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = '#007AFF'
+                  e.currentTarget.style.boxShadow = 'none'
+                  gsap.to(e.currentTarget, { scale: 1, duration: 0.2, ease: 'power2.out' })
+                }}
+                onMouseDown={e => gsap.to(e.currentTarget, { scale: 0.93, duration: 0.1, ease: 'power2.in' })}
+                onMouseUp={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.15, ease: 'back.out(3)' })}
               >
                 {/* Arrow — slides left out when loading */}
                 <span

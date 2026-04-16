@@ -94,7 +94,7 @@ export default function ChatBubble({
         maxWidth: '75%',
         padding: isAI ? '8px 10px' : '12px 16px',
         borderRadius: isAI ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
-        background: isAI ? 'transparent' : 'var(--color-brand)',
+        background: isAI ? 'transparent' : '#1779F7',
         color: isAI ? 'var(--text-primary)' : '#fff',
         opacity: isAI ? 0.8 : 1,
         fontSize: 14,

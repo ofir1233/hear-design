@@ -207,6 +207,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebar_collapsed') === 'true')
   const [submitted, setSubmitted]              = useState(false)
   const [settled, setSettled]                  = useState(false)
+  const justSettledRef                         = useRef(false)
   const [loading, setLoading]                  = useState(false)
   const [fixedStart, setFixedStart]            = useState(null)
   const [inputOffset, setInputOffset]          = useState(0)
@@ -230,8 +231,101 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
   const [newlyNamedId, setNewlyNamedId]           = useState(null)
   const activeSessionRef                          = useRef(null)
 
-  const logoRef     = useRef(null)
-  const subtitleRef = useRef(null)
+  const logoRef          = useRef(null)
+  const subtitleRef      = useRef(null)
+  const greetingRef       = useRef(null)
+  const suggestionsRef    = useRef(null)
+  const dailyBriefingRef  = useRef(null)
+  const [inputFocused, setInputFocused] = useState(false)
+  const [logoActive, setLogoActive]     = useState(false)
+  const logoTimerRef = useRef(null)
+
+  const logoGradTweenRef  = useRef(null)
+
+  // Clean up logo animations when conversation starts — kill tweens only,
+  // let the CSS parent fade handle the visual disappearance
+  useEffect(() => {
+    if (!submitted) return
+    clearTimeout(logoTimerRef.current)
+    logoGradTweenRef.current?.kill()
+    logoGradTweenRef.current = null
+
+    // Kill all running tweens without touching opacity (CSS handles the fade)
+    ;['logoGradPath','logoDotsRing'].forEach(id => {
+      const el = document.getElementById(id)
+      if (el) gsap.killTweensOf(el)
+    })
+    for (let i = 0; i < 28; i++) gsap.killTweensOf(document.getElementById(`logoDot-${i}`))
+
+    // Delay React state cleanup until after CSS transition completes (~200ms)
+    const t = setTimeout(() => {
+      setLogoActive(false)
+      setInputFocused(false)
+    }, 200)
+    return () => clearTimeout(t)
+  }, [submitted])
+
+  useEffect(() => {
+    clearTimeout(logoTimerRef.current)
+    if (inputFocused) {
+      logoTimerRef.current = setTimeout(() => {
+        setLogoActive(true)
+        // Two rAFs: first lets React render the new elements, second starts GSAP
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const grad = document.getElementById('logoRadiance')
+          const path = document.getElementById('logoGradPath')
+          if (!grad || !path) return
+
+          // Start rotation immediately (no position flicker when it fades in)
+          logoGradTweenRef.current = gsap.fromTo(grad,
+            { attr: { gradientTransform: 'rotate(0, 34.5, 30)' } },
+            { attr: { gradientTransform: 'rotate(360, 34.5, 30)' },
+              duration: 3, ease: 'none', repeat: -1 }
+          )
+          // Fade gradient in
+          gsap.to(path, { opacity: 1, duration: 0.55, ease: 'power2.out' })
+
+          // ── Inner ring (clockwise) ──────────────────────────────────
+          const ring = document.getElementById('logoDotsRing')
+          if (ring) {
+            gsap.to(ring, { opacity: 1, duration: 0.6, delay: 0.4, ease: 'power2.out' })
+            gsap.to(ring, { rotation: 360, svgOrigin: '34.5 30', duration: 8, ease: 'none', repeat: -1, delay: 0.4 })
+
+            const INNER_COUNT = 28
+            const innerTl = gsap.timeline({ repeat: -1, delay: 0.5 })
+            for (let i = 0; i < INNER_COUNT; i++) {
+              const el = document.getElementById(`logoDot-${i}`)
+              if (!el) continue
+              const t = i * (8 / INNER_COUNT)
+              innerTl.to(el, { attr: { fill: '#4DA3FF' }, opacity: 1, duration: 0.2, ease: 'power2.out' }, t)
+              innerTl.to(el, { attr: { fill: el.getAttribute('fill') }, opacity: parseFloat(el.getAttribute('opacity')), duration: 0.35, ease: 'power2.in' }, t + 0.9)
+            }
+          }
+
+        }))
+      }, 420)
+    } else {
+      // Fade out gradient path before killing tween
+      const path = document.getElementById('logoGradPath')
+      const ring = document.getElementById('logoDotsRing')
+      if (ring) { gsap.killTweensOf(ring); gsap.to(ring, { opacity: 0, duration: 0.2 }) }
+      if (path) {
+        gsap.to(path, {
+          opacity: 0, duration: 0.3, ease: 'power2.in',
+          onComplete: () => {
+            logoGradTweenRef.current?.kill()
+            logoGradTweenRef.current = null
+            setLogoActive(false)
+          }
+        })
+      } else {
+        logoGradTweenRef.current?.kill()
+        logoGradTweenRef.current = null
+        setLogoActive(false)
+      }
+    }
+    return () => clearTimeout(logoTimerRef.current)
+  }, [inputFocused])
 
   useEffect(() => {
     window.__hearActivePage = activePage
@@ -266,6 +360,76 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
     tl.to(cards,    { opacity: 1, y: 0, duration: 0.42, stagger: 0.045 },                        0.78)
     dashTabReady.current = true
   }, [activePage])
+
+  // ── Focus expand / greeting shrink ─────────────────────────────
+  useEffect(() => {
+    if (submitted || settled) return
+    const greeting     = greetingRef.current
+    const suggestions  = suggestionsRef.current
+    const suggItems    = suggestions?.querySelectorAll('.hive-badge') ?? []
+    const db           = dailyBriefingRef.current
+
+    const logo     = logoRef.current
+    const words    = document.querySelectorAll('.dash-word')
+    const subtitle = subtitleRef.current
+
+    if (inputFocused) {
+      const tl = gsap.timeline()
+
+      // Fade out greeting text only (words + subtitle) — logo stays
+      tl.to([...words, subtitle], {
+        opacity: 0, y: -12, filter: 'blur(6px)',
+        duration: 0.22, ease: 'power3.in', stagger: 0.03,
+      }, 0)
+
+      // Shrink logo in place
+      tl.to(logo, {
+        scale: 0.52, y: 0,
+        duration: 0.45, ease: 'expo.out',
+      }, 0.1)
+
+
+      // Lift input up
+      if (inputRef.current) tl.to(inputRef.current, {
+        y: -100, scale: 1.018, duration: 0.5, ease: 'expo.out',
+      }, 0.22)
+
+      // Suggestions stagger in
+      if (suggItems.length) tl.fromTo(suggItems,
+        { opacity: 0, y: 10, scale: 0.92 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.32, stagger: 0.04, ease: 'expo.out' },
+        0.38
+      )
+
+      // Daily Briefing follows below
+      if (db) tl.to(db, { y: 230, duration: 0.5, ease: 'expo.out' }, 0.22)
+
+    } else {
+      const tl = gsap.timeline()
+
+      // Fade suggestions out first
+      if (suggItems.length) tl.to(suggItems, {
+        opacity: 0, y: 6, scale: 0.94, duration: 0.18, stagger: 0.02, ease: 'power2.in',
+      }, 0)
+
+      // Drop input back
+      if (inputRef.current) tl.to(inputRef.current, {
+        y: 0, scale: 1, duration: 0.5, ease: 'expo.out',
+      }, 0.1)
+
+      // Daily Briefing back up
+      if (db) tl.to(db, { y: 0, duration: 0.5, ease: 'expo.out' }, 0.1)
+
+      // Logo returns to full size
+      tl.to(logo, { scale: 1, y: 0, duration: 0.45, ease: 'expo.out' }, 0.15)
+
+      // Text fades back in
+      tl.to([...words, subtitle], {
+        opacity: 1, y: 0, filter: 'blur(0px)',
+        duration: 0.45, ease: 'expo.out', stagger: 0.04,
+      }, 0.28)
+    }
+  }, [inputFocused]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -513,6 +677,10 @@ Ask me anything about your operations, or explore a topic below to get started.`
 
     if (!submitted) {
       if (!inputRef.current) return
+      // Kill any in-flight GSAP transforms and snap to natural position
+      // before capturing the rect — prevents wrong fixedStart from y/scale tweens
+      gsap.killTweensOf(inputRef.current)
+      gsap.set(inputRef.current, { y: 0, scale: 1 })
       const rect = inputRef.current.getBoundingClientRect()
       setFixedStart({ top: rect.top, left: rect.left, width: rect.width, height: rect.height })
       setSubmitted(true)
@@ -758,8 +926,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         </div>
       ) : (
         <div
-          className="min-h-screen flex flex-col items-center justify-center px-6"
-          style={{ paddingLeft, paddingTop: 84, paddingBottom: 84, transition: sidebarTransition }}
+          className="flex flex-col items-center justify-center px-6"
+          style={{ height: '100vh', overflow: 'visible', paddingLeft, paddingTop: 84, paddingBottom: 84, transition: sidebarTransition, boxSizing: 'border-box' }}
         >
           <Header
             style={{
@@ -773,6 +941,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
             }
           />
           <div
+            ref={greetingRef}
             className="flex flex-col items-center w-full max-w-2xl"
             style={{
               opacity:       submitted ? 0 : 1,
@@ -787,7 +956,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
             }}
           >
             <div ref={logoRef} style={{ marginBottom: '1.5rem' }}>
-              <HearLogo className="w-20 h-14" />
+              <HearLogo className="w-20 h-14" isActive={logoActive} />
             </div>
             <div className="text-center">
               <h1
@@ -825,14 +994,18 @@ Ask me anything about your operations, or explore a topic below to get started.`
             ref={inputRef}
             style={
               settled
-                ? {
-                    position: 'fixed', bottom: 32,
-                    left:      isMobile ? '50%' : `calc(50% + ${effectiveSidebarWidth / 2}px)`,
-                    transform: 'translateX(-50%)',
-                    width:     isMobile ? 'calc(100% - 3rem)' : `calc(100% - ${effectiveSidebarWidth}px - 3rem)`,
-                    transition: sidebarTransition,
-                    maxWidth: '42rem', zIndex: 50,
-                  }
+                ? (() => {
+                    const noTransition = justSettledRef.current
+                    if (noTransition) requestAnimationFrame(() => { justSettledRef.current = false })
+                    return {
+                      position: 'fixed', bottom: 32,
+                      left:      isMobile ? '50%' : `calc(50% + ${effectiveSidebarWidth / 2}px)`,
+                      transform: 'translateX(-50%)',
+                      width:     isMobile ? 'calc(100% - 3rem)' : `calc(100% - ${effectiveSidebarWidth}px - 3rem)`,
+                      transition: noTransition ? 'none' : sidebarTransition,
+                      maxWidth: '42rem', zIndex: 50,
+                    }
+                  })()
                 : fixedStart
                 ? {
                     position: 'fixed',
@@ -846,28 +1019,106 @@ Ask me anything about your operations, or explore a topic below to get started.`
                       : 'none',
                     zIndex: 50,
                   }
-                : { width: '100%', maxWidth: '42rem', position: 'relative', zIndex: 10 }
+                : { width: '100%', maxWidth: '42rem', position: 'relative', zIndex: 10, isolation: 'isolate' }
             }
             onTransitionEnd={(e) => {
               if (
                 e.target === inputRef.current &&
                 e.propertyName === 'transform' &&
                 fixedStart && !settled
-              ) { setSettled(true) }
+              ) { justSettledRef.current = true; setSettled(true) }
             }}
           >
             <ChatInput
               onSubmit={(text) => handleSubmit(text)}
               onMentionChange={setMentionActive}
               onUploadChange={setUploadActive}
+              onFocusChange={setInputFocused}
               loading={loading}
               settled={settled}
               suggestedPrompts={companyConfig?.suggestedPrompts}
               defaultText={chatDefaultText}
             />
+
+            {/* Hive suggestion badges — absolutely positioned below input, out of flex flow */}
+            {!submitted && !settled && (
+              <div
+                ref={suggestionsRef}
+                style={{
+                  position: 'absolute', top: 'calc(100% + 16px)', left: 0, right: 0,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+                  pointerEvents: 'auto',
+                }}
+              >
+                <span className="hive-badge" style={{
+                  opacity: 0,
+                  fontSize: 11, fontWeight: 700, letterSpacing: '0.08em',
+                  textTransform: 'uppercase', color: 'var(--text-muted)',
+                  fontFamily: "'Byrd', sans-serif",
+                  pointerEvents: 'none',
+                }}>
+                  AI Suggestions
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
+                  {(companyConfig?.suggestedPrompts ?? [
+                    'What are the top call topics this week?',
+                    'Show agent performance trends',
+                    'Any compliance flags today?',
+                    'Summarize customer sentiment',
+                    'Which issues are escalating?',
+                    'Compare teams this month',
+                  ]).slice(0, 6).map((prompt, i) => (
+                    <div
+                      key={i}
+                      style={{ position: 'relative', padding: '1px', borderRadius: 999, opacity: 0, background: 'var(--border-default)', transition: 'background 0ms' }}
+                      className="hive-badge"
+                      onMouseMove={e => {
+                        const r = e.currentTarget.getBoundingClientRect()
+                        const x = e.clientX - r.left
+                        const y = e.clientY - r.top
+                        e.currentTarget.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(23,121,247,0.75) 0%, rgba(23,121,247,0.2) 40%, var(--border-default) 70%)`
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = 'var(--border-default)'
+                      }}
+                    >
+                      <button
+                        onClick={e => {
+                          // Flash the pill then paste
+                          const btn = e.currentTarget
+                          gsap.to(btn, { scale: 0.92, duration: 0.1, ease: 'power2.in',
+                            onComplete: () => gsap.to(btn, { scale: 1, duration: 0.2, ease: 'back.out(2)' })
+                          })
+                          setChatDefaultText(prompt)
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '9px 18px',
+                          borderRadius: 999,
+                          border: 'none',
+                          background: 'var(--bg-card)',
+                          color: 'var(--text-secondary)',
+                          fontSize: 13, fontWeight: 500,
+                          cursor: 'pointer', whiteSpace: 'nowrap',
+                          fontFamily: "'Byrd', sans-serif",
+                          transition: 'color 150ms ease',
+                          display: 'block',
+                        }}
+                        onMouseDown={e => e.preventDefault()}
+                        onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
+                      >
+                        {prompt}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {!submitted && (
+            <div ref={dailyBriefingRef} style={{ marginTop: 16 }}>
             <DailyBriefing
               sidebarWidth={effectiveSidebarWidth}
               onPin={prompt => {
@@ -882,6 +1133,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
                 }])
               }}
             />
+            </div>
           )}
 
           {submitted && settled && (

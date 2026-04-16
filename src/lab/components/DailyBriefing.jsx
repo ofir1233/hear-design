@@ -269,7 +269,6 @@ export default function DailyBriefing({ onPin, sidebarWidth = 0 }) {
   // ── Ready pill ────────────────────────────────────────────────────────────
   const readyPill = (
     <div style={{
-      marginTop: 12,
       display: 'flex', justifyContent: 'center',
       animation: phase === 'ready' ? 'db-fade-in 400ms ease forwards' : undefined,
     }}>
