@@ -8,15 +8,13 @@ import EmailForm from './sign-in/EmailForm.jsx'
 import DemoFlow from './demo/DemoFlow.jsx'
 import DevFlow from './dev/DevFlow.jsx'
 
-const ALLOWED_DOMAIN = 'hear.ai'
-
 export default function SignIn({ onSignIn }) {
   const [env, setEnv] = useState(() => {
     const params = new URLSearchParams(window.location.search)
     return params.get('demoToken') ? 'Demo' : 'Design Lab'
   })
 
-  // ── Regular (hear.ai) Google login ───────────────────────────────
+  // ── Google login ─────────────────────────────────────────────────
   const [googleError, setGoogleError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -24,15 +22,9 @@ export default function SignIn({ onSignIn }) {
     onSuccess: async (tokenResponse) => {
       setLoading(true)
       try {
-        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         })
-        const userInfo = await res.json()
-        if (!userInfo.email?.endsWith(`@${ALLOWED_DOMAIN}`)) {
-          setGoogleError(`Access is restricted to @${ALLOWED_DOMAIN} accounts.`)
-          setLoading(false)
-          return
-        }
         onSignIn({ mode: 'lab' })
       } catch {
         setGoogleError('Sign-in failed. Please try again.')
