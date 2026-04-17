@@ -132,7 +132,7 @@ function getActiveMention(text, cursorPos) {
   return { query: match[1], start: match.index }
 }
 
-export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, onFocusChange, onLogoHover, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
+export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, onFocusChange, onLogoHover, onKeystroke, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
   const [text, setText]           = useState(defaultText)
   const [hovered, setHovered]     = useState(false)
   const [focused, setFocused]     = useState(false)
@@ -369,6 +369,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     const cursor = e.target.selectionStart
     textRef.current = val
     setText(val)
+    if (val.length > text.length) onKeystroke?.('add')
 
     const mention = getActiveMention(val, cursor)
     if (mention) {
@@ -528,7 +529,13 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
               rows={1}
               value={text}
               onChange={handleChange}
-              onKeyDown={handleKeyDown}
+              onKeyDown={e => {
+                handleKeyDown(e)
+                if (e.key === 'Backspace' || e.key === 'Delete') onKeystroke?.('delete')
+              }}
+              onKeyUp={e => {
+                if (e.key === 'Backspace' || e.key === 'Delete') onKeystroke?.('deleteEnd')
+              }}
               onFocus={() => { setFocused(true); focusedRef.current = true; onFocusChange?.(true) }}
               onBlur={() => { setFocused(false); focusedRef.current = false; onFocusChange?.(false) }}
               placeholder=""

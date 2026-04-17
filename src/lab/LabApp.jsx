@@ -1044,6 +1044,44 @@ Ask me anything about your operations, or explore a topic below to get started.`
               settled={settled}
               suggestedPrompts={companyConfig?.suggestedPrompts}
               defaultText={chatDefaultText}
+              onKeystroke={(dir) => {
+                const ring = document.getElementById('logoDotsRing')
+                if (ring) {
+                  clearTimeout(ring._keystrokeTimer)
+                  const tweens = gsap.getTweensOf(ring)
+                  const overlay = document.getElementById('logoDeleteOverlay')
+                  const gradPath = document.getElementById('logoGradPath')
+                  if (dir === 'delete') {
+                    tweens.forEach(t => gsap.to(t, { timeScale: -1, duration: 0.2, ease: 'power2.out' }))
+                    gsap.to(ring, { filter: 'sepia(1) saturate(3) hue-rotate(-20deg)', duration: 0.3, ease: 'power2.out', overwrite: 'auto' })
+                    if (gradPath) gsap.to(gradPath, { opacity: 0.08, duration: 0.25, ease: 'power2.out', overwrite: true })
+                    if (overlay)  gsap.to(overlay,  { opacity: 0.72, duration: 0.3, ease: 'power2.out', overwrite: true })
+                  } else if (dir === 'deleteEnd' || dir === 'add') {
+                    tweens.forEach(t => gsap.to(t, { timeScale: 1, duration: 0.35, ease: 'power2.inOut' }))
+                    gsap.killTweensOf(ring, 'filter')
+                    gsap.set(ring, { filter: 'none' })
+                    if (overlay)  { gsap.killTweensOf(overlay, 'opacity');  gsap.to(overlay,  { opacity: 0,    duration: 0.45, ease: 'power2.out' }) }
+                    if (gradPath) { gsap.killTweensOf(gradPath, 'opacity'); gsap.to(gradPath, { opacity: 0.85, duration: 0.45, ease: 'power2.out' }) }
+                  }
+                }
+                if (dir === 'add') {
+                  // Gradient gleam
+                  const path = document.getElementById('logoGradPath')
+                  if (path) {
+                    gsap.killTweensOf(path, 'opacity')
+                    gsap.fromTo(path, { opacity: 1 }, { opacity: 0.8, duration: 0.5, ease: 'power2.out' })
+                  }
+                  // Dot flicker
+                  const dotEls = Array.from({ length: 28 }, (_, i) => document.getElementById(`logoDot-${i}`)).filter(Boolean)
+                  if (dotEls.length) {
+                    gsap.killTweensOf(dotEls, 'opacity')
+                    gsap.fromTo(dotEls,
+                      { opacity: 0.85 },
+                      { opacity: 0.28, duration: 0.6, ease: 'power2.out', stagger: { each: 0.012, from: 'random' } }
+                    )
+                  }
+                }
+              }}
               onLogoHover={(hovering) => {
                 const logo = logoRef.current
                 const ring = document.getElementById('logoDotsRing')

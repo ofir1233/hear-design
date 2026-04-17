@@ -79,6 +79,9 @@ export default function HearLogo({ className = '', style: styleProp, isActive = 
           style={{ opacity: 0 }}
         />
       )}
+
+      {/* Delete mode red overlay — topmost, always present, opacity driven by GSAP */}
+      <path id="logoDeleteOverlay" d={PATH} fill="#FF7070" style={{ opacity: 0, pointerEvents: 'none' }} />
     </svg>
   )
 }
