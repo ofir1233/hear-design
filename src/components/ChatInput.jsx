@@ -233,12 +233,13 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     onUploadChange?.(uploadOpen)
   }, [uploadOpen])
 
-  // Auto-resize textarea
+  // Auto-resize textarea — when empty, use 'auto' so minHeight controls visually
   useEffect(() => {
     const el = textareaRef.current
     if (!el) return
     el.style.height = 'auto'
-    el.style.height = `${el.scrollHeight}px`
+    if (text) el.style.height = `${el.scrollHeight}px`
+    // No explicit height when empty: element visually follows minHeight (GSAP-animated)
   }, [text])
 
   // Sync box-shadow and layer1 directly when focus state changes
@@ -301,23 +302,27 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     if (!el) return
     // Once settled at the bottom, keep compact regardless of focus
     if (settled) return
+    gsap.killTweensOf(el)
+    // Expand on focus; shrink on blur only if no text (text content keeps it tall naturally)
+    const target = focused ? LINE_HEIGHT * 4 : LINE_HEIGHT
     gsap.to(el, {
-      minHeight: (focused && !text) ? LINE_HEIGHT * 2 : (focused && text) ? LINE_HEIGHT * 4 : LINE_HEIGHT,
-      duration: 0.4, ease: 'expo.out',
-      onUpdate: () => {
-        if (el.scrollHeight > parseFloat(el.style.minHeight || 0)) {
-          el.style.height = `${el.scrollHeight}px`
-        }
+      minHeight: target,
+      duration: 0.4,
+      ease: 'expo.out',
+      onComplete: () => {
+        if (!focused && !text) el.style.minHeight = ''
       },
     })
-  }, [focused, settled, text])
+  }, [focused, settled]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Force compact on settle (input moves to bottom fixed position)
+  // Force compact on settle — clear all inline height styles and release to CSS
   useEffect(() => {
     if (!settled) return
     const el = textareaRef.current
     if (!el) return
-    gsap.to(el, { minHeight: LINE_HEIGHT, duration: 0.35, ease: 'expo.out' })
+    gsap.killTweensOf(el)
+    el.style.minHeight = ''
+    el.style.height = 'auto'
   }, [settled])
 
   const filteredItems = mentionQuery === null
@@ -430,7 +435,17 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const mentionOpen = mentionQuery !== null && filteredItems.length > 0
 
   return (
-    <div data-inspector="ChatInput" className="relative w-full max-w-2xl mx-auto">
+    <div
+      data-inspector="ChatInput"
+      className="relative w-full max-w-2xl mx-auto"
+      onMouseDown={e => {
+        const tag = e.target.tagName.toLowerCase()
+        if (tag !== 'button' && tag !== 'textarea' && tag !== 'input') {
+          e.preventDefault()
+          textareaRef.current?.focus()
+        }
+      }}
+    >
 
       {/* Card — two-layer gradient border: orange (mouse) crossfades to blue (focused) */}
       <div
