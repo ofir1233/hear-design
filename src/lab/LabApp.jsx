@@ -288,15 +288,14 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
           // ── Inner ring (clockwise) ──────────────────────────────────
           const ring = document.getElementById('logoDotsRing')
           if (ring) {
-            gsap.to(ring, { opacity: 1, duration: 0.6, delay: 0.4, ease: 'power2.out' })
-            gsap.to(ring, { rotation: 360, svgOrigin: '34.5 30', duration: 8, ease: 'none', repeat: -1, delay: 0.4 })
+            gsap.to(ring, { opacity: 1, duration: 0.5, ease: 'power2.out' })
+            gsap.to(ring, { rotation: 360, svgOrigin: '34.5 30', duration: 8, ease: 'none', repeat: -1 })
 
-            // Dot chase — single staggered timeline, much lighter than 56 individual tweens
             const dotEls = Array.from({ length: 28 }, (_, i) => document.getElementById(`logoDot-${i}`)).filter(Boolean)
             const origFills   = dotEls.map(el => el.getAttribute('fill'))
             const origOpacity = dotEls.map(el => parseFloat(el.getAttribute('opacity')))
 
-            const innerTl = gsap.timeline({ repeat: -1, delay: 0.5 })
+            const innerTl = gsap.timeline({ repeat: -1 })
             innerTl.to(dotEls, { attr: { fill: '#4DA3FF' }, opacity: 1, duration: 0.2, ease: 'power2.out', stagger: 8 / 28 })
             innerTl.to(dotEls, {
               attr: { fill: (i) => origFills[i] },

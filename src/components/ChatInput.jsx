@@ -146,7 +146,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const glowLayer1Ref        = useRef(null)
   const settledPlaceholderRef  = useRef(null)
   const typewriterRef          = useRef(null)
-  const focusedRef           = useRef(false)
+  const focusedRef             = useRef(false)
 
   const GLOW_PROXIMITY = 120 // px from edge to start showing
 
@@ -248,7 +248,6 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     const layer1  = glowLayer1Ref.current
     if (!wrapper || !layer1) return
     if (focused) {
-      // Delay matches the blue border transition delay (420ms)
       const t = setTimeout(() => {
         wrapper.style.boxShadow = '0 0 0 3px rgba(23,121,247,0.1), 0 4px 28px rgba(23,121,247,0.18)'
       }, 420)

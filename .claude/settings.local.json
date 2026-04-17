@@ -55,7 +55,8 @@
       "Bash(find:*)",
       "Bash(grep:*)",
       "Bash(gh pr:*)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "Bash(npx acorn:*)"
     ]
   }
 }
