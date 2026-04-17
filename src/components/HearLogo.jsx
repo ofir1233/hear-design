@@ -20,7 +20,8 @@ function makeDots(r, count, prefix) {
 
 const DOTS_INNER = makeDots(62, 28, 'logoDot')
 
-export default function HearLogo({ className = '', isActive = false }) {
+export default function HearLogo({ className = '', style: styleProp, isActive = false, gradientOnly = false, inheritColor = false, outline = false }) {
+  const showGradient = isActive || gradientOnly
   return (
     <svg
       data-inspector="HearLogo"
@@ -28,10 +29,15 @@ export default function HearLogo({ className = '', isActive = false }) {
       viewBox="0 0 69 60"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ overflow: 'visible' }}
+      style={{ overflow: 'visible', ...styleProp }}
     >
-      {isActive && (
+      {showGradient && (
         <defs>
+          <filter id="logoGlow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="9" result="blur"/>
+            <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.35 0" result="softBlur"/>
+            <feMerge><feMergeNode in="softBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
           <linearGradient
             id="logoRadiance"
             x1="0" y1="0" x2="69" y2="60"
@@ -47,7 +53,7 @@ export default function HearLogo({ className = '', isActive = false }) {
         </defs>
       )}
 
-      {/* Inner dot ring — rotates clockwise */}
+      {/* Inner dot ring — only when fully active */}
       {isActive && (
         <g id="logoDotsRing" style={{ opacity: 0, willChange: 'transform' }}>
           {DOTS_INNER.map((d) => (
@@ -56,16 +62,20 @@ export default function HearLogo({ className = '', isActive = false }) {
         </g>
       )}
 
+      {/* Base layer */}
+      <path d={PATH}
+        fill={outline ? 'none' : (isActive ? '#FF7056' : inheritColor ? 'currentColor' : '#FF7056')}
+        stroke={outline ? 'currentColor' : 'none'}
+        strokeWidth={outline ? 5.5 : 0}
+      />
 
-      {/* Base layer — always orange */}
-      <path d={PATH} fill="#FF7056" />
-
-      {/* Gradient layer — fades in over the base */}
-      {isActive && (
+      {/* Gradient layer — fades in over the base, shown when active or gradientOnly */}
+      {showGradient && (
         <path
           id="logoGradPath"
           d={PATH}
           fill="url(#logoRadiance)"
+          filter="url(#logoGlow)"
           style={{ opacity: 0 }}
         />
       )}

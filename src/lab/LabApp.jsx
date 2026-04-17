@@ -237,10 +237,12 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
   const suggestionsRef    = useRef(null)
   const dailyBriefingRef  = useRef(null)
   const [inputFocused, setInputFocused] = useState(false)
-  const [logoActive, setLogoActive]     = useState(false)
+  const [logoActive, setLogoActive]       = useState(false)
+  const [logoGradHover, setLogoGradHover] = useState(false)
   const logoTimerRef = useRef(null)
 
   const logoGradTweenRef  = useRef(null)
+
 
   // Clean up logo animations when conversation starts — kill tweens only,
   // let the CSS parent fade handle the visual disappearance
@@ -269,6 +271,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
     clearTimeout(logoTimerRef.current)
     if (inputFocused) {
       logoTimerRef.current = setTimeout(() => {
+        setLogoGradHover(false)
         setLogoActive(true)
         // Two rAFs: first lets React render the new elements, second starts GSAP
         requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -959,7 +962,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
             }}
           >
             <div ref={logoRef} style={{ marginBottom: '1.5rem', willChange: 'transform, opacity' }}>
-              <HearLogo className="w-20 h-14" isActive={logoActive} />
+              <HearLogo className="w-20 h-14" isActive={logoActive} gradientOnly={logoGradHover && !logoActive} />
             </div>
             <div className="text-center">
               <h1
@@ -1041,6 +1044,55 @@ Ask me anything about your operations, or explore a topic below to get started.`
               settled={settled}
               suggestedPrompts={companyConfig?.suggestedPrompts}
               defaultText={chatDefaultText}
+              onLogoHover={(hovering) => {
+                const logo = logoRef.current
+                const ring = document.getElementById('logoDotsRing')
+
+                // Scale
+                if (logo) {
+                  if (hovering) {
+                    // Wait for any in-flight scale tween to settle before snapshotting
+                    const activeScaleTween = gsap.getTweensOf(logo).find(t => t.vars.scale !== undefined)
+                    const snapScale = activeScaleTween ? (activeScaleTween.vars.scale ?? gsap.getProperty(logo, 'scaleX')) : gsap.getProperty(logo, 'scaleX')
+                    logo._preHoverScale = snapScale
+                    gsap.to(logo, { scale: snapScale * 1.07, duration: 0.35, ease: 'back.out(1.8)', overwrite: 'auto' })
+                  } else {
+                    const restore = logo._preHoverScale ?? 1
+                    gsap.to(logo, { scale: restore, duration: 0.45, ease: 'power2.out', overwrite: 'auto' })
+                  }
+                }
+
+                // Ring speed — only change when not already active
+                if (ring && !logoActive) gsap.getTweensOf(ring).forEach(t => gsap.to(t, { timeScale: hovering ? 3.5 : 1, duration: 0.4 }))
+
+                // Gradient colour morph — only when logo isn't already fully active
+                if (!logoActive) {
+                  if (hovering) {
+                    setLogoGradHover(true)
+                    requestAnimationFrame(() => requestAnimationFrame(() => {
+                      const grad = document.getElementById('logoRadiance')
+                      const path = document.getElementById('logoGradPath')
+                      if (!grad || !path) return
+                      gsap.fromTo(grad,
+                        { attr: { gradientTransform: 'rotate(0, 34.5, 30)' } },
+                        { attr: { gradientTransform: 'rotate(360, 34.5, 30)' }, duration: 3, ease: 'none', repeat: -1 }
+                      )
+                      gsap.to(path, { opacity: 1, duration: 0.45, ease: 'power2.out' })
+                    }))
+                  } else {
+                    const path = document.getElementById('logoGradPath')
+                    const grad = document.getElementById('logoRadiance')
+                    if (path) {
+                      gsap.to(path, { opacity: 0, duration: 0.3, ease: 'power2.in', onComplete: () => {
+                        if (grad) gsap.killTweensOf(grad)
+                        setLogoGradHover(false)
+                      }})
+                    } else {
+                      setLogoGradHover(false)
+                    }
+                  }
+                }
+              }}
             />
 
             {/* Hive suggestion badges — absolutely positioned below input, out of flex flow */}
@@ -1178,6 +1230,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
           )}
         </div>
       )}
+
+
 
       {/* Inspector — Design Lab only */}
       <Suspense fallback={null}>

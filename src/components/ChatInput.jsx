@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { gsap } from 'gsap'
 import { MicIcon, ReturnIcon, NavigateIcon, EscIcon, AttachIcon } from './icons'
+import HearLogo from './HearLogo'
 
 const PROMPTS = [
   'Who are my top performing agents this month?',
@@ -96,7 +97,7 @@ function WaveAnimation() {
           width: 2,
           height: 2,
           borderRadius: 1,
-          background: '#FF7056',
+          background: '#1779F7',
           animation: 'wave-bar 900ms ease-in-out infinite',
           animationDelay: delay,
         }} />
@@ -131,7 +132,7 @@ function getActiveMention(text, cursorPos) {
   return { query: match[1], start: match.index }
 }
 
-export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, onFocusChange, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
+export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, onFocusChange, onLogoHover, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
   const [text, setText]           = useState(defaultText)
   const [hovered, setHovered]     = useState(false)
   const [focused, setFocused]     = useState(false)
@@ -147,6 +148,14 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const settledPlaceholderRef  = useRef(null)
   const typewriterRef          = useRef(null)
   const focusedRef             = useRef(false)
+  const textRef                = useRef('')
+  const listeningRef           = useRef(false)
+  const logoHoveredRef         = useRef(false)
+  const logoColorBlendRef      = useRef(0)   // 0 = orange, 1 = blue
+  const beamRef                = useRef(null)
+  const beamTweensRef          = useRef([])
+  const micContainerRef        = useRef(null)
+  const logoButtonRef          = useRef(null)
 
   const GLOW_PROXIMITY = 120 // px from edge to start showing
 
@@ -165,18 +174,24 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
         const dy   = Math.max(0, rect.top  - e.clientY, e.clientY - rect.bottom)
         const dist = Math.sqrt(dx * dx + dy * dy)
 
-        if (dist > GLOW_PROXIMITY || focusedRef.current) {
-          wrapper.style.boxShadow = focusedRef.current
+        const isBlue = focusedRef.current || listeningRef.current
+        if (dist > GLOW_PROXIMITY || isBlue) {
+          wrapper.style.boxShadow = isBlue
             ? '0 0 0 3px rgba(23,121,247,0.1), 0 4px 28px rgba(23,121,247,0.18)'
             : '0 2px 8px 0 rgba(0,0,0,0.06)'
-          if (!focusedRef.current) layer1.style.background = 'var(--border-input)'
+          if (!isBlue) layer1.style.background = 'var(--border-input)'
           return
         }
-        const intensity = 1 - dist / GLOW_PROXIMITY
+        const intensity = logoHoveredRef.current ? 1 : 1 - dist / GLOW_PROXIMITY
         const x = e.clientX - rect.left
         const y = e.clientY - rect.top
-        layer1.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,112,86,${intensity}) 0%, rgba(255,112,86,${intensity * 0.35}) 30%, var(--border-default) 60%)`
-        wrapper.style.boxShadow = `0 0 ${24 * intensity}px rgba(255,112,86,${0.15 * intensity})`
+        const t  = listeningRef.current ? 1 : logoColorBlendRef.current
+        const cr = Math.round(255 - 232 * t)
+        const cg = Math.round(112 +   9 * t)
+        const cb = Math.round( 86 + 161 * t)
+        const r  = `${cr},${cg},${cb}`
+        layer1.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(${r},${intensity}) 0%, rgba(${r},${intensity * 0.35}) 30%, var(--border-default) 60%)`
+        wrapper.style.boxShadow = `0 0 ${24 * intensity}px rgba(${r},${0.15 * intensity})`
       })
     }
     window.addEventListener('mousemove', handleGlobalMouseMove, { passive: true })
@@ -203,16 +218,16 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
       const transcript = Array.from(e.results).map(r => r[0].transcript).join('')
       setText(transcript)
     }
-    rec.onend = () => setListening(false)
+    rec.onend = () => { setListening(false); listeningRef.current = false }
     rec.onerror = (e) => {
-      setListening(false)
+      setListening(false); listeningRef.current = false
       if (e.error === 'not-allowed') {
         alert('Microphone access was blocked. Please allow microphone permission for this site in your browser settings.')
       }
     }
     recognitionRef.current = rec
     rec.start()
-    setListening(true)
+    setListening(true); listeningRef.current = true
   }
 
   // Sync externally-set defaultText (e.g. from Related click)
@@ -247,16 +262,19 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     const wrapper = glowWrapperRef.current
     const layer1  = glowLayer1Ref.current
     if (!wrapper || !layer1) return
-    if (focused) {
+    if (focused || listening) {
       const t = setTimeout(() => {
         wrapper.style.boxShadow = '0 0 0 3px rgba(23,121,247,0.1), 0 4px 28px rgba(23,121,247,0.18)'
-      }, 420)
+      }, focused ? 420 : 0)
       return () => clearTimeout(t)
     } else {
-      wrapper.style.boxShadow = '0 2px 8px 0 rgba(0,0,0,0.06)'
-      layer1.style.background = 'var(--border-input)'
+      const hasText = !!textRef.current
+      wrapper.style.boxShadow = hasText
+        ? '0 0 0 3px rgba(23,121,247,0.1), 0 4px 28px rgba(23,121,247,0.18)'
+        : '0 2px 8px 0 rgba(0,0,0,0.06)'
+      if (!hasText) layer1.style.background = 'var(--border-input)'
     }
-  }, [focused])
+  }, [focused, listening])
 
   // Set initial hidden state for typewriter placeholder
   useEffect(() => {
@@ -314,6 +332,15 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     })
   }, [focused, settled]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Slide mic into logo's spot when logo hides, slide back when logo returns
+  const logoHidden = listening || !!text.trim() || focused
+
+  useEffect(() => {
+    const el = micContainerRef.current
+    if (!el) return
+    gsap.to(el, { x: logoHidden ? 32 : 0, duration: 0.28, ease: logoHidden ? 'expo.out' : 'expo.inOut' })
+  }, [logoHidden])
+
   // Force compact on settle — clear all inline height styles and release to CSS
   useEffect(() => {
     if (!settled) return
@@ -340,6 +367,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   function handleChange(e) {
     const val = e.target.value
     const cursor = e.target.selectionStart
+    textRef.current = val
     setText(val)
 
     const mention = getActiveMention(val, cursor)
@@ -439,10 +467,10 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
       className="relative w-full max-w-2xl mx-auto"
       onMouseDown={e => {
         const tag = e.target.tagName.toLowerCase()
-        if (tag !== 'button' && tag !== 'textarea' && tag !== 'input') {
-          e.preventDefault()
-          textareaRef.current?.focus()
-        }
+        if (tag === 'textarea' || tag === 'input') return
+        if (e.target.closest('button')) return
+        e.preventDefault()
+        textareaRef.current?.focus()
       }}
     >
 
@@ -465,20 +493,20 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
         <div ref={glowLayer1Ref} style={{
           position: 'absolute', inset: 0, borderRadius: 'inherit',
           background: 'var(--border-input)',
-          opacity: focused ? 0 : 1,
+          opacity: (focused || listening) ? 0 : 1,
           transition: 'opacity 350ms ease',
-          transitionDelay: focused ? '420ms' : '0ms',
+          transitionDelay: (focused || listening) ? '420ms' : '0ms',
           pointerEvents: 'none',
           willChange: 'opacity',
         }} />
 
-        {/* Layer 2 — blue active border (fades in on focus, delayed to sync with logo color change) */}
+        {/* Layer 2 — blue active border: stays visible when text exists */}
         <div style={{
           position: 'absolute', inset: 0, borderRadius: 'inherit',
           background: '#1779F7',
-          opacity: focused ? 1 : 0,
+          opacity: (focused || !!text || listening) ? 1 : 0,
           transition: 'opacity 350ms ease',
-          transitionDelay: focused ? '420ms' : '0ms',
+          transitionDelay: (focused && !text && !listening) ? '420ms' : '0ms',
           pointerEvents: 'none',
         }} />
 
@@ -492,7 +520,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
             : 'calc(1rem - 1px)',
         }}
       >
-        <div className="px-5" style={{ paddingTop: (!settled && focused) ? 20 : 10, paddingBottom: (!settled && focused) ? 16 : 10, transition: 'padding 400ms ease' }}>
+        <div className="pl-5" style={{ paddingRight: 10, paddingTop: (!settled && focused) ? 20 : 10, paddingBottom: (!settled && focused) ? 10 : 10, transition: 'padding 400ms ease' }}>
           {/* Textarea + animated typewriter placeholder */}
           <div style={{ position: 'relative' }}>
             <textarea
@@ -605,25 +633,81 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
               ))}
             </div>
 
-            {/* Right: voice / submit cross-fade */}
-            <div className="relative w-9 h-9">
+            {/* Right: voice / submit cross-fade + hear logo */}
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+              onMouseMove={e => {
+                // Only position-detect when focused is the sole reason logo is hidden
+                // (not listening/text — in those states the mic is in logo's spot but shouldn't trigger logo hover)
+                if (!focused || listening || text.trim()) return
+                const btn = logoButtonRef.current
+                if (!btn) return
+                const r = btn.getBoundingClientRect()
+                const inLogo = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
+                if (inLogo === logoHoveredRef.current) return
+                logoHoveredRef.current = inLogo
+                gsap.to(logoColorBlendRef, { current: inLogo ? 1 : 0, duration: inLogo ? 0.35 : 0.45, ease: 'power2.out' })
+                onLogoHover?.(inLogo)
+              }}
+              onMouseLeave={() => {
+                if (!focused || !logoHoveredRef.current) return
+                logoHoveredRef.current = false
+                gsap.to(logoColorBlendRef, { current: 0, duration: 0.45, ease: 'power2.out' })
+                onLogoHover?.(false)
+              }}
+            >
+            <div ref={micContainerRef} className="relative w-9 h-9">
               <button
                 aria-label="Voice input"
                 onClick={toggleListening}
+                onMouseDown={e => e.preventDefault()}
                 style={{
-                  transition: 'opacity 200ms ease, transform 200ms ease, background 200ms ease, color 150ms ease',
+                  position: 'absolute',
+                  top: -6, left: -6, right: -6, bottom: -6,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'opacity 200ms ease, transform 200ms ease, color 150ms ease',
                   opacity: (text.trim() || loading) ? 0 : 1,
                   transform: (text.trim() || loading) ? 'scale(0.8)' : 'scale(1)',
                   pointerEvents: (text.trim() || loading) ? 'none' : 'auto',
-                  color: listening ? '#FF7056' : 'var(--text-muted)',
-                  background: listening ? 'rgba(255,112,86,0.08)' : 'transparent',
-                  borderRadius: 10,
+                  color: listening ? '#1779F7' : 'var(--text-muted)',
+                  background: 'transparent',
                 }}
-                className="absolute inset-0 flex items-center justify-center"
                 onMouseEnter={e => { if (!listening) e.currentTarget.style.color = 'var(--text-primary)' }}
-                onMouseLeave={e => { if (!listening) e.currentTarget.style.color = 'var(--text-muted)' }}
+                onMouseMove={e => {
+                  if (!listening) return
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  const dx = (e.clientX - (rect.left + rect.width  / 2)) / (rect.width  / 2)
+                  const dy = (e.clientY - (rect.top  + rect.height / 2)) / (rect.height / 2)
+                  gsap.to(e.currentTarget, {
+                    rotateY: dx * 22, rotateX: -dy * 22,
+                    transformPerspective: 280,
+                    duration: 0.25, ease: 'power2.out',
+                  })
+                  const spans = e.currentTarget.querySelectorAll('span')
+                  spans.forEach((span, i) => {
+                    const pos = (i / (spans.length - 1)) * 2 - 1
+                    const pull = 1 - Math.abs(pos - dx) * 0.65
+                    gsap.to(span, { scaleY: 0.6 + pull * 1.4, duration: 0.18, ease: 'power2.out' })
+                  })
+                }}
+                onMouseLeave={e => {
+                  if (!listening) {
+                    e.currentTarget.style.color = 'var(--text-muted)'
+                  } else {
+                    gsap.to(e.currentTarget, { rotateX: 0, rotateY: 0, duration: 0.7, ease: 'elastic.out(1, 0.45)' })
+                    gsap.to(e.currentTarget.querySelectorAll('span'), { scaleY: 1, duration: 0.35, ease: 'power2.out' })
+                  }
+                }}
               >
-                {listening ? <WaveAnimation /> : <MicIcon />}
+                <div style={{
+                  width: 36, height: 36,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: listening ? 'rgba(23,121,247,0.08)' : 'transparent',
+                  borderRadius: 10,
+                  transition: 'background 200ms ease',
+                }}>
+                  {listening ? <WaveAnimation /> : <MicIcon />}
+                </div>
               </button>
               {/* Submit button — arrow slides out, dots slide in */}
               <button
@@ -640,17 +724,34 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.background = '#1779F7'
-                  e.currentTarget.style.boxShadow = '0 0 0 4px rgba(23,121,247,0.25), 0 4px 16px rgba(23,121,247,0.4)'
                   gsap.to(e.currentTarget, { scale: 1.08, duration: 0.2, ease: 'back.out(2)' })
+                  const beam = beamRef.current
+                  beamTweensRef.current.forEach(t => t.kill())
+                  gsap.set(beam, { rotation: 0 })
+                  const rot = gsap.to(beam, { rotation: 360, transformOrigin: '50% 50%', duration: 6, ease: 'none', repeat: -1 })
+                  const tl  = gsap.timeline()
+                  tl.to(beam, { opacity: 0.85, duration: 0.5, ease: 'power2.out' })
+                    .to(beam, { opacity: 0.45, duration: 1.6, ease: 'sine.inOut' })
+                    .to(beam, { opacity: 0.75, duration: 1.8, ease: 'sine.inOut' })
+                    .to(beam, { opacity: 0.35, duration: 2.2, ease: 'sine.inOut', repeat: -1, yoyo: true })
+                  beamTweensRef.current = [rot, tl]
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.background = '#007AFF'
-                  e.currentTarget.style.boxShadow = 'none'
                   gsap.to(e.currentTarget, { scale: 1, duration: 0.2, ease: 'power2.out' })
+                  beamTweensRef.current.forEach(t => t.kill())
+                  beamTweensRef.current = []
+                  gsap.to(beamRef.current, { opacity: 0, duration: 0.3, ease: 'power2.in' })
                 }}
                 onMouseDown={e => gsap.to(e.currentTarget, { scale: 0.93, duration: 0.1, ease: 'power2.in' })}
                 onMouseUp={e => gsap.to(e.currentTarget, { scale: 1.05, duration: 0.15, ease: 'back.out(3)' })}
               >
+                {/* Radiance beam — rotates inside button, clipped by overflow-hidden */}
+                <div ref={beamRef} style={{
+                  position: 'absolute', inset: -12,
+                  background: 'conic-gradient(from 0deg, rgba(10,40,110,0.5) 0%, transparent 12%, rgba(255,255,255,0.1) 24%, rgba(56,189,248,0.38) 34%, rgba(23,121,247,0.28) 44%, transparent 56%, rgba(10,40,110,0.35) 78%, rgba(10,40,110,0.5) 100%)',
+                  opacity: 0, pointerEvents: 'none', willChange: 'transform',
+                }} />
                 {/* Arrow — slides left out when loading */}
                 <span
                   style={{
@@ -685,6 +786,37 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                   <ThinkingDots />
                 </span>
               </button>
+            </div>
+            <button
+              ref={logoButtonRef}
+              aria-label="Hear AI"
+              onClick={e => { e.preventDefault(); e.stopPropagation() }}
+              onMouseDown={e => e.preventDefault()}
+              style={{
+                width: 28, height: 28,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'transparent', border: 'none', borderRadius: 6, cursor: 'pointer',
+                color: 'var(--text-muted)',
+                transition: 'opacity 200ms ease, color 150ms ease',
+                opacity: logoHidden ? 0 : 1,
+                pointerEvents: logoHidden ? 'none' : 'auto',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--text-primary)'
+                logoHoveredRef.current = true
+                gsap.to(logoColorBlendRef, { current: 1, duration: 0.35, ease: 'power2.out' })
+                onLogoHover?.(true)
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--text-muted)'
+                logoHoveredRef.current = false
+                gsap.to(logoColorBlendRef, { current: 0, duration: 0.45, ease: 'power2.out' })
+                onLogoHover?.(false)
+              }}
+            >
+              <HearLogo style={{ width: 20, height: 17 }} outline />
+            </button>
             </div>
           </div>
         </div>
