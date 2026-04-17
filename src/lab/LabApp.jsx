@@ -291,15 +291,19 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
             gsap.to(ring, { opacity: 1, duration: 0.6, delay: 0.4, ease: 'power2.out' })
             gsap.to(ring, { rotation: 360, svgOrigin: '34.5 30', duration: 8, ease: 'none', repeat: -1, delay: 0.4 })
 
-            const INNER_COUNT = 28
+            // Dot chase — single staggered timeline, much lighter than 56 individual tweens
+            const dotEls = Array.from({ length: 28 }, (_, i) => document.getElementById(`logoDot-${i}`)).filter(Boolean)
+            const origFills   = dotEls.map(el => el.getAttribute('fill'))
+            const origOpacity = dotEls.map(el => parseFloat(el.getAttribute('opacity')))
+
             const innerTl = gsap.timeline({ repeat: -1, delay: 0.5 })
-            for (let i = 0; i < INNER_COUNT; i++) {
-              const el = document.getElementById(`logoDot-${i}`)
-              if (!el) continue
-              const t = i * (8 / INNER_COUNT)
-              innerTl.to(el, { attr: { fill: '#4DA3FF' }, opacity: 1, duration: 0.2, ease: 'power2.out' }, t)
-              innerTl.to(el, { attr: { fill: el.getAttribute('fill') }, opacity: parseFloat(el.getAttribute('opacity')), duration: 0.35, ease: 'power2.in' }, t + 0.9)
-            }
+            innerTl.to(dotEls, { attr: { fill: '#4DA3FF' }, opacity: 1, duration: 0.2, ease: 'power2.out', stagger: 8 / 28 })
+            innerTl.to(dotEls, {
+              attr: { fill: (i) => origFills[i] },
+              opacity: (i) => origOpacity[i],
+              duration: 0.35, ease: 'power2.in',
+              stagger: 8 / 28,
+            }, `<+0.9`)
           }
 
         }))
@@ -348,14 +352,14 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
 
     const tl = gsap.timeline({ defaults: { ease: 'expo.out' } })
     gsap.set(logo,     { opacity: 0, scale: 0.82 })
-    gsap.set(words,    { opacity: 0, y: 22, filter: 'blur(10px)' })
-    gsap.set(subtitle, { opacity: 0, y: 14, filter: 'blur(8px)' })
+    gsap.set(words,    { opacity: 0, y: 22 })
+    gsap.set(subtitle, { opacity: 0, y: 14 })
     gsap.set(input,    { opacity: 0, y: 18 })
     gsap.set(cards,    { opacity: 0, y: 20 })
 
     tl.to(logo,     { opacity: 1, scale: 1, duration: 0.55 },                                    0)
-    tl.to(words,    { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.65, stagger: 0.07 },    0.15)
-    tl.to(subtitle, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.55 },                   0.48)
+    tl.to(words,    { opacity: 1, y: 0, duration: 0.65, stagger: 0.07 },    0.15)
+    tl.to(subtitle, { opacity: 1, y: 0, duration: 0.55 },                   0.48)
     tl.to(input,    { opacity: 1, y: 0, duration: 0.55 },                                        0.62)
     tl.to(cards,    { opacity: 1, y: 0, duration: 0.42, stagger: 0.045 },                        0.78)
     dashTabReady.current = true
@@ -378,7 +382,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
 
       // Fade out greeting text only (words + subtitle) — logo stays
       tl.to([...words, subtitle], {
-        opacity: 0, y: -12, filter: 'blur(6px)',
+        opacity: 0, y: -12,
         duration: 0.22, ease: 'power3.in', stagger: 0.03,
       }, 0)
 
@@ -425,7 +429,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
 
       // Text fades back in
       tl.to([...words, subtitle], {
-        opacity: 1, y: 0, filter: 'blur(0px)',
+        opacity: 1, y: 0,
         duration: 0.45, ease: 'expo.out', stagger: 0.04,
       }, 0.28)
     }
@@ -955,7 +959,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
               ].join(', '),
             }}
           >
-            <div ref={logoRef} style={{ marginBottom: '1.5rem' }}>
+            <div ref={logoRef} style={{ marginBottom: '1.5rem', willChange: 'transform, opacity' }}>
               <HearLogo className="w-20 h-14" isActive={logoActive} />
             </div>
             <div className="text-center">
@@ -1019,7 +1023,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
                       : 'none',
                     zIndex: 50,
                   }
-                : { width: '100%', maxWidth: '42rem', position: 'relative', zIndex: 10, isolation: 'isolate' }
+                : { width: '100%', maxWidth: '42rem', position: 'relative', zIndex: 10, isolation: 'isolate', willChange: 'transform' }
             }
             onTransitionEnd={(e) => {
               if (

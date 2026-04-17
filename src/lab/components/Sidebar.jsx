@@ -651,10 +651,15 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
     const currentH = navRef.current?.offsetHeight ?? 400
     dragState.current = { startY: e.clientY, startH: currentH }
 
+    let rafId = null
     function onMove(ev) {
-      const delta = ev.clientY - dragState.current.startY
-      const next  = Math.max(36, dragState.current.startH + delta) // min 1 row
-      setNavHeight(next)
+      if (rafId) return
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        if (!dragState.current) return
+        const delta = ev.clientY - dragState.current.startY
+        setNavHeight(Math.max(36, dragState.current.startH + delta))
+      })
     }
     function onUp() {
       dragState.current = null

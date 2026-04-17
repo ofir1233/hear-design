@@ -49,7 +49,7 @@ export default function HearLogo({ className = '', isActive = false }) {
 
       {/* Inner dot ring — rotates clockwise */}
       {isActive && (
-        <g id="logoDotsRing" style={{ opacity: 0 }}>
+        <g id="logoDotsRing" style={{ opacity: 0, willChange: 'transform' }}>
           {DOTS_INNER.map((d) => (
             <circle key={d.id} id={d.id} cx={d.x} cy={d.y} r={d.r} fill={d.fill} opacity={d.opacity} />
           ))}

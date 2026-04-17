@@ -140,41 +140,47 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const [activeIndex, setActiveIndex]   = useState(0)
   const [uploadOpen, setUploadOpen]     = useState(initialUploadOpen)
   const [listening, setListening] = useState(false)
-  const [glowPos, setGlowPos] = useState(null)
   const textareaRef          = useRef(null)
   const recognitionRef       = useRef(null)
   const glowWrapperRef       = useRef(null)
+  const glowLayer1Ref        = useRef(null)
   const settledPlaceholderRef  = useRef(null)
   const typewriterRef          = useRef(null)
+  const focusedRef           = useRef(false)
 
   const GLOW_PROXIMITY = 120 // px from edge to start showing
 
+  // Direct DOM manipulation — no React state, no re-renders on mouse move
   useEffect(() => {
+    let rafId = null
     function handleGlobalMouseMove(e) {
-      const el = glowWrapperRef.current
-      if (!el) return
-      const rect = el.getBoundingClientRect()
+      if (rafId) return
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        const wrapper = glowWrapperRef.current
+        const layer1  = glowLayer1Ref.current
+        if (!wrapper || !layer1) return
+        const rect = wrapper.getBoundingClientRect()
+        const dx   = Math.max(0, rect.left - e.clientX, e.clientX - rect.right)
+        const dy   = Math.max(0, rect.top  - e.clientY, e.clientY - rect.bottom)
+        const dist = Math.sqrt(dx * dx + dy * dy)
 
-      // Distance from mouse to nearest edge of the box
-      const dx = Math.max(0, rect.left - e.clientX, e.clientX - rect.right)
-      const dy = Math.max(0, rect.top  - e.clientY, e.clientY - rect.bottom)
-      const dist = Math.sqrt(dx * dx + dy * dy)
-
-      if (dist > GLOW_PROXIMITY) {
-        setGlowPos(null)
-        return
-      }
-
-      const intensity = 1 - dist / GLOW_PROXIMITY
-      setGlowPos({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-        intensity,
+        if (dist > GLOW_PROXIMITY || focusedRef.current) {
+          wrapper.style.boxShadow = focusedRef.current
+            ? '0 0 0 3px rgba(23,121,247,0.1), 0 4px 28px rgba(23,121,247,0.18)'
+            : '0 2px 8px 0 rgba(0,0,0,0.06)'
+          if (!focusedRef.current) layer1.style.background = 'var(--border-input)'
+          return
+        }
+        const intensity = 1 - dist / GLOW_PROXIMITY
+        const x = e.clientX - rect.left
+        const y = e.clientY - rect.top
+        layer1.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,112,86,${intensity}) 0%, rgba(255,112,86,${intensity * 0.35}) 30%, var(--border-default) 60%)`
+        wrapper.style.boxShadow = `0 0 ${24 * intensity}px rgba(255,112,86,${0.15 * intensity})`
       })
     }
-
-    window.addEventListener('mousemove', handleGlobalMouseMove)
-    return () => window.removeEventListener('mousemove', handleGlobalMouseMove)
+    window.addEventListener('mousemove', handleGlobalMouseMove, { passive: true })
+    return () => { window.removeEventListener('mousemove', handleGlobalMouseMove); if (rafId) cancelAnimationFrame(rafId) }
   }, [])
 
   const activePrompts    = (suggestedPrompts?.length >= 3) ? suggestedPrompts : PROMPTS
@@ -237,7 +243,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
 
   // Set initial hidden state for typewriter placeholder
   useEffect(() => {
-    if (typewriterRef.current) gsap.set(typewriterRef.current, { opacity: 0, y: 6, filter: 'blur(4px)' })
+    if (typewriterRef.current) gsap.set(typewriterRef.current, { opacity: 0, y: 6 })
   }, [])
 
   // Animate typewriter placeholder in/out
@@ -246,15 +252,15 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     if (!el) return
     gsap.killTweensOf(el)
     if (typewriterActive) {
-      gsap.to(el, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.35, ease: 'expo.out' })
+      gsap.to(el, { opacity: 1, y: 0, duration: 0.35, ease: 'expo.out' })
     } else {
-      gsap.to(el, { opacity: 0, y: -6, filter: 'blur(4px)', duration: 0.22, ease: 'power2.in' })
+      gsap.to(el, { opacity: 0, y: -6, duration: 0.22, ease: 'power2.in' })
     }
   }, [typewriterActive])
 
   // Set initial hidden state for settled placeholder
   useEffect(() => {
-    if (settledPlaceholderRef.current) gsap.set(settledPlaceholderRef.current, { opacity: 0, y: 6, filter: 'blur(4px)' })
+    if (settledPlaceholderRef.current) gsap.set(settledPlaceholderRef.current, { opacity: 0, y: 6 })
   }, [settled])
 
   // Animate settled placeholder in/out
@@ -262,11 +268,11 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     const el = settledPlaceholderRef.current
     if (!el) return
     if (focused || text) {
-      gsap.to(el, { opacity: 0, y: -6, filter: 'blur(4px)', duration: 0.22, ease: 'power2.in' })
+      gsap.to(el, { opacity: 0, y: -6, duration: 0.22, ease: 'power2.in' })
     } else {
       gsap.fromTo(el,
-        { opacity: 0, y: 6, filter: 'blur(4px)' },
-        { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.35, ease: 'expo.out' }
+        { opacity: 0, y: 6 },
+        { opacity: 1, y: 0, duration: 0.35, ease: 'expo.out' }
       )
     }
   }, [focused, text, settled])
@@ -420,29 +426,19 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
           borderRadius: (mentionOpen || uploadOpen)
             ? (settled ? '0 0 1rem 1rem' : '1rem 1rem 0 0')
             : '1rem',
-          transition: `border-radius 200ms ease, box-shadow 350ms ease ${focused ? '420ms' : '0ms'}`,
-          boxShadow: focused
-            ? '0 0 0 3px rgba(23,121,247,0.1), 0 4px 28px rgba(23,121,247,0.18)'
-            : glowPos
-              ? `0 0 ${24 * glowPos.intensity}px rgba(255,112,86,${0.15 * glowPos.intensity})`
-              : '0 2px 8px 0 rgba(0,0,0,0.06)',
+          transition: 'border-radius 200ms ease',
+          willChange: 'transform',
         }}
       >
-        {/* Layer 1 — orange border: shows during animation, crossfades to blue at t=420ms */}
-        <div style={{
+        {/* Layer 1 — orange border (direct DOM, no React re-renders) */}
+        <div ref={glowLayer1Ref} style={{
           position: 'absolute', inset: 0, borderRadius: 'inherit',
-          background: focused
-            ? 'rgba(255,112,86,0.8)'
-            : glowPos
-              ? `radial-gradient(circle at ${glowPos.x}px ${glowPos.y}px,
-                  rgba(255,112,86,${glowPos.intensity}) 0%,
-                  rgba(255,112,86,${glowPos.intensity * 0.35}) 30%,
-                  var(--border-default) 60%)`
-              : 'var(--border-input)',
+          background: 'var(--border-input)',
           opacity: focused ? 0 : 1,
           transition: 'opacity 350ms ease',
           transitionDelay: focused ? '420ms' : '0ms',
           pointerEvents: 'none',
+          willChange: 'opacity',
         }} />
 
         {/* Layer 2 — blue active border (fades in on focus, delayed to sync with logo color change) */}
@@ -474,8 +470,8 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
               value={text}
               onChange={handleChange}
               onKeyDown={handleKeyDown}
-              onFocus={() => { setFocused(true); onFocusChange?.(true) }}
-              onBlur={() => { setFocused(false); onFocusChange?.(false) }}
+              onFocus={() => { setFocused(true); focusedRef.current = true; onFocusChange?.(true) }}
+              onBlur={() => { setFocused(false); focusedRef.current = false; onFocusChange?.(false) }}
               placeholder=""
               className="smooth-scroll w-full resize-none bg-transparent outline-none text-base leading-relaxed min-h-[28px] max-h-48 overflow-y-auto"
               style={{ color: 'var(--text-primary)', caretColor: 'var(--text-primary)' }}
