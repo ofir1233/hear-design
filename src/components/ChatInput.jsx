@@ -241,6 +241,23 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     el.style.height = `${el.scrollHeight}px`
   }, [text])
 
+  // Sync box-shadow and layer1 directly when focus state changes
+  useEffect(() => {
+    const wrapper = glowWrapperRef.current
+    const layer1  = glowLayer1Ref.current
+    if (!wrapper || !layer1) return
+    if (focused) {
+      // Delay matches the blue border transition delay (420ms)
+      const t = setTimeout(() => {
+        wrapper.style.boxShadow = '0 0 0 3px rgba(23,121,247,0.1), 0 4px 28px rgba(23,121,247,0.18)'
+      }, 420)
+      return () => clearTimeout(t)
+    } else {
+      wrapper.style.boxShadow = '0 2px 8px 0 rgba(0,0,0,0.06)'
+      layer1.style.background = 'var(--border-input)'
+    }
+  }, [focused])
+
   // Set initial hidden state for typewriter placeholder
   useEffect(() => {
     if (typewriterRef.current) gsap.set(typewriterRef.current, { opacity: 0, y: 6 })
@@ -285,7 +302,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     // Once settled at the bottom, keep compact regardless of focus
     if (settled) return
     gsap.to(el, {
-      minHeight: focused ? LINE_HEIGHT * 4 : LINE_HEIGHT,
+      minHeight: (focused && !text) ? LINE_HEIGHT * 2 : (focused && text) ? LINE_HEIGHT * 4 : LINE_HEIGHT,
       duration: 0.4, ease: 'expo.out',
       onUpdate: () => {
         if (el.scrollHeight > parseFloat(el.style.minHeight || 0)) {
@@ -293,7 +310,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
         }
       },
     })
-  }, [focused, settled])
+  }, [focused, settled, text])
 
   // Force compact on settle (input moves to bottom fixed position)
   useEffect(() => {
