@@ -167,18 +167,12 @@ export default function SignIn({ onSignIn }) {
         })
         const userInfo = await res.json()
 
-        const cached = getCachedUser(userInfo.sub)
-        if (cached?.name && cached?.config) {
-          // Fully returning user — go straight in
-          localStorage.setItem('hear-user-name', cached.name)
-          onSignIn({ mode: 'lab', name: cached.name, email: userInfo.email, picture: userInfo.picture, config: cached.config })
-          return
-        }
-
-        setPendingUser(userInfo)
-        setNameValue(userInfo.name || '')
+        // After Google auth → show environment picker (DemoFlow SELECT)
+        const name = userInfo.given_name || userInfo.name?.split(' ')[0] || 'there'
+        localStorage.setItem('hear-user-name', name)
+        setDemoUser(userInfo)
         setLoading(false)
-        animateStep(cached?.name ? 'workspace' : 'name')
+        animateStep('env-select')
       } catch {
         setGoogleError('Sign-in failed. Please try again.')
         setLoading(false)
@@ -190,12 +184,30 @@ export default function SignIn({ onSignIn }) {
     },
   })
 
-  // ── Name confirm ─────────────────────────────────────────────────
+  // ── Name confirm — skip workspace setup, enter with Demo inv default ──
   function handleConfirmName() {
     const trimmed = nameValue.trim()
     if (!trimmed) { setNameError('Please enter your name.'); return }
     localStorage.setItem('hear-user-name', trimmed)
-    animateStep('workspace')
+    const config = {
+      companyName: 'Demo inv',
+      industry: 'Enterprise SaaS',
+      keyProducts: ['Platform', 'Analytics', 'Integrations'],
+      commonTopics: ['Pricing', 'Support', 'Onboarding', 'Compliance', 'Performance', 'Escalations', 'Sentiment', 'Agent Evaluation'],
+      suggestedPrompts: [
+        'Who are my top performing agents this month?',
+        'Show me trending topics from the last 24 hours',
+        'Which calls had the highest risk score this week?',
+        'Summarize customer sentiment from today\'s calls',
+        'What are the most common complaints in the last 7 days?',
+        'Which agent has the lowest CSAT score this month?',
+        'Show me all calls flagged for compliance review',
+        'What topics are spiking in enterprise accounts?',
+      ],
+    }
+    const profile = { sub: pendingUser?.sub, name: trimmed, email: pendingUser?.email, picture: pendingUser?.picture, config }
+    setCachedUser(profile)
+    onSignIn({ mode: 'lab', ...profile })
   }
 
   // ── Workspace generate ────────────────────────────────────────────
@@ -315,14 +327,14 @@ export default function SignIn({ onSignIn }) {
       <img src="/bot.svg"       alt="" aria-hidden="true" style={{ position: 'absolute', bottom: -80, left: '50%', transform: 'translateX(-50%)', width: '80vw', pointerEvents: 'none', zIndex: 1 }} />
 
       <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', width: '100%', maxWidth: 1160, padding: '0 60px', boxSizing: 'border-box', gap: 100 }}>
+        <div style={{ display: 'flex', alignItems: 'center', width: '100%', maxWidth: 1160, padding: '0 60px', boxSizing: 'border-box', gap: 100 }}>
 
           <div style={{ flex: '0 0 340px', width: 340, display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 24, paddingBottom: 24, minHeight: 'clamp(420px, 65vh, 540px)' }}>
             <SignInHero env={env} onEnvChange={step === 'auth' ? setEnv : undefined} />
 
             <div ref={formRef} style={{ display: 'flex', flexDirection: 'column', gap: 10, overflow: 'hidden' }}>
 
-              {/* ── Auth step ── */}
+              {/* ── Auth step — Design Lab ── */}
               {step === 'auth' && env !== 'Demo' && env !== 'Dev' && (
                 <>
                   <GoogleButton onClick={() => googleLogin()} loading={loading} error={googleError} />
@@ -333,6 +345,15 @@ export default function SignIn({ onSignIn }) {
                     <a href="#" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'underline' }}>Privacy Policy</a>.
                   </p>
                 </>
+              )}
+
+              {/* ── Environment picker (after Google auth) ── */}
+              {step === 'env-select' && (
+                <DemoFlow
+                  googleUser={demoUser}
+                  onGoogleLogin={() => {}}
+                  onComplete={(profile) => onSignIn({ ...profile, mode: 'lab' })}
+                />
               )}
 
               {/* ── Demo ── */}

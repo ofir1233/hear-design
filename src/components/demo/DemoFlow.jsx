@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { apiFetch } from '../../lib/api.js'
+import { DEMO_INV_PROFILE, withDemoInv } from '../../lib/demoConstants.js'
 
 // ── Screen IDs ────────────────────────────────────────────────────
 const S = { GATE: 'GATE', CHECKING: 'CHECKING', NAME: 'NAME', SELECT: 'SELECT', CREATE: 'CREATE', WAITING: 'WAITING', ERROR: 'ERROR' }
@@ -41,6 +42,13 @@ function makeLocalProfile(url, email) {
     color: '#FF7056',
     config,
   }
+}
+
+// Use shared constant (Sidebar imports the same one — single source of truth)
+const DEMO_COMPANY_PROFILE = DEMO_INV_PROFILE
+
+function withDemoCompany(list) {
+  return [DEMO_COMPANY_PROFILE, ...list.filter(p => p.id !== 'demo-company')]
 }
 
 // ── Shared style helpers ──────────────────────────────────────────
@@ -149,9 +157,10 @@ function ProfileCard({ profile, onClick, onDelete }) {
 
       {/* Right side: trash + chevron */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-        {/* Delete button — slides in from right on hover */}
+        {/* Delete button — slides in from right on hover (not shown for Demo Company) */}
         <button
           onClick={handleDelete}
+          style={{ display: profile.id === 'demo-company' ? 'none' : undefined }}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             width: 28, height: 28,
@@ -335,15 +344,11 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     }
     if (screen !== S.GATE && screen !== S.CHECKING && screen !== S.ERROR) return
 
-    // Show cached profiles instantly if available
+    // Show cached profiles instantly (always include Demo inv)
     const cacheKey = `hear-demo-profiles-${googleUser.email}`
-    const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
-    if (cached.length > 0) {
-      setProfiles(cached)
-      goToSelect()
-    } else {
-      setScreen(S.CHECKING)
-    }
+    const cached = withDemoCompany(JSON.parse(localStorage.getItem(cacheKey) || '[]'))
+    setProfiles(cached)
+    goToSelect()
 
     // Refresh from backend — 40s timeout handles Render cold-starts (~30s wake-up)
     setSlowLoad(false)
@@ -359,14 +364,11 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
         clearTimeout(timeout)
         clearTimeout(slowTimer)
         setSlowLoad(false)
-        const list = filterDeleted(googleUser.email, data.profiles || [])
-        if (list.length > 0) {
-          localStorage.setItem(cacheKey, JSON.stringify(list))
-          setProfiles(list)
-          goToSelect()
-        } else if (cached.length === 0) {
-          setScreen(S.CREATE)
-        }
+        const list = withDemoCompany(filterDeleted(googleUser.email, data.profiles || []))
+        // Cache only custom profiles (Demo inv is always injected at runtime)
+        localStorage.setItem(cacheKey, JSON.stringify(list.filter(p => p.id !== 'demo-company')))
+        setProfiles(list)
+        goToSelect()
       })
       .then(() => {
         // After fresh backend list is loaded, attempt to sync any pending local profiles
@@ -448,9 +450,9 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
         const next = prev.filter(p => p.id !== id)
         if (googleUser?.email) {
           const cacheKey = `hear-demo-profiles-${googleUser.email}`
-          localStorage.setItem(cacheKey, JSON.stringify(next))
+          localStorage.setItem(cacheKey, JSON.stringify(next.filter(p => p.id !== 'demo-company')))
         }
-        if (next.length === 0) setScreen(S.CREATE)
+        // Demo inv always stays — nothing extra needed when custom profiles are all deleted
         return next
       })
     }, 220)
@@ -502,6 +504,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
       const cached = JSON.parse(localStorage.getItem(cacheKey) || '[]')
       const updated = [...cached.filter(p => p.id !== resultProfile.id), resultProfile]
       localStorage.setItem(cacheKey, JSON.stringify(updated))
+      window.dispatchEvent(new CustomEvent('hear:profiles-updated'))
       if (resultProfile.config?.companyName) {
         localStorage.setItem('hear-demo-config', JSON.stringify(resultProfile.config))
       }
@@ -511,7 +514,7 @@ export default function DemoFlow({ googleUser, onGoogleLogin, onComplete }) {
     setTimeout(() => {
       if (resultProfile) {
         setProfiles(prev => {
-          const deduped = [...prev.filter(p => p.id !== resultProfile.id), resultProfile]
+          const deduped = withDemoCompany([...prev.filter(p => p.id !== resultProfile.id && p.id !== 'demo-company'), resultProfile])
           return deduped
         })
       }

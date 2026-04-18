@@ -531,7 +531,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
               onChange={handleChange}
               onKeyDown={e => {
                 handleKeyDown(e)
-                if (e.key === 'Backspace' || e.key === 'Delete') onKeystroke?.('delete')
+                if ((e.key === 'Backspace' || e.key === 'Delete') && text.length > 0) onKeystroke?.('delete')
               }}
               onKeyUp={e => {
                 if (e.key === 'Backspace' || e.key === 'Delete') onKeystroke?.('deleteEnd')
@@ -794,6 +794,44 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                 </span>
               </button>
             </div>
+            <div style={{ position: 'relative', display: 'inline-flex' }}
+              onMouseEnter={e => {
+                const tip = e.currentTarget.querySelector('.logo-tooltip')
+                const rect = e.currentTarget.getBoundingClientRect()
+                tip.style.top = `${rect.top - tip.offsetHeight - 10}px`
+                tip.style.left = `${rect.left + rect.width / 2}px`
+                tip.style.opacity = '1'
+              }}
+              onMouseLeave={e => e.currentTarget.querySelector('.logo-tooltip').style.opacity = '0'}
+            >
+              <div className="logo-tooltip" style={{
+                position: 'fixed', top: 0, left: 0,
+                transform: 'translateX(-50%)',
+                background: 'var(--bg-card)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8,
+                padding: '6px 10px',
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                opacity: 0,
+                transition: 'opacity 150ms ease',
+                zIndex: 9999,
+              }}>
+                {/* nub pointing down toward icon */}
+                <div style={{
+                  position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+                  width: 0, height: 0,
+                  borderLeft: '5px solid transparent',
+                  borderRight: '5px solid transparent',
+                  borderTop: '5px solid rgba(255,255,255,0.1)',
+                }} />
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
+                  Conversation mode
+                </div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1, fontFamily: "'Byrd', sans-serif" }}>
+                  Coming soon
+                </div>
+              </div>
             <button
               ref={logoButtonRef}
               aria-label="Hear AI"
@@ -824,6 +862,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
             >
               <HearLogo style={{ width: 20, height: 17 }} outline />
             </button>
+            </div>
             </div>
           </div>
         </div>
@@ -955,5 +994,6 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
         </div>
       </div>
     </div>
+
   )
 }

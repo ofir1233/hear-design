@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import HearLogo from '../../components/HearLogo.jsx'
+import { DEMO_INV_PROFILE } from '../../lib/demoConstants.js'
 import NotificationsPopover from './NotificationsPopover.jsx'
 import {
   HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon,
@@ -683,19 +684,28 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
 
   const isDemo = !!(userId?.includes('@') && companyConfig)
 
-  // Build project list from localStorage demo profiles, or fallback to design lab projects
-  const projects = useMemo(() => {
-    if (isDemo) {
-      try {
-        const cached = JSON.parse(localStorage.getItem(`hear-demo-profiles-${userId}`) || '[]')
-        if (cached.length > 0) return cached.map(p => ({ id: p.id, label: p.name, profile: p }))
-      } catch { /* fall through */ }
-    }
-    return DESIGN_LAB_PROJECTS
+  // Build project list — always includes Demo inv, refreshes when profiles change
+  const readProjects = useCallback(() => {
+    if (!isDemo) return DESIGN_LAB_PROJECTS
+    try {
+      const cached = JSON.parse(localStorage.getItem(`hear-demo-profiles-${userId}`) || '[]')
+      const custom = cached.filter(p => p.id !== 'demo-company').map(p => ({ id: p.id, label: p.name, profile: p }))
+      return [{ id: 'demo-company', label: 'Demo inv', profile: DEMO_INV_PROFILE }, ...custom]
+    } catch { return [{ id: 'demo-company', label: 'Demo inv', profile: DEMO_INV_PROFILE }] }
   }, [isDemo, userId])
 
+  const [projects, setProjects] = useState(readProjects)
+
+  useEffect(() => {
+    setProjects(readProjects())
+    const onUpdate = () => setProjects(readProjects())
+    window.addEventListener('hear:profiles-updated', onUpdate)
+    return () => window.removeEventListener('hear:profiles-updated', onUpdate)
+  }, [readProjects])
+
+  const currentProfileId = typeof window !== 'undefined' ? localStorage.getItem('hear-demo-profile-id') : null
   const selectedProject = isDemo
-    ? (projects.find(p => p.label === (companyConfig?.companyName || '')) ?? projects[0])
+    ? (projects.find(p => String(p.id) === String(currentProfileId)) ?? projects.find(p => p.label === (companyConfig?.companyName || '')) ?? projects[0])
     : (projects.find(p => p.id === selectedLabProjectId) ?? projects[0])
 
   useEffect(() => {

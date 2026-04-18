@@ -58,31 +58,51 @@ function EnvironmentToggle({ env, onEnvChange }) {
           pointerEvents: 'none',
         }}
       />
-      {TABS.map((tab, i) => (
-        <button
-          key={tab}
-          ref={el => (btnRefs.current[i] = el)}
-          onClick={() => onEnvChange(tab)}
-          style={{
-            position: 'relative',
-            zIndex: 1,
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: '0.07em',
-            textTransform: 'uppercase',
-            color: env === tab ? '#fff' : 'rgba(255,255,255,0.4)',
-            background: 'transparent',
-            border: 'none',
-            borderRadius: 999,
-            padding: '3px 10px',
-            cursor: 'pointer',
-            transition: 'color 300ms ease',
-            fontFamily: 'inherit',
-          }}
-        >
-          {tab}
-        </button>
-      ))}
+      {TABS.map((tab, i) => {
+        const isDemo = tab === 'Demo'
+        return (
+          <button
+            key={tab}
+            ref={el => (btnRefs.current[i] = el)}
+            onClick={() => !isDemo && onEnvChange(tab)}
+            style={{
+              position: 'relative',
+              zIndex: 1,
+              display: 'flex', alignItems: 'center', gap: 5,
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: '0.07em',
+              textTransform: 'uppercase',
+              color: isDemo ? 'rgba(255,255,255,0.22)' : (env === tab ? '#fff' : 'rgba(255,255,255,0.4)'),
+              background: 'transparent',
+              border: 'none',
+              borderRadius: 999,
+              padding: '3px 10px',
+              cursor: isDemo ? 'default' : 'pointer',
+              transition: 'color 300ms ease',
+              fontFamily: 'inherit',
+            }}
+          >
+            {tab}
+            {isDemo && (
+              <span style={{
+                fontSize: 8,
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+                color: 'rgba(255,255,255,0.3)',
+                background: 'rgba(255,255,255,0.08)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 4,
+                padding: '1px 5px',
+                lineHeight: 1.6,
+              }}>
+                In development
+              </span>
+            )}
+          </button>
+        )
+      })}
     </div>
   )
 }
