@@ -240,6 +240,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
   const [logoActive, setLogoActive]       = useState(false)
   const [logoGradHover, setLogoGradHover] = useState(false)
   const logoTimerRef = useRef(null)
+  const focusTlRef   = useRef(null)
 
   const logoGradTweenRef  = useRef(null)
 
@@ -370,7 +371,10 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
   // ── Focus expand / greeting shrink ─────────────────────────────
   useEffect(() => {
     if (submitted || settled) return
-    const greeting     = greetingRef.current
+
+    // Kill any in-progress focus/blur animation before starting a new one
+    focusTlRef.current?.kill()
+
     const suggestions  = suggestionsRef.current
     const suggItems    = suggestions?.querySelectorAll('.hive-badge') ?? []
     const db           = dailyBriefingRef.current
@@ -381,6 +385,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
 
     if (inputFocused) {
       const tl = gsap.timeline()
+      focusTlRef.current = tl
 
       // Fade out greeting text only (words + subtitle) — logo stays
       tl.to([...words, subtitle], {
@@ -412,6 +417,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
 
     } else {
       const tl = gsap.timeline()
+      focusTlRef.current = tl
 
       // Fade suggestions out first
       if (suggItems.length) tl.to(suggItems, {
