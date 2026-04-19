@@ -140,6 +140,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const [activeIndex, setActiveIndex]   = useState(0)
   const [uploadOpen, setUploadOpen]     = useState(initialUploadOpen)
   const [listening, setListening] = useState(false)
+  const [hoveringIcons, setHoveringIcons] = useState(false)
   const textareaRef          = useRef(null)
   const recognitionRef       = useRef(null)
   const glowWrapperRef       = useRef(null)
@@ -150,6 +151,8 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const blurTimerRef           = useRef(null)
   const textRef                = useRef('')
   const listeningRef           = useRef(false)
+  const hoveringIconsRef       = useRef(false)
+  const iconBlendRef           = useRef(0)
   const beamRef                = useRef(null)
   const beamTweensRef          = useRef([])
   const micContainerRef        = useRef(null)
@@ -180,10 +183,10 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
           if (!isBlue) layer1.style.background = 'var(--border-input)'
           return
         }
-        const intensity = 1 - dist / GLOW_PROXIMITY
+        const intensity = hoveringIconsRef.current ? 1 : 1 - dist / GLOW_PROXIMITY
         const x = e.clientX - rect.left
         const y = e.clientY - rect.top
-        const t  = listeningRef.current ? 1 : 0
+        const t  = listeningRef.current ? 1 : iconBlendRef.current
         const cr = Math.round(255 - 232 * t)
         const cg = Math.round(112 +   9 * t)
         const cb = Math.round( 86 + 161 * t)
@@ -528,8 +531,8 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
         <div style={{
           position: 'absolute', inset: 0, borderRadius: 'inherit',
           background: '#1779F7',
-          opacity: (focused || !!text || listening) ? 1 : 0,
-          transition: 'opacity 350ms ease',
+          opacity: (focused || !!text || listening || hoveringIcons) ? 1 : 0,
+          transition: 'opacity 300ms ease',
           transitionDelay: (focused && !text && !listening) ? '420ms' : '0ms',
           pointerEvents: 'none',
         }} />
@@ -624,7 +627,18 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
           </div>
 
           {/* Bottom row */}
-          <div className="flex items-center justify-between" style={{ marginTop: (!settled && focused) ? 16 : 6, transition: 'margin-top 400ms ease' }}>
+          <div className="flex items-center justify-between" style={{ marginTop: (!settled && focused) ? 16 : 6, transition: 'margin-top 400ms ease' }}
+            onMouseEnter={() => {
+              hoveringIconsRef.current = true
+              setHoveringIcons(true)
+              gsap.to(iconBlendRef, { current: 1, duration: 0.28, ease: 'power2.out' })
+            }}
+            onMouseLeave={() => {
+              hoveringIconsRef.current = false
+              setHoveringIcons(false)
+              gsap.to(iconBlendRef, { current: 0, duration: 0.4, ease: 'power2.out' })
+            }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               {[
                 {
@@ -688,7 +702,13 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                   color: listening ? '#1779F7' : 'var(--text-muted)',
                   background: 'transparent',
                 }}
-                onMouseEnter={e => { if (!listening) e.currentTarget.style.color = 'var(--text-primary)' }}
+                onMouseEnter={e => {
+                  if (!listening) {
+                    e.currentTarget.style.color = 'var(--text-primary)'
+                  } else {
+                    gsap.to(e.currentTarget.querySelectorAll('span'), { background: '#38BDF8', duration: 0.28, ease: 'power2.out', overwrite: 'auto' })
+                  }
+                }}
                 onMouseMove={e => {
                   if (!listening) return
                   const rect = e.currentTarget.getBoundingClientRect()
@@ -711,7 +731,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                     e.currentTarget.style.color = 'var(--text-muted)'
                   } else {
                     gsap.to(e.currentTarget, { rotateX: 0, rotateY: 0, duration: 0.7, ease: 'elastic.out(1, 0.45)' })
-                    gsap.to(e.currentTarget.querySelectorAll('span'), { scaleY: 1, duration: 0.35, ease: 'power2.out' })
+                    gsap.to(e.currentTarget.querySelectorAll('span'), { scaleY: 1, background: '#1779F7', duration: 0.35, ease: 'power2.out', overwrite: 'auto' })
                   }
                 }}
               >
