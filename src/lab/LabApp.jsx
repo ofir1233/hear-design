@@ -412,8 +412,10 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
         0.38
       )
 
-      // Push Daily Briefing below suggestions
-      if (db) tl.to(db, { y: 180, duration: 0.5, ease: 'expo.out' }, 0.22)
+      // Push Daily Briefing exactly below suggestions — dynamic based on actual height
+      const sugH = suggestions?.offsetHeight ?? 0
+      const dbPush = Math.max(0, sugH - 84)
+      if (db && dbPush > 0) tl.to(db, { y: dbPush, duration: 0.5, ease: 'expo.out' }, 0.22)
 
     } else {
       const tl = gsap.timeline()
