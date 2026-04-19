@@ -148,6 +148,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const settledPlaceholderRef  = useRef(null)
   const typewriterRef          = useRef(null)
   const focusedRef             = useRef(false)
+  const blurTimerRef           = useRef(null)
   const textRef                = useRef('')
   const listeningRef           = useRef(false)
   const logoHoveredRef         = useRef(false)
@@ -536,8 +537,15 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
               onKeyUp={e => {
                 if (e.key === 'Backspace' || e.key === 'Delete') onKeystroke?.('deleteEnd')
               }}
-              onFocus={() => { setFocused(true); focusedRef.current = true; onFocusChange?.(true) }}
-              onBlur={() => { setFocused(false); focusedRef.current = false; onFocusChange?.(false) }}
+              onFocus={() => {
+                clearTimeout(blurTimerRef.current)
+                setFocused(true); focusedRef.current = true; onFocusChange?.(true)
+              }}
+              onBlur={() => {
+                blurTimerRef.current = setTimeout(() => {
+                  setFocused(false); focusedRef.current = false; onFocusChange?.(false)
+                }, 420)
+              }}
               placeholder=""
               className="smooth-scroll w-full resize-none bg-transparent outline-none text-base leading-relaxed min-h-[28px] max-h-48 overflow-y-auto"
               style={{ color: 'var(--text-primary)', caretColor: 'var(--text-primary)' }}
