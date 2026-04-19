@@ -413,7 +413,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
       )
 
       // Push Daily Briefing below suggestions
-      if (db) tl.to(db, { y: 230, duration: 0.5, ease: 'expo.out' }, 0.22)
+      if (db) tl.to(db, { y: 180, duration: 0.5, ease: 'expo.out' }, 0.22)
 
     } else {
       const tl = gsap.timeline()
