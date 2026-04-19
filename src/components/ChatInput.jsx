@@ -175,7 +175,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
         const dy   = Math.max(0, rect.top  - e.clientY, e.clientY - rect.bottom)
         const dist = Math.sqrt(dx * dx + dy * dy)
 
-        const isBlue = focusedRef.current || listeningRef.current
+        const isBlue = focusedRef.current || listeningRef.current || !!textRef.current
         if (dist > GLOW_PROXIMITY || isBlue) {
           wrapper.style.boxShadow = isBlue
             ? '0 0 0 3px rgba(23,121,247,0.1), 0 4px 28px rgba(23,121,247,0.18)'
