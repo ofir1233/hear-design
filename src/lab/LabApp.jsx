@@ -1212,25 +1212,28 @@ Ask me anything about your operations, or explore a topic below to get started.`
                     </div>
                   ))}
                 </div>
-                <div ref={dailyBriefingRef} style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
-                  <DailyBriefing
-                    sidebarWidth={effectiveSidebarWidth}
-                    onPin={prompt => {
-                      const userMsg = { role: 'user', text: prompt }
-                      setMessages(prev => [...prev, userMsg])
-                      setChatDefaultText('')
-                      setSubmitted(true)
-                      setSettled(true)
-                      setMessages(prev => [...prev, {
-                        role: 'ai',
-                        text: "Here's your daily briefing summary:\n\nSentiment is tracking up and escalations are down vs. the 7-day average. The main area to watch is the spike in delivery-related contacts — up 34% vs. the 7-day average, likely tied to yesterday's logistics partner outage.\n\n**Key highlights:**\n- Calls handled: 1,284 (+12%)\n- Avg sentiment: 72% (+3pts)\n- Escalations: 23 (−8%)\n- Top agent: Martha Kellett at 94% CSAT\n\nWould you like to drill into any of these areas?"
-                      }])
-                    }}
-                  />
-                </div>
               </div>
             )}
           </div>
+
+          {!submitted && (
+            <div ref={dailyBriefingRef} style={{ marginTop: 12 }}>
+              <DailyBriefing
+                sidebarWidth={effectiveSidebarWidth}
+                onPin={prompt => {
+                  const userMsg = { role: 'user', text: prompt }
+                  setMessages(prev => [...prev, userMsg])
+                  setChatDefaultText('')
+                  setSubmitted(true)
+                  setSettled(true)
+                  setMessages(prev => [...prev, {
+                    role: 'ai',
+                    text: "Here's your daily briefing summary:\n\nSentiment is tracking up and escalations are down vs. the 7-day average. The main area to watch is the spike in delivery-related contacts — up 34% vs. the 7-day average, likely tied to yesterday's logistics partner outage.\n\n**Key highlights:**\n- Calls handled: 1,284 (+12%)\n- Avg sentiment: 72% (+3pts)\n- Escalations: 23 (−8%)\n- Top agent: Martha Kellett at 94% CSAT\n\nWould you like to drill into any of these areas?"
+                  }])
+                }}
+              />
+            </div>
+          )}
 
           {submitted && settled && (
             <div className="smooth-scroll" style={{
