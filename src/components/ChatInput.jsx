@@ -157,6 +157,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const beamTweensRef          = useRef([])
   const micContainerRef        = useRef(null)
   const logoButtonRef          = useRef(null)
+  const outerRef               = useRef(null)
 
   const GLOW_PROXIMITY = 120 // px from edge to start showing
 
@@ -342,6 +343,19 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     gsap.to(el, { x: logoHidden ? 32 : 0, duration: 0.28, ease: logoHidden ? 'expo.out' : 'expo.inOut' })
   }, [logoHidden])
 
+  // Close dropdowns + deactivate when clicking outside the entire component
+  useEffect(() => {
+    function handleOutsideClick(e) {
+      if (outerRef.current && !outerRef.current.contains(e.target)) {
+        setUploadOpen(false)
+        setMentionQuery(null)
+        textareaRef.current?.blur()
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
+
   // Force compact on settle — clear all inline height styles and release to CSS
   useEffect(() => {
     if (!settled) return
@@ -465,6 +479,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
 
   return (
     <div
+      ref={outerRef}
       data-inspector="ChatInput"
       className="relative w-full max-w-2xl mx-auto"
       onMouseDown={e => {
