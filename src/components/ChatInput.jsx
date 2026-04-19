@@ -152,6 +152,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const listeningRef           = useRef(false)
   const hoveringIconsRef       = useRef(false)
   const iconBlendRef           = useRef(0)
+  const iconLeaveTimerRef      = useRef(null)
   const beamRef                = useRef(null)
   const beamTweensRef          = useRef([])
   const micContainerRef        = useRef(null)
@@ -627,14 +628,6 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
 
           {/* Bottom row */}
           <div className="flex items-center justify-between" style={{ marginTop: (!settled && focused) ? 16 : 6, transition: 'margin-top 400ms ease' }}
-            onMouseEnter={() => {
-              hoveringIconsRef.current = true
-              gsap.to(iconBlendRef, { current: 1, duration: 0.28, ease: 'power2.out' })
-            }}
-            onMouseLeave={() => {
-              hoveringIconsRef.current = false
-              gsap.to(iconBlendRef, { current: 0, duration: 0.4, ease: 'power2.out' })
-            }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               {[
@@ -673,8 +666,8 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                     transition: 'color 150ms ease, background 150ms ease',
                     flexShrink: 0,
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
-                  onMouseLeave={e => { e.currentTarget.style.color = active ? 'var(--text-primary)' : 'var(--text-muted)'; e.currentTarget.style.background = active ? 'var(--bg-active)' : 'transparent' }}
+                  onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)'; clearTimeout(iconLeaveTimerRef.current); hoveringIconsRef.current = true; gsap.to(iconBlendRef, { current: 1, duration: 0.28, ease: 'power2.out' }) }}
+                  onMouseLeave={e => { e.currentTarget.style.color = active ? 'var(--text-primary)' : 'var(--text-muted)'; e.currentTarget.style.background = active ? 'var(--bg-active)' : 'transparent'; iconLeaveTimerRef.current = setTimeout(() => { hoveringIconsRef.current = false; gsap.to(iconBlendRef, { current: 0, duration: 0.4, ease: 'power2.out' }) }, 60) }}
                 >
                   {icon}
                 </button>
@@ -700,6 +693,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                   background: 'transparent',
                 }}
                 onMouseEnter={e => {
+                  clearTimeout(iconLeaveTimerRef.current); hoveringIconsRef.current = true; gsap.to(iconBlendRef, { current: 1, duration: 0.28, ease: 'power2.out' })
                   if (!listening) {
                     e.currentTarget.style.color = 'var(--text-primary)'
                   } else {
@@ -730,6 +724,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                     gsap.to(e.currentTarget, { rotateX: 0, rotateY: 0, duration: 0.7, ease: 'elastic.out(1, 0.45)' })
                     gsap.to(e.currentTarget.querySelectorAll('span'), { scaleY: 1, background: '#1779F7', duration: 0.35, ease: 'power2.out', overwrite: 'auto' })
                   }
+                  iconLeaveTimerRef.current = setTimeout(() => { hoveringIconsRef.current = false; gsap.to(iconBlendRef, { current: 0, duration: 0.4, ease: 'power2.out' }) }, 60)
                 }}
               >
                 <div style={{
@@ -757,6 +752,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                   pointerEvents: (text.trim() || loading) ? 'auto' : 'none',
                 }}
                 onMouseEnter={e => {
+                  clearTimeout(iconLeaveTimerRef.current); hoveringIconsRef.current = true; gsap.to(iconBlendRef, { current: 1, duration: 0.28, ease: 'power2.out' })
                   e.currentTarget.style.background = '#1779F7'
                   gsap.to(e.currentTarget, { scale: 1.08, duration: 0.2, ease: 'back.out(2)' })
                   const beam = beamRef.current
@@ -771,6 +767,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                   beamTweensRef.current = [rot, tl]
                 }}
                 onMouseLeave={e => {
+                  iconLeaveTimerRef.current = setTimeout(() => { hoveringIconsRef.current = false; gsap.to(iconBlendRef, { current: 0, duration: 0.4, ease: 'power2.out' }) }, 60)
                   e.currentTarget.style.background = '#007AFF'
                   gsap.to(e.currentTarget, { scale: 1, duration: 0.2, ease: 'power2.out' })
                   beamTweensRef.current.forEach(t => t.kill())
