@@ -1211,6 +1211,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
                       </button>
                     </div>
                   ))}
+                </div>
                 <div ref={dailyBriefingRef} style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
                   <DailyBriefing
                     sidebarWidth={effectiveSidebarWidth}
