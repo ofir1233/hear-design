@@ -719,12 +719,13 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
               {/* Submit button — arrow slides out, dots slide in */}
               <button
                 aria-label="Submit"
+                onMouseDown={e => e.preventDefault()}
                 onClick={() => { handleSubmit() }}
                 className="absolute inset-0 flex items-center justify-center overflow-hidden"
                 style={{
                   background: '#007AFF',
                   borderRadius: 8,
-                  transition: 'opacity 200ms ease, transform 200ms ease, background 150ms ease, box-shadow 150ms ease',
+                  transition: 'opacity 200ms ease, background 150ms ease',
                   opacity: (text.trim() || loading) ? 1 : 0,
                   transform: (text.trim() || loading) ? 'scale(1)' : 'scale(0.8)',
                   pointerEvents: (text.trim() || loading) ? 'auto' : 'none',
