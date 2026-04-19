@@ -225,6 +225,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
   const [chatDefaultText, setChatDefaultText] = useState('')
   const dashTabContentRef = useRef(null)
   const dashTabReady      = useRef(false)
+  const [entranceReady, setEntranceReady] = useState(false)
 
   const [sessions, setSessions]                   = useState([])
   const [activeSessionId, setActiveSessionId]     = useState(null)
@@ -365,7 +366,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
     tl.to(subtitle, { opacity: 1, y: 0, duration: 0.55 },                   0.48)
     tl.to(input,    { opacity: 1, y: 0, duration: 0.55 },                                        0.62)
     tl.to(cards,    { opacity: 1, y: 0, duration: 0.42, stagger: 0.045 },                        0.78)
-    dashTabReady.current = true
+    tl.add(() => { dashTabReady.current = true; setEntranceReady(true) })
   }, [activePage])
 
   // ── Focus expand / greeting shrink ─────────────────────────────
@@ -1045,7 +1046,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
               onSubmit={(text) => handleSubmit(text)}
               onMentionChange={setMentionActive}
               onUploadChange={setUploadActive}
-              onFocusChange={setInputFocused}
+              onFocusChange={v => { if (!v || entranceReady) setInputFocused(v) }}
               loading={loading}
               settled={settled}
               suggestedPrompts={companyConfig?.suggestedPrompts}
