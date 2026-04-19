@@ -412,8 +412,8 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
         0.38
       )
 
-      // Daily Briefing follows below
-      // Daily Briefing now inside suggestions container — moves with input
+      // Push Daily Briefing below suggestions
+      if (db) tl.to(db, { y: 230, duration: 0.5, ease: 'expo.out' }, 0.22)
 
     } else {
       const tl = gsap.timeline()
@@ -430,7 +430,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
       }, 0.1)
 
       // Daily Briefing back up
-
+      if (db) tl.to(db, { y: 0, duration: 0.5, ease: 'expo.out' }, 0.1)
 
       // Logo returns to full size
       tl.to(logo, { scale: 1, y: 0, duration: 0.45, ease: 'expo.out' }, 0.15)
