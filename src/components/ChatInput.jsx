@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { gsap } from 'gsap'
 import { MicIcon, ReturnIcon, NavigateIcon, EscIcon, AttachIcon } from './icons'
-import HearLogo from './HearLogo'
 
 const PROMPTS = [
   'Who are my top performing agents this month?',
@@ -132,7 +131,7 @@ function getActiveMention(text, cursorPos) {
   return { query: match[1], start: match.index }
 }
 
-export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, onFocusChange, onLogoHover, onKeystroke, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
+export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, onFocusChange, onKeystroke, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
   const [text, setText]           = useState(defaultText)
   const [hovered, setHovered]     = useState(false)
   const [focused, setFocused]     = useState(false)
@@ -151,12 +150,9 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const blurTimerRef           = useRef(null)
   const textRef                = useRef('')
   const listeningRef           = useRef(false)
-  const logoHoveredRef         = useRef(false)
-  const logoColorBlendRef      = useRef(0)   // 0 = orange, 1 = blue
   const beamRef                = useRef(null)
   const beamTweensRef          = useRef([])
   const micContainerRef        = useRef(null)
-  const logoButtonRef          = useRef(null)
   const outerRef               = useRef(null)
 
   const GLOW_PROXIMITY = 120 // px from edge to start showing
@@ -184,10 +180,10 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
           if (!isBlue) layer1.style.background = 'var(--border-input)'
           return
         }
-        const intensity = logoHoveredRef.current ? 1 : 1 - dist / GLOW_PROXIMITY
+        const intensity = 1 - dist / GLOW_PROXIMITY
         const x = e.clientX - rect.left
         const y = e.clientY - rect.top
-        const t  = listeningRef.current ? 1 : logoColorBlendRef.current
+        const t  = listeningRef.current ? 1 : 0
         const cr = Math.round(255 - 232 * t)
         const cg = Math.round(112 +   9 * t)
         const cb = Math.round( 86 + 161 * t)
@@ -213,14 +209,21 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) return
     const rec = new SR()
-    rec.continuous      = false
+    rec.continuous      = true
     rec.interimResults  = true
     rec.lang            = 'en-US'
     rec.onresult = (e) => {
       const transcript = Array.from(e.results).map(r => r[0].transcript).join('')
       setText(transcript)
     }
-    rec.onend = () => { setListening(false); listeningRef.current = false }
+    rec.onend = () => {
+      if (listeningRef.current) {
+        // Browser stopped unexpectedly — restart to keep listening
+        try { rec.start() } catch {}
+      } else {
+        setListening(false)
+      }
+    }
     rec.onerror = (e) => {
       setListening(false); listeningRef.current = false
       if (e.error === 'not-allowed') {
@@ -335,13 +338,6 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   }, [focused, settled]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Slide mic into logo's spot when logo hides, slide back when logo returns
-  const logoHidden = listening || !!text.trim() || focused
-
-  useEffect(() => {
-    const el = micContainerRef.current
-    if (!el) return
-    gsap.to(el, { x: logoHidden ? 32 : 0, duration: 0.28, ease: logoHidden ? 'expo.out' : 'expo.inOut' })
-  }, [logoHidden])
 
   // Close dropdowns + deactivate when clicking outside the entire component
   useEffect(() => {
@@ -663,29 +659,8 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
               ))}
             </div>
 
-            {/* Right: voice / submit cross-fade + hear logo */}
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: 4 }}
-              onMouseMove={e => {
-                // Only position-detect when focused is the sole reason logo is hidden
-                // (not listening/text — in those states the mic is in logo's spot but shouldn't trigger logo hover)
-                if (!focused || listening || text.trim()) return
-                const btn = logoButtonRef.current
-                if (!btn) return
-                const r = btn.getBoundingClientRect()
-                const inLogo = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom
-                if (inLogo === logoHoveredRef.current) return
-                logoHoveredRef.current = inLogo
-                gsap.to(logoColorBlendRef, { current: inLogo ? 1 : 0, duration: inLogo ? 0.35 : 0.45, ease: 'power2.out' })
-                onLogoHover?.(inLogo)
-              }}
-              onMouseLeave={() => {
-                if (!focused || !logoHoveredRef.current) return
-                logoHoveredRef.current = false
-                gsap.to(logoColorBlendRef, { current: 0, duration: 0.45, ease: 'power2.out' })
-                onLogoHover?.(false)
-              }}
-            >
+            {/* Right: voice / submit cross-fade */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div ref={micContainerRef} className="relative w-9 h-9">
               <button
                 aria-label="Voice input"
@@ -817,75 +792,6 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                   <ThinkingDots />
                 </span>
               </button>
-            </div>
-            <div style={{ position: 'relative', display: 'inline-flex', pointerEvents: logoHidden ? 'none' : 'auto' }}
-              onMouseEnter={e => {
-                const tip = e.currentTarget.querySelector('.logo-tooltip')
-                const rect = e.currentTarget.getBoundingClientRect()
-                tip.style.top = `${rect.top - tip.offsetHeight - 10}px`
-                tip.style.left = `${rect.left + rect.width / 2}px`
-                tip.style.opacity = '1'
-              }}
-              onMouseLeave={e => e.currentTarget.querySelector('.logo-tooltip').style.opacity = '0'}
-            >
-              <div className="logo-tooltip" style={{
-                position: 'fixed', top: 0, left: 0,
-                transform: 'translateX(-50%)',
-                background: 'var(--bg-card)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 8,
-                padding: '6px 10px',
-                whiteSpace: 'nowrap',
-                pointerEvents: 'none',
-                opacity: 0,
-                transition: 'opacity 150ms ease',
-                zIndex: 9999,
-              }}>
-                {/* nub pointing down toward icon */}
-                <div style={{
-                  position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
-                  width: 0, height: 0,
-                  borderLeft: '5px solid transparent',
-                  borderRight: '5px solid transparent',
-                  borderTop: '5px solid rgba(255,255,255,0.1)',
-                }} />
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
-                  Conversation mode
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1, fontFamily: "'Byrd', sans-serif" }}>
-                  Coming soon
-                </div>
-              </div>
-            <button
-              ref={logoButtonRef}
-              aria-label="Hear AI"
-              onClick={e => { e.preventDefault(); e.stopPropagation() }}
-              onMouseDown={e => e.preventDefault()}
-              style={{
-                width: 28, height: 28,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'transparent', border: 'none', borderRadius: 6, cursor: 'pointer',
-                color: 'var(--text-muted)',
-                transition: 'opacity 200ms ease, color 150ms ease',
-                opacity: logoHidden ? 0 : 1,
-                pointerEvents: logoHidden ? 'none' : 'auto',
-                flexShrink: 0,
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.color = 'var(--text-primary)'
-                logoHoveredRef.current = true
-                gsap.to(logoColorBlendRef, { current: 1, duration: 0.35, ease: 'power2.out' })
-                onLogoHover?.(true)
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.color = 'var(--text-muted)'
-                logoHoveredRef.current = false
-                gsap.to(logoColorBlendRef, { current: 0, duration: 0.45, ease: 'power2.out' })
-                onLogoHover?.(false)
-              }}
-            >
-              <HearLogo style={{ width: 20, height: 17 }} outline />
-            </button>
             </div>
             </div>
           </div>
