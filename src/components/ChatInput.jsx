@@ -476,7 +476,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   function handleSubmit() {
     if (!text.trim() || loading) return
     const message = text.trim()
-    setText('')
+    setText(''); textRef.current = ''
     setMentionQuery(null)
     setUploadOpen(false)
     // Snap textarea to compact before the input transitions to the bottom
