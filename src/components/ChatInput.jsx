@@ -201,38 +201,49 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const typewriterVisible = !settled && !loading
   const { display: typedHint, blink } = useTypewriter(typewriterActive, activePrompts)
 
-  function toggleListening() {
-    if (listening) {
-      recognitionRef.current?.stop()
-      return
-    }
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+
+  function startRecognition() {
     if (!SR) return
     const rec = new SR()
-    rec.continuous      = true
-    rec.interimResults  = true
-    rec.lang            = 'en-US'
+    rec.continuous     = true
+    rec.interimResults = true
+    rec.lang           = 'en-US'
     rec.onresult = (e) => {
       const transcript = Array.from(e.results).map(r => r[0].transcript).join('')
       setText(transcript)
     }
     rec.onend = () => {
+      // Always restart a fresh instance while user hasn't clicked to stop
       if (listeningRef.current) {
-        // Browser stopped unexpectedly — restart to keep listening
-        try { rec.start() } catch {}
+        setTimeout(() => {
+          if (listeningRef.current) startRecognition()
+        }, 80)
       } else {
         setListening(false)
       }
     }
     rec.onerror = (e) => {
-      setListening(false); listeningRef.current = false
       if (e.error === 'not-allowed') {
+        setListening(false); listeningRef.current = false
         alert('Microphone access was blocked. Please allow microphone permission for this site in your browser settings.')
       }
+      // Other errors (aborted, network) are transient — onend will restart
     }
     recognitionRef.current = rec
     rec.start()
+  }
+
+  function toggleListening() {
+    if (listening) {
+      listeningRef.current = false
+      recognitionRef.current?.stop()
+      setListening(false)
+      return
+    }
+    if (!SR) return
     setListening(true); listeningRef.current = true
+    startRecognition()
   }
 
   // Sync externally-set defaultText (e.g. from Related click)
