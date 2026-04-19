@@ -140,7 +140,6 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const [activeIndex, setActiveIndex]   = useState(0)
   const [uploadOpen, setUploadOpen]     = useState(initialUploadOpen)
   const [listening, setListening] = useState(false)
-  const [hoveringIcons, setHoveringIcons] = useState(false)
   const textareaRef          = useRef(null)
   const recognitionRef       = useRef(null)
   const glowWrapperRef       = useRef(null)
@@ -531,7 +530,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
         <div style={{
           position: 'absolute', inset: 0, borderRadius: 'inherit',
           background: '#1779F7',
-          opacity: (focused || !!text || listening || hoveringIcons) ? 1 : 0,
+          opacity: (focused || !!text || listening) ? 1 : 0,
           transition: 'opacity 300ms ease',
           transitionDelay: (focused && !text && !listening) ? '420ms' : '0ms',
           pointerEvents: 'none',
@@ -630,12 +629,10 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
           <div className="flex items-center justify-between" style={{ marginTop: (!settled && focused) ? 16 : 6, transition: 'margin-top 400ms ease' }}
             onMouseEnter={() => {
               hoveringIconsRef.current = true
-              setHoveringIcons(true)
               gsap.to(iconBlendRef, { current: 1, duration: 0.28, ease: 'power2.out' })
             }}
             onMouseLeave={() => {
               hoveringIconsRef.current = false
-              setHoveringIcons(false)
               gsap.to(iconBlendRef, { current: 0, duration: 0.4, ease: 'power2.out' })
             }}
           >
