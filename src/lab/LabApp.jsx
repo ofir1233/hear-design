@@ -1051,18 +1051,16 @@ Ask me anything about your operations, or explore a topic below to get started.`
                   const tweens = gsap.getTweensOf(ring)
                   const overlay = document.getElementById('logoDeleteOverlay')
                   const gradPath = document.getElementById('logoGradPath')
-                  const rotTween = tweens.find(t => t.vars.rotation !== undefined)
                   if (dir === 'delete') {
-                    if (rotTween) rotTween.timeScale(-1)
+                    tweens.forEach(t => gsap.to(t, { timeScale: -1, duration: 0.2, ease: 'power2.out' }))
                     gsap.to(ring, { filter: 'sepia(1) saturate(3) hue-rotate(-20deg)', duration: 0.3, ease: 'power2.out', overwrite: 'auto' })
                     if (gradPath) gsap.to(gradPath, { opacity: 0.08, duration: 0.25, ease: 'power2.out', overwrite: true })
                     if (overlay)  gsap.to(overlay,  { opacity: 0.72, duration: 0.3, ease: 'power2.out', overwrite: true })
                   } else if (dir === 'deleteEnd' || dir === 'add') {
-                    if (rotTween) rotTween.timeScale(1)
-
+                    tweens.forEach(t => gsap.to(t, { timeScale: 1, duration: 0.35, ease: 'power2.inOut' }))
                     gsap.killTweensOf(ring, 'filter')
-                    gsap.to(ring, { filter: 'none', duration: 0.35, ease: 'power2.out', overwrite: 'auto' })
-                    if (overlay)  { gsap.killTweensOf(overlay);  gsap.to(overlay,  { opacity: 0,    duration: 0.45, ease: 'power2.out' }) }
+                    gsap.set(ring, { filter: 'none' })
+                    if (overlay)  { gsap.killTweensOf(overlay, 'opacity');  gsap.to(overlay,  { opacity: 0,    duration: 0.45, ease: 'power2.out' }) }
                     if (gradPath) { gsap.killTweensOf(gradPath, 'opacity'); gsap.to(gradPath, { opacity: 0.85, duration: 0.45, ease: 'power2.out' }) }
                   }
                 }
@@ -1154,17 +1152,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
                 }}>
                   AI Suggestions
                 </span>
-                <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center',
-                  maxHeight: 236, overflowY: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none',
-                  width: '100%',
-                }}
-                  onScroll={e => {
-                    const el = e.currentTarget
-                    const fade = el.nextSibling
-                    if (fade) fade.style.opacity = el.scrollTop + el.clientHeight >= el.scrollHeight - 4 ? '0' : '1'
-                  }}
-                >
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
                   {(companyConfig?.suggestedPrompts ?? [
                     'What are the top call topics this week?',
                     'Show agent performance trends',
@@ -1172,7 +1160,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
                     'Summarize customer sentiment',
                     'Which issues are escalating?',
                     'Compare teams this month',
-                  ]).map((prompt, i) => (
+                  ]).slice(0, 5).map((prompt, i) => (
                     <div
                       key={i}
                       style={{ position: 'relative', padding: '1px', borderRadius: 999, opacity: 0, background: 'var(--border-default)', transition: 'background 0ms' }}
@@ -1218,16 +1206,12 @@ Ask me anything about your operations, or explore a topic below to get started.`
                     </div>
                   ))}
                 </div>
-                {/* Fade overlay — signals more content below */}
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0, height: 64,
-                  background: 'linear-gradient(to bottom, transparent, var(--bg-main, #0f1117))',
-                  pointerEvents: 'none', transition: 'opacity 200ms ease',
-                }} />
-                </div>{/* close position:relative wrapper */}
-                {/* Daily Briefing sits directly below the suggestions fade */}
-                {!submitted && !settled && (
-                  <div ref={dailyBriefingRef} style={{ marginTop: 16, width: '100%', display: 'flex', justifyContent: 'center' }}>
+              </div>
+            )}
+          </div>
+
+          {!submitted && (
+            <div ref={dailyBriefingRef} style={{ marginTop: 16 }}>
             <DailyBriefing
               sidebarWidth={effectiveSidebarWidth}
               onPin={prompt => {
@@ -1242,11 +1226,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
                 }])
               }}
             />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {submitted && settled && (
             <div className="smooth-scroll" style={{
