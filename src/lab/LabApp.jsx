@@ -413,7 +413,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
       )
 
       // Daily Briefing follows below
-      if (db) tl.to(db, { y: 230, duration: 0.5, ease: 'expo.out' }, 0.22)
+      // Daily Briefing now inside suggestions container — moves with input
 
     } else {
       const tl = gsap.timeline()
@@ -430,7 +430,7 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
       }, 0.1)
 
       // Daily Briefing back up
-      if (db) tl.to(db, { y: 0, duration: 0.5, ease: 'expo.out' }, 0.1)
+
 
       // Logo returns to full size
       tl.to(logo, { scale: 1, y: 0, duration: 0.45, ease: 'expo.out' }, 0.15)
@@ -1211,29 +1211,25 @@ Ask me anything about your operations, or explore a topic below to get started.`
                       </button>
                     </div>
                   ))}
+                <div ref={dailyBriefingRef} style={{ marginTop: 12, display: 'flex', justifyContent: 'center' }}>
+                  <DailyBriefing
+                    sidebarWidth={effectiveSidebarWidth}
+                    onPin={prompt => {
+                      const userMsg = { role: 'user', text: prompt }
+                      setMessages(prev => [...prev, userMsg])
+                      setChatDefaultText('')
+                      setSubmitted(true)
+                      setSettled(true)
+                      setMessages(prev => [...prev, {
+                        role: 'ai',
+                        text: "Here's your daily briefing summary:\n\nSentiment is tracking up and escalations are down vs. the 7-day average. The main area to watch is the spike in delivery-related contacts — up 34% vs. the 7-day average, likely tied to yesterday's logistics partner outage.\n\n**Key highlights:**\n- Calls handled: 1,284 (+12%)\n- Avg sentiment: 72% (+3pts)\n- Escalations: 23 (−8%)\n- Top agent: Martha Kellett at 94% CSAT\n\nWould you like to drill into any of these areas?"
+                      }])
+                    }}
+                  />
                 </div>
               </div>
             )}
           </div>
-
-          {!submitted && (
-            <div ref={dailyBriefingRef} style={{ marginTop: 16 }}>
-            <DailyBriefing
-              sidebarWidth={effectiveSidebarWidth}
-              onPin={prompt => {
-                const userMsg = { role: 'user', text: prompt }
-                setMessages(prev => [...prev, userMsg])
-                setChatDefaultText('')
-                setSubmitted(true)
-                setSettled(true)
-                setMessages(prev => [...prev, {
-                  role: 'ai',
-                  text: "Here's your daily briefing summary:\n\nSentiment is tracking up and escalations are down vs. the 7-day average. The main area to watch is the spike in delivery-related contacts — up 34% vs. the 7-day average, likely tied to yesterday's logistics partner outage.\n\n**Key highlights:**\n- Calls handled: 1,284 (+12%)\n- Avg sentiment: 72% (+3pts)\n- Escalations: 23 (−8%)\n- Top agent: Martha Kellett at 94% CSAT\n\nWould you like to drill into any of these areas?"
-                }])
-              }}
-            />
-            </div>
-          )}
 
           {submitted && settled && (
             <div className="smooth-scroll" style={{
