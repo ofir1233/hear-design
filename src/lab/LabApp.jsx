@@ -412,10 +412,8 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
         0.38
       )
 
-      // Push Daily Briefing exactly below suggestions — dynamic based on actual height
-      const sugH = suggestions?.offsetHeight ?? 0
-      const dbPush = Math.max(0, sugH - 84)
-      if (db && dbPush > 0) tl.to(db, { y: dbPush, duration: 0.5, ease: 'expo.out' }, 0.22)
+      // Hide Daily Briefing when chat is active
+      if (db) tl.to(db, { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0)
 
     } else {
       const tl = gsap.timeline()
@@ -431,8 +429,8 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
         y: 0, scale: 1, duration: 0.5, ease: 'expo.out',
       }, 0.1)
 
-      // Daily Briefing back up
-      if (db) tl.to(db, { y: 0, duration: 0.5, ease: 'expo.out' }, 0.1)
+      // Restore Daily Briefing
+      if (db) tl.to(db, { opacity: 1, y: 0, duration: 0.4, ease: 'expo.out' }, 0.3)
 
       // Logo returns to full size
       tl.to(logo, { scale: 1, y: 0, duration: 0.45, ease: 'expo.out' }, 0.15)
