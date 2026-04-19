@@ -803,7 +803,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                 </span>
               </button>
             </div>
-            <div style={{ position: 'relative', display: 'inline-flex' }}
+            <div style={{ position: 'relative', display: 'inline-flex', pointerEvents: logoHidden ? 'none' : 'auto' }}
               onMouseEnter={e => {
                 const tip = e.currentTarget.querySelector('.logo-tooltip')
                 const rect = e.currentTarget.getBoundingClientRect()
