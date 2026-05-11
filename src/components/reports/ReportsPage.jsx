@@ -1,58 +1,23 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import { AgGridReact } from 'ag-grid-react'
-import { ModuleRegistry, AllCommunityModule, themeQuartz, colorSchemeDark, colorSchemeLight } from 'ag-grid-community'
-
-ModuleRegistry.registerModules([AllCommunityModule])
+import { useState, useMemo, useCallback } from 'react'
+import { BsPinFill, BsPin } from 'react-icons/bs'
+import Badge from '../Badge.jsx'
+import Button from '../Button.jsx'
 
 function navigate(path, state = {}) {
   window.history.pushState(state, '', path)
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
-import { BsPinFill, BsPin } from 'react-icons/bs'
-import Badge from '../Badge.jsx'
-import Button from '../Button.jsx'
-
-// ── AG Grid themes ─────────────────────────────────────────────────────────────
-const THEME_PARAMS = {
-  fontFamily: "'Byrd', sans-serif",
-  fontSize: 13,
-  cellHorizontalPaddingScale: 1.1,
-  wrapperBorderRadius: 0,
-}
-const lightTheme = themeQuartz.withPart(colorSchemeLight).withParams({
-  ...THEME_PARAMS,
-  backgroundColor:            '#F5F5F3',
-  foregroundColor:            '#181818',
-  headerBackgroundColor:      '#F5F5F3',
-  headerTextColor:            '#606060',
-  borderColor:                '#E5E7EB',
-  rowHoverColor:              '#E8E8E6',
-  selectedRowBackgroundColor: 'rgba(23,121,247,0.07)',
-  oddRowBackgroundColor:      '#F5F5F3',
-  headerColumnResizeHandleColor: '#D1D5DB',
-})
-const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
-  ...THEME_PARAMS,
-  backgroundColor:            '#242424',
-  foregroundColor:            '#F4F3F1',
-  headerBackgroundColor:      '#181818',
-  headerTextColor:            '#9B9B9B',
-  borderColor:                '#333333',
-  rowHoverColor:              '#2A2A2A',
-  selectedRowBackgroundColor: 'rgba(23,121,247,0.12)',
-  oddRowBackgroundColor:      '#242424',
-  headerColumnResizeHandleColor: '#444444',
-})
-
-const DEFAULT_COL_DEF = {
-  sortable: true,
-  resizable: true,
-  suppressMovable: false,
-  cellStyle: { display: 'flex', alignItems: 'center' },
-}
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
+
+function ChevronIcon({ open }) {
+  return (
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+      style={{ transition: 'transform 200ms ease', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+      <path d="M3 2l4 3-4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 function PlusIcon() {
   return (
@@ -104,7 +69,6 @@ function MoreIcon() {
   )
 }
 
-
 function SparkleIcon() {
   return (
     <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
@@ -131,14 +95,11 @@ function Sparkline({ data, color = '#FF7056', height = 56 }) {
   const [lx, ly] = pts.at(-1)
   const gid = `sg${color.replace('#', '')}`
 
-  // Convert SVG-space coordinates to % so dots stay perfectly round
-  // even when the SVG is stretched via preserveAspectRatio="none"
   const dotLeft = `${(lx / W) * 100}%`
   const dotTop  = `${(ly / H) * 100}%`
 
   return (
     <div style={{ position: 'relative', height }}>
-      {/* Line + area — stretched to fill card width */}
       <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" fill="none"
         style={{ display: 'block' }}>
         <defs>
@@ -151,36 +112,25 @@ function Sparkline({ data, color = '#FF7056', height = 56 }) {
         <polyline points={line} stroke={color} strokeWidth="1.8" strokeLinecap="round"
           strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
       </svg>
-
-      {/* Pulsing halo — CSS div, always a perfect circle */}
       <div style={{
-        position: 'absolute',
-        left: dotLeft, top: dotTop,
-        width: 14, height: 14,
-        borderRadius: '50%',
-        background: color,
-        opacity: 0.18,
+        position: 'absolute', left: dotLeft, top: dotTop,
+        width: 14, height: 14, borderRadius: '50%',
+        background: color, opacity: 0.18,
         transform: 'translate(-50%, -50%)',
         animation: 'spark-pulse 2s ease-in-out infinite',
         pointerEvents: 'none',
       }} />
-
-      {/* Solid dot — CSS div, always a perfect circle */}
       <div style={{
-        position: 'absolute',
-        left: dotLeft, top: dotTop,
-        width: 8, height: 8,
-        borderRadius: '50%',
-        background: color,
-        transform: 'translate(-50%, -50%)',
+        position: 'absolute', left: dotLeft, top: dotTop,
+        width: 8, height: 8, borderRadius: '50%',
+        background: color, transform: 'translate(-50%, -50%)',
         pointerEvents: 'none',
       }} />
     </div>
   )
 }
 
-// ── Preview data map (keyed by report ID) ────────────────────────────────────
-// Provides sparkline + stat data for any report that can be pinned.
+// ── Data ──────────────────────────────────────────────────────────────────────
 
 const PREVIEW_DATA = {
   '694d64ceefa95f9cc2ababdb3': {
@@ -215,14 +165,11 @@ const PREVIEW_DATA = {
   },
 }
 
-// Default pinned IDs — first 3 have full preview data
 const DEFAULT_PINNED = [
   '694d64ceefa95f9cc2ababdb3',
   '6942b63cfd8049b0c779c75b',
   '694265261dcb88436adfcac5',
 ]
-
-// ── Status config ──────────────────────────────────────────────────────────────
 
 const STATUS_CFG = {
   'ai-generated': { label: 'AI Generated', border: 'var(--c100)' },
@@ -240,8 +187,6 @@ const STATUS_FILTERS = [
   { value: 'failed',       label: 'Failed' },
   { value: 'not-executed', label: 'Not Executed' },
 ]
-
-// ── Mock data ──────────────────────────────────────────────────────────────────
 
 const MOCK_REPORTS = [
   { id: '694d64ceefa95f9cc2ababdb3', name: 'Daily trends report',                                    status: 'ai-generated', schedule: 'Daily',     createdAt: '2026-03-08', trend: 'Billing complaints up 12%, resolution time improved 8% vs. last week.' },
@@ -268,16 +213,34 @@ const MOCK_REPORTS = [
   { id: '6852ccbc2e71d4df0f611a30',  name: 'Agent performance: call topics',                        status: 'not-executed', schedule: 'Daily',     createdAt: '2026-02-25', trend: null },
 ]
 
-// ── Status badge atoms ─────────────────────────────────────────────────────────
+// ── Status atoms ───────────────────────────────────────────────────────────────
+
+const STATUS_DOT_COLOR = {
+  'ai-generated': 'var(--c100)',
+  'running':      '#3B82F6',
+  'completed':    'var(--g100)',
+  'failed':       '#DC2626',
+  'not-executed': 'var(--border-default)',
+}
+
+function StatusDot({ status }) {
+  return (
+    <span style={{
+      width: 7, height: 7, borderRadius: '50%',
+      background: STATUS_DOT_COLOR[status] ?? 'var(--border-default)',
+      flexShrink: 0, display: 'inline-block',
+    }} />
+  )
+}
 
 function AIBadge() {
   return (
-    <span data-inspector="ReportStatusBadge" style={{
+    <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 4,
       height: 20, padding: '0 8px', borderRadius: 999,
       background: 'rgba(255,112,86,0.12)', border: '1px solid rgba(255,112,86,0.28)',
       color: 'var(--c100)', fontSize: 11, fontWeight: 600,
-      fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
+      fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', flexShrink: 0,
     }}>
       <SparkleIcon /> AI Generated
     </span>
@@ -292,7 +255,7 @@ function FailedBadge() {
       background: 'rgba(220,38,38,0.10)', border: '1px solid rgba(220,38,38,0.28)',
       color: '#DC2626', fontSize: 11, fontWeight: 600,
       fontFamily: "'Byrd', sans-serif",
-      letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+      letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0,
     }}>
       Failed
     </span>
@@ -307,7 +270,7 @@ function NotExecutedBadge() {
       background: 'var(--bg-active)', border: '1px solid var(--border-input)',
       color: 'var(--text-muted)', fontSize: 11, fontWeight: 600,
       fontFamily: "'Byrd', sans-serif",
-      letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+      letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0,
     }}>
       Not Executed
     </span>
@@ -323,20 +286,53 @@ function StatusBadge({ status }) {
   return null
 }
 
-// ── Schedule pill ──────────────────────────────────────────────────────────────
-
 function SchedulePill({ label }) {
   return (
-    <span data-inspector="SchedulePill" style={{
+    <span style={{
       display: 'inline-flex', alignItems: 'center',
       height: 20, padding: '0 8px', borderRadius: 4,
       background: 'var(--bg-active)', border: '1px solid var(--border-input)',
       color: 'var(--text-muted)', fontSize: 10, fontWeight: 600,
       fontFamily: "'Byrd', sans-serif",
-      letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap',
+      letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0,
     }}>
       {label}
     </span>
+  )
+}
+
+// ── Toggle ────────────────────────────────────────────────────────────────────
+
+function Toggle({ value, onChange }) {
+  const [on, setOn] = useState(value ?? true)
+  function handleClick(e) {
+    e.stopPropagation()
+    const next = !on
+    setOn(next)
+    onChange?.(next)
+  }
+  return (
+    <button
+      onClick={handleClick}
+      style={{
+        position: 'relative',
+        width: 32, height: 18, borderRadius: 9,
+        background: on ? 'var(--b100)' : 'var(--border-default)',
+        border: 'none', cursor: 'pointer', flexShrink: 0, padding: 0,
+        transition: 'background 200ms ease',
+        boxShadow: on ? '0 0 0 3px rgba(23,121,247,0.12)' : 'none',
+        outline: 'none',
+      }}
+    >
+      <span style={{
+        position: 'absolute',
+        top: 2, left: on ? 14 : 2,
+        width: 14, height: 14, borderRadius: '50%',
+        background: '#fff',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+        transition: 'left 180ms cubic-bezier(0.34,1.56,0.64,1)',
+      }} />
+    </button>
   )
 }
 
@@ -344,7 +340,7 @@ function SchedulePill({ label }) {
 
 function StatusTabs({ active, onChange, counts }) {
   return (
-    <div data-inspector="ReportStatusTabs" style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+    <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
       {STATUS_FILTERS.map(f => {
         const isActive = active === f.value
         const count = counts[f.value]
@@ -386,101 +382,156 @@ function StatusTabs({ active, onChange, counts }) {
   )
 }
 
+// ── ReportRow (accordion item) ────────────────────────────────────────────────
 
-// ── RowMenu ───────────────────────────────────────────────────────────────────
-
-function MenuRow({ icon, label, onClick, danger, highlight }) {
-  const [hov, setHov] = useState(false)
+function FieldLabel({ children }) {
   return (
-    <button
-      onMouseDown={e => e.preventDefault()}
-      onClick={onClick}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => setHov(false)}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 9,
-        width: '100%', padding: '7px 12px',
-        background: hov ? 'var(--bg-active)' : 'transparent',
-        border: 'none', cursor: 'pointer', textAlign: 'left',
-        color: danger ? '#DC2626' : highlight ? 'var(--c100)' : 'var(--text-secondary)',
-        fontSize: 12, fontFamily: "'Byrd', sans-serif", fontWeight: 500,
-        transition: 'background 100ms ease',
-      }}
-    >
-      {icon}
-      {label}
-    </button>
+    <span style={{
+      fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
+      textTransform: 'uppercase', color: 'var(--text-muted)',
+      fontFamily: "'Byrd', sans-serif",
+    }}>
+      {children}
+    </span>
   )
 }
 
-function RowMenu({ isPinned, onTogglePin }) {
-  const [open, setOpen] = useState(false)
-  const [pos, setPos]   = useState({ top: 0, right: 0 })
-  const btnRef = useRef(null)
-
-  useEffect(() => {
-    if (!open) return
-    function onDown(e) {
-      if (btnRef.current && !btnRef.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', onDown)
-    return () => document.removeEventListener('mousedown', onDown)
-  }, [open])
-
-  function handleOpen(e) {
-    e.stopPropagation()
-    const r = btnRef.current.getBoundingClientRect()
-    setPos({ top: r.bottom + 4, right: window.innerWidth - r.right })
-    setOpen(o => !o)
-  }
+function ReportRow({ report, isOpen, onToggle, isPinned, onTogglePin }) {
+  const showStatusBadge = report.status === 'failed' || report.status === 'not-executed'
+  const defaultOn = report.status !== 'failed' && report.status !== 'not-executed'
 
   return (
-    <div ref={btnRef}>
-      <button
-        onClick={handleOpen}
+    <div style={{
+      background: 'var(--bg-card)',
+      border: `1px solid ${isOpen ? 'var(--border-default)' : 'var(--border-input)'}`,
+      borderRadius: 10,
+      overflow: 'hidden',
+      transition: 'border-color 150ms ease, box-shadow 150ms ease',
+      boxShadow: isOpen ? '0 2px 12px rgba(0,0,0,0.07)' : 'none',
+    }}>
+      {/* ── Collapsed header ── */}
+      <div
+        onClick={onToggle}
         style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          width: 26, height: 26, borderRadius: 5,
-          background: open ? 'var(--bg-active)' : 'var(--bg-canvas)',
-          border: '1px solid var(--border-input)',
-          cursor: 'pointer', color: 'var(--text-secondary)',
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '0 14px', height: 44,
+          cursor: 'pointer',
+          background: isOpen ? 'var(--bg-active)' : 'transparent',
+          transition: 'background 120ms ease',
+          userSelect: 'none',
         }}
+        onMouseEnter={e => { if (!isOpen) e.currentTarget.style.background = 'var(--bg-active)' }}
+        onMouseLeave={e => { if (!isOpen) e.currentTarget.style.background = 'transparent' }}
       >
-        <MoreIcon />
-      </button>
-
-      {open && createPortal(
-        <div style={{
-          position: 'fixed', top: pos.top, right: pos.right,
-          background: 'var(--bg-card)', border: '1px solid var(--border-default)',
-          borderRadius: 8, boxShadow: '0 8px 28px rgba(0,0,0,0.25)',
-          zIndex: 9999, minWidth: 168, padding: '4px 0',
+        <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <ChevronIcon open={isOpen} />
+        </span>
+        <StatusDot status={report.status} />
+        <span style={{
+          flex: 1, fontSize: 13, fontWeight: 600,
+          color: report.status === 'not-executed' ? 'var(--text-muted)' : 'var(--text-primary)',
+          fontFamily: "'Byrd', sans-serif",
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
-          <MenuRow
-            icon={isPinned ? <BsPinFill size={13} /> : <BsPin size={13} />}
-            label={isPinned ? 'Unpin from top' : 'Pin to top'}
-            onClick={() => { onTogglePin(); setOpen(false) }}
-            highlight={!isPinned}
-          />
-          <MenuRow icon={
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M7 2H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
-              <path d="M9 1h4v4M13 1L7.5 6.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          } label="Open report" onClick={() => setOpen(false)} />
-          <div style={{ height: 1, background: 'var(--border-input)', margin: '4px 0' }} />
-          <MenuRow icon={
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-              <path d="M2 4h10M5 4V2.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 .5.5V4M11 4l-.7 7.5a.5.5 0 0 1-.5.5H4.2a.5.5 0 0 1-.5-.5L3 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          } label="Delete" onClick={() => setOpen(false)} danger />
-        </div>,
-        document.body
-      )}
+          {report.name}
+        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {report.status === 'ai-generated' && <AIBadge />}
+          <SchedulePill label={report.schedule} />
+          {showStatusBadge && <StatusBadge status={report.status} />}
+          <Toggle value={defaultOn} />
+        </div>
+      </div>
+
+      {/* ── Expanded body ── */}
+      <div style={{
+        maxHeight: isOpen ? 500 : 0,
+        overflow: 'hidden',
+        transition: 'max-height 260ms ease',
+      }}>
+        <div style={{
+          padding: '14px 16px 16px',
+          borderTop: '1px solid var(--border-input)',
+          background: 'var(--bg-canvas)',
+          display: 'flex', flexDirection: 'column', gap: 12,
+        }}>
+          {/* Trend text */}
+          {report.trend ? (
+            <p style={{
+              margin: 0, fontSize: 13, color: 'var(--text-secondary)',
+              fontFamily: "'Byrd', sans-serif", lineHeight: 1.55,
+            }}>
+              {report.trend}
+            </p>
+          ) : (
+            <p style={{
+              margin: 0, fontSize: 12, color: 'var(--text-muted)',
+              fontFamily: "'Byrd', sans-serif", fontStyle: 'italic',
+            }}>
+              No data yet — this report hasn't been executed.
+            </p>
+          )}
+
+          {/* Fields */}
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <FieldLabel>Schedule</FieldLabel>
+              <SchedulePill label={report.schedule} />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <FieldLabel>Created</FieldLabel>
+              <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
+                {report.createdAt}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <FieldLabel>Status</FieldLabel>
+              <StatusBadge status={report.status} />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            paddingTop: 12, borderTop: '1px solid var(--border-input)',
+            flexWrap: 'wrap',
+          }}>
+            <Button size="sm" onClick={() => navigate(`/reports/${report.id}`)}>
+              ↗ Open Report
+            </Button>
+            <Button variant="ghost" size="sm">↻ Re-run</Button>
+            <Button variant="ghost" size="sm">⧉ Duplicate</Button>
+            <button
+              onClick={e => { e.stopPropagation(); onTogglePin() }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                height: 28, padding: '0 10px', borderRadius: 6,
+                background: isPinned ? 'rgba(23,121,247,0.07)' : 'transparent',
+                border: `1px solid ${isPinned ? 'rgba(23,121,247,0.22)' : 'var(--border-input)'}`,
+                color: isPinned ? 'var(--b100)' : 'var(--text-secondary)',
+                fontSize: 12, fontFamily: "'Byrd', sans-serif", fontWeight: 500,
+                cursor: 'pointer', transition: 'all 150ms ease',
+              }}
+            >
+              {isPinned ? <BsPinFill size={11} /> : <BsPin size={11} />}
+              {isPinned ? 'Pinned' : 'Pin'}
+            </button>
+            <div style={{ flex: 1 }} />
+            <button style={{
+              display: 'inline-flex', alignItems: 'center',
+              height: 28, padding: '0 10px', borderRadius: 6,
+              background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)',
+              color: '#DC2626', fontSize: 12, fontFamily: "'Byrd', sans-serif", fontWeight: 500,
+              cursor: 'pointer',
+            }}>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
-
 
 // ── ReportCard (grid view) ─────────────────────────────────────────────────────
 
@@ -490,15 +541,12 @@ function ReportCard({ report }) {
 
   return (
     <div
-      data-inspector="ReportCard"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
         background: 'var(--bg-card)',
         border: `1px solid ${hovered ? cfg.border : 'var(--border-input)'}`,
-        borderRadius: 12,
-        padding: '16px',
-        cursor: 'pointer',
+        borderRadius: 12, padding: '16px', cursor: 'pointer',
         transition: 'border-color 180ms ease, box-shadow 180ms ease',
         boxShadow: hovered ? `0 0 0 3px ${cfg.border}20` : 'none',
         display: 'flex', flexDirection: 'column', gap: 10,
@@ -508,55 +556,26 @@ function ReportCard({ report }) {
         <StatusBadge status={report.status} />
         <SchedulePill label={report.schedule} />
       </div>
-
       <div style={{ flex: 1 }}>
-        <p style={{
-          margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
-          fontFamily: "'Byrd', sans-serif", lineHeight: 1.45,
-        }}>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", lineHeight: 1.45 }}>
           {report.name}
         </p>
-        <p style={{
-          margin: '4px 0 0', fontSize: 11, color: 'var(--text-muted)',
-          fontFamily: "'Byrd', sans-serif",
-        }}>
+        <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
           {report.id.slice(0, 20)}…
         </p>
       </div>
-
       {report.trend ? (
-        <p style={{
-          margin: 0, fontSize: 12, color: 'var(--text-secondary)',
-          fontFamily: "'Byrd', sans-serif", lineHeight: 1.5,
-          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-        }}>
+        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {report.trend}
         </p>
       ) : (
-        <p style={{
-          margin: 0, fontSize: 12, color: 'var(--text-muted)',
-          fontFamily: "'Byrd', sans-serif", fontStyle: 'italic',
-        }}>
+        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", fontStyle: 'italic' }}>
           No data yet
         </p>
       )}
-
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
-          {report.createdAt}
-        </span>
-        <button
-          onClick={e => e.stopPropagation()}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: 24, height: 24, borderRadius: 4,
-            background: hovered ? 'var(--bg-active)' : 'transparent',
-            border: hovered ? '1px solid var(--border-input)' : '1px solid transparent',
-            cursor: 'pointer', color: 'var(--text-secondary)',
-            transition: 'background 150ms ease, border-color 150ms ease',
-          }}
-        >
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{report.createdAt}</span>
+        <button onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 4, background: hovered ? 'var(--bg-active)' : 'transparent', border: hovered ? '1px solid var(--border-input)' : '1px solid transparent', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'background 150ms ease, border-color 150ms ease' }}>
           <MoreIcon />
         </button>
       </div>
@@ -572,80 +591,39 @@ function PinnedReportCard({ report }) {
 
   return (
     <div
-      data-inspector="PinnedReportCard"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        flex: '1 1 340px',
-        minWidth: 320,
-        maxWidth: 540,
+        flex: '1 1 340px', minWidth: 320, maxWidth: 540,
         background: 'var(--bg-card)',
         border: `1px solid ${hovered ? cfg.border : 'var(--border-input)'}`,
-        borderRadius: 12,
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        cursor: 'pointer',
+        borderRadius: 12, display: 'flex', flexDirection: 'column',
+        overflow: 'hidden', cursor: 'pointer',
         transition: 'border-color 180ms ease, box-shadow 180ms ease',
         boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.12)' : '0 1px 4px rgba(0,0,0,0.08)',
       }}
     >
-      {/* ─ Header ─ */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '14px 14px 0' }}>
         <StatusBadge status={report.status} />
         <SchedulePill label={report.schedule} />
         <div style={{ flex: 1 }} />
-        <button
-          onClick={e => e.stopPropagation()}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 3,
-            height: 22, padding: '0 8px', borderRadius: 5,
-            background: hovered ? 'var(--bg-active)' : 'transparent',
-            border: '1px solid var(--border-input)',
-            color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 600,
-            fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
-            transition: 'background 150ms ease',
-          }}
-        >
+        <button onClick={e => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, height: 22, padding: '0 8px', borderRadius: 5, background: hovered ? 'var(--bg-active)' : 'transparent', border: '1px solid var(--border-input)', color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 600, fontFamily: "'Byrd', sans-serif", cursor: 'pointer', transition: 'background 150ms ease' }}>
           Open ↗
         </button>
       </div>
-
-      {/* ─ Title ─ */}
       <div style={{ padding: '8px 14px 0' }}>
-        <p style={{
-          margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)',
-          fontFamily: "'Byrd', sans-serif",
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {report.name}
         </p>
       </div>
-
-      {/* ─ Sparkline ─ */}
       <div style={{ padding: '10px 14px 6px' }}>
         <Sparkline data={report.sparkData} color={report.sparkColor} height={52} />
       </div>
-
-      {/* ─ Stats row ─ */}
       <div style={{ display: 'flex', padding: '4px 8px 14px' }}>
         {report.stats.map((s, i) => (
-          <div key={i} style={{
-            flex: 1, textAlign: 'center', padding: '6px 8px',
-            borderRight: i < report.stats.length - 1 ? '1px solid var(--border-input)' : 'none',
-          }}>
-            <div style={{
-              fontSize: 15, fontWeight: 700, color: 'var(--text-primary)',
-              fontFamily: "'Byrd', sans-serif", lineHeight: 1.2,
-            }}>
-              {s.value}
-            </div>
-            <div style={{
-              fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
-              marginTop: 3, whiteSpace: 'nowrap',
-            }}>
-              {s.label}
-            </div>
+          <div key={i} style={{ flex: 1, textAlign: 'center', padding: '6px 8px', borderRight: i < report.stats.length - 1 ? '1px solid var(--border-input)' : 'none' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", lineHeight: 1.2 }}>{s.value}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", marginTop: 3, whiteSpace: 'nowrap' }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -653,36 +631,16 @@ function PinnedReportCard({ report }) {
   )
 }
 
-// ── PinnedReportsStrip ────────────────────────────────────────────────────────
-
 function PinnedReportsStrip({ reports }) {
   if (!reports.length) return null
   return (
-    <div style={{
-      padding: '14px 20px 14px',
-      background: 'var(--bg-canvas)',
-      flexShrink: 0,
-    }}>
-      {/* Label */}
+    <div style={{ padding: '14px 20px 14px', background: 'var(--bg-canvas)', flexShrink: 0 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-        <span style={{
-          fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)',
-          fontFamily: "'Byrd', sans-serif", letterSpacing: '0.07em', textTransform: 'uppercase',
-        }}>
-          Pinned
-        </span>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          width: 16, height: 16, borderRadius: 4,
-          background: 'var(--bg-active)', border: '1px solid var(--border-input)',
-          fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
-          fontFamily: "'Byrd', sans-serif",
-        }}>
+        <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", letterSpacing: '0.07em', textTransform: 'uppercase' }}>Pinned</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: 4, background: 'var(--bg-active)', border: '1px solid var(--border-input)', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
           {reports.length}
         </span>
       </div>
-
-      {/* Cards */}
       <div className="pinned-cards-scroll" style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '6px 4px 10px', margin: '-6px -4px -10px' }}>
         {reports.map(r => <PinnedReportCard key={r.id} report={r} />)}
       </div>
@@ -690,95 +648,23 @@ function PinnedReportsStrip({ reports }) {
   )
 }
 
-// ── Empty state ────────────────────────────────────────────────────────────────
-
 function EmptyState() {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      padding: '60px 0', flexDirection: 'column', gap: 6,
-    }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 0', flexDirection: 'column', gap: 6 }}>
       <span style={{ fontSize: 14, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>No reports found</span>
       <span style={{ fontSize: 12, color: 'var(--text-muted)', opacity: 0.6, fontFamily: "'Byrd', sans-serif" }}>Try adjusting your filters</span>
     </div>
   )
 }
 
-// ── AG Grid column definitions ────────────────────────────────────────────────
-const COL_DEFS = [
-  {
-    headerName: '#', width: 52, sortable: false, resizable: false,
-    cellRenderer: ({ node, context }) => {
-      const pinned = context.pinnedIds.has(node.data.id)
-      return pinned
-        ? <span style={{ color: 'var(--c100)', display: 'flex', alignItems: 'center' }}><BsPinFill size={12} /></span>
-        : <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{node.rowIndex + 1}</span>
-    },
-  },
-  {
-    headerName: 'Status', field: 'status', width: 160,
-    cellRenderer: ({ value }) => <StatusBadge status={value === 'ai-generated' ? 'completed' : value} />,
-  },
-  {
-    headerName: 'Report ID', field: 'id', width: 180,
-    cellRenderer: ({ value }) => (
-      <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
-        {value.slice(0, 22)}…
-      </span>
-    ),
-  },
-  {
-    headerName: 'Name', field: 'name', flex: 1,
-    cellRenderer: ({ value, data }) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
-        <span style={{ fontSize: 13, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", fontWeight: 500,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {value}
-        </span>
-        {data?.status === 'ai-generated' && <AIBadge />}
-      </div>
-    ),
-  },
-  {
-    headerName: 'Trend', field: 'trend', width: 300,
-    cellRenderer: ({ value }) => (
-      <span style={{ fontSize: 12, fontFamily: "'Byrd', sans-serif",
-        color: value ? 'var(--text-secondary)' : 'var(--text-muted)',
-        fontStyle: value ? 'normal' : 'italic',
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {value ?? 'No data yet'}
-      </span>
-    ),
-  },
-  {
-    headerName: 'Schedule', field: 'schedule', width: 110,
-    cellRenderer: ({ value }) => <SchedulePill label={value} />,
-  },
-  {
-    headerName: '', width: 52, sortable: false, resizable: false,
-    cellRenderer: ({ data, context }) => (
-      <RowMenu isPinned={context.pinnedIds.has(data.id)} onTogglePin={() => context.togglePin(data.id)} />
-    ),
-  },
-]
-
 // ── ReportsPage ────────────────────────────────────────────────────────────────
 
 export default function ReportsPage({ isMobile = false, sidebarWidth = 272, sidebarTransition, companyConfig = null }) {
-  const gridRef = useRef(null)
-  const [view, setView]             = useState('list')
-  const [statusFilter, setStatus]   = useState('all')
-  const [search, setSearch]         = useState('')
-  const [pinnedIds, setPinnedIds]   = useState(new Set(DEFAULT_PINNED))
-  const [isDark, setIsDark]         = useState(() => document.documentElement.dataset.theme === 'dark')
-
-  useEffect(() => {
-    const obs = new MutationObserver(() =>
-      setIsDark(document.documentElement.dataset.theme === 'dark')
-    )
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-    return () => obs.disconnect()
-  }, [])
+  const [view, setView]           = useState('list')
+  const [statusFilter, setStatus] = useState('all')
+  const [search, setSearch]       = useState('')
+  const [pinnedIds, setPinnedIds] = useState(new Set(DEFAULT_PINNED))
+  const [openId, setOpenId]       = useState(null)
 
   const left = isMobile ? 0 : sidebarWidth
 
@@ -790,9 +676,6 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
     })
   }, [])
 
-  const gridContext = useMemo(() => ({ pinnedIds, togglePin }), [pinnedIds, togglePin])
-
-  // Build pinned card objects — merge MOCK_REPORTS base data with PREVIEW_DATA
   const pinnedReports = useMemo(() =>
     [...pinnedIds]
       .map(id => {
@@ -826,6 +709,10 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
     return data
   }, [statusFilter, search])
 
+  function handleToggleOpen(id) {
+    setOpenId(prev => prev === id ? null : id)
+  }
+
   return (
     <div
       data-inspector="ReportsPage"
@@ -836,7 +723,7 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
         transition: sidebarTransition,
       }}
     >
-      {/* ── Page Header — floating pill ──────────────────────────────────── */}
+      {/* ── Page Header ── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '0 16px', height: 52, flexShrink: 0,
@@ -861,12 +748,7 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* View toggle */}
-          <div style={{
-            display: 'flex', gap: 1, padding: 3,
-            background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
-            borderRadius: 8,
-          }}>
+          <div style={{ display: 'flex', gap: 1, padding: 3, background: 'var(--bg-canvas)', border: '1px solid var(--border-input)', borderRadius: 8 }}>
             {[{ id: 'list', Icon: ListViewIcon }, { id: 'grid', Icon: GridViewIcon }].map(({ id, Icon }) => (
               <button
                 key={id}
@@ -884,14 +766,12 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
               </button>
             ))}
           </div>
-
-          <Button variant="ghost" size="sm" leftIcon={<MoreIcon />} />
           <Button size="sm" leftIcon={<PlusIcon />} onClick={() => navigate('/reports/create')}>Create Report</Button>
         </div>
       </div>
 
-      {/* ── Pinned previews ─────────────────────────────────────────────── */}
-      <div style={{ marginTop: 8 }}>
+      {/* ── Pinned strip ── */}
+      <div style={{ marginTop: 8, flexShrink: 0 }}>
         <PinnedReportsStrip reports={pinnedReports} />
       </div>
 
@@ -899,32 +779,71 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
         <div style={{ height: 1, background: 'var(--border-input)', margin: '0 16px' }} />
       )}
 
-      {/* ── Content ──────────────────────────────────────────────────────── */}
+      {/* ── Content ── */}
       {view === 'list' ? (
-        <div style={{ flex: 1, overflow: 'hidden', margin: '16px 16px 16px', borderRadius: 16, border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', background: 'var(--bg-sidebar)' }}>
-          <AgGridReact
-            ref={gridRef}
-            theme={isDark ? darkTheme : lightTheme}
-            className="hear-grid"
-            rowData={filtered}
-            columnDefs={COL_DEFS}
-            defaultColDef={DEFAULT_COL_DEF}
-            rowHeight={44}
-            headerHeight={38}
-            suppressCellFocus
-            context={gridContext}
-            getRowId={p => p.data.id}
-            noRowsOverlayComponent={EmptyState}
-          />
+        <div style={{
+          flex: 1, overflow: 'hidden', minHeight: 0,
+          margin: '16px 16px 16px',
+          borderRadius: 16,
+          border: 'var(--page-header-border)',
+          boxShadow: 'var(--page-header-shadow)',
+          background: 'var(--bg-sidebar)',
+          display: 'flex', flexDirection: 'column',
+        }}>
+          {/* Toolbar */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '10px 14px',
+            borderBottom: '1px solid var(--border-input)',
+            flexShrink: 0, flexWrap: 'wrap',
+          }}>
+            <StatusTabs active={statusFilter} onChange={setStatus} counts={counts} />
+            <div style={{ flex: 1 }} />
+            {/* Search */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              height: 30, padding: '0 10px',
+              background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+              borderRadius: 8,
+            }}>
+              <span style={{ color: 'var(--text-muted)', display: 'flex' }}><SearchIcon /></span>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search reports…"
+                style={{
+                  border: 'none', outline: 'none', background: 'transparent',
+                  fontSize: 12, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+                  width: 160,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Accordion list */}
+          <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {filtered.length === 0 ? (
+              <EmptyState />
+            ) : (
+              filtered.map(r => (
+                <ReportRow
+                  key={r.id}
+                  report={r}
+                  isOpen={openId === r.id}
+                  onToggle={() => handleToggleOpen(r.id)}
+                  isPinned={pinnedIds.has(r.id)}
+                  onTogglePin={() => togglePin(r.id)}
+                />
+              ))
+            )}
+          </div>
         </div>
       ) : (
         <div className="smooth-scroll" style={{
-          flex: 1, overflowY: 'auto',
-          padding: 20,
+          flex: 1, overflowY: 'auto', padding: 20,
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: 12,
-          alignContent: 'start',
+          gap: 12, alignContent: 'start',
         }}>
           {filtered.length === 0
             ? <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60 }}><EmptyState /></div>
