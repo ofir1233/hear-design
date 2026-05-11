@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { BsPinFill, BsPin } from 'react-icons/bs'
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
@@ -401,7 +401,7 @@ function ReportRow({ report, isOpen, onToggle, isPinned, onTogglePin }) {
   const defaultOn = report.status !== 'failed' && report.status !== 'not-executed'
 
   return (
-    <div style={{
+    <div data-report-id={report.id} style={{
       background: 'var(--bg-card)',
       border: `1px solid ${isOpen ? 'var(--border-default)' : 'var(--border-input)'}`,
       borderRadius: 10,
@@ -665,6 +665,7 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
   const [search, setSearch]       = useState('')
   const [pinnedIds, setPinnedIds] = useState(new Set(DEFAULT_PINNED))
   const [openId, setOpenId]       = useState(null)
+  const listRef                   = useRef(null)
 
   const left = isMobile ? 0 : sidebarWidth
 
@@ -712,6 +713,16 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
   function handleToggleOpen(id) {
     setOpenId(prev => prev === id ? null : id)
   }
+
+  // After expand animation completes, scroll so the full row (incl. action buttons) is visible
+  useEffect(() => {
+    if (!openId || !listRef.current) return
+    const timer = setTimeout(() => {
+      const el = listRef.current.querySelector(`[data-report-id="${openId}"]`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }, 280)
+    return () => clearTimeout(timer)
+  }, [openId])
 
   return (
     <div
@@ -821,7 +832,7 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
           </div>
 
           {/* Accordion list */}
-          <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div ref={listRef} className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '12px 14px 32px', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {filtered.length === 0 ? (
               <EmptyState />
             ) : (

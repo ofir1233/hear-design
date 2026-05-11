@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import CreateSignalPage from './CreateSignalPage.jsx'
 
 function navigate(path, state = {}) {
@@ -306,7 +306,7 @@ function SignalRow({ signal, isOpen, onToggle, onEdit, onDelete, onToggleAutoPro
   const showStatusBadge = signal.status === 'error' || signal.status === 'paused'
 
   return (
-    <div style={{
+    <div data-signal-id={signal.id} style={{
       background: 'var(--bg-card)',
       border: `1px solid ${isOpen ? 'var(--border-default)' : 'var(--border-input)'}`,
       borderRadius: 10,
@@ -436,6 +436,7 @@ export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTrans
   const [statusFilter, setStatusFilter]   = useState('all')
   const [searchText, setSearchText]       = useState('')
   const [openId, setOpenId]               = useState(null)
+  const listRef                           = useRef(null)
 
   const left = isMobile ? 0 : sidebarWidth
 
@@ -468,6 +469,15 @@ export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTrans
   function handleToggleOpen(id) {
     setOpenId(prev => prev === id ? null : id)
   }
+
+  useEffect(() => {
+    if (!openId || !listRef.current) return
+    const timer = setTimeout(() => {
+      const el = listRef.current.querySelector(`[data-signal-id="${openId}"]`)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }, 280)
+    return () => clearTimeout(timer)
+  }, [openId])
 
   if (editingSignal) {
     return (
@@ -569,7 +579,7 @@ export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTrans
         </div>
 
         {/* Accordion list */}
-        <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <div ref={listRef} className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '12px 14px 32px', display: 'flex', flexDirection: 'column', gap: 5 }}>
           {filtered.length === 0 ? (
             <EmptyState />
           ) : (
