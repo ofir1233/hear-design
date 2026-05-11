@@ -716,13 +716,19 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
     setOpenId(prev => prev === id ? null : id)
   }
 
-  // After expand animation completes, scroll so the full row (incl. action buttons) is visible
+  // After expand animation completes, scroll container so the full expanded row is visible
   useEffect(() => {
     if (!openId || !listRef.current) return
     const timer = setTimeout(() => {
-      const el = listRef.current.querySelector(`[data-report-id="${openId}"]`)
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    }, 280)
+      const container = listRef.current
+      const el = container.querySelector(`[data-report-id="${openId}"]`)
+      if (!el) return
+      const elBottom = el.getBoundingClientRect().bottom
+      const containerBottom = container.getBoundingClientRect().bottom
+      if (elBottom > containerBottom) {
+        container.scrollBy({ top: elBottom - containerBottom + 24, behavior: 'smooth' })
+      }
+    }, 300)
     return () => clearTimeout(timer)
   }, [openId])
 

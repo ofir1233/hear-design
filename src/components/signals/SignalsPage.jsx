@@ -475,9 +475,15 @@ export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTrans
   useEffect(() => {
     if (!openId || !listRef.current) return
     const timer = setTimeout(() => {
-      const el = listRef.current.querySelector(`[data-signal-id="${openId}"]`)
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    }, 280)
+      const container = listRef.current
+      const el = container.querySelector(`[data-signal-id="${openId}"]`)
+      if (!el) return
+      const elBottom = el.getBoundingClientRect().bottom
+      const containerBottom = container.getBoundingClientRect().bottom
+      if (elBottom > containerBottom) {
+        container.scrollBy({ top: elBottom - containerBottom + 24, behavior: 'smooth' })
+      }
+    }, 300)
     return () => clearTimeout(timer)
   }, [openId])
 
