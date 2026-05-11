@@ -353,12 +353,13 @@ function SignalRow({ signal, isOpen, onToggle, onEdit, onDelete, onToggleAutoPro
         </div>
       </div>
 
-      {/* ── Expanded body ── */}
+      {/* ── Expanded body — grid-rows animation never clips content once open ── */}
       <div style={{
-        maxHeight: isOpen ? 500 : 0,
-        overflow: 'hidden',
-        transition: 'max-height 260ms ease',
+        display: 'grid',
+        gridTemplateRows: isOpen ? '1fr' : '0fr',
+        transition: 'grid-template-rows 260ms ease',
       }}>
+        <div style={{ overflow: 'hidden' }}>
         <div style={{
           padding: '14px 16px 16px',
           borderTop: '1px solid var(--border-input)',
@@ -413,6 +414,7 @@ function SignalRow({ signal, isOpen, onToggle, onEdit, onDelete, onToggleAutoPro
             <div style={{ flex: 1 }} />
             <ActionBtn danger onClick={() => onDelete?.(signal.id)}>Delete</ActionBtn>
           </div>
+        </div>
         </div>
       </div>
     </div>
