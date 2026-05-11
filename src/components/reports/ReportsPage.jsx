@@ -789,14 +789,6 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
         </div>
       </div>
 
-      {/* ── Pinned strip ── */}
-      <div style={{ marginTop: 8, flexShrink: 0 }}>
-        <PinnedReportsStrip reports={pinnedReports} />
-      </div>
-
-      {pinnedReports.length > 0 && (
-        <div style={{ height: 1, background: 'var(--border-input)', margin: '0 16px' }} />
-      )}
 
       {/* ── Content ── */}
       {view === 'list' ? (
