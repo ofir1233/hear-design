@@ -321,12 +321,12 @@ function SignalRow({ signal, isOpen, onToggle, onEdit, onDelete, onToggleAutoPro
           display: 'flex', alignItems: 'center', gap: 8,
           padding: '0 14px', height: 44,
           cursor: 'pointer',
-          background: isOpen ? 'var(--bg-active)' : 'transparent',
+          background: 'transparent',
           transition: 'background 120ms ease',
           userSelect: 'none',
         }}
-        onMouseEnter={e => { if (!isOpen) e.currentTarget.style.background = 'var(--bg-active)' }}
-        onMouseLeave={e => { if (!isOpen) e.currentTarget.style.background = 'transparent' }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
       >
         <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
           <ChevronIcon open={isOpen} />
