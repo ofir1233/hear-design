@@ -363,7 +363,7 @@ function SignalRow({ signal, isOpen, onToggle, onEdit, onDelete, onToggleAutoPro
         <div style={{
           padding: '14px 16px 16px',
           borderTop: '1px solid var(--border-input)',
-          background: 'var(--bg-canvas)',
+          background: 'var(--bg-card)',
           display: 'flex', flexDirection: 'column', gap: 12,
         }}>
           {/* Context */}
