@@ -333,19 +333,21 @@ function SignalRow({ signal, isOpen, onToggle, onEdit, onDelete, onToggleAutoPro
         </span>
         <StatusDot status={signal.status} />
         <span style={{
-          flex: 1, fontSize: 13, fontWeight: 600,
+          fontSize: 13, fontWeight: 600,
           color: signal.status === 'paused' ? 'var(--text-muted)' : 'var(--text-primary)',
           fontFamily: "'Byrd', sans-serif",
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          flexShrink: 1, minWidth: 0,
         }}>
           {signal.name}
         </span>
+        {signal.source && <SourceBadge source={signal.source} />}
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', flexShrink: 0 }}>
+          {signal.executions} runs
+        </span>
+        <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          {signal.source && <SourceBadge source={signal.source} />}
           {showStatusBadge && <StatusBadge status={signal.status} />}
-          <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap' }}>
-            {signal.executions} runs
-          </span>
           <Toggle
             value={signal.autoProcess}
             onChange={next => onToggleAutoProcess?.(signal.id, next)}

@@ -428,16 +428,18 @@ function ReportRow({ report, isOpen, onToggle, isPinned, onTogglePin }) {
         </span>
         <StatusDot status={report.status} />
         <span style={{
-          flex: 1, fontSize: 13, fontWeight: 600,
+          fontSize: 13, fontWeight: 600,
           color: report.status === 'not-executed' ? 'var(--text-muted)' : 'var(--text-primary)',
           fontFamily: "'Byrd', sans-serif",
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          flexShrink: 1, minWidth: 0,
         }}>
           {report.name}
         </span>
+        {report.status === 'ai-generated' && <AIBadge />}
+        <SchedulePill label={report.schedule} />
+        <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          {report.status === 'ai-generated' && <AIBadge />}
-          <SchedulePill label={report.schedule} />
           {showStatusBadge && <StatusBadge status={report.status} />}
           <Toggle value={defaultOn} />
         </div>
