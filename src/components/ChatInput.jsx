@@ -743,7 +743,8 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                   onClick: openSlash,
                   icon: (
                     <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                      <path d="M9.5 2L5.5 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                      <rect x="1" y="1" width="13" height="13" rx="3" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M9.5 3.5L5.5 11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                     </svg>
                   ),
                 },
