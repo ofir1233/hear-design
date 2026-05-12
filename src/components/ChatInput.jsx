@@ -86,6 +86,17 @@ const MENTION_ITEMS = [
   { id: 3, name: 'Something makes seance',          handle: 'Whatever@' },
 ]
 
+const SLASH_COMMANDS = [
+  { id: 1, command: '/report',  name: 'New Report',        description: 'Generate a new analytics report'       },
+  { id: 2, command: '/signal',  name: 'New Signal',        description: 'Create a monitoring signal'             },
+  { id: 3, command: '/trend',   name: 'Trending Topics',   description: 'Show what topics are spiking right now' },
+  { id: 4, command: '/agents',  name: 'Agent Performance', description: 'Breakdown by agent metrics'             },
+  { id: 5, command: '/compare', name: 'Compare Periods',   description: 'Compare two time periods side by side'  },
+  { id: 6, command: '/summary', name: 'Daily Summary',     description: "Today's calls and key metrics"          },
+  { id: 7, command: '/export',  name: 'Export Data',       description: 'Export current filtered data to CSV'    },
+  { id: 8, command: '/analyze', name: 'Deep Analyze',      description: 'AI deep-dive on a specific topic'       },
+]
+
 function WaveAnimation() {
   const delays = ['0ms', '120ms', '240ms', '80ms', '200ms']
   return (
@@ -131,6 +142,15 @@ function getActiveMention(text, cursorPos) {
   return { query: match[1], start: match.index }
 }
 
+// Finds an active /command being typed: returns { query, start } or null
+function getActiveSlash(text, cursorPos) {
+  const before = text.slice(0, cursorPos)
+  const match = before.match(/(^|\s)(\/\w*)$/)
+  if (!match) return null
+  const slash = match[2]
+  return { query: slash.slice(1), start: before.lastIndexOf(slash) }
+}
+
 export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, onFocusChange, onKeystroke, loading = false, settled = false, defaultText = '', initialUploadOpen = false, initialMentionQuery = null, suggestedPrompts = null }) {
   const [text, setText]           = useState(defaultText)
   const [hovered, setHovered]     = useState(false)
@@ -138,6 +158,9 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
   const [mentionQuery, setMentionQuery] = useState(initialMentionQuery)
   const [mentionStart, setMentionStart] = useState(0)
   const [activeIndex, setActiveIndex]   = useState(0)
+  const [slashQuery, setSlashQuery]     = useState(null)
+  const [slashStart, setSlashStart]     = useState(0)
+  const [slashIndex, setSlashIndex]     = useState(0)
   const [uploadOpen, setUploadOpen]     = useState(initialUploadOpen)
   const [listening, setListening] = useState(false)
   const textareaRef          = useRef(null)
@@ -359,6 +382,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
       if (outerRef.current && !outerRef.current.contains(e.target)) {
         setUploadOpen(false)
         setMentionQuery(null)
+        setSlashQuery(null)
         textareaRef.current?.blur()
       }
     }
@@ -385,9 +409,8 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
       )
 
   // Keep activeIndex in bounds when filtered list changes
-  useEffect(() => {
-    setActiveIndex(0)
-  }, [mentionQuery])
+  useEffect(() => { setActiveIndex(0) }, [mentionQuery])
+  useEffect(() => { setSlashIndex(0) }, [slashQuery])
 
   function handleChange(e) {
     const val = e.target.value
@@ -400,9 +423,20 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     if (mention) {
       setMentionQuery(mention.query)
       setMentionStart(mention.start)
+      setSlashQuery(null)
       setUploadOpen(false)
     } else {
       setMentionQuery(null)
+    }
+
+    const slash = getActiveSlash(val, cursor)
+    if (slash) {
+      setSlashQuery(slash.query)
+      setSlashStart(slash.start)
+      setMentionQuery(null)
+      setUploadOpen(false)
+    } else {
+      setSlashQuery(null)
     }
   }
 
@@ -426,6 +460,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     const el = textareaRef.current
     if (!el) return
     setUploadOpen(false)
+    setSlashQuery(null)
     const cursor = el.selectionStart
     const newText = text.slice(0, cursor) + '@' + text.slice(cursor)
     setText(newText)
@@ -434,6 +469,41 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
     el.focus()
     setTimeout(() => {
       el.setSelectionRange(cursor + 1, cursor + 1)
+    }, 0)
+  }
+
+  function openSlash() {
+    const el = textareaRef.current
+    if (!el) return
+    setUploadOpen(false)
+    setMentionQuery(null)
+    const cursor = el.selectionStart
+    const before = text.slice(0, cursor)
+    const needsSpace = before.length > 0 && !before.endsWith(' ')
+    const prefix = needsSpace ? ' ' : ''
+    const newText = text.slice(0, cursor) + prefix + '/' + text.slice(cursor)
+    setText(newText)
+    textRef.current = newText
+    const newCursor = cursor + prefix.length + 1
+    setSlashQuery('')
+    setSlashStart(cursor + prefix.length)
+    el.focus()
+    setTimeout(() => el.setSelectionRange(newCursor, newCursor), 0)
+  }
+
+  function selectSlash(cmd) {
+    const before = text.slice(0, slashStart)
+    const after  = text.slice(slashStart + 1 + (slashQuery?.length ?? 0))
+    const newText = before + cmd.command + ' ' + after
+    setText(newText)
+    textRef.current = newText
+    setSlashQuery(null)
+    setTimeout(() => {
+      const el = textareaRef.current
+      if (!el) return
+      el.focus()
+      const pos = (before + cmd.command + ' ').length
+      el.setSelectionRange(pos, pos)
     }, 0)
   }
 
@@ -459,6 +529,16 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
         setMentionQuery(null)
         return
       }
+    }
+
+    const filteredSlash = slashQuery === null ? [] : SLASH_COMMANDS.filter(c =>
+      slashQuery === '' ? true : c.command.slice(1).startsWith(slashQuery.toLowerCase())
+    )
+    if (slashQuery !== null && filteredSlash.length > 0) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setSlashIndex(i => (i + 1) % filteredSlash.length); return }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); setSlashIndex(i => (i - 1 + filteredSlash.length) % filteredSlash.length); return }
+      if (e.key === 'Enter')     { e.preventDefault(); selectSlash(filteredSlash[slashIndex]); return }
+      if (e.key === 'Escape')    { e.preventDefault(); setSlashQuery(null); return }
     }
 
     if (uploadOpen && e.key === 'Escape') {
@@ -487,6 +567,11 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
 
   const mentionOpen = mentionQuery !== null && filteredItems.length > 0
 
+  const filteredSlashItems = slashQuery === null ? [] : SLASH_COMMANDS.filter(c =>
+    slashQuery === '' ? true : c.command.slice(1).startsWith(slashQuery.toLowerCase())
+  )
+  const slashOpen = slashQuery !== null && filteredSlashItems.length > 0
+
   return (
     <div
       ref={outerRef}
@@ -509,7 +594,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
         style={{
           position: 'relative',
           padding: '1px',
-          borderRadius: (mentionOpen || uploadOpen)
+          borderRadius: (mentionOpen || slashOpen || uploadOpen)
             ? (settled ? '0 0 1rem 1rem' : '1rem 1rem 0 0')
             : '1rem',
           transition: 'border-radius 200ms ease',
@@ -542,7 +627,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
         style={{
           position: 'relative', zIndex: 1,
           background: 'var(--bg-card)',
-          borderRadius: (mentionOpen || uploadOpen)
+          borderRadius: (mentionOpen || slashOpen || uploadOpen)
             ? (settled ? '0 0 calc(1rem - 1px) calc(1rem - 1px)' : 'calc(1rem - 1px) calc(1rem - 1px) 0 0')
             : 'calc(1rem - 1px)',
         }}
@@ -649,6 +734,16 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="4"/>
                       <path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94"/>
+                    </svg>
+                  ),
+                },
+                {
+                  label: 'Commands',
+                  active: slashQuery !== null,
+                  onClick: openSlash,
+                  icon: (
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                      <path d="M9.5 2L5.5 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
                     </svg>
                   ),
                 },
@@ -898,6 +993,80 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
               <span className="flex items-center gap-1.5 text-xs">
                 Navigate <NavigateIcon />
               </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Slash commands dropdown */}
+      <div
+        className="absolute left-0 right-0 z-50"
+        style={{
+          [settled ? 'bottom' : 'top']: '100%',
+          display: 'grid',
+          gridTemplateRows: slashOpen ? '1fr' : '0fr',
+          transition: 'grid-template-rows 200ms ease',
+        }}
+      >
+        <div className="overflow-hidden">
+          <div
+            className={`px-4 ${settled ? 'border-x border-t rounded-t-2xl pt-3 pb-4' : 'border-x border-b rounded-b-2xl pb-4 pt-3'}`}
+            style={{
+              background: 'var(--bg-card)',
+              borderColor: hovered ? 'var(--border-default)' : 'var(--bg-active)',
+              boxShadow: settled
+                ? '0 -8px 16px 0 rgba(0,0,0,0.08)'
+                : '0 8px 16px 0 rgba(0,0,0,0.08)',
+            }}
+          >
+            <p className="text-[11px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'var(--text-muted)' }}>
+              Commands
+            </p>
+            <div className="flex flex-col gap-1">
+              {filteredSlashItems.map((cmd, i) => {
+                const isActive = i === slashIndex
+                return (
+                  <button
+                    key={cmd.id}
+                    onMouseEnter={() => setSlashIndex(i)}
+                    onClick={() => selectSlash(cmd)}
+                    className="flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-left"
+                    style={{
+                      background: isActive ? 'var(--bg-active)' : 'transparent',
+                      border: isActive ? '1.5px solid var(--border-default)' : '1.5px solid transparent',
+                      opacity: isActive ? 1 : 0.4,
+                      transition: 'opacity 150ms ease, background 150ms ease',
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="text-xs px-2 py-0.5 rounded-md font-mono font-semibold"
+                        style={{
+                          background: isActive ? 'var(--bg-canvas)' : 'var(--bg-active)',
+                          color: isActive ? 'var(--c100)' : 'var(--text-muted)',
+                          border: '1px solid var(--border-input)',
+                          minWidth: 72,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {cmd.command}
+                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{cmd.name}</span>
+                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{cmd.description}</span>
+                      </div>
+                    </div>
+                    <span className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+                      <ReturnIcon />
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            <div className="flex items-center justify-end gap-4 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-default)', color: 'var(--text-muted)' }}>
+              <span className="flex items-center gap-1.5 text-xs">Close <EscIcon /></span>
+              <span className="flex items-center gap-1.5 text-xs">Select <ReturnIcon /></span>
+              <span className="flex items-center gap-1.5 text-xs">Navigate <NavigateIcon /></span>
             </div>
           </div>
         </div>
