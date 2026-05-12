@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 
 // ── Keyframes ─────────────────────────────────────────────────────────────────
 const CSS = `
@@ -271,6 +272,7 @@ export default function DailyBriefing({ onPin, sidebarWidth = 0 }) {
     <div style={{
       display: 'flex', justifyContent: 'center',
       animation: phase === 'ready' ? 'db-fade-in 400ms ease forwards' : undefined,
+      pointerEvents: 'auto',
     }}>
       <button
         onClick={openModal}
@@ -283,10 +285,21 @@ export default function DailyBriefing({ onPin, sidebarWidth = 0 }) {
           fontSize: 12, fontFamily: "'Byrd', sans-serif",
           color: 'var(--text-secondary)',
           cursor: 'pointer',
-          transition: 'border-color 150ms ease, color 150ms ease, background 150ms ease',
+          pointerEvents: 'auto',
+          transition: 'border-color 150ms ease, color 150ms ease, background 150ms ease, box-shadow 150ms ease',
         }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--c100)'; e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.background = 'var(--bg-active)' }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-default)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'var(--bg-card)' }}
+        onMouseEnter={e => {
+          e.currentTarget.style.borderColor = 'var(--c100)'
+          e.currentTarget.style.color = 'var(--text-primary)'
+          e.currentTarget.style.background = 'var(--bg-active)'
+          e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255,112,86,0.12)'
+        }}
+        onMouseLeave={e => {
+          e.currentTarget.style.borderColor = 'var(--border-default)'
+          e.currentTarget.style.color = 'var(--text-secondary)'
+          e.currentTarget.style.background = 'var(--bg-card)'
+          e.currentTarget.style.boxShadow = 'none'
+        }}
       >
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--c100)', flexShrink: 0, animation: 'db-pulse 2s ease-in-out infinite' }} />
         Daily briefing ready
@@ -508,7 +521,7 @@ export default function DailyBriefing({ onPin, sidebarWidth = 0 }) {
   return (
     <>
       {readyPill}
-      {modal}
+      {modal && createPortal(modal, document.body)}
     </>
   )
 }
