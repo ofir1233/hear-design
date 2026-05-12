@@ -1013,7 +1013,7 @@ export default function ChatInput({ onSubmit, onMentionChange, onUploadChange, o
             <p className="text-[11px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'var(--text-muted)' }}>
               Commands
             </p>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 smooth-scroll" style={{ maxHeight: 220, overflowY: 'auto' }}>
               {filteredSlashItems.map((cmd, i) => {
                 const isActive = i === slashIndex
                 return (
