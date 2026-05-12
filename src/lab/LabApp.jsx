@@ -1098,7 +1098,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
                 style={{
                   position: 'absolute', top: 'calc(100% + 16px)', left: 0, right: 0,
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
-                  pointerEvents: 'auto',
+                  pointerEvents: inputFocused ? 'auto' : 'none',
                 }}
               >
                 <span className="hive-badge" style={{
