@@ -438,6 +438,12 @@ function ReportRow({ report, isOpen, onToggle, isPinned, onTogglePin }) {
         </span>
         {report.status === 'ai-generated' && <AIBadge />}
         <SchedulePill label={report.schedule} />
+        <span style={{
+          fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
+          whiteSpace: 'nowrap', flexShrink: 0,
+        }}>
+          {report.createdAt}
+        </span>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {showStatusBadge && <StatusBadge status={report.status} />}

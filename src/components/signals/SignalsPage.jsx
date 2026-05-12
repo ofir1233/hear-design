@@ -345,6 +345,9 @@ function SignalRow({ signal, isOpen, onToggle, onEdit, onDelete, onToggleAutoPro
         <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', flexShrink: 0 }}>
           {signal.executions} runs
         </span>
+        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', flexShrink: 0 }}>
+          {signal.createdAt}
+        </span>
         <div style={{ flex: 1 }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           {showStatusBadge && <StatusBadge status={signal.status} />}
