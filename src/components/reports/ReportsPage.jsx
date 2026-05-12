@@ -340,7 +340,7 @@ function Toggle({ value, onChange }) {
 
 function StatusTabs({ active, onChange, counts }) {
   return (
-    <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+    <div className="smooth-scroll" style={{ display: 'flex', gap: 2, flexShrink: 1, overflowX: 'auto', minWidth: 0 }}>
       {STATUS_FILTERS.map(f => {
         const isActive = active === f.value
         const count = counts[f.value]
@@ -414,8 +414,8 @@ function ReportRow({ report, isOpen, onToggle, isPinned, onTogglePin }) {
         onClick={onToggle}
         style={{
           display: 'flex', alignItems: 'center', gap: 8,
-          padding: '0 14px', height: 44,
-          cursor: 'pointer',
+          padding: '0 14px', height: 44, minWidth: 0,
+          cursor: 'pointer', flexWrap: 'nowrap', overflow: 'hidden',
           background: 'transparent',
           transition: 'background 120ms ease',
           userSelect: 'none',
@@ -808,7 +808,7 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '10px 14px',
             borderBottom: '1px solid var(--border-input)',
-            flexShrink: 0, flexWrap: 'wrap',
+            flexShrink: 0, flexWrap: 'nowrap', overflow: 'hidden',
           }}>
             <StatusTabs active={statusFilter} onChange={setStatus} counts={counts} />
             <div style={{ flex: 1 }} />
