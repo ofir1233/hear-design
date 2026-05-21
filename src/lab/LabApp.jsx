@@ -13,6 +13,7 @@ import ChatInput   from '../components/ChatInput.jsx'
 import Sidebar     from './components/Sidebar.jsx'
 import Header      from './components/Header.jsx'
 import DataPage    from '../components/data/DataPage.jsx'
+import DataPageV2  from '../components/data/DataPageV2.jsx'
 import ExplorePage from '../components/data/ExplorePage.jsx'
 import ReportsPage from '../components/reports/ReportsPage.jsx'
 import CreateReportPage from '../components/reports/CreateReportPage.jsx'
@@ -810,6 +811,14 @@ Ask me anything about your operations, or explore a topic below to get started.`
         />
       ) : activePage === 'data' ? (
         <DataPage
+          isMobile={isMobile}
+          sidebarWidth={effectiveSidebarWidth}
+          sidebarTransition={sidebarTransition}
+          companyConfig={companyConfig}
+          onOpenCall={openCall}
+        />
+      ) : activePage === 'data-v2' ? (
+        <DataPageV2
           isMobile={isMobile}
           sidebarWidth={effectiveSidebarWidth}
           sidebarTransition={sidebarTransition}

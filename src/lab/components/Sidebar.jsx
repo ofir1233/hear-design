@@ -588,6 +588,7 @@ function StorybookDisabledButton() {
 const NAV_ITEMS = [
   { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon,        group: 'MAIN'         },
   { id: 'data',        label: 'Data',             Icon: DataIcon,        group: 'MAIN'         },
+  { id: 'data-v2',     label: 'Data V2',          Icon: DataIcon,        group: 'MAIN'         },
   { id: 'topics',      label: 'Topics',           Icon: TopicsIcon,      group: 'MAIN',        disabled: true },
   { id: 'reports',     label: 'Reports',          Icon: ReportsIcon,     group: 'MAIN'         },
   { id: 'signals',     label: 'Signals',          Icon: SignalsIcon,     group: 'INTELLIGENCE' },
