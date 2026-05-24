@@ -512,18 +512,37 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
   const [filterExpanded, setFilterExpanded] = useState(false)
   const [queryText,      setQueryText]      = useState('')
 
-  // Columns picker state — visibleFields is ordered; ALL_FIELDS is the source of truth
+  // Columns picker state — visibleFields is applied; draft is what the modal is editing
   const [visibleFields,    setVisibleFields]    = useState(ALL_FIELDS)
-  const [columnsExpanded,  setColumnsExpanded]  = useState(false)
+  const [columnsModalOpen, setColumnsModalOpen] = useState(false)
+  const [columnsDraft,     setColumnsDraft]     = useState(ALL_FIELDS)
   const [columnsSearch,    setColumnsSearch]    = useState('')
+  const [expandedGroups,   setExpandedGroups]   = useState(() =>
+    new Set(COLUMN_GROUPS.map(g => g.id))   // all groups open by default
+  )
 
-  function toggleField(field) {
-    setVisibleFields(v => v.includes(field)
+  function openColumnsModal() {
+    setColumnsDraft(visibleFields)
+    setColumnsSearch('')
+    setColumnsModalOpen(true)
+  }
+  function applyColumns() {
+    setVisibleFields(columnsDraft)
+    setColumnsModalOpen(false)
+  }
+  function toggleDraftField(field) {
+    setColumnsDraft(v => v.includes(field)
       ? v.filter(f => f !== field)
       : [...v, field]
     )
   }
-  function resetColumns() { setVisibleFields(ALL_FIELDS) }
+  function toggleGroupExpand(id) {
+    setExpandedGroups(s => {
+      const next = new Set(s)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
 
   // AG Grid columnDefs driven by visibleFields (preserves user-chosen order)
   const activeColDefs = useMemo(
@@ -691,11 +710,7 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => { setFilterExpanded(true); setColumnsExpanded(true) }}
-          >Add columns</Button>
+          <Button variant="ghost" size="sm" onClick={openColumnsModal}>Add columns</Button>
           <Button size="sm">Upload</Button>
           <Button variant="ghost" size="sm" leftIcon={<MoreIcon />} />
         </div>
@@ -904,191 +919,6 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
               </div>
             ))}
 
-            {/* ── Columns sub-section ─────────────────────────────────── */}
-            <div style={{
-              marginTop: 6,
-              border: '1px solid var(--border-default)',
-              borderRadius: 8,
-              background: 'var(--bg-canvas)',
-              overflow: 'hidden',
-            }}>
-              {/* Summary row — always visible */}
-              <button
-                onClick={() => setColumnsExpanded(v => !v)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  width: '100%', padding: '10px 12px',
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontFamily: "'Byrd', sans-serif", textAlign: 'left',
-                }}
-              >
-                <span style={{
-                  fontSize: 'var(--type-p14)', fontWeight: 600,
-                  color: 'var(--text-primary)',
-                }}>Columns</span>
-                <span style={{
-                  fontSize: 'var(--type-p14)', color: 'var(--text-muted)',
-                }}>
-                  {visibleFields.length} of {ALL_FIELDS.length} selected
-                </span>
-                <div style={{ flex: 1 }} />
-                <span style={{
-                  fontSize: 'var(--type-p14)', color: 'var(--b100)',
-                  fontWeight: 500,
-                }}>
-                  {columnsExpanded ? 'Hide' : 'Edit'}
-                </span>
-                <ChevronDown open={columnsExpanded} />
-              </button>
-
-              {/* Expanded body */}
-              {columnsExpanded && (
-                <div style={{
-                  borderTop: '1px solid var(--border-default)',
-                  padding: 12,
-                  display: 'flex', flexDirection: 'column', gap: 10,
-                }}>
-                  {/* Search + reset */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      flex: 1, height: 32, padding: '0 12px',
-                      background: 'var(--bg-sidebar)',
-                      border: '1px solid var(--border-input)',
-                      borderRadius: 6,
-                    }}>
-                      <span style={{ color: 'var(--text-muted)', display: 'flex' }}>
-                        <SearchIcon />
-                      </span>
-                      <input
-                        value={columnsSearch}
-                        onChange={e => setColumnsSearch(e.target.value)}
-                        placeholder="Search columns…"
-                        style={{
-                          flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                          fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
-                          fontFamily: "'Byrd', sans-serif",
-                        }}
-                      />
-                    </div>
-                    <button
-                      onClick={resetColumns}
-                      style={{
-                        background: 'none', border: 'none',
-                        fontSize: 'var(--type-p14)', color: 'var(--c100)',
-                        fontFamily: "'Byrd', sans-serif",
-                        cursor: 'pointer', padding: '0 6px',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >Reset columns</button>
-                  </div>
-
-                  {/* Grouped checklist */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {COLUMN_GROUPS.map(group => {
-                      const matchingFields = group.fields.filter(f => {
-                        const label = FIELD_LABELS[f] ?? f
-                        return label.toLowerCase().includes(columnsSearch.trim().toLowerCase())
-                      })
-                      if (matchingFields.length === 0) return null
-                      const allChecked = matchingFields.every(f => visibleFields.includes(f))
-                      return (
-                        <div key={group.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                          <div style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '2px 0',
-                          }}>
-                            <span style={{
-                              fontSize: 11, fontWeight: 700, letterSpacing: '0.06em',
-                              textTransform: 'uppercase', color: 'var(--text-muted)',
-                              fontFamily: "'Byrd', sans-serif",
-                            }}>{group.label}</span>
-                            <button
-                              onClick={() => {
-                                if (allChecked) {
-                                  setVisibleFields(v => v.filter(f => !matchingFields.includes(f)))
-                                } else {
-                                  setVisibleFields(v => {
-                                    const merged = [...v]
-                                    matchingFields.forEach(f => { if (!merged.includes(f)) merged.push(f) })
-                                    return merged
-                                  })
-                                }
-                              }}
-                              style={{
-                                background: 'none', border: 'none', padding: 0,
-                                fontSize: 11, color: 'var(--b100)',
-                                fontFamily: "'Byrd', sans-serif",
-                                cursor: 'pointer',
-                              }}
-                            >{allChecked ? 'Clear all' : 'Select all'}</button>
-                          </div>
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                            gap: 6,
-                          }}>
-                            {matchingFields.map(field => {
-                              const checked = visibleFields.includes(field)
-                              return (
-                                <label
-                                  key={field}
-                                  style={{
-                                    display: 'flex', alignItems: 'center', gap: 8,
-                                    padding: '6px 8px', borderRadius: 6,
-                                    cursor: 'pointer',
-                                    background: checked ? 'var(--b20)' : 'transparent',
-                                    border: `1px solid ${checked ? 'var(--b30)' : 'var(--border-default)'}`,
-                                    fontSize: 'var(--type-p14)',
-                                    color: 'var(--text-primary)',
-                                    fontFamily: "'Byrd', sans-serif",
-                                    transition: 'background 120ms ease, border-color 120ms ease',
-                                  }}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={() => toggleField(field)}
-                                    style={{ accentColor: 'var(--b100)', cursor: 'pointer' }}
-                                  />
-                                  <span style={{
-                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                                    textTransform: 'capitalize',
-                                  }}>
-                                    {(FIELD_LABELS[field] ?? field).toLowerCase()}
-                                  </span>
-                                </label>
-                              )
-                            })}
-                          </div>
-                        </div>
-                      )
-                    })}
-                    {COLUMN_GROUPS.every(g => g.fields.every(f => {
-                      const label = FIELD_LABELS[f] ?? f
-                      return !label.toLowerCase().includes(columnsSearch.trim().toLowerCase())
-                    })) && (
-                      <div style={{
-                        padding: '20px 12px', textAlign: 'center',
-                        fontSize: 'var(--type-p14)', color: 'var(--text-muted)',
-                        fontFamily: "'Byrd', sans-serif",
-                      }}>
-                        No columns match "{columnsSearch}"
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{
-                    fontSize: 11, color: 'var(--text-muted)',
-                    fontFamily: "'Byrd', sans-serif", lineHeight: 1.5,
-                    paddingTop: 4, borderTop: '1px dashed var(--border-default)',
-                  }}>
-                    Tip: drag column headers in the grid to reorder.
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* Footer — Add Filter + actions */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
               <button
@@ -1161,6 +991,189 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
           onClose={closePopover}
         />
       )}
+
+      {/* ── Manage Columns modal ──────────────────────────────────────── */}
+      <Modal
+        open={columnsModalOpen}
+        onClose={() => setColumnsModalOpen(false)}
+        title="Manage Columns"
+        width={560}
+        footer={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setColumnsModalOpen(false)}>Close</Button>
+            <Button variant="outline" size="sm" onClick={applyColumns}>Apply</Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {/* Search */}
+          <div style={{ padding: '4px 0 18px' }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              height: 44, padding: '0 16px',
+              background: 'var(--bg-canvas)',
+              border: '1.5px solid var(--border-input)',
+              borderRadius: 999,
+            }}>
+              <span style={{ color: 'var(--text-muted)', display: 'flex' }}>
+                <SearchIcon />
+              </span>
+              <input
+                value={columnsSearch}
+                onChange={e => setColumnsSearch(e.target.value)}
+                placeholder="Search columns..."
+                style={{
+                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                  fontSize: 'var(--type-p13)', color: 'var(--text-primary)',
+                  fontFamily: "'Byrd', sans-serif",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* SIGNALS divider */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            padding: '6px 0 14px',
+          }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+            <span style={{
+              fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
+              textTransform: 'uppercase', color: 'var(--text-muted)',
+              fontFamily: "'Byrd', sans-serif",
+            }}>Signals</span>
+            <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+          </div>
+
+          {/* Accordion groups */}
+          <div style={{
+            display: 'flex', flexDirection: 'column',
+            maxHeight: 420, overflowY: 'auto',
+            margin: '0 -4px', padding: '0 4px',
+          }}>
+            {COLUMN_GROUPS.map((group, gi) => {
+              const matchingFields = group.fields.filter(f => {
+                const label = FIELD_LABELS[f] ?? f
+                return label.toLowerCase().includes(columnsSearch.trim().toLowerCase())
+              })
+              if (matchingFields.length === 0) return null
+              const isOpen      = expandedGroups.has(group.id) || columnsSearch.trim().length > 0
+              const allChecked  = matchingFields.every(f => columnsDraft.includes(f))
+
+              return (
+                <div key={group.id} style={{
+                  borderTop: gi === 0 ? 'none' : '1px solid var(--border-default)',
+                  padding: '14px 0',
+                }}>
+                  {/* Group header */}
+                  <button
+                    onClick={() => toggleGroupExpand(group.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', width: '100%',
+                      background: 'none', border: 'none', padding: 0,
+                      cursor: 'pointer', textAlign: 'left',
+                    }}
+                  >
+                    <span style={{
+                      flex: 1,
+                      fontSize: 'var(--type-p12)', fontWeight: 700,
+                      color: 'var(--text-primary)',
+                      fontFamily: "'Byrd', sans-serif",
+                    }}>{group.label}</span>
+                    <span style={{ color: 'var(--text-secondary)', display: 'flex' }}>
+                      <ChevronDown open={isOpen} />
+                    </span>
+                  </button>
+
+                  {/* Group body */}
+                  {isOpen && (
+                    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column' }}>
+                      {/* Select All */}
+                      <label style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '8px 0',
+                        borderBottom: '1px solid var(--border-default)',
+                        marginBottom: 6,
+                        cursor: 'pointer',
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={allChecked}
+                          onChange={() => {
+                            if (allChecked) {
+                              setColumnsDraft(v => v.filter(f => !matchingFields.includes(f)))
+                            } else {
+                              setColumnsDraft(v => {
+                                const merged = [...v]
+                                matchingFields.forEach(f => { if (!merged.includes(f)) merged.push(f) })
+                                return merged
+                              })
+                            }
+                          }}
+                          style={{
+                            width: 18, height: 18, accentColor: 'var(--b100)',
+                            cursor: 'pointer', flexShrink: 0,
+                          }}
+                        />
+                        <span style={{
+                          fontSize: 'var(--type-p13)', color: 'var(--text-primary)',
+                          fontFamily: "'Byrd', sans-serif",
+                        }}>Select All</span>
+                      </label>
+
+                      {/* Items */}
+                      {matchingFields.map(field => {
+                        const checked = columnsDraft.includes(field)
+                        return (
+                          <label
+                            key={field}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 12,
+                              padding: '7px 0',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleDraftField(field)}
+                              style={{
+                                width: 18, height: 18, accentColor: 'var(--b100)',
+                                cursor: 'pointer', flexShrink: 0,
+                              }}
+                            />
+                            <span style={{
+                              fontSize: 'var(--type-p13)', color: 'var(--text-primary)',
+                              fontFamily: "'Byrd', sans-serif",
+                              textTransform: 'capitalize',
+                            }}>
+                              {(FIELD_LABELS[field] ?? field).toLowerCase()}
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+            {/* Empty state for search */}
+            {COLUMN_GROUPS.every(g => g.fields.every(f => {
+              const label = FIELD_LABELS[f] ?? f
+              return !label.toLowerCase().includes(columnsSearch.trim().toLowerCase())
+            })) && (
+              <div style={{
+                padding: '32px 12px', textAlign: 'center',
+                fontSize: 'var(--type-p14)', color: 'var(--text-muted)',
+                fontFamily: "'Byrd', sans-serif",
+              }}>
+                No columns match "{columnsSearch}"
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
 
       {/* ── Save preset modal ─────────────────────────────────────────── */}
       <Modal
