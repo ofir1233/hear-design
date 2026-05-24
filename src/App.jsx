@@ -7,6 +7,7 @@ import ChatInput from './components/ChatInput.jsx'
 import Sidebar from './components/Sidebar.jsx'
 import SignIn from './components/SignIn.jsx'
 import DataPage from './components/data/DataPage.jsx'
+import DataPageV2 from './components/data/DataPageV2.jsx'
 import ExplorePage from './components/data/ExplorePage.jsx'
 import ReportsPage from './components/reports/ReportsPage.jsx'
 import CreateReportPage from './components/reports/CreateReportPage.jsx'
@@ -606,6 +607,14 @@ Ask me anything about your operations, or explore a topic below to get started.`
           companyConfig={companyConfig}
           onOpenCall={openCall}
         />
+      ) : activePage === 'data-v2' ? (
+        <DataPageV2
+          isMobile={isMobile}
+          sidebarWidth={effectiveSidebarWidth}
+          sidebarTransition={sidebarTransition}
+          companyConfig={companyConfig}
+          onOpenCall={openCall}
+        />
       ) : activePage === 'topics' ? (
         <TopicsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'reports' && route.sub === 'create' ? (
@@ -903,6 +912,14 @@ export default function App() {
 
     sessionStorage.setItem('hear-app-mode', mode)
     setAppMode(mode)
+
+    // Always land on /dashboard after sign-in, so a stale URL from a previous
+    // session (e.g. /data-v2 left over from Lab mode) can't strand the user
+    // on a route the new mode doesn't handle.
+    if (window.location.pathname !== '/dashboard') {
+      window.history.replaceState({}, '', '/dashboard')
+      window.dispatchEvent(new PopStateEvent('popstate'))
+    }
     sessionStorage.setItem('hear-signed-in', '1')
     setSignedIn(true)
   }
