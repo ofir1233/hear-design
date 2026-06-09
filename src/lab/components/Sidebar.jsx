@@ -905,34 +905,80 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
             >×</button>
           )}
 
-          {/* Logo */}
-          <div style={{ padding: '24px 20px 16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <img src={isDark ? '/hear-logo-dark.svg' : '/hear-logo.svg'} alt="Hear" style={{ height: 34 }} />
-            <img src={isDark ? '/powered-by-hear-dark.svg' : '/powered-by-hear.svg'} alt="Powered by Hear" style={{ height: 17, opacity: 0.7 }} />
-          </div>
+          {/* Co-branded header + scope toggle — one card, separated by a stroke */}
+          {(() => {
+            const company = companyConfig?.companyName || 'Hear'
+            const initials = company.split(/[\s/]+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()
+            const COMPANY_LOGOS = { 'demo inv': '/audi.svg', 'audi': '/audi.svg' }
+            const logoSrc = COMPANY_LOGOS[company.toLowerCase()]
+            const showToggle = activeNav !== 'settings'
+            return (
+              <div style={{ padding: '20px 16px 16px' }}>
+                <div style={{
+                  borderRadius: 14, overflow: 'hidden',
+                  border: '1px solid var(--border-default)', background: 'var(--bg-card, #fff)',
+                }}>
+                  {/* Header row */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px' }}>
+                    {/* Logo box — company logo, or monogram fallback */}
+                    <div style={{
+                      width: 60, height: 40, flexShrink: 0, borderRadius: 9,
+                      border: '1px solid var(--border-default)', background: '#fff',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 15, fontWeight: 700, color: 'var(--text-primary)',
+                      fontFamily: "'Byrd', sans-serif", overflow: 'hidden',
+                    }}>
+                      {logoSrc
+                        ? <img src={logoSrc} alt={company} style={{ width: 32, height: 'auto' }} />
+                        : initials}
+                    </div>
 
-          {/* Scope toggle: Project | Org — hidden in settings */}
-          {activeNav !== 'settings' && (
-            <div style={{ padding: '0 24px 12px' }}>
-              <div style={{ display: 'flex', background: 'var(--bg-active)', borderRadius: 8, padding: 3, gap: 2 }}>
-                {[{ id: 'project', label: 'Project' }, { id: 'org', label: 'Org' }].map(({ id, label }) => (
-                  <button
-                    key={id}
-                    onClick={() => { setOrgScope(id); if (id === 'org') setProjectOpen(false) }}
-                    style={{
-                      flex: 1, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer',
-                      fontSize: 12, fontWeight: orgScope === id ? 500 : 400,
-                      background: orgScope === id ? 'var(--bg-sidebar)' : 'transparent',
-                      color: orgScope === id ? 'var(--text-primary)' : 'var(--text-muted)',
-                      boxShadow: orgScope === id ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
-                      transition: 'background 160ms ease, color 160ms ease, box-shadow 160ms ease',
-                      userSelect: 'none',
-                    }}
-                  >{label}</button>
-                ))}
+                    {/* Divider */}
+                    <div style={{ width: 1, alignSelf: 'stretch', background: 'var(--border-default)', flexShrink: 0 }} />
+
+                    {/* Name + powered by */}
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{
+                        fontSize: 16, fontWeight: 700, color: 'var(--text-primary)',
+                        fontFamily: "'Byrd', sans-serif",
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>{company}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>Powered by</span>
+                        <img src={isDark ? '/hear-logo-dark.svg' : '/hear-logo.svg'} alt="Hear" style={{ height: 12 }} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Separator + scope toggle */}
+                  {showToggle && (
+                    <>
+                      <div style={{ height: 1, background: 'var(--border-default)', margin: '0 14px' }} />
+                      <div style={{ padding: '12px 14px' }}>
+                        <div style={{ display: 'flex', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)', borderRadius: 8, padding: 3, gap: 2 }}>
+                          {[{ id: 'project', label: 'Project' }, { id: 'org', label: 'Org' }].map(({ id, label }) => (
+                            <button
+                              key={id}
+                              onClick={() => { setOrgScope(id); if (id === 'org') setProjectOpen(false) }}
+                              style={{
+                                flex: 1, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer',
+                                fontSize: 12, fontWeight: orgScope === id ? 600 : 400,
+                                background: orgScope === id ? '#fff' : 'transparent',
+                                color: orgScope === id ? 'var(--text-primary)' : 'var(--text-muted)',
+                                boxShadow: orgScope === id ? '0 1px 3px rgba(0,0,0,0.10)' : 'none',
+                                transition: 'background 160ms ease, color 160ms ease, box-shadow 160ms ease',
+                                userSelect: 'none',
+                              }}
+                            >{label}</button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Project selector + bell */}
           <div style={{ padding: '0 24px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>

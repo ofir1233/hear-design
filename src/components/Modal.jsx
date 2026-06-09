@@ -14,7 +14,10 @@ import { createPortal } from 'react-dom'
 //   • Escape key     → onClose
 //   • Enter/scale animation on open
 
-export default function Modal({ open, onClose, title, children, footer, width = 440 }) {
+export default function Modal({ open, onClose, title, children, footer, width = 440, padding }) {
+  const headerPad = padding != null ? `${padding}px` : '16px 20px'
+  const bodyPad   = padding != null ? `${padding}px ${padding}px 0` : '20px'
+  const footerPad = padding != null ? `${padding}px` : '12px 20px'
   const [entered, setEntered] = useState(false)
 
   // Trigger enter animation one rAF after mount so the transition fires
@@ -62,7 +65,7 @@ export default function Modal({ open, onClose, title, children, footer, width = 
         {/* ── Header ── */}
         <div style={{
           display:         'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding:         '16px 20px',
+          padding:         headerPad,
           borderBottom:    '1px solid var(--border-default)',
         }}>
           <span style={{
@@ -90,7 +93,7 @@ export default function Modal({ open, onClose, title, children, footer, width = 
         </div>
 
         {/* ── Body ── */}
-        <div style={{ padding: '20px' }}>
+        <div style={{ padding: bodyPad }}>
           {children}
         </div>
 
@@ -98,7 +101,7 @@ export default function Modal({ open, onClose, title, children, footer, width = 
         {footer && (
           <div style={{
             display:         'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
-            padding:         '12px 20px',
+            padding:         footerPad,
             borderTop:       '1px solid var(--border-default)',
           }}>
             {footer}

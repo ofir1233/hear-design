@@ -12,8 +12,8 @@ import ChatBubble  from '../components/ChatBubble.jsx'
 import ChatInput   from '../components/ChatInput.jsx'
 import Sidebar     from './components/Sidebar.jsx'
 import Header      from './components/Header.jsx'
-import DataPage    from '../components/data/DataPage.jsx'
 import DataPageV2  from '../components/data/DataPageV2.jsx'
+import DataPageV3  from '../components/data/DataPageV3.jsx'
 import ExplorePage from '../components/data/ExplorePage.jsx'
 import ReportsPage from '../components/reports/ReportsPage.jsx'
 import CreateReportPage from '../components/reports/CreateReportPage.jsx'
@@ -815,7 +815,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
           sidebarTransition={sidebarTransition}
         />
       ) : activePage === 'data' ? (
-        <DataPage
+        <DataPageV2
           isMobile={isMobile}
           sidebarWidth={effectiveSidebarWidth}
           sidebarTransition={sidebarTransition}
@@ -823,7 +823,7 @@ Ask me anything about your operations, or explore a topic below to get started.`
           onOpenCall={openCall}
         />
       ) : activePage === 'data-v2' ? (
-        <DataPageV2
+        <DataPageV3
           isMobile={isMobile}
           sidebarWidth={effectiveSidebarWidth}
           sidebarTransition={sidebarTransition}

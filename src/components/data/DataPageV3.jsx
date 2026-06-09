@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import { AgGridReact } from 'ag-grid-react'
 import { ModuleRegistry, AllCommunityModule, themeQuartz, colorSchemeDark, colorSchemeLight } from 'ag-grid-community'
 
@@ -524,62 +525,49 @@ function CollapsedChips({ chips, onClearAll, onRemove, onEdit, isCustomPreset, o
             }}>{chips.length}</span>
           </div>
 
-          {/* Rows */}
+          {/* Rows — field + value pill, click to edit, matches the modal's language */}
           <div style={{ padding: '4px 0' }}>
             {chips.map(chip => {
               const fieldLabel = colLabel(chip.field)
-              const op = isDateField(chip.field) ? (DATE_OP_WORD[chip.operator] ?? '') : (OP_SYMBOL[chip.operator] ?? '=')
+              const opLabel = (isDateField(chip.field) ? DATE_OPERATORS : OPERATORS)
+                .find(o => o.value === chip.operator)?.label ?? ''
+              const pill = `${opLabel}: ${chipValueLabel(chip)}`
               const isHovered = hoveredId === chip.id
               return (
                 <div
                   key={chip.id}
+                  onClick={e => { onEdit(chip, e.currentTarget); setOpen(false) }}
                   onMouseEnter={() => setHoveredId(chip.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '10px 12px 10px 20px',
-                    background: isHovered ? 'var(--bg-active)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                    padding: '8px 14px 8px 20px', cursor: 'pointer',
+                    background: isHovered ? 'rgba(23,121,247,0.06)' : 'transparent',
                     transition: 'background 100ms',
                   }}
                 >
                   <span style={{
-                    flex: 1, fontFamily: "'Byrd', sans-serif",
-                    fontSize: 14, whiteSpace: 'nowrap',
+                    fontFamily: "'Byrd', sans-serif", fontSize: 14, fontWeight: 500,
+                    color: 'var(--text-primary)', whiteSpace: 'nowrap',
                     overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>{fieldLabel}</span>
+
+                  {/* Value pill — same style as the column-list markers */}
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0,
+                    height: 24, padding: '0 4px 0 10px',
+                    background: 'var(--b20)', border: '1px solid var(--b60)', borderRadius: 99,
+                    fontSize: 12, color: 'var(--b100)', fontFamily: "'Byrd', sans-serif",
+                    maxWidth: 220,
                   }}>
-                    <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{fieldLabel}</span>
-                    <span style={{ color: 'var(--text-muted)', margin: '0 5px', fontSize: 12 }}>{op}</span>
-                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{chipValueLabel(chip)}</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pill}</span>
+                    <span
+                      role="button"
+                      title="Clear filter"
+                      onClick={e => { e.stopPropagation(); onRemove(chip) }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, flexShrink: 0, borderRadius: 99, cursor: 'pointer', fontSize: 13, lineHeight: 1, color: 'var(--b100)' }}
+                    >×</span>
                   </span>
-                  <div style={{
-                    display: 'flex', gap: 2, flexShrink: 0,
-                    opacity: isHovered ? 1 : 0, transition: 'opacity 120ms',
-                  }}>
-                    <button
-                      onClick={e => { onEdit(chip, e.currentTarget); setOpen(false) }}
-                      title="Edit"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        width: 28, height: 28, background: 'none', border: 'none',
-                        borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)',
-                        transition: 'background 100ms, color 100ms',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-canvas)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-                    ><EditIcon /></button>
-                    <button
-                      onClick={() => onRemove(chip)}
-                      title="Remove"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        width: 28, height: 28, background: 'none', border: 'none',
-                        borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16,
-                        transition: 'background 100ms, color 100ms',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--c20)'; e.currentTarget.style.color = 'var(--c100)' }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-                    >×</button>
-                  </div>
                 </div>
               )
             })}
@@ -643,52 +631,110 @@ function FilterChip({ chip, onEdit, onRemove }) {
   )
 }
 
-// ── Filter modal (column-first, two-step) ─────────────────────────────────────
+// ── Filter modal (inline per-column editing) ──────────────────────────────────
 
-function FilterModal({ open, step, chip, onChange, onPickField, onBack, onDone, onClose }) {
-  const [search, setSearch]     = useState('')
-  const [expanded, setExpanded] = useState(() => new Set())
+function FilterModal({ open, initialField, chips, onUpsert, onRemove, onClose }) {
+  const [search, setSearch]           = useState('')
+  const [expanded, setExpanded]       = useState(() => new Set())
+  const [activeField, setActiveField] = useState(null)
+  const [anchorRect, setAnchorRect]   = useState(null)
+  const [draft, setDraft]             = useState({ operator: 'equals', value: '' })
+  const closeTimer = useRef(null)
+  const rowRefs    = useRef({})
 
-  // Reset to all-collapsed whenever the modal (re)opens at the column step
-  useEffect(() => {
-    if (open && step === 'column') {
-      setSearch('')
-      setExpanded(new Set())
-    }
-  }, [open, step])
-
-  const isDate     = isDateField(chip.field)
-  const [rangeFrom, rangeTo] = (chip.value || '').split('..')
-  const canDone    = chip.field && (
-    isDate && chip.operator === 'between'
-      ? (rangeFrom && rangeTo)
-      : chip.value.trim()
-  )
-  const fieldLabel = colLabel(chip.field)
-
-  // When switching condition for a date field, keep the value format consistent
-  function setCondition(op) {
-    if (!isDate) { onChange({ ...chip, operator: op }); return }
-    let value = chip.value
-    if (op === 'between' && !value.includes('..')) value = `${value}..`
-    else if (op !== 'between' && value.includes('..')) value = value.split('..')[0]
-    onChange({ ...chip, operator: op, value })
+  // Auto-dismiss the inline editor 0.5s after the cursor leaves both the row and the editor
+  function cancelClose() { clearTimeout(closeTimer.current) }
+  function scheduleClose() {
+    clearTimeout(closeTimer.current)
+    closeTimer.current = setTimeout(() => setActiveField(null), 500)
   }
-  const setRange = (from, to) => onChange({ ...chip, value: `${from}..${to}` })
+  useEffect(() => () => clearTimeout(closeTimer.current), [])
 
-  const footer = step === 'column'
-    ? <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-    : (
-      <>
-        <Button variant="ghost" size="sm" onClick={onBack}>Back</Button>
-        <Button size="sm" onClick={onDone} disabled={!canDone}>Done</Button>
-      </>
-    )
+  useEffect(() => {
+    if (!open) return
+    setSearch('')
+    setActiveField(null)
+    if (initialField) {
+      // Edit a specific column: expand its group and pop its inline editor open
+      const g = COLUMN_GROUPS.find(grp => grp.fields.includes(initialField))
+      setExpanded(g ? new Set([g.id]) : new Set())
+      const t = setTimeout(() => {
+        const el = rowRefs.current[initialField]
+        if (el) { el.scrollIntoView({ block: 'nearest' }); openEditor(initialField, el) }
+      }, 40)
+      return () => clearTimeout(t)
+    }
+    setExpanded(new Set())
+  }, [open, initialField])
+
+  const chipFor = field => chips.find(c => c.field === field)
+
+  function isComplete(field, op, value) {
+    if (isDateField(field)) {
+      if (op === 'between') { const [a, b] = (value || '').split('..'); return !!(a && b) }
+      return !!value
+    }
+    return !!(value && String(value).trim())
+  }
+
+  function openEditor(field, el) {
+    cancelClose()
+    const existing = chipFor(field)
+    const isD = isDateField(field)
+    setDraft(existing
+      ? { operator: existing.operator, value: existing.value }
+      : { operator: isD ? 'on' : 'equals', value: '' })
+    setActiveField(field)
+    setAnchorRect(el.getBoundingClientRect())
+  }
+
+  function update(next) {
+    setDraft(next)
+    if (isComplete(activeField, next.operator, next.value)) onUpsert(activeField, next)
+    else onRemove(activeField)
+  }
+
+  function setOp(op) {
+    let value = draft.value
+    if (isDateField(activeField)) {
+      if (op === 'between' && !value.includes('..')) value = `${value}..`
+      else if (op !== 'between' && value.includes('..')) value = value.split('..')[0]
+    }
+    update({ operator: op, value })
+  }
+
+  function clearActive() {
+    if (activeField) onRemove(activeField)
+    setActiveField(null)
+  }
+
+  function markerText(field) {
+    const c = chipFor(field)
+    if (!c || !isComplete(field, c.operator, c.value)) return null
+    const val = isDateField(field) ? chipValueLabel(c) : c.value
+    const opLabel = (isDateField(field) ? DATE_OPERATORS : OPERATORS)
+      .find(o => o.value === c.operator)?.label ?? ''
+    return `${opLabel}: ${val}`.trim()
+  }
+
+  const isD = isDateField(activeField)
+  const [rangeFrom, rangeTo] = (draft.value || '').split('..')
+  const dateInput = {
+    height: 34, padding: '0 8px', boxSizing: 'border-box',
+    background: 'var(--bg-canvas)', border: '1px solid var(--border-input)', borderRadius: 8,
+    fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', outline: 'none',
+  }
 
   return (
-    <Modal open={open} onClose={onClose} title="Add filter" width={440} footer={footer}>
-      {step === 'column' ? (
-        /* ── Step 1: pick a column ── */
+    <>
+      <Modal
+        open={open}
+        onClose={onClose}
+        title="Add filter"
+        width={520}
+        padding={24}
+        footer={<Button size="sm" onClick={onClose}>Done</Button>}
+      >
         <div>
           {/* Search */}
           <div style={{
@@ -702,10 +748,7 @@ function FilterModal({ open, step, chip, onChange, onPickField, onBack, onDone, 
               onChange={e => setSearch(e.target.value)}
               placeholder="Search columns..."
               autoFocus
-              style={{
-                flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)',
-              }}
+              style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)' }}
             />
             {search && (
               <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 15, padding: 0, lineHeight: 1 }}>×</button>
@@ -713,7 +756,7 @@ function FilterModal({ open, step, chip, onChange, onPickField, onBack, onDone, 
           </div>
 
           {/* Sectioned, grouped column list */}
-          <div style={{ maxHeight: 380, overflowY: 'auto', paddingRight: 2 }} className="manage-cols-scroll">
+          <div style={{ maxHeight: 380, overflowY: 'auto', paddingRight: 10 }} className="manage-cols-scroll">
             {COLUMN_SECTIONS.map(section => {
               const groups = COLUMN_GROUPS.filter(g =>
                 g.section === section.key &&
@@ -722,54 +765,60 @@ function FilterModal({ open, step, chip, onChange, onPickField, onBack, onDone, 
               if (groups.length === 0) return null
               return (
                 <div key={section.key}>
-                  {/* Section divider label */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 8px 8px' }}>
                     <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, letterSpacing: '0.09em',
-                      textTransform: 'uppercase', color: 'var(--text-muted)',
-                      fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
-                    }}>{section.label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap' }}>{section.label}</span>
                     <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
                   </div>
-
                   {groups.map(group => {
-                    const matched = group.fields.filter(f =>
-                      colLabel(f).toLowerCase().includes(search.toLowerCase())
-                    )
+                    const matched = group.fields.filter(f => colLabel(f).toLowerCase().includes(search.toLowerCase()))
                     const isExpanded = expanded.has(group.id) || search.length > 0
+                    const setCount = group.fields.filter(f => markerText(f)).length
                     return (
                       <div key={group.id} style={{ borderBottom: '1px solid var(--border-default)' }}>
                         <button
                           onClick={() => setExpanded(s => { const n = new Set(s); n.has(group.id) ? n.delete(group.id) : n.add(group.id); return n })}
-                          style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            width: '100%', padding: '13px 8px', background: 'none', border: 'none', cursor: 'pointer',
-                          }}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '13px 8px', background: 'none', border: 'none', cursor: 'pointer' }}
                         >
-                          <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>{group.label}</span>
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-                            style={{ transition: 'transform 180ms', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
+                            {group.label}
+                            {setCount > 0 && (
+                              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--b100)', background: 'var(--b20)', borderRadius: 99, padding: '1px 7px' }}>{setCount}</span>
+                            )}
+                          </span>
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ transition: 'transform 180ms', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
                             <path d="M3 5l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         </button>
                         {isExpanded && matched.map(f => {
-                          const lbl = colLabel(f)
+                          const mark = markerText(f)
+                          const active = activeField === f
                           return (
                             <button
                               key={f}
-                              onClick={() => onPickField(f)}
-                              style={{
-                                display: 'flex', alignItems: 'center',
-                                width: '100%', padding: '9px 8px 9px 18px', background: 'none', border: 'none',
-                                cursor: 'pointer', borderRadius: 8, textAlign: 'left',
-                                fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)',
-                                transition: 'background 100ms',
-                              }}
-                              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-                              onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+                              ref={el => { if (el) rowRefs.current[f] = el }}
+                              onClick={e => openEditor(f, e.currentTarget)}
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', marginBottom: 4, padding: '9px 8px 9px 18px', border: 'none', cursor: 'pointer', borderRadius: 8, textAlign: 'left', background: active ? 'var(--bg-active)' : 'none', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', transition: 'background 100ms' }}
+                              onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-active)'; else cancelClose() }}
+                              onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'none'; else scheduleClose() }}
                             >
-                              {lbl}
+                              <span>{colLabel(f)}</span>
+                              {mark
+                                ? <span
+                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 22, padding: '0 4px 0 8px', background: 'var(--b20)', border: '1px solid var(--b60)', borderRadius: 99, fontSize: 12, color: 'var(--b100)', whiteSpace: 'nowrap', maxWidth: 220, transition: 'background 120ms' }}
+                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--b30)' }}
+                                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--b20)' }}
+                                  >
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{mark}</span>
+                                    <span
+                                      role="button"
+                                      title="Clear filter"
+                                      onMouseDown={e => e.stopPropagation()}
+                                      onClick={e => { e.stopPropagation(); onRemove(f) }}
+                                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, flexShrink: 0, borderRadius: 99, cursor: 'pointer', fontSize: 13, lineHeight: 1, color: 'var(--b100)' }}
+                                    >×</span>
+                                  </span>
+                                : <span style={{ color: 'var(--text-muted)', fontSize: 18, lineHeight: 1 }}>+</span>}
                             </button>
                           )
                         })}
@@ -781,119 +830,89 @@ function FilterModal({ open, step, chip, onChange, onPickField, onBack, onDone, 
             })}
           </div>
         </div>
-      ) : (
-        /* ── Step 2: configure the filter for the chosen column ── */
-        <div>
-          {/* Back row */}
-          <button
-            onClick={onBack}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14,
-              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-              fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-secondary)',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.color = 'var(--b100)' }}
-            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M9 3l-4 4 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            All columns
-          </button>
+      </Modal>
 
-          {/* Chosen column */}
+      {/* Inline editor — anchored beside the clicked column (portal escapes the modal card) */}
+      {open && activeField && anchorRect && createPortal(
+        <div
+          onMouseDown={e => e.stopPropagation()}
+          onMouseEnter={cancelClose}
+          onMouseLeave={scheduleClose}
+          style={{ position: 'fixed', top: Math.max(12, anchorRect.top - 6), left: anchorRect.right + 9, zIndex: 10001 }}
+        >
+          {/* Tail — left-pointing caret that connects the editor to the column row */}
           <div style={{
-            padding: '10px 12px', marginBottom: 14, borderRadius: 8,
-            background: 'var(--b20)', border: '1px solid var(--b60)',
-          }}>
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--b100)', opacity: 0.7, fontFamily: "'Byrd', sans-serif", marginBottom: 2 }}>Column</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--b100)', fontFamily: "'Byrd', sans-serif" }}>{fieldLabel}</div>
-          </div>
+            position: 'absolute', left: -5, top: anchorRect.height / 2 + 6,
+            width: 12, height: 12, background: '#fff',
+            borderLeft: '1px solid var(--border-default)',
+            borderBottom: '1px solid var(--border-default)',
+            borderBottomLeftRadius: 3,
+            transform: 'translateY(-50%) rotate(45deg)',
+            zIndex: 2,
+          }} />
 
-          {/* Condition */}
-          <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>Condition</label>
+          {/* Editor card */}
+          <div style={{
+            position: 'relative', zIndex: 1,
+            background: '#fff', border: '1px solid var(--border-default)', borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.18)', padding: 8,
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+          <div style={{ width: 150 }}>
             <PresetSelect
               fullWidth
-              options={(isDate ? DATE_OPERATORS : OPERATORS).map(op => ({ value: op.value, label: op.label }))}
-              value={isDate && !DATE_OP_VALUES.has(chip.operator) ? 'on' : chip.operator}
-              onChange={setCondition}
+              options={(isD ? DATE_OPERATORS : OPERATORS).map(op => ({ value: op.value, label: op.label }))}
+              value={isD && !DATE_OP_VALUES.has(draft.operator) ? 'on' : draft.operator}
+              onChange={setOp}
             />
           </div>
 
-          {/* Value */}
-          <div>
-            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
-              {isDate ? (chip.operator === 'between' ? 'Date range' : 'Date') : 'Value'}
-            </label>
+          {!isD ? (
+            <input
+              value={draft.value}
+              onChange={e => update({ ...draft, value: e.target.value })}
+              placeholder="Value"
+              autoFocus
+              style={{ width: 180, height: 34, padding: '0 10px', boxSizing: 'border-box', background: 'var(--bg-canvas)', border: '1px solid var(--border-input)', borderRadius: 8, fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', outline: 'none' }}
+            />
+          ) : draft.operator === 'between' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input type="date" value={rangeFrom || ''} onChange={e => update({ ...draft, value: `${e.target.value}..${rangeTo || ''}` })} style={{ ...dateInput, width: 140 }} />
+              <span style={{ color: 'var(--text-muted)' }}>→</span>
+              <input type="date" value={rangeTo || ''} min={rangeFrom || undefined} onChange={e => update({ ...draft, value: `${rangeFrom || ''}..${e.target.value}` })} style={{ ...dateInput, width: 140 }} />
+            </div>
+          ) : (
+            <input type="date" value={draft.value} onChange={e => update({ ...draft, value: e.target.value })} style={{ ...dateInput, width: 170 }} />
+          )}
 
-            {!isDate ? (
-              <input
-                value={chip.value}
-                onChange={e => onChange({ ...chip, value: e.target.value })}
-                onKeyDown={e => { if (e.key === 'Enter' && canDone) onDone() }}
-                placeholder="Enter value…"
-                autoFocus
-                style={{
-                  width: '100%', boxSizing: 'border-box', height: 38, padding: '0 12px',
-                  background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)', borderRadius: 8,
-                  fontSize: 'var(--type-p14)', color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
-                  outline: 'none', transition: 'border-color 150ms',
-                }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'var(--b100)' }}
-                onBlur={e  => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
-              />
-            ) : chip.operator === 'between' ? (
-              /* Range: two date inputs */
-              <div style={{
-                display: 'flex', alignItems: 'center',
-                border: '1.5px solid var(--border-default)', borderRadius: 8, overflow: 'hidden',
-              }}>
-                <input
-                  type="date"
-                  value={rangeFrom || ''}
-                  onChange={e => setRange(e.target.value, rangeTo || '')}
-                  style={{
-                    flex: 1, minWidth: 0, height: 38, padding: '0 10px',
-                    background: 'var(--bg-canvas)', border: 'none', outline: 'none',
-                    fontSize: 'var(--type-p14)', color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
-                  }}
-                />
-                <span style={{ color: 'var(--text-muted)', fontSize: 14, flexShrink: 0 }}>→</span>
-                <input
-                  type="date"
-                  value={rangeTo || ''}
-                  min={rangeFrom || undefined}
-                  onChange={e => setRange(rangeFrom || '', e.target.value)}
-                  style={{
-                    flex: 1, minWidth: 0, height: 38, padding: '0 10px',
-                    background: 'var(--bg-canvas)', border: 'none', outline: 'none',
-                    fontSize: 'var(--type-p14)', color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", textAlign: 'right',
-                  }}
-                />
-              </div>
-            ) : (
-              /* Single specific date */
-              <input
-                type="date"
-                value={chip.value}
-                onChange={e => onChange({ ...chip, value: e.target.value })}
-                style={{
-                  width: '100%', boxSizing: 'border-box', height: 38, padding: '0 12px',
-                  background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)', borderRadius: 8,
-                  fontSize: 'var(--type-p14)', color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
-                  outline: 'none', transition: 'border-color 150ms',
-                }}
-                onFocus={e => { e.currentTarget.style.borderColor = 'var(--b100)' }}
-                onBlur={e  => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
-              />
-            )}
+          {/* Confirm — commits the value and closes this column's editor */}
+          <button
+            onClick={() => setActiveField(null)}
+            title="Confirm"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, flexShrink: 0, background: 'none', border: 'none', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--b20)'; e.currentTarget.style.color = 'var(--b100)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+              <path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          <button
+            onClick={clearActive}
+            title="Remove filter"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, flexShrink: 0, background: 'none', border: 'none', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 17 }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--c20)'; e.currentTarget.style.color = 'var(--c100)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+          >×</button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </Modal>
+    </>
   )
 }
+
 
 const DATE_RANGES = [
   { key: 'today',   label: 'Today' },
@@ -934,7 +953,7 @@ function CalendarIcon() {
 
 // ── DataPage ──────────────────────────────────────────────────────────────────
 
-export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sidebarTransition, companyConfig = null, onOpenCall }) {
+export default function DataPageV3({ isMobile = false, sidebarWidth = 272, sidebarTransition, companyConfig = null, onOpenCall }) {
   const [schemaId,       setSchemaId]       = useState('acme')
   const [customPresets,  setCustomPresets]  = useState([])
   const [selectedPreset, setSelectedPreset] = useState('')
@@ -1060,39 +1079,21 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
     setChips(newChips)
   }
 
+  // Inline-edit model: opening the panel shows the column list; editing happens per-column.
   function openPopover(id) {
-    setActivePopover({ id })
-    if (id === 'new') {
-      setEditingChip({ field: '', operator: 'contains', value: '' })
-      setFilterStep('column')
-    } else {
-      const c = chips.find(x => x.id === id)
-      if (c) setEditingChip({ field: c.field, operator: c.operator, value: c.value })
-      setFilterStep('config')
-    }
+    const c = id && id !== 'new' ? chips.find(x => x.id === id) : null
+    setActivePopover({ field: c?.field ?? null })
   }
-
-  function pickFilterField(field) {
-    setEditingChip(c => ({
-      ...c,
-      field,
-      operator: isDateField(field) ? 'on' : 'contains',
-      value: '',
-    }))
-    setFilterStep('config')
-  }
-
   function closePopover() { setActivePopover(null) }
 
-  function donePopover() {
-    if (!editingChip.field || !editingChip.value.trim()) { closePopover(); return }
-    if (activePopover.id === 'new') {
-      setChips(c => [...c, { id: _chipId++, ...editingChip }])
-    } else {
-      setChips(c => c.map(x => x.id === activePopover.id ? { ...x, ...editingChip } : x))
-    }
-    closePopover()
+  function upsertFilter(field, patch) {
+    setChips(cs => {
+      const ex = cs.find(c => c.field === field)
+      if (ex) return cs.map(c => c.field === field ? { ...c, operator: patch.operator, value: patch.value } : c)
+      return [...cs, { id: _chipId++, field, operator: patch.operator, value: patch.value }]
+    })
   }
+  function removeFilterByField(field) { setChips(cs => cs.filter(c => c.field !== field)) }
 
   function removeChip(id) { setChips(c => c.filter(x => x.id !== id)) }
 
@@ -1100,7 +1101,7 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
 
   return (
     <div
-      data-inspector="DataPageV2"
+      data-inspector="DataPageV3"
       style={{
         position: 'fixed', top: 0, left, right: 0, bottom: 0,
         background: 'var(--bg-canvas)',
@@ -1119,7 +1120,7 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
         boxShadow: 'var(--page-header-shadow)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Data</span>
+          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Data V2</span>
           {companyConfig?.companyName && (
             <>
               <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
@@ -1409,15 +1410,13 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
         />
       </div>
 
-      {/* ── Filter modal (column-first, two-step) ─────────────────────── */}
+      {/* ── Filter modal (inline per-column editing) ──────────────────── */}
       <FilterModal
         open={!!activePopover}
-        step={filterStep}
-        chip={editingChip}
-        onChange={setEditingChip}
-        onPickField={pickFilterField}
-        onBack={() => setFilterStep('column')}
-        onDone={donePopover}
+        initialField={activePopover?.field ?? null}
+        chips={chips}
+        onUpsert={upsertFilter}
+        onRemove={removeFilterByField}
         onClose={closePopover}
       />
 
