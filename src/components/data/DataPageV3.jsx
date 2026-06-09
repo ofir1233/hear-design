@@ -83,20 +83,35 @@ function chipValueLabel(chip) {
   return fmtDate(chip.value)
 }
 
+// Each preset is a saved view: which columns are selected + the filters applied.
+// Columns reference the shared COLUMN_GROUPS taxonomy; filters on signal columns are UI-level.
 const PRESETS = [
-  { id: 'agent_v1',      label: 'Agent evaluation V1', filters: [
-    { field: 'status',   operator: 'equals', value: 'IN PROGRESS' },
-    { field: 'priority', operator: 'equals', value: 'HIGH' },
-  ]},
-  { id: 'high_priority', label: 'High Priority', filters: [
-    { field: 'priority', operator: 'equals',   value: 'HIGH' },
-    { field: 'status',   operator: 'not_equal', value: 'DONE' },
-  ]},
-  { id: 'done_only',     label: 'Done',          filters: [{ field: 'status', operator: 'equals', value: 'DONE' }] },
-  { id: 'alerts',        label: 'Alerts Only',   filters: [
-    { field: 'status',     operator: 'equals', value: 'IN PROGRESS' },
-    { field: 'priority',   operator: 'equals', value: 'HIGH' },
-  ]},
+  { id: 'agent_v1', label: 'Agent evaluation V1',
+    columns: ['id', 'callDate', 'status', 'priority', 'Agent Full Name', 'Team Language', 'Sentiment Score', 'Talk Ratio'],
+    filters: [
+      { field: 'status',         operator: 'equals', value: 'IN PROGRESS' },
+      { field: 'priority',       operator: 'equals', value: 'HIGH' },
+      { field: 'Team Language',  operator: 'equals', value: 'English' },
+      { field: 'Sentiment Score', operator: 'equals', value: 'Positive' },
+      { field: 'Talk Ratio',     operator: 'equals', value: 'Balanced' },
+    ]},
+  { id: 'high_priority', label: 'High Priority',
+    columns: ['id', 'callDate', 'destination', 'status', 'priority', 'assignedTo'],
+    filters: [
+      { field: 'priority', operator: 'equals',    value: 'HIGH' },
+      { field: 'status',   operator: 'not_equal', value: 'DONE' },
+    ]},
+  { id: 'done_only', label: 'Done',
+    columns: ['id', 'callDate', 'proposedPrice', 'summary', 'status', 'priority', 'assignedTo'],
+    filters: [{ field: 'status', operator: 'equals', value: 'DONE' }] },
+  { id: 'alerts', label: 'Alerts Only',
+    columns: ['id', 'callDate', 'status', 'Investment Advice', 'Legal Regulatory Violations', 'Information Violation', 'Loan Mentioned'],
+    filters: [
+      { field: 'status',                       operator: 'equals', value: 'IN PROGRESS' },
+      { field: 'Investment Advice',            operator: 'equals', value: 'Yes' },
+      { field: 'Legal Regulatory Violations',  operator: 'equals', value: 'Yes' },
+      { field: 'Information Violation',         operator: 'equals', value: 'Yes' },
+    ]},
 ]
 
 // One shared column taxonomy — drives BOTH the Columns tab and the Filters column picker.
@@ -468,7 +483,7 @@ function EditIcon() {
 
 const OP_SYMBOL = { equals: '=', not_equal: '≠', contains: '~', not_contains: '!~' }
 
-function CollapsedChips({ chips, onClearAll, onRemove, onEdit, isCustomPreset, onSave, onUpdatePreset }) {
+function CollapsedChips({ selectedFields, chips, onClearAll, onRemoveColumn, onEdit, isCustomPreset, onSave, onUpdatePreset }) {
   const [open, setOpen]       = useState(false)
   const [hoveredId, setHoveredId] = useState(null)
   const closeTimer            = useRef(null)
@@ -476,6 +491,10 @@ function CollapsedChips({ chips, onClearAll, onRemove, onEdit, isCustomPreset, o
   function cancelClose() { clearTimeout(closeTimer.current) }
   function scheduleClose() { closeTimer.current = setTimeout(() => setOpen(false), 300) }
   useEffect(() => () => clearTimeout(closeTimer.current), [])
+
+  const chipFor = field => chips.find(c => c.field === field)
+  // Union of selected columns + any filtered field, in a stable order
+  const fields = [...new Set([...selectedFields, ...chips.map(c => c.field)])]
 
   return (
     <div
@@ -491,7 +510,7 @@ function CollapsedChips({ chips, onClearAll, onRemove, onEdit, isCustomPreset, o
         borderRadius: 99, fontSize: 12, color: 'var(--b100)',
         fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', cursor: 'default',
       }}>
-        {chips.length} filters
+        {fields.length} selected
         <span
           onClick={e => { e.stopPropagation(); onClearAll() }}
           style={{ cursor: 'pointer', fontSize: 14, lineHeight: 1, opacity: 0.7 }}
@@ -505,7 +524,7 @@ function CollapsedChips({ chips, onClearAll, onRemove, onEdit, isCustomPreset, o
           background: '#fff',
           borderRadius: 16,
           boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
-          zIndex: 200, width: 320,
+          zIndex: 200, width: 340,
           overflow: 'hidden',
         }}>
           {/* Title bar */}
@@ -517,57 +536,71 @@ function CollapsedChips({ chips, onClearAll, onRemove, onEdit, isCustomPreset, o
             <span style={{
               fontSize: 16, fontWeight: 600, color: 'var(--text-primary)',
               fontFamily: "'Byrd', sans-serif",
-            }}>Active filters</span>
+            }}>Selected columns</span>
             <span style={{
               fontSize: 12, fontWeight: 600, color: 'var(--b100)',
               background: 'var(--b20)', borderRadius: 99, padding: '2px 8px',
               fontFamily: "'Byrd', sans-serif",
-            }}>{chips.length}</span>
+            }}>{fields.length}</span>
           </div>
 
-          {/* Rows — field + value pill, click to edit, matches the modal's language */}
+          {/* Rows — every selected column; filtered ones show their value pill */}
           <div style={{ padding: '4px 0' }}>
-            {chips.map(chip => {
-              const fieldLabel = colLabel(chip.field)
-              const opLabel = (isDateField(chip.field) ? DATE_OPERATORS : OPERATORS)
-                .find(o => o.value === chip.operator)?.label ?? ''
-              const pill = `${opLabel}: ${chipValueLabel(chip)}`
-              const isHovered = hoveredId === chip.id
+            {fields.map(field => {
+              const chip = chipFor(field)
+              const opLabel = chip ? ((isDateField(field) ? DATE_OPERATORS : OPERATORS).find(o => o.value === chip.operator)?.label ?? '') : ''
+              const pill = chip ? `${opLabel}: ${chipValueLabel(chip)}` : null
+              const isHovered = hoveredId === field
               return (
                 <div
-                  key={chip.id}
-                  onClick={e => { onEdit(chip, e.currentTarget); setOpen(false) }}
-                  onMouseEnter={() => setHoveredId(chip.id)}
+                  key={field}
+                  onClick={() => { onEdit(field); setOpen(false) }}
+                  onMouseEnter={() => setHoveredId(field)}
                   onMouseLeave={() => setHoveredId(null)}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-                    padding: '8px 14px 8px 20px', cursor: 'pointer',
+                    padding: '8px 12px 8px 20px', cursor: 'pointer',
                     background: isHovered ? 'rgba(23,121,247,0.06)' : 'transparent',
                     transition: 'background 100ms',
                   }}
                 >
                   <span style={{
-                    fontFamily: "'Byrd', sans-serif", fontSize: 14, fontWeight: 500,
+                    flex: 1, fontFamily: "'Byrd', sans-serif", fontSize: 14, fontWeight: 500,
                     color: 'var(--text-primary)', whiteSpace: 'nowrap',
                     overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{fieldLabel}</span>
+                  }}>{colLabel(field)}</span>
 
-                  {/* Value pill — same style as the column-list markers */}
-                  <span style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0,
-                    height: 24, padding: '0 4px 0 10px',
-                    background: 'var(--b20)', border: '1px solid var(--b60)', borderRadius: 99,
-                    fontSize: 12, color: 'var(--b100)', fontFamily: "'Byrd', sans-serif",
-                    maxWidth: 220,
-                  }}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{pill}</span>
-                    <span
-                      role="button"
-                      title="Clear filter"
-                      onClick={e => { e.stopPropagation(); onRemove(chip) }}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, flexShrink: 0, borderRadius: 99, cursor: 'pointer', fontSize: 13, lineHeight: 1, color: 'var(--b100)' }}
-                    >×</span>
-                  </span>
+                  {/* Filter value pill, or a dashed "Add filter" pill — same as the modal */}
+                  {pill
+                    ? <span style={{
+                        display: 'inline-flex', alignItems: 'center', flexShrink: 0,
+                        height: 24, padding: '0 10px',
+                        background: 'var(--b20)', border: '1px solid var(--b60)', borderRadius: 99,
+                        fontSize: 12, color: 'var(--b100)', fontFamily: "'Byrd', sans-serif",
+                        maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>{pill}</span>
+                    : <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
+                        height: 24, padding: '0 10px', borderRadius: 99,
+                        border: '1px dashed var(--b60)', background: 'transparent',
+                        color: 'var(--b100)', fontSize: 12, fontWeight: 500,
+                        fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
+                      }}>
+                        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                          <path d="M1.5 2.5h11l-4.5 5.5V12l-2-1V8L1.5 2.5z" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinejoin="round" strokeLinecap="round" />
+                        </svg>
+                        Add filter
+                      </span>}
+
+                  {/* Remove the column (and any filter on it) */}
+                  <span
+                    role="button"
+                    title="Remove column"
+                    onClick={e => { e.stopPropagation(); onRemoveColumn(field) }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, height: 22, flexShrink: 0, borderRadius: 6, cursor: 'pointer', fontSize: 15, lineHeight: 1, color: 'var(--text-muted)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
+                  >×</span>
                 </div>
               )
             })}
@@ -633,35 +666,24 @@ function FilterChip({ chip, onEdit, onRemove }) {
 
 // ── Filter modal (inline per-column editing) ──────────────────────────────────
 
-function FilterModal({ open, initialField, chips, onUpsert, onRemove, onClose }) {
+function FilterModal({ open, initialField, chips, selectedColumns, onToggleColumn, onUpsert, onRemove, onClose }) {
   const [search, setSearch]           = useState('')
   const [expanded, setExpanded]       = useState(() => new Set())
   const [activeField, setActiveField] = useState(null)
-  const [anchorRect, setAnchorRect]   = useState(null)
+  const [hoveredField, setHoveredField] = useState(null)
   const [draft, setDraft]             = useState({ operator: 'equals', value: '' })
-  const closeTimer = useRef(null)
   const rowRefs    = useRef({})
-
-  // Auto-dismiss the inline editor 0.5s after the cursor leaves both the row and the editor
-  function cancelClose() { clearTimeout(closeTimer.current) }
-  function scheduleClose() {
-    clearTimeout(closeTimer.current)
-    closeTimer.current = setTimeout(() => setActiveField(null), 500)
-  }
-  useEffect(() => () => clearTimeout(closeTimer.current), [])
 
   useEffect(() => {
     if (!open) return
     setSearch('')
     setActiveField(null)
     if (initialField) {
-      // Edit a specific column: expand its group and pop its inline editor open
+      // Edit a specific column: expand its group and open its inline editor
       const g = COLUMN_GROUPS.find(grp => grp.fields.includes(initialField))
       setExpanded(g ? new Set([g.id]) : new Set())
-      const t = setTimeout(() => {
-        const el = rowRefs.current[initialField]
-        if (el) { el.scrollIntoView({ block: 'nearest' }); openEditor(initialField, el) }
-      }, 40)
+      openEditor(initialField)
+      const t = setTimeout(() => rowRefs.current[initialField]?.scrollIntoView({ block: 'nearest' }), 40)
       return () => clearTimeout(t)
     }
     setExpanded(new Set())
@@ -677,15 +699,13 @@ function FilterModal({ open, initialField, chips, onUpsert, onRemove, onClose })
     return !!(value && String(value).trim())
   }
 
-  function openEditor(field, el) {
-    cancelClose()
+  function openEditor(field) {
     const existing = chipFor(field)
     const isD = isDateField(field)
     setDraft(existing
       ? { operator: existing.operator, value: existing.value }
       : { operator: isD ? 'on' : 'equals', value: '' })
     setActiveField(field)
-    setAnchorRect(el.getBoundingClientRect())
   }
 
   function update(next) {
@@ -773,17 +793,31 @@ function FilterModal({ open, initialField, chips, onUpsert, onRemove, onClose })
                   {groups.map(group => {
                     const matched = group.fields.filter(f => colLabel(f).toLowerCase().includes(search.toLowerCase()))
                     const isExpanded = expanded.has(group.id) || search.length > 0
-                    const setCount = group.fields.filter(f => markerText(f)).length
+                    const selCount    = group.fields.filter(f => selectedColumns?.has(f)).length
+                    const filterCount = group.fields.filter(f => markerText(f)).length
                     return (
                       <div key={group.id} style={{ borderBottom: '1px solid var(--border-default)' }}>
                         <button
                           onClick={() => setExpanded(s => { const n = new Set(s); n.has(group.id) ? n.delete(group.id) : n.add(group.id); return n })}
                           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '13px 8px', background: 'none', border: 'none', cursor: 'pointer' }}
                         >
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
                             {group.label}
-                            {setCount > 0 && (
-                              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--b100)', background: 'var(--b20)', borderRadius: 99, padding: '1px 7px' }}>{setCount}</span>
+                            {selCount > 0 && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', background: 'var(--bg-active)', borderRadius: 99, padding: '2px 9px', fontFamily: "'Byrd', sans-serif" }}>
+                                <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                                  <path d="M2 6l2.5 2.5L10 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                                {selCount} selected
+                              </span>
+                            )}
+                            {filterCount > 0 && (
+                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: 'var(--b100)', background: 'var(--b20)', borderRadius: 99, padding: '2px 9px', fontFamily: "'Byrd', sans-serif" }}>
+                                <svg width="11" height="11" viewBox="0 0 14 14" fill="none">
+                                  <path d="M1.5 2.5h11l-4.5 5.5V12l-2-1V8L1.5 2.5z" stroke="currentColor" strokeWidth="1.7" fill="none" strokeLinejoin="round" strokeLinecap="round" />
+                                </svg>
+                                {filterCount} filtered
+                              </span>
                             )}
                           </span>
                           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ transition: 'transform 180ms', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
@@ -793,33 +827,147 @@ function FilterModal({ open, initialField, chips, onUpsert, onRemove, onClose })
                         {isExpanded && matched.map(f => {
                           const mark = markerText(f)
                           const active = activeField === f
+                          const checked = selectedColumns?.has(f)
                           return (
-                            <button
+                            <div
                               key={f}
                               ref={el => { if (el) rowRefs.current[f] = el }}
-                              onClick={e => openEditor(f, e.currentTarget)}
-                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, width: '100%', marginBottom: 4, padding: '9px 8px 9px 18px', border: 'none', cursor: 'pointer', borderRadius: 8, textAlign: 'left', background: active ? 'var(--bg-active)' : 'none', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', transition: 'background 100ms' }}
-                              onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-active)'; else cancelClose() }}
-                              onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'none'; else scheduleClose() }}
+                              style={{
+                                marginBottom: 4, borderRadius: 10,
+                                ...(active ? { border: '1px solid var(--b60)', background: '#fff', boxShadow: '0 2px 12px rgba(23,121,247,0.12)' } : {}),
+                              }}
                             >
-                              <span>{colLabel(f)}</span>
-                              {mark
-                                ? <span
-                                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 22, padding: '0 4px 0 8px', background: 'var(--b20)', border: '1px solid var(--b60)', borderRadius: 99, fontSize: 12, color: 'var(--b100)', whiteSpace: 'nowrap', maxWidth: 220, transition: 'background 120ms' }}
-                                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--b30)' }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--b20)' }}
-                                  >
-                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{mark}</span>
-                                    <span
-                                      role="button"
-                                      title="Clear filter"
-                                      onMouseDown={e => e.stopPropagation()}
-                                      onClick={e => { e.stopPropagation(); onRemove(f) }}
-                                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, flexShrink: 0, borderRadius: 99, cursor: 'pointer', fontSize: 13, lineHeight: 1, color: 'var(--b100)' }}
-                                    >×</span>
-                                  </span>
-                                : <span style={{ color: 'var(--text-muted)', fontSize: 18, lineHeight: 1 }}>+</span>}
-                            </button>
+                              {/* Row */}
+                              <div
+                                onMouseEnter={() => setHoveredField(f)}
+                                onMouseLeave={() => setHoveredField(null)}
+                                style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', minHeight: 32, boxSizing: 'border-box', padding: active ? 12 : '4px 12px', borderRadius: 8, background: active ? 'transparent' : (hoveredField === f ? 'rgba(23,121,247,0.05)' : 'none'), fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', transition: 'background 100ms' }}
+                              >
+                                {/* Checkbox — adds the column to the view (no filter) */}
+                                <div
+                                  role="checkbox"
+                                  aria-checked={checked}
+                                  title={checked ? 'Hide column' : 'Show column'}
+                                  onClick={e => {
+                                    e.stopPropagation()
+                                    onToggleColumn(f)
+                                    if (checked) {           // deselecting → collapse editor + clear its filter
+                                      if (activeField === f) setActiveField(null)
+                                      onRemove(f)
+                                    }
+                                  }}
+                                  style={{
+                                    width: 16, height: 16, flexShrink: 0, borderRadius: 4,
+                                    border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--border-input)'}`,
+                                    background: checked ? 'var(--b100)' : 'transparent',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    cursor: 'pointer', transition: 'all 120ms',
+                                  }}
+                                >
+                                  {checked && (
+                                    <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                                      <path d="M2 5l2.5 2.5L8 3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  )}
+                                </div>
+
+                                {/* Name — click to add/edit a filter (only once the column is added) */}
+                                <span
+                                  onClick={() => { if (checked) openEditor(f) }}
+                                  style={{ flex: 1, cursor: checked ? 'pointer' : 'default' }}
+                                >{colLabel(f)}</span>
+
+                                {/* Filter pill / Add filter — only shown after the column is checked */}
+                                {checked && (mark
+                                  ? <span
+                                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 22, padding: '0 4px 0 8px', background: 'var(--b20)', border: '1px solid var(--b60)', borderRadius: 99, fontSize: 12, color: 'var(--b100)', whiteSpace: 'nowrap', maxWidth: 220, cursor: 'pointer', transition: 'background 120ms' }}
+                                      onClick={() => openEditor(f)}
+                                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--b30)' }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = 'var(--b20)' }}
+                                    >
+                                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{mark}</span>
+                                      <span
+                                        role="button"
+                                        title="Clear filter"
+                                        onClick={e => { e.stopPropagation(); onRemove(f) }}
+                                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, flexShrink: 0, borderRadius: 99, cursor: 'pointer', fontSize: 13, lineHeight: 1, color: 'var(--b100)' }}
+                                      >×</span>
+                                    </span>
+                                  : !active && <span
+                                      title="Add filter"
+                                      onClick={() => openEditor(f)}
+                                      style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: 5, flexShrink: 0,
+                                        height: 24, padding: '0 10px', borderRadius: 99,
+                                        border: '1px dashed var(--b60)', background: 'transparent',
+                                        color: 'var(--b100)', fontSize: 12, fontWeight: 500,
+                                        fontFamily: "'Byrd', sans-serif", cursor: 'pointer', whiteSpace: 'nowrap',
+                                        transition: 'background 120ms',
+                                      }}
+                                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--b20)' }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                                    >
+                                      <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+                                        <path d="M1.5 2.5h11l-4.5 5.5V12l-2-1V8L1.5 2.5z" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinejoin="round" strokeLinecap="round" />
+                                      </svg>
+                                      Add filter
+                                    </span>)}
+                              </div>
+
+                              {/* Inline editor — expands in place under the row */}
+                              {active && (
+                                <>
+                                  <div style={{ height: 1, background: 'var(--border-default)', margin: '0 14px' }} />
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 12 }}>
+                                    <div style={{ width: 150 }}>
+                                      <PresetSelect
+                                        fullWidth
+                                        options={(isD ? DATE_OPERATORS : OPERATORS).map(op => ({ value: op.value, label: op.label }))}
+                                        value={isD && !DATE_OP_VALUES.has(draft.operator) ? 'on' : draft.operator}
+                                        onChange={setOp}
+                                      />
+                                    </div>
+                                    {!isD ? (
+                                      <input
+                                        value={draft.value}
+                                        onChange={e => update({ ...draft, value: e.target.value })}
+                                        placeholder="Value"
+                                        autoFocus
+                                        style={{ flex: 1, minWidth: 0, height: 34, padding: '0 10px', boxSizing: 'border-box', background: '#fff', border: '1px solid var(--border-input)', borderRadius: 8, fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', outline: 'none' }}
+                                      />
+                                    ) : draft.operator === 'between' ? (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+                                        <input type="date" value={rangeFrom || ''} onChange={e => update({ ...draft, value: `${e.target.value}..${rangeTo || ''}` })} style={{ ...dateInput, background: '#fff', flex: 1, minWidth: 0 }} />
+                                        <span style={{ color: 'var(--text-muted)' }}>→</span>
+                                        <input type="date" value={rangeTo || ''} min={rangeFrom || undefined} onChange={e => update({ ...draft, value: `${rangeFrom || ''}..${e.target.value}` })} style={{ ...dateInput, background: '#fff', flex: 1, minWidth: 0 }} />
+                                      </div>
+                                    ) : (
+                                      <input type="date" value={draft.value} onChange={e => update({ ...draft, value: e.target.value })} style={{ ...dateInput, background: '#fff', flex: 1, minWidth: 0 }} />
+                                    )}
+                                    {/* Confirm */}
+                                    <button
+                                      onClick={() => setActiveField(null)}
+                                      title="Confirm"
+                                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, flexShrink: 0, background: 'none', border: 'none', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)' }}
+                                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--b20)'; e.currentTarget.style.color = 'var(--b100)' }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                                    >
+                                      <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
+                                        <path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    </button>
+                                    {/* Remove */}
+                                    <button
+                                      onClick={clearActive}
+                                      title="Remove filter"
+                                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, flexShrink: 0, background: 'none', border: 'none', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 17 }}
+                                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--c20)'; e.currentTarget.style.color = 'var(--c100)' }}
+                                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                                    >×</button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           )
                         })}
                       </div>
@@ -831,84 +979,6 @@ function FilterModal({ open, initialField, chips, onUpsert, onRemove, onClose })
           </div>
         </div>
       </Modal>
-
-      {/* Inline editor — anchored beside the clicked column (portal escapes the modal card) */}
-      {open && activeField && anchorRect && createPortal(
-        <div
-          onMouseDown={e => e.stopPropagation()}
-          onMouseEnter={cancelClose}
-          onMouseLeave={scheduleClose}
-          style={{ position: 'fixed', top: Math.max(12, anchorRect.top - 6), left: anchorRect.right + 9, zIndex: 10001 }}
-        >
-          {/* Tail — left-pointing caret that connects the editor to the column row */}
-          <div style={{
-            position: 'absolute', left: -5, top: anchorRect.height / 2 + 6,
-            width: 12, height: 12, background: '#fff',
-            borderLeft: '1px solid var(--border-default)',
-            borderBottom: '1px solid var(--border-default)',
-            borderBottomLeftRadius: 3,
-            transform: 'translateY(-50%) rotate(45deg)',
-            zIndex: 2,
-          }} />
-
-          {/* Editor card */}
-          <div style={{
-            position: 'relative', zIndex: 1,
-            background: '#fff', border: '1px solid var(--border-default)', borderRadius: 12,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)', padding: 8,
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-          <div style={{ width: 150 }}>
-            <PresetSelect
-              fullWidth
-              options={(isD ? DATE_OPERATORS : OPERATORS).map(op => ({ value: op.value, label: op.label }))}
-              value={isD && !DATE_OP_VALUES.has(draft.operator) ? 'on' : draft.operator}
-              onChange={setOp}
-            />
-          </div>
-
-          {!isD ? (
-            <input
-              value={draft.value}
-              onChange={e => update({ ...draft, value: e.target.value })}
-              placeholder="Value"
-              autoFocus
-              style={{ width: 180, height: 34, padding: '0 10px', boxSizing: 'border-box', background: 'var(--bg-canvas)', border: '1px solid var(--border-input)', borderRadius: 8, fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)', outline: 'none' }}
-            />
-          ) : draft.operator === 'between' ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <input type="date" value={rangeFrom || ''} onChange={e => update({ ...draft, value: `${e.target.value}..${rangeTo || ''}` })} style={{ ...dateInput, width: 140 }} />
-              <span style={{ color: 'var(--text-muted)' }}>→</span>
-              <input type="date" value={rangeTo || ''} min={rangeFrom || undefined} onChange={e => update({ ...draft, value: `${rangeFrom || ''}..${e.target.value}` })} style={{ ...dateInput, width: 140 }} />
-            </div>
-          ) : (
-            <input type="date" value={draft.value} onChange={e => update({ ...draft, value: e.target.value })} style={{ ...dateInput, width: 170 }} />
-          )}
-
-          {/* Confirm — commits the value and closes this column's editor */}
-          <button
-            onClick={() => setActiveField(null)}
-            title="Confirm"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, flexShrink: 0, background: 'none', border: 'none', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--b20)'; e.currentTarget.style.color = 'var(--b100)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-          >
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
-              <path d="M3 8.5l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-
-          <button
-            onClick={clearActive}
-            title="Remove filter"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, flexShrink: 0, background: 'none', border: 'none', borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 17 }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--c20)'; e.currentTarget.style.color = 'var(--c100)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-          >×</button>
-          </div>
-        </div>,
-        document.body
-      )}
     </>
   )
 }
@@ -967,7 +1037,7 @@ export default function DataPageV3({ isMobile = false, sidebarWidth = 272, sideb
   const [manageColsOpen,   setManageColsOpen]   = useState(false)
   const [colSearch,        setColSearch]        = useState('')
   const [expandedGroups,   setExpandedGroups]   = useState(() => new Set())
-  const [draftCols,        setDraftCols]        = useState(() => new Set(COL_DEFS.map(c => c.field)))
+  const [draftCols,        setDraftCols]        = useState(() => new Set())
   const [dateRange,      setDateRange]      = useState(null)
   const [dateRangeOpen,  setDateRangeOpen]  = useState(false)
   const [customFrom,      setCustomFrom]      = useState('')
@@ -1073,10 +1143,11 @@ export default function DataPageV3({ isMobile = false, sidebarWidth = 272, sideb
 
   function loadPreset(id) {
     setSelectedPreset(id)
-    const newChips = !id
-      ? []
-      : (allPresets.find(p => p.id === id)?.filters.map(f => ({ ...f, id: _chipId++ })) ?? [])
-    setChips(newChips)
+    const preset = id ? allPresets.find(p => p.id === id) : null
+    setChips(preset ? preset.filters.map(f => ({ ...f, id: _chipId++ })) : [])
+    // Select the preset's columns plus any filtered field, so the view matches
+    const cols = preset ? [...(preset.columns ?? []), ...preset.filters.map(f => f.field)] : []
+    setDraftCols(new Set(cols))
   }
 
   // Inline-edit model: opening the panel shows the column list; editing happens per-column.
@@ -1087,6 +1158,7 @@ export default function DataPageV3({ isMobile = false, sidebarWidth = 272, sideb
   function closePopover() { setActivePopover(null) }
 
   function upsertFilter(field, patch) {
+    setDraftCols(s => s.has(field) ? s : new Set(s).add(field))  // filtering a column implies it's selected
     setChips(cs => {
       const ex = cs.find(c => c.field === field)
       if (ex) return cs.map(c => c.field === field ? { ...c, operator: patch.operator, value: patch.value } : c)
@@ -1195,19 +1267,16 @@ export default function DataPageV3({ isMobile = false, sidebarWidth = 272, sideb
 
         {/* Chips + Add */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
-          {chips.length === 1 && (
-            <FilterChip
-              chip={chips[0]}
-              onEdit={() => openPopover(chips[0].id)}
-              onRemove={() => removeChip(chips[0].id)}
-            />
-          )}
-          {chips.length > 1 && (
+          {(draftCols.size > 0 || chips.length > 0) && (
             <CollapsedChips
+              selectedFields={[...draftCols]}
               chips={chips}
-              onClearAll={() => setChips([])}
-              onRemove={chip => removeChip(chip.id)}
-              onEdit={chip => openPopover(chip.id)}
+              onClearAll={() => { setChips([]); setDraftCols(new Set()) }}
+              onRemoveColumn={field => {
+                setDraftCols(s => { const n = new Set(s); n.delete(field); return n })
+                removeFilterByField(field)
+              }}
+              onEdit={field => setActivePopover({ field })}
               isCustomPreset={selectedPreset && customPresets.some(p => p.id === selectedPreset)}
               onSave={() => { setPresetNameDraft(''); setSaveModalOpen(true) }}
               onUpdatePreset={updatePreset}
@@ -1415,6 +1484,8 @@ export default function DataPageV3({ isMobile = false, sidebarWidth = 272, sideb
         open={!!activePopover}
         initialField={activePopover?.field ?? null}
         chips={chips}
+        selectedColumns={draftCols}
+        onToggleColumn={field => setDraftCols(s => { const n = new Set(s); n.has(field) ? n.delete(field) : n.add(field); return n })}
         onUpsert={upsertFilter}
         onRemove={removeFilterByField}
         onClose={closePopover}
