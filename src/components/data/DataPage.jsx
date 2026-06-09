@@ -61,11 +61,49 @@ const OPERATORS = [
 ]
 
 const PRESETS = [
-  { id: 'agent_v1',      label: 'Agent evaluation V1', filters: [{ field: 'status',     operator: 'equals', value: 'IN PROGRESS' }] },
-  { id: 'high_priority', label: 'High Priority',        filters: [{ field: 'priority',   operator: 'equals', value: 'HIGH'        }] },
-  { id: 'done_only',     label: 'Done',                 filters: [{ field: 'status',     operator: 'equals', value: 'DONE'        }] },
-  { id: 'alerts',        label: 'Alerts Only',          filters: [{ field: 'hasWarning', operator: 'equals', value: 'true'        }] },
+  { id: 'agent_v1',      label: 'Agent evaluation V1', filters: [
+    { field: 'status',   operator: 'equals', value: 'IN PROGRESS' },
+    { field: 'priority', operator: 'equals', value: 'HIGH' },
+  ]},
+  { id: 'high_priority', label: 'High Priority', filters: [
+    { field: 'priority', operator: 'equals',   value: 'HIGH' },
+    { field: 'status',   operator: 'not_equal', value: 'DONE' },
+  ]},
+  { id: 'done_only',     label: 'Done',          filters: [{ field: 'status', operator: 'equals', value: 'DONE' }] },
+  { id: 'alerts',        label: 'Alerts Only',   filters: [
+    { field: 'hasWarning', operator: 'equals', value: 'true' },
+    { field: 'status',     operator: 'equals', value: 'IN PROGRESS' },
+    { field: 'priority',   operator: 'equals', value: 'HIGH' },
+  ]},
 ]
+
+// One shared column taxonomy — drives BOTH the Columns tab and the Filters column picker.
+// Core fields (Call Details / Financial / Status & Priority / Assignment) map to real row data;
+// signal/metadata columns are listed for parity but don't narrow the demo rows.
+const COLUMN_GROUPS = [
+  { id: 'call',       label: 'Call Details',     fields: ['id', 'callDate', 'destination', 'summary'] },
+  { id: 'financial',  label: 'Financial',         fields: ['proposedPrice'] },
+  { id: 'classify',   label: 'Status & Priority', fields: ['status', 'priority'] },
+  { id: 'assignment', label: 'Assignment',        fields: ['assignedTo'] },
+  { id: 'metadata',   label: 'Metadata',          fields: [
+    'User Id', 'Lead Id', 'Call Start Time', 'Extension', 'Voipcentral', 'Call Direction Name',
+    'Agent Id', 'Agent Full Name', 'Label Name', 'Team Language', 'Agent Name',
+    'Call Duration Formatted', 'Audio Length In Minutes', 'Agent Office Name',
+  ]},
+  { id: 'alerts',     label: 'Alerts',            fields: [
+    'Investment Advice', 'Distressed Client', 'Unprofessional Behavior',
+    'Interfering With Or Downplaying KYC Registration Or Proof Of Funds',
+    'Deposits Withdrawals Recommendations', 'Legal Regulatory Violations',
+    'Third Party', 'Information Violation', 'Loan Mentioned',
+  ]},
+  { id: 'dynamic',    label: 'Dynamic Metrics',   fields: ['Sentiment Score', 'Talk Ratio', 'Silence Rate', 'Interruptions', 'Energy Level'] },
+  { id: 'workflows',  label: 'Workflows',         fields: ['Lead Qualification', 'Discovery Call', 'Demo Flow', 'Closing Sequence'] },
+]
+
+// Resolve a column key to a human label (core fields have nice labels in FILTER_FIELDS)
+function colLabel(key) {
+  return FILTER_FIELDS.find(f => f.value === key)?.label ?? key
+}
 
 let _chipId = 1
 
@@ -368,8 +406,10 @@ function runFilters(appliedChips, searchText, allData) {
     )
   }
 
+  const DATA_FIELDS = new Set(['id', 'callDate', 'proposedPrice', 'destination', 'summary', 'status', 'priority', 'assignedTo'])
   for (const f of appliedChips) {
     if (!f.field || !f.value.trim()) continue
+    if (!DATA_FIELDS.has(f.field)) continue   // signal columns: UI-only, don't narrow demo rows
     data = data.filter(row => {
       const cellVal = f.field === 'assignedTo'
         ? (row.assignedTo?.name ?? '').toLowerCase()
@@ -388,10 +428,159 @@ function runFilters(appliedChips, searchText, allData) {
   return data
 }
 
+// ── Collapsed chips pill ──────────────────────────────────────────────────────
+
+
+function EditIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M9 2l2 2-6.5 6.5L2 11l.5-2.5L9 2z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+const OP_SYMBOL = { equals: '=', not_equal: '≠', contains: '~', not_contains: '!~' }
+
+function CollapsedChips({ chips, onClearAll, onRemove, onEdit, isCustomPreset, onSave, onUpdatePreset }) {
+  const [open, setOpen]       = useState(false)
+  const [hoveredId, setHoveredId] = useState(null)
+  const closeTimer            = useRef(null)
+
+  function cancelClose() { clearTimeout(closeTimer.current) }
+  function scheduleClose() { closeTimer.current = setTimeout(() => setOpen(false), 300) }
+  useEffect(() => () => clearTimeout(closeTimer.current), [])
+
+  return (
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, position: 'relative' }}
+      onMouseEnter={() => { cancelClose(); setOpen(true) }}
+      onMouseLeave={scheduleClose}
+    >
+      {/* Pill */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        height: 28, padding: '0 11px',
+        background: 'var(--b20)', border: '1px solid var(--b60)',
+        borderRadius: 99, fontSize: 12, color: 'var(--b100)',
+        fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', cursor: 'default',
+      }}>
+        {chips.length} filters
+        <span
+          onClick={e => { e.stopPropagation(); onClearAll() }}
+          style={{ cursor: 'pointer', fontSize: 14, lineHeight: 1, opacity: 0.7 }}
+        >×</span>
+      </div>
+
+      {/* Dropdown — styled to match Manage Columns modal */}
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 8px)', left: 0,
+          background: '#fff',
+          borderRadius: 16,
+          boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
+          zIndex: 200, width: 320,
+          overflow: 'hidden',
+        }}>
+          {/* Title bar */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '16px 20px 12px',
+            borderBottom: '1px solid var(--border-default)',
+          }}>
+            <span style={{
+              fontSize: 16, fontWeight: 600, color: 'var(--text-primary)',
+              fontFamily: "'Byrd', sans-serif",
+            }}>Active filters</span>
+            <span style={{
+              fontSize: 12, fontWeight: 600, color: 'var(--b100)',
+              background: 'var(--b20)', borderRadius: 99, padding: '2px 8px',
+              fontFamily: "'Byrd', sans-serif",
+            }}>{chips.length}</span>
+          </div>
+
+          {/* Rows */}
+          <div style={{ padding: '4px 0' }}>
+            {chips.map(chip => {
+              const fieldLabel = colLabel(chip.field)
+              const op = OP_SYMBOL[chip.operator] ?? '='
+              const isHovered = hoveredId === chip.id
+              return (
+                <div
+                  key={chip.id}
+                  onMouseEnter={() => setHoveredId(chip.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 12px 10px 20px',
+                    background: isHovered ? 'var(--bg-active)' : 'transparent',
+                    transition: 'background 100ms',
+                  }}
+                >
+                  <span style={{
+                    flex: 1, fontFamily: "'Byrd', sans-serif",
+                    fontSize: 14, whiteSpace: 'nowrap',
+                    overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{fieldLabel}</span>
+                    <span style={{ color: 'var(--text-muted)', margin: '0 5px', fontSize: 12 }}>{op}</span>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{chip.value}</span>
+                  </span>
+                  <div style={{
+                    display: 'flex', gap: 2, flexShrink: 0,
+                    opacity: isHovered ? 1 : 0, transition: 'opacity 120ms',
+                  }}>
+                    <button
+                      onClick={e => { onEdit(chip, e.currentTarget); setOpen(false) }}
+                      title="Edit"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 28, height: 28, background: 'none', border: 'none',
+                        borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)',
+                        transition: 'background 100ms, color 100ms',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-canvas)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                    ><EditIcon /></button>
+                    <button
+                      onClick={() => onRemove(chip)}
+                      title="Remove"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 28, height: 28, background: 'none', border: 'none',
+                        borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16,
+                        transition: 'background 100ms, color 100ms',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--c20)'; e.currentTarget.style.color = 'var(--c100)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                    >×</button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Footer */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 20px',
+            borderTop: '1px solid var(--border-default)',
+          }}>
+            <Button variant="ghost" size="sm" onClick={onClearAll}>Clear all</Button>
+            {isCustomPreset
+              ? <Button size="sm" onClick={() => { onUpdatePreset(); setOpen(false) }}>Update preset</Button>
+              : <Button size="sm" onClick={() => { onSave(); setOpen(false) }}>Save as preset</Button>
+            }
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Filter chip ───────────────────────────────────────────────────────────────
 
 function FilterChip({ chip, onEdit, onRemove }) {
-  const fieldLabel = FILTER_FIELDS.find(f => f.value === chip.field)?.label ?? chip.field
+  const fieldLabel = colLabel(chip.field)
   const isNeg = chip.operator === 'not_contains' || chip.operator === 'not_equal'
   const label = `${fieldLabel}${isNeg ? ' ≠' : ':'} ${chip.value}`
 
@@ -426,60 +615,209 @@ function FilterChip({ chip, onEdit, onRemove }) {
   )
 }
 
-// ── Filter popover ────────────────────────────────────────────────────────────
+// ── Filter modal (column-first, two-step) ─────────────────────────────────────
 
-function FilterPopover({ anchor, chip, onChange, onDone, onClose }) {
-  const ref = useRef(null)
+function FilterModal({ open, step, chip, onChange, onPickField, onBack, onDone, onClose }) {
+  const [search, setSearch]     = useState('')
+  const [expanded, setExpanded] = useState(() => new Set(COLUMN_GROUPS.map(g => g.id)))
 
+  // Reset search whenever the modal (re)opens at the column step
   useEffect(() => {
-    function h(e) {
-      if (ref.current && !ref.current.contains(e.target)) onClose()
+    if (open && step === 'column') {
+      setSearch('')
+      setExpanded(new Set(COLUMN_GROUPS.map(g => g.id)))
     }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [onClose])
+  }, [open, step])
 
-  const canDone = chip.field && chip.value.trim()
+  const canDone    = chip.field && chip.value.trim()
+  const fieldLabel = colLabel(chip.field)
+
+  const footer = step === 'column'
+    ? <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+    : (
+      <>
+        <Button variant="ghost" size="sm" onClick={onBack}>Back</Button>
+        <Button size="sm" onClick={onDone} disabled={!canDone}>Done</Button>
+      </>
+    )
 
   return (
-    <div ref={ref} data-inspector="FilterPopover" style={{
-      position: 'fixed', left: anchor.x, top: anchor.y,
-      zIndex: 600,
-      background: 'var(--bg-elevated)',
-      border: '1px solid var(--border-default)',
-      borderRadius: 10,
-      boxShadow: '0 8px 28px rgba(0,0,0,0.14)',
-      padding: 12,
-      display: 'flex', flexDirection: 'column', gap: 8,
-      width: 250,
-    }}>
-      <PresetSelect
-        fullWidth
-        options={[{ value: '', label: 'Field…' }, ...FILTER_FIELDS.map(f => ({ value: f.value, label: f.label }))]}
-        value={chip.field}
-        onChange={v => onChange({ ...chip, field: v })}
-      />
+    <Modal open={open} onClose={onClose} title="Add filter" width={440} footer={footer}>
+      {step === 'column' ? (
+        /* ── Step 1: pick a column ── */
+        <div>
+          {/* Search */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14,
+            padding: '8px 12px', borderRadius: 10,
+            background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+          }}>
+            <SearchIcon />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search columns..."
+              autoFocus
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)',
+              }}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 15, padding: 0, lineHeight: 1 }}>×</button>
+            )}
+          </div>
 
-      <PresetSelect
-        fullWidth
-        options={OPERATORS.map(op => ({ value: op.value, label: op.label }))}
-        value={chip.operator}
-        onChange={v => onChange({ ...chip, operator: v })}
-      />
+          {/* Grouped column list */}
+          <div style={{ maxHeight: 360, overflowY: 'auto', margin: '0 -4px' }} className="manage-cols-scroll">
+            {COLUMN_GROUPS.map(group => {
+              const matched = group.fields.filter(f =>
+                colLabel(f).toLowerCase().includes(search.toLowerCase())
+              )
+              if (matched.length === 0) return null
+              const isExpanded = expanded.has(group.id) || search.length > 0
+              return (
+                <div key={group.id} style={{ borderBottom: '1px solid var(--border-default)' }}>
+                  <button
+                    onClick={() => setExpanded(s => { const n = new Set(s); n.has(group.id) ? n.delete(group.id) : n.add(group.id); return n })}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      width: '100%', padding: '12px 8px', background: 'none', border: 'none', cursor: 'pointer',
+                    }}
+                  >
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>{group.label}</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+                      style={{ transition: 'transform 180ms', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                      <path d="M3 5l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  {isExpanded && matched.map(f => {
+                    const lbl = colLabel(f)
+                    return (
+                      <button
+                        key={f}
+                        onClick={() => onPickField(f)}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          width: '100%', padding: '9px 8px 9px 18px', background: 'none', border: 'none',
+                          cursor: 'pointer', borderRadius: 8,
+                          fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)',
+                          transition: 'background 100ms',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+                      >
+                        {lbl}
+                        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ color: 'var(--text-muted)' }}>
+                          <path d="M4 2l5 4.5L4 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        /* ── Step 2: configure the filter for the chosen column ── */
+        <div>
+          {/* Back row */}
+          <button
+            onClick={onBack}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14,
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-secondary)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--b100)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M9 3l-4 4 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            All columns
+          </button>
 
-      <input
-        value={chip.value}
-        onChange={e => onChange({ ...chip, value: e.target.value })}
-        onKeyDown={e => { if (e.key === 'Enter' && canDone) onDone() }}
-        placeholder="Value…"
-        style={{ ...SEL, width: '100%', boxSizing: 'border-box' }}
-      />
+          {/* Chosen column */}
+          <div style={{
+            padding: '10px 12px', marginBottom: 14, borderRadius: 8,
+            background: 'var(--b20)', border: '1px solid var(--b60)',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--b100)', opacity: 0.7, fontFamily: "'Byrd', sans-serif", marginBottom: 2 }}>Column</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--b100)', fontFamily: "'Byrd', sans-serif" }}>{fieldLabel}</div>
+          </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
-        <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-        <Button size="sm" onClick={onDone} disabled={!canDone}>Done</Button>
-      </div>
-    </div>
+          {/* Condition */}
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>Condition</label>
+            <PresetSelect
+              fullWidth
+              options={OPERATORS.map(op => ({ value: op.value, label: op.label }))}
+              value={chip.operator}
+              onChange={v => onChange({ ...chip, operator: v })}
+            />
+          </div>
+
+          {/* Value */}
+          <div>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>Value</label>
+            <input
+              value={chip.value}
+              onChange={e => onChange({ ...chip, value: e.target.value })}
+              onKeyDown={e => { if (e.key === 'Enter' && canDone) onDone() }}
+              placeholder="Enter value…"
+              autoFocus
+              style={{
+                width: '100%', boxSizing: 'border-box', height: 38, padding: '0 12px',
+                background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)', borderRadius: 8,
+                fontSize: 'var(--type-p14)', color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+                outline: 'none', transition: 'border-color 150ms',
+              }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--b100)' }}
+              onBlur={e  => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
+            />
+          </div>
+        </div>
+      )}
+    </Modal>
+  )
+}
+
+const DATE_RANGES = [
+  { key: 'today',   label: 'Today' },
+  { key: 'week',    label: 'This week' },
+  { key: 'month',   label: 'This month' },
+  { key: 'quarter', label: 'This quarter' },
+  { key: 'year',    label: 'This year' },
+  { key: 'custom',  label: 'Custom range' },
+]
+
+function fmtDate(iso) {
+  if (!iso) return ''
+  const [, m, d] = iso.split('-')
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  return `${months[+m - 1]} ${+d}`
+}
+
+function ColumnsIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink: 0 }}>
+      <path d="M1 3h11M1 6.5h11M1 10h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <circle cx="4" cy="3" r="1.5" fill="var(--bg-sidebar)" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="9" cy="6.5" r="1.5" fill="var(--bg-sidebar)" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="5" cy="10" r="1.5" fill="var(--bg-sidebar)" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink: 0 }}>
+      <rect x="1" y="2.5" width="11" height="9.5" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M1 5.5h11" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M4 1v3M9 1v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
   )
 }
 
@@ -490,14 +828,25 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
   const [customPresets,  setCustomPresets]  = useState([])
   const [selectedPreset, setSelectedPreset] = useState('')
   const [chips,          setChips]          = useState([])
-  const [appliedChips,   setAppliedChips]   = useState([])
   const [searchText,     setSearchText]     = useState('')
-  const [activePopover,  setActivePopover]  = useState(null) // { id, anchor:{x,y} }
+  const [activePopover,  setActivePopover]  = useState(null) // { id }
+  const [filterStep,     setFilterStep]     = useState('column') // 'column' | 'config'
   const [editingChip,    setEditingChip]    = useState({ field: '', operator: 'contains', value: '' })
-  const [saveModalOpen,  setSaveModalOpen]  = useState(false)
-  const [presetNameDraft, setPresetNameDraft] = useState('')
+  const [saveModalOpen,    setSaveModalOpen]    = useState(false)
+  const [presetNameDraft,  setPresetNameDraft]  = useState('')
+  const [manageColsOpen,   setManageColsOpen]   = useState(false)
+  const [colSearch,        setColSearch]        = useState('')
+  const [expandedGroups,   setExpandedGroups]   = useState(() => new Set())
+  const [draftCols,        setDraftCols]        = useState(() => new Set(COL_DEFS.map(c => c.field)))
+  const [dateRange,      setDateRange]      = useState(null)
+  const [dateRangeOpen,  setDateRangeOpen]  = useState(false)
+  const [customFrom,      setCustomFrom]      = useState('')
+  const [customTo,        setCustomTo]        = useState('')
+  const [customDateField, setCustomDateField] = useState('equals')
 
-  const gridRef = useRef(null)
+  const gridRef      = useRef(null)
+  const dateRangeRef   = useRef(null)
+  const manageColsRef  = useRef(null)
 
   // Track dark mode — switch AG Grid theme reactively
   const [isDark, setIsDark] = useState(
@@ -514,14 +863,32 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
   useEffect(() => {
     setSelectedPreset('')
     setChips([])
-    setAppliedChips([])
     setSearchText('')
     setActivePopover(null)
   }, [schemaId])
 
+  useEffect(() => {
+    if (!dateRangeOpen) return
+    function handleClick(e) {
+      if (dateRangeRef.current && !dateRangeRef.current.contains(e.target))
+        setDateRangeOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [dateRangeOpen])
+
+  useEffect(() => {
+    if (!manageColsOpen) return
+    function handleClick(e) {
+      if (manageColsRef.current && !manageColsRef.current.contains(e.target))
+        setManageColsOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [manageColsOpen])
+
   const [gridApi, setGridApi] = useState(null)
 
-  const isDirty    = JSON.stringify(chips) !== JSON.stringify(appliedChips)
   const allPresets = useMemo(() => [...PRESETS, ...customPresets], [customPresets])
 
   // Full row pool — use company data when config is available, otherwise schema mock data
@@ -530,7 +897,7 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
       ? generateCompanyRows(companyConfig)
       : generateRows(schemaId),
   [schemaId, companyConfig])
-  const filteredPool = useMemo(() => runFilters(appliedChips, searchText, rowPool), [appliedChips, searchText, rowPool])
+  const filteredPool = useMemo(() => runFilters(chips, searchText, rowPool), [chips, searchText, rowPool])
 
   // Infinite-row datasource — slices filteredPool on demand
   const datasource = useMemo(() => ({
@@ -547,6 +914,11 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
   useEffect(() => {
     gridApi?.setGridOption('datasource', datasource)
   }, [datasource, gridApi])
+
+  function applyColumns() {
+    if (gridApi) COL_DEFS.forEach(c => gridApi.setColumnVisible(c.field, draftCols.has(c.field)))
+    setManageColsOpen(false)
+  }
 
   function savePreset() {
     if (!presetNameDraft.trim()) return
@@ -567,7 +939,6 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
         ? { ...p2, filters: chips.map(({ id: _id, ...rest }) => rest) }
         : p2
     ))
-    setAppliedChips(chips)
   }
 
   function loadPreset(id) {
@@ -578,15 +949,21 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
     setChips(newChips)
   }
 
-  function openPopover(id, el) {
-    const r = el.getBoundingClientRect()
-    setActivePopover({ id, anchor: { x: r.left, y: r.bottom + 6 } })
+  function openPopover(id) {
+    setActivePopover({ id })
     if (id === 'new') {
       setEditingChip({ field: '', operator: 'contains', value: '' })
+      setFilterStep('column')
     } else {
       const c = chips.find(x => x.id === id)
       if (c) setEditingChip({ field: c.field, operator: c.operator, value: c.value })
+      setFilterStep('config')
     }
+  }
+
+  function pickFilterField(field) {
+    setEditingChip(c => ({ ...c, field }))
+    setFilterStep('config')
   }
 
   function closePopover() { setActivePopover(null) }
@@ -640,7 +1017,33 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Button variant="ghost" size="sm">Add columns</Button>
+          {/* Search */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            height: 30, padding: '0 10px',
+            background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+            borderRadius: 6, flexShrink: 0, width: 190,
+          }}>
+            <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <SearchIcon />
+            </span>
+            <input
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              placeholder="Search…"
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
+                fontFamily: "'Byrd', sans-serif",
+              }}
+            />
+            {searchText && (
+              <button onClick={() => setSearchText('')} style={{
+                display: 'flex', alignItems: 'center', background: 'none', border: 'none',
+                cursor: 'pointer', color: 'var(--text-secondary)', padding: 0, fontSize: 15, lineHeight: 1,
+              }}>×</button>
+            )}
+          </div>
           <Button size="sm">Upload</Button>
           <Button variant="ghost" size="sm" leftIcon={<MoreIcon />} />
         </div>
@@ -655,6 +1058,7 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
         border: 'var(--page-header-border)',
         borderRadius: 12,
         boxShadow: 'var(--page-header-shadow)',
+        minWidth: 0,
       }}>
         {/* Preset selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
@@ -673,21 +1077,27 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
         <div style={{ width: 1, height: 22, background: 'var(--border-input)', flexShrink: 0 }} />
 
         {/* Chips + Add */}
-        <div className="smooth-scroll" style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          flex: 1, overflowX: 'auto', overflowY: 'hidden',
-          minWidth: 0,
-        }}>
-          {chips.map(chip => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+          {chips.length === 1 && (
             <FilterChip
-              key={chip.id}
-              chip={chip}
-              onEdit={e => openPopover(chip.id, e.currentTarget.closest('[data-chip]') ?? e.currentTarget)}
-              onRemove={() => removeChip(chip.id)}
+              chip={chips[0]}
+              onEdit={() => openPopover(chips[0].id)}
+              onRemove={() => removeChip(chips[0].id)}
             />
-          ))}
+          )}
+          {chips.length > 1 && (
+            <CollapsedChips
+              chips={chips}
+              onClearAll={() => setChips([])}
+              onRemove={chip => removeChip(chip.id)}
+              onEdit={chip => openPopover(chip.id)}
+              isCustomPreset={selectedPreset && customPresets.some(p => p.id === selectedPreset)}
+              onSave={() => { setPresetNameDraft(''); setSaveModalOpen(true) }}
+              onUpdatePreset={updatePreset}
+            />
+          )}
           <button
-            onClick={e => openPopover('new', e.currentTarget)}
+            onClick={() => openPopover('new')}
             style={{
               display: 'flex', alignItems: 'center', gap: 5,
               height: 28, padding: '0 11px',
@@ -704,50 +1114,182 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
           </button>
         </div>
 
-        {/* Search */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          height: 30, padding: '0 10px',
-          background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
-          borderRadius: 6, flexShrink: 0, width: 190,
-        }}>
-          <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-            <SearchIcon />
-          </span>
-          <input
-            value={searchText}
-            onChange={e => setSearchText(e.target.value)}
-            placeholder="Search…"
+        {/* Add columns */}
+        <div ref={manageColsRef} style={{ position: 'relative', flexShrink: 0 }}>
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            height: 28, padding: '0 11px',
+            background: manageColsOpen ? 'var(--b20)' : 'none',
+            border: `1px solid ${manageColsOpen ? 'var(--b60)' : 'var(--border-input)'}`,
+            borderRadius: 99, fontSize: 12, color: manageColsOpen ? 'var(--b100)' : 'var(--text-secondary)',
+            fontFamily: "'Byrd', sans-serif", cursor: 'pointer', whiteSpace: 'nowrap',
+            transition: 'border-color 150ms, color 150ms, background 150ms',
+          }}
+            onMouseEnter={e => { if (!manageColsOpen) { e.currentTarget.style.borderColor = 'var(--b100)'; e.currentTarget.style.color = 'var(--b100)'; e.currentTarget.style.background = 'var(--b20)' } }}
+            onMouseLeave={e => { if (!manageColsOpen) { e.currentTarget.style.borderColor = 'var(--border-input)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'none' } }}
+            onClick={() => setManageColsOpen(v => !v)}
+          >
+            <ColumnsIcon /> Manage columns
+          </button>
+        </div>
+
+
+        {/* Date range picker */}
+        <div ref={dateRangeRef} style={{ position: 'relative', flexShrink: 0 }}>
+          {/* Trigger pill */}
+          <button
+            onClick={() => setDateRangeOpen(v => !v)}
             style={{
-              flex: 1, background: 'transparent', border: 'none', outline: 'none',
-              fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
-              fontFamily: "'Byrd', sans-serif",
+              display: 'flex', alignItems: 'center', gap: 6,
+              height: 28, padding: '0 11px',
+              background: dateRange ? 'var(--b20)' : 'none',
+              border: `1px solid ${dateRange ? 'var(--b60)' : 'var(--border-input)'}`,
+              borderRadius: 99,
+              fontSize: 12, color: dateRange ? 'var(--b100)' : 'var(--text-secondary)',
+              fontFamily: "'Byrd', sans-serif", cursor: 'pointer', whiteSpace: 'nowrap',
+              transition: 'all 150ms ease',
             }}
-          />
-          {searchText && (
-            <button onClick={() => setSearchText('')} style={{
-              display: 'flex', alignItems: 'center', background: 'none', border: 'none',
-              cursor: 'pointer', color: 'var(--text-secondary)', padding: 0, fontSize: 15, lineHeight: 1,
-            }}>×</button>
+          >
+            <CalendarIcon />
+            {!dateRange
+              ? 'Date range'
+              : dateRange === 'custom'
+                ? (customFrom && customTo
+                    ? `${fmtDate(customFrom)} – ${fmtDate(customTo)}`
+                    : 'Custom range')
+                : DATE_RANGES.find(r => r.key === dateRange)?.label
+            }
+            {dateRange && (
+              <span
+                onClick={e => {
+                  e.stopPropagation()
+                  setDateRange(null)
+                  setCustomFrom('')
+                  setCustomTo('')
+                  setDateRangeOpen(false)
+                }}
+                style={{ marginLeft: 2, fontSize: 14, lineHeight: 1, opacity: 0.7 }}
+              >×</span>
+            )}
+          </button>
+
+          {/* Dropdown */}
+          {dateRangeOpen && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+              background: '#fff',
+              border: '1px solid var(--border-default)',
+              borderRadius: 12,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.14)',
+              overflow: 'hidden', zIndex: 100, width: 240,
+            }}>
+              {/* Quick options */}
+              <div style={{ padding: 6 }}>
+                {DATE_RANGES.filter(r => r.key !== 'custom').map(r => {
+                  const active = dateRange === r.key
+                  return (
+                    <button
+                      key={r.key}
+                      onClick={() => { setDateRange(r.key); setDateRangeOpen(false) }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        width: '100%', textAlign: 'left',
+                        padding: '8px 10px', border: 'none', cursor: 'pointer', borderRadius: 8,
+                        background: active ? 'var(--b20)' : 'transparent',
+                        fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif",
+                        color: active ? 'var(--b100)' : 'var(--text-primary)',
+                        fontWeight: active ? 600 : 400,
+                        transition: 'background 100ms ease',
+                      }}
+                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-active)' }}
+                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                    >
+                      {r.label}
+                      {active && (
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="var(--b100)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Custom range toggle */}
+              <button
+                onClick={() => setDateRange(dateRange === 'custom' ? null : 'custom')}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  width: '100%', textAlign: 'left',
+                  padding: '11px 16px', border: 'none', cursor: 'pointer',
+                  borderTop: '1px solid var(--border-default)',
+                  background: dateRange === 'custom' ? 'var(--b20)' : 'transparent',
+                  fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif",
+                  color: dateRange === 'custom' ? 'var(--b100)' : 'var(--text-primary)',
+                  fontWeight: dateRange === 'custom' ? 600 : 400,
+                  transition: 'background 100ms ease',
+                }}
+                onMouseEnter={e => { if (dateRange !== 'custom') e.currentTarget.style.background = 'var(--bg-active)' }}
+                onMouseLeave={e => { if (dateRange !== 'custom') e.currentTarget.style.background = 'transparent' }}
+              >
+                Custom range
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+                  style={{ transition: 'transform 160ms', transform: dateRange === 'custom' ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+
+              {/* Custom date inputs — expands when Custom is selected */}
+              {dateRange === 'custom' && (
+                <div style={{ padding: '14px 16px 16px', borderTop: '1px solid var(--border-default)' }}>
+                  {/* From → To row */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center',
+                    border: '1px solid var(--border-input)',
+                    borderRadius: 10, overflow: 'hidden',
+                  }}>
+                    <input
+                      type="date"
+                      value={customFrom}
+                      onChange={e => setCustomFrom(e.target.value)}
+                      style={{
+                        flex: 1, minWidth: 0, padding: '9px 10px', boxSizing: 'border-box',
+                        background: 'transparent', border: 'none',
+                        fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif",
+                        color: 'var(--text-primary)', outline: 'none',
+                      }}
+                    />
+                    <span style={{ color: 'var(--text-muted)', fontSize: 14, flexShrink: 0 }}>→</span>
+                    <input
+                      type="date"
+                      value={customTo}
+                      min={customFrom || undefined}
+                      onChange={e => setCustomTo(e.target.value)}
+                      style={{
+                        flex: 1, minWidth: 0, padding: '9px 10px', boxSizing: 'border-box',
+                        background: 'transparent', border: 'none',
+                        fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif",
+                        color: 'var(--text-primary)', outline: 'none', textAlign: 'right',
+                      }}
+                    />
+                  </div>
+
+                  {/* Apply */}
+                  <div style={{ marginTop: 12 }}>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      fullWidth
+                      disabled={!customFrom || !customTo}
+                      onClick={() => setDateRangeOpen(false)}
+                    >Apply</Button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Save / Update preset */}
-        {selectedPreset && customPresets.some(p => p.id === selectedPreset)
-          ? <Button variant="secondary" size="sm" onClick={updatePreset}>Update preset</Button>
-          : chips.length > 0
-            ? <Button variant="secondary" size="sm" onClick={() => { setPresetNameDraft(''); setSaveModalOpen(true) }}>Save</Button>
-            : null
-        }
-
-        {/* Apply */}
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setAppliedChips(chips)}
-        >
-          Apply
-        </Button>
       </div>
 
       {/* ── AG Grid ──────────────────────────────────────────────────────── */}
@@ -770,16 +1312,17 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
         />
       </div>
 
-      {/* ── Filter popover (portal-style) ─────────────────────────────── */}
-      {activePopover && (
-        <FilterPopover
-          anchor={activePopover.anchor}
-          chip={editingChip}
-          onChange={setEditingChip}
-          onDone={donePopover}
-          onClose={closePopover}
-        />
-      )}
+      {/* ── Filter modal (column-first, two-step) ─────────────────────── */}
+      <FilterModal
+        open={!!activePopover}
+        step={filterStep}
+        chip={editingChip}
+        onChange={setEditingChip}
+        onPickField={pickFilterField}
+        onBack={() => setFilterStep('column')}
+        onDone={donePopover}
+        onClose={closePopover}
+      />
 
       {/* ── Save preset modal ─────────────────────────────────────────── */}
       <Modal
@@ -827,13 +1370,244 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
             }}>
               {chips.length} filter{chips.length > 1 ? 's' : ''} will be saved:&nbsp;
               {chips.map(c => {
-                const fl = FILTER_FIELDS.find(f => f.value === c.field)?.label ?? c.field
+                const fl = colLabel(c.field)
                 return `${fl}: ${c.value}`
               }).join(' · ')}
             </p>
           )}
         </div>
       </Modal>
+
+      {/* ── Manage Columns floating panel ─────────────────────────────────── */}
+      {manageColsOpen && manageColsRef.current && (
+        <>
+          {/* Floating panel — anchored below the button */}
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            style={{
+              position: 'fixed',
+              top: manageColsRef.current.getBoundingClientRect().bottom + 8,
+              right: window.innerWidth - manageColsRef.current.getBoundingClientRect().right,
+              width: 320, maxHeight: 520,
+              background: '#fff', zIndex: 500,
+              display: 'flex', flexDirection: 'column',
+              borderRadius: 12,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.16)',
+              border: '1px solid var(--border-default)',
+            }}>
+            {/* Header */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 16px 12px',
+              borderBottom: '1px solid var(--border-default)', flexShrink: 0,
+            }}>
+              <span style={{ fontSize: 15, fontWeight: 600, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)' }}>
+                Manage columns
+              </span>
+              <button
+                onClick={() => setManageColsOpen(false)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 28, height: 28, background: 'none', border: 'none',
+                  borderRadius: 6, cursor: 'pointer', fontSize: 18, color: 'var(--text-muted)',
+                  transition: 'background 100ms',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+              >×</button>
+            </div>
+
+            {/* Search */}
+            <div style={{ padding: '12px 14px 0', flexShrink: 0 }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 12px', borderRadius: 10,
+                background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+              }}>
+                <SearchIcon />
+                <input
+                  value={colSearch}
+                  onChange={e => setColSearch(e.target.value)}
+                  placeholder="Search..."
+                  autoFocus
+                  style={{
+                    flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                    fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif",
+                    color: 'var(--text-primary)',
+                  }}
+                />
+                {colSearch && (
+                  <button onClick={() => setColSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 15, padding: 0, lineHeight: 1 }}>×</button>
+                )}
+              </div>
+            </div>
+
+            {/* Selected columns */}
+            {draftCols.size > 0 && (
+              <div style={{
+                padding: '10px 14px 8px', flexShrink: 0,
+                borderBottom: '1px solid var(--border-default)',
+              }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 600, letterSpacing: '0.07em',
+                  textTransform: 'uppercase', color: 'var(--text-muted)',
+                  fontFamily: "'Byrd', sans-serif", marginBottom: 8,
+                }}>Selected · {draftCols.size}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {[...draftCols].map(field => (
+                    <div key={field} style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      height: 26, padding: '0 8px 0 10px',
+                      background: 'var(--b20)', border: '1px solid var(--b60)',
+                      borderRadius: 99, fontSize: 12, color: 'var(--b100)',
+                      fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
+                    }}>
+                      {field}
+                      <span
+                        onClick={() => setDraftCols(s => { const n = new Set(s); n.delete(field); return n })}
+                        style={{ cursor: 'pointer', fontSize: 14, lineHeight: 1, opacity: 0.7, marginLeft: 1 }}
+                      >×</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Section label */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 14px 6px', flexShrink: 0,
+            }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+              <span style={{
+                fontSize: 11, fontWeight: 600, letterSpacing: '0.09em',
+                textTransform: 'uppercase', color: 'var(--text-muted)',
+                fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
+              }}>Signals</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+            </div>
+
+            {/* Groups — scrollable */}
+            <div className="manage-cols-scroll" style={{ flex: 1, overflowY: 'auto', padding: '0 14px' }}>
+              {COLUMN_GROUPS.map(group => {
+                const matchedFields = group.fields.filter(f =>
+                  colLabel(f).toLowerCase().includes(colSearch.toLowerCase())
+                )
+                if (matchedFields.length === 0 && colSearch) return null
+                const isExpanded = expandedGroups.has(group.id)
+                const checkedCount = group.fields.filter(f => draftCols.has(f)).length
+
+                return (
+                  <div key={group.id} style={{ borderBottom: '1px solid var(--border-default)' }}>
+                    {/* Group header */}
+                    <button
+                      onClick={() => setExpandedGroups(s => {
+                        const n = new Set(s); n.has(group.id) ? n.delete(group.id) : n.add(group.id); return n
+                      })}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        width: '100%', padding: '14px 0',
+                        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                      }}
+                    >
+                      {/* Group-level checkbox */}
+                      <div
+                        onClick={e => {
+                          e.stopPropagation()
+                          const allChecked = group.fields.every(f => draftCols.has(f))
+                          setDraftCols(s => {
+                            const n = new Set(s)
+                            group.fields.forEach(f => allChecked ? n.delete(f) : n.add(f))
+                            return n
+                          })
+                        }}
+                        style={{
+                          width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+                          border: `1.5px solid ${checkedCount > 0 ? 'var(--b100)' : 'var(--border-input)'}`,
+                          background: checkedCount === group.fields.length ? 'var(--b100)' : checkedCount > 0 ? 'var(--b20)' : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 120ms',
+                        }}
+                      >
+                        {checkedCount === group.fields.length && (
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 5l2.5 2.5L8 3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                        {checkedCount > 0 && checkedCount < group.fields.length && (
+                          <div style={{ width: 8, height: 2, background: 'var(--b100)', borderRadius: 1 }} />
+                        )}
+                      </div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: 13, flexShrink: 0 }}>•</span>
+                      <span style={{
+                        flex: 1, fontSize: 15, fontWeight: 600,
+                        color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+                      }}>{group.label}</span>
+                      <span style={{
+                        fontSize: 12, fontWeight: 500, color: 'var(--text-muted)',
+                        fontFamily: "'Byrd', sans-serif", marginRight: 4,
+                      }}>{group.fields.length}</span>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+                        style={{ transition: 'transform 180ms', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                        <path d="M3 5l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+
+                    {/* Items — flex wrap grid */}
+                    {isExpanded && (
+                      <div style={{
+                        display: 'flex', flexWrap: 'wrap', gap: '6px 16px',
+                        padding: '2px 0 10px 24px',
+                      }}>
+                        {(colSearch ? matchedFields : group.fields).map(field => {
+                          const checked = draftCols.has(field)
+                          return (
+                            <label key={field} style={{
+                              display: 'flex', alignItems: 'center', gap: 8,
+                              cursor: 'pointer', minWidth: 140,
+                            }}>
+                              <div
+                                onClick={() => setDraftCols(s => { const n = new Set(s); n.has(field) ? n.delete(field) : n.add(field); return n })}
+                                style={{
+                                  width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                                  border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--border-input)'}`,
+                                  background: checked ? 'var(--b100)' : 'transparent',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  transition: 'all 120ms',
+                                }}
+                              >
+                                {checked && (
+                                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                                    <path d="M2 5l2.5 2.5L8 3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                )}
+                              </div>
+                              <span style={{
+                                fontSize: 13, fontFamily: "'Byrd', sans-serif",
+                                color: 'var(--text-primary)',
+                              }}>{colLabel(field)}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+              padding: '12px 14px',
+              borderTop: '1px solid var(--border-default)', flexShrink: 0,
+            }}>
+              <Button variant="ghost" size="sm" onClick={() => setManageColsOpen(false)}>Close</Button>
+              <Button size="sm" onClick={applyColumns}>Apply</Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

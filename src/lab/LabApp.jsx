@@ -372,6 +372,11 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
 
   // ── Focus expand / greeting shrink ─────────────────────────────
   useEffect(() => {
+    // Bail out unless we're on the dashboard — the refs below (logo, subtitle,
+    // input, etc.) are only mounted there. Reaching gsap.to with a null target
+    // crashes the whole LabApp render and produces a blank screen on refresh
+    // of /data, /data-v2, /reports, etc.
+    if (activePage !== 'dashboard') return
     if (submitted || settled) return
 
     // Kill any in-progress focus/blur animation before starting a new one

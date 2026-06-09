@@ -522,3 +522,12 @@ input::placeholder {
 /* Date input — native calendar icon matches theme */
 input[type="date"] { color-scheme: light; }
 [data-theme="dark"] input[type="date"] { color-scheme: dark; }
+
+/* Manage Columns panel — seamless scrollbar */
+.manage-cols-scroll { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.manage-cols-scroll:hover { scrollbar-color: var(--border-default) transparent; }
+.manage-cols-scroll::-webkit-scrollbar { width: 4px; }
+.manage-cols-scroll::-webkit-scrollbar-track { background: transparent; }
+.manage-cols-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 99px; transition: background 200ms; }
+.manage-cols-scroll:hover::-webkit-scrollbar-thumb { background: var(--border-default); }
+.manage-cols-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }

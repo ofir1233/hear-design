@@ -60,12 +60,72 @@ const OPERATORS = [
   { value: 'not_equal',    label: 'Not equal' },
 ]
 
-const PRESETS = [
-  { id: 'agent_v1',      label: 'Agent evaluation V1', filters: [{ field: 'status',     operator: 'equals', value: 'IN PROGRESS' }] },
-  { id: 'high_priority', label: 'High Priority',        filters: [{ field: 'priority',   operator: 'equals', value: 'HIGH'        }] },
-  { id: 'done_only',     label: 'Done',                 filters: [{ field: 'status',     operator: 'equals', value: 'DONE'        }] },
-  { id: 'alerts',        label: 'Alerts Only',          filters: [{ field: 'hasWarning', operator: 'equals', value: 'true'        }] },
+// Date columns get date-specific conditions + a date picker (single or range)
+const DATE_FIELDS = new Set(['callDate'])
+const isDateField = field => DATE_FIELDS.has(field)
+const DATE_OPERATORS = [
+  { value: 'on',      label: 'On' },
+  { value: 'before',  label: 'Before' },
+  { value: 'after',   label: 'After' },
+  { value: 'between', label: 'Between' },
 ]
+const DATE_OP_VALUES = new Set(DATE_OPERATORS.map(o => o.value))
+const DATE_OP_WORD = { on: 'on', before: 'before', after: 'after', between: 'between' }
+
+// Human-readable value for a chip (formats dates / ranges nicely)
+function chipValueLabel(chip) {
+  if (!isDateField(chip.field)) return chip.value
+  if (chip.operator === 'between') {
+    const [a, b] = (chip.value || '').split('..')
+    return `${fmtDate(a)} – ${fmtDate(b)}`
+  }
+  return fmtDate(chip.value)
+}
+
+const PRESETS = [
+  { id: 'agent_v1',      label: 'Agent evaluation V1', filters: [
+    { field: 'status',   operator: 'equals', value: 'IN PROGRESS' },
+    { field: 'priority', operator: 'equals', value: 'HIGH' },
+  ]},
+  { id: 'high_priority', label: 'High Priority', filters: [
+    { field: 'priority', operator: 'equals',   value: 'HIGH' },
+    { field: 'status',   operator: 'not_equal', value: 'DONE' },
+  ]},
+  { id: 'done_only',     label: 'Done',          filters: [{ field: 'status', operator: 'equals', value: 'DONE' }] },
+  { id: 'alerts',        label: 'Alerts Only',   filters: [
+    { field: 'hasWarning', operator: 'equals', value: 'true' },
+    { field: 'status',     operator: 'equals', value: 'IN PROGRESS' },
+    { field: 'priority',   operator: 'equals', value: 'HIGH' },
+  ]},
+]
+
+// One shared column taxonomy — drives BOTH the Columns tab and the Filters column picker.
+// Core fields (Call Details / Financial / Status & Priority / Assignment) map to real row data;
+// signal/metadata columns are listed for parity but don't narrow the demo rows.
+const COLUMN_GROUPS = [
+  { id: 'call',       label: 'Call Details',     fields: ['id', 'callDate', 'destination', 'summary'] },
+  { id: 'financial',  label: 'Financial',         fields: ['proposedPrice'] },
+  { id: 'classify',   label: 'Status & Priority', fields: ['status', 'priority'] },
+  { id: 'assignment', label: 'Assignment',        fields: ['assignedTo'] },
+  { id: 'metadata',   label: 'Metadata',          fields: [
+    'User Id', 'Lead Id', 'Call Start Time', 'Extension', 'Voipcentral', 'Call Direction Name',
+    'Agent Id', 'Agent Full Name', 'Label Name', 'Team Language', 'Agent Name',
+    'Call Duration Formatted', 'Audio Length In Minutes', 'Agent Office Name',
+  ]},
+  { id: 'alerts',     label: 'Alerts',            fields: [
+    'Investment Advice', 'Distressed Client', 'Unprofessional Behavior',
+    'Interfering With Or Downplaying KYC Registration Or Proof Of Funds',
+    'Deposits Withdrawals Recommendations', 'Legal Regulatory Violations',
+    'Third Party', 'Information Violation', 'Loan Mentioned',
+  ]},
+  { id: 'dynamic',    label: 'Dynamic Metrics',   fields: ['Sentiment Score', 'Talk Ratio', 'Silence Rate', 'Interruptions', 'Energy Level'] },
+  { id: 'workflows',  label: 'Workflows',         fields: ['Lead Qualification', 'Discovery Call', 'Demo Flow', 'Closing Sequence'] },
+]
+
+// Resolve a column key to a human label (core fields have nice labels in FILTER_FIELDS)
+function colLabel(key) {
+  return FILTER_FIELDS.find(f => f.value === key)?.label ?? key
+}
 
 let _chipId = 1
 
@@ -352,19 +412,6 @@ const COL_DEFS = [
     valueGetter: p => p.data?.assignedTo, sortable: false },
 ]
 
-// ── Column groups (for the inline Columns picker) ─────────────────────────────
-// Groups the available COL_DEFS into named sections, matching the platform's
-// existing "Manage Columns" modal model. Order in `fields` is the display order
-// inside the group; field IDs must match COL_DEFS.field exactly.
-const COLUMN_GROUPS = [
-  { id: 'call_details', label: 'Call Details', fields: ['id', 'callDate', 'destination', 'summary'] },
-  { id: 'commercial',   label: 'Commercial',   fields: ['proposedPrice'] },
-  { id: 'status',       label: 'Status & Priority', fields: ['status', 'priority'] },
-  { id: 'assignment',   label: 'Assignment',   fields: ['assignedTo'] },
-]
-const ALL_FIELDS    = COL_DEFS.map(c => c.field)
-const FIELD_LABELS  = Object.fromEntries(COL_DEFS.map(c => [c.field, c.headerName]))
-
 const DEFAULT_COL_DEF = { resizable: true, sortable: true }
 
 // ── Filter logic ──────────────────────────────────────────────────────────────
@@ -381,8 +428,10 @@ function runFilters(appliedChips, searchText, allData) {
     )
   }
 
+  const DATA_FIELDS = new Set(['id', 'callDate', 'proposedPrice', 'destination', 'summary', 'status', 'priority', 'assignedTo'])
   for (const f of appliedChips) {
     if (!f.field || !f.value.trim()) continue
+    if (!DATA_FIELDS.has(f.field)) continue   // signal columns: UI-only, don't narrow demo rows
     data = data.filter(row => {
       const cellVal = f.field === 'assignedTo'
         ? (row.assignedTo?.name ?? '').toLowerCase()
@@ -401,12 +450,163 @@ function runFilters(appliedChips, searchText, allData) {
   return data
 }
 
+// ── Collapsed chips pill ──────────────────────────────────────────────────────
+
+
+function EditIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M9 2l2 2-6.5 6.5L2 11l.5-2.5L9 2z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+const OP_SYMBOL = { equals: '=', not_equal: '≠', contains: '~', not_contains: '!~' }
+
+function CollapsedChips({ chips, onClearAll, onRemove, onEdit, isCustomPreset, onSave, onUpdatePreset }) {
+  const [open, setOpen]       = useState(false)
+  const [hoveredId, setHoveredId] = useState(null)
+  const closeTimer            = useRef(null)
+
+  function cancelClose() { clearTimeout(closeTimer.current) }
+  function scheduleClose() { closeTimer.current = setTimeout(() => setOpen(false), 300) }
+  useEffect(() => () => clearTimeout(closeTimer.current), [])
+
+  return (
+    <div
+      style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, position: 'relative' }}
+      onMouseEnter={() => { cancelClose(); setOpen(true) }}
+      onMouseLeave={scheduleClose}
+    >
+      {/* Pill */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        height: 28, padding: '0 11px',
+        background: 'var(--b20)', border: '1px solid var(--b60)',
+        borderRadius: 99, fontSize: 12, color: 'var(--b100)',
+        fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', cursor: 'default',
+      }}>
+        {chips.length} filters
+        <span
+          onClick={e => { e.stopPropagation(); onClearAll() }}
+          style={{ cursor: 'pointer', fontSize: 14, lineHeight: 1, opacity: 0.7 }}
+        >×</span>
+      </div>
+
+      {/* Dropdown — styled to match Manage Columns modal */}
+      {open && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 8px)', left: 0,
+          background: '#fff',
+          borderRadius: 16,
+          boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
+          zIndex: 200, width: 320,
+          overflow: 'hidden',
+        }}>
+          {/* Title bar */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '16px 20px 12px',
+            borderBottom: '1px solid var(--border-default)',
+          }}>
+            <span style={{
+              fontSize: 16, fontWeight: 600, color: 'var(--text-primary)',
+              fontFamily: "'Byrd', sans-serif",
+            }}>Active filters</span>
+            <span style={{
+              fontSize: 12, fontWeight: 600, color: 'var(--b100)',
+              background: 'var(--b20)', borderRadius: 99, padding: '2px 8px',
+              fontFamily: "'Byrd', sans-serif",
+            }}>{chips.length}</span>
+          </div>
+
+          {/* Rows */}
+          <div style={{ padding: '4px 0' }}>
+            {chips.map(chip => {
+              const fieldLabel = colLabel(chip.field)
+              const op = isDateField(chip.field) ? (DATE_OP_WORD[chip.operator] ?? '') : (OP_SYMBOL[chip.operator] ?? '=')
+              const isHovered = hoveredId === chip.id
+              return (
+                <div
+                  key={chip.id}
+                  onMouseEnter={() => setHoveredId(chip.id)}
+                  onMouseLeave={() => setHoveredId(null)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 12px 10px 20px',
+                    background: isHovered ? 'var(--bg-active)' : 'transparent',
+                    transition: 'background 100ms',
+                  }}
+                >
+                  <span style={{
+                    flex: 1, fontFamily: "'Byrd', sans-serif",
+                    fontSize: 14, whiteSpace: 'nowrap',
+                    overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}>
+                    <span style={{ color: 'var(--text-secondary)', fontWeight: 400 }}>{fieldLabel}</span>
+                    <span style={{ color: 'var(--text-muted)', margin: '0 5px', fontSize: 12 }}>{op}</span>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{chipValueLabel(chip)}</span>
+                  </span>
+                  <div style={{
+                    display: 'flex', gap: 2, flexShrink: 0,
+                    opacity: isHovered ? 1 : 0, transition: 'opacity 120ms',
+                  }}>
+                    <button
+                      onClick={e => { onEdit(chip, e.currentTarget); setOpen(false) }}
+                      title="Edit"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 28, height: 28, background: 'none', border: 'none',
+                        borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)',
+                        transition: 'background 100ms, color 100ms',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-canvas)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                    ><EditIcon /></button>
+                    <button
+                      onClick={() => onRemove(chip)}
+                      title="Remove"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        width: 28, height: 28, background: 'none', border: 'none',
+                        borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 16,
+                        transition: 'background 100ms, color 100ms',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--c20)'; e.currentTarget.style.color = 'var(--c100)' }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+                    >×</button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Footer */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '12px 20px',
+            borderTop: '1px solid var(--border-default)',
+          }}>
+            <Button variant="ghost" size="sm" onClick={onClearAll}>Clear all</Button>
+            {isCustomPreset
+              ? <Button size="sm" onClick={() => { onUpdatePreset(); setOpen(false) }}>Update preset</Button>
+              : <Button size="sm" onClick={() => { onSave(); setOpen(false) }}>Save as preset</Button>
+            }
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Filter chip ───────────────────────────────────────────────────────────────
 
 function FilterChip({ chip, onEdit, onRemove }) {
-  const fieldLabel = FILTER_FIELDS.find(f => f.value === chip.field)?.label ?? chip.field
+  const fieldLabel = colLabel(chip.field)
   const isNeg = chip.operator === 'not_contains' || chip.operator === 'not_equal'
-  const label = `${fieldLabel}${isNeg ? ' ≠' : ':'} ${chip.value}`
+  const label = isDateField(chip.field)
+    ? `${fieldLabel} ${DATE_OP_WORD[chip.operator] ?? ''} ${chipValueLabel(chip)}`.replace(/\s+/g, ' ').trim()
+    : `${fieldLabel}${isNeg ? ' ≠' : ':'} ${chip.value}`
 
   return (
     <div
@@ -439,118 +639,300 @@ function FilterChip({ chip, onEdit, onRemove }) {
   )
 }
 
-// ── Filter popover ────────────────────────────────────────────────────────────
+// ── Filter modal (column-first, two-step) ─────────────────────────────────────
 
-function FilterPopover({ anchor, chip, onChange, onDone, onClose }) {
-  const ref = useRef(null)
+function FilterModal({ open, step, chip, onChange, onPickField, onBack, onDone, onClose }) {
+  const [search, setSearch]     = useState('')
+  const [expanded, setExpanded] = useState(() => new Set())
 
+  // Reset to all-collapsed whenever the modal (re)opens at the column step
   useEffect(() => {
-    function h(e) {
-      if (ref.current && !ref.current.contains(e.target)) onClose()
+    if (open && step === 'column') {
+      setSearch('')
+      setExpanded(new Set())
     }
-    document.addEventListener('mousedown', h)
-    return () => document.removeEventListener('mousedown', h)
-  }, [onClose])
+  }, [open, step])
 
-  const canDone = chip.field && chip.value.trim()
+  const isDate     = isDateField(chip.field)
+  const [rangeFrom, rangeTo] = (chip.value || '').split('..')
+  const canDone    = chip.field && (
+    isDate && chip.operator === 'between'
+      ? (rangeFrom && rangeTo)
+      : chip.value.trim()
+  )
+  const fieldLabel = colLabel(chip.field)
+
+  // When switching condition for a date field, keep the value format consistent
+  function setCondition(op) {
+    if (!isDate) { onChange({ ...chip, operator: op }); return }
+    let value = chip.value
+    if (op === 'between' && !value.includes('..')) value = `${value}..`
+    else if (op !== 'between' && value.includes('..')) value = value.split('..')[0]
+    onChange({ ...chip, operator: op, value })
+  }
+  const setRange = (from, to) => onChange({ ...chip, value: `${from}..${to}` })
+
+  const footer = step === 'column'
+    ? <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
+    : (
+      <>
+        <Button variant="ghost" size="sm" onClick={onBack}>Back</Button>
+        <Button size="sm" onClick={onDone} disabled={!canDone}>Done</Button>
+      </>
+    )
 
   return (
-    <div ref={ref} data-inspector="FilterPopover" style={{
-      position: 'fixed', left: anchor.x, top: anchor.y,
-      zIndex: 600,
-      background: 'var(--bg-elevated)',
-      border: '1px solid var(--border-default)',
-      borderRadius: 10,
-      boxShadow: '0 8px 28px rgba(0,0,0,0.14)',
-      padding: 12,
-      display: 'flex', flexDirection: 'column', gap: 8,
-      width: 250,
-    }}>
-      <PresetSelect
-        fullWidth
-        options={[{ value: '', label: 'Field…' }, ...FILTER_FIELDS.map(f => ({ value: f.value, label: f.label }))]}
-        value={chip.field}
-        onChange={v => onChange({ ...chip, field: v })}
-      />
+    <Modal open={open} onClose={onClose} title="Add filter" width={440} footer={footer}>
+      {step === 'column' ? (
+        /* ── Step 1: pick a column ── */
+        <div>
+          {/* Search */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14,
+            padding: '8px 12px', borderRadius: 10,
+            background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+          }}>
+            <SearchIcon />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search columns..."
+              autoFocus
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)',
+              }}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 15, padding: 0, lineHeight: 1 }}>×</button>
+            )}
+          </div>
 
-      <PresetSelect
-        fullWidth
-        options={OPERATORS.map(op => ({ value: op.value, label: op.label }))}
-        value={chip.operator}
-        onChange={v => onChange({ ...chip, operator: v })}
-      />
+          {/* Grouped column list */}
+          <div style={{ maxHeight: 360, overflowY: 'auto', margin: '0 -4px' }} className="manage-cols-scroll">
+            {COLUMN_GROUPS.map(group => {
+              const matched = group.fields.filter(f =>
+                colLabel(f).toLowerCase().includes(search.toLowerCase())
+              )
+              if (matched.length === 0) return null
+              const isExpanded = expanded.has(group.id) || search.length > 0
+              return (
+                <div key={group.id} style={{ borderBottom: '1px solid var(--border-default)' }}>
+                  <button
+                    onClick={() => setExpanded(s => { const n = new Set(s); n.has(group.id) ? n.delete(group.id) : n.add(group.id); return n })}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      width: '100%', padding: '12px 8px', background: 'none', border: 'none', cursor: 'pointer',
+                    }}
+                  >
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>{group.label}</span>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+                      style={{ transition: 'transform 180ms', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                      <path d="M3 5l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  {isExpanded && matched.map(f => {
+                    const lbl = colLabel(f)
+                    return (
+                      <button
+                        key={f}
+                        onClick={() => onPickField(f)}
+                        style={{
+                          display: 'flex', alignItems: 'center',
+                          width: '100%', padding: '9px 8px 9px 18px', background: 'none', border: 'none',
+                          cursor: 'pointer', borderRadius: 8, textAlign: 'left',
+                          fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)',
+                          transition: 'background 100ms',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+                      >
+                        {lbl}
+                      </button>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        /* ── Step 2: configure the filter for the chosen column ── */
+        <div>
+          {/* Back row */}
+          <button
+            onClick={onBack}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14,
+              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif", color: 'var(--text-secondary)',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--b100)' }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)' }}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M9 3l-4 4 4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            All columns
+          </button>
 
-      <input
-        value={chip.value}
-        onChange={e => onChange({ ...chip, value: e.target.value })}
-        onKeyDown={e => { if (e.key === 'Enter' && canDone) onDone() }}
-        placeholder="Value…"
-        style={{ ...SEL, width: '100%', boxSizing: 'border-box' }}
-      />
+          {/* Chosen column */}
+          <div style={{
+            padding: '10px 12px', marginBottom: 14, borderRadius: 8,
+            background: 'var(--b20)', border: '1px solid var(--b60)',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--b100)', opacity: 0.7, fontFamily: "'Byrd', sans-serif", marginBottom: 2 }}>Column</div>
+            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--b100)', fontFamily: "'Byrd', sans-serif" }}>{fieldLabel}</div>
+          </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
-        <Button variant="ghost" size="sm" onClick={onClose}>Cancel</Button>
-        <Button size="sm" onClick={onDone} disabled={!canDone}>Done</Button>
-      </div>
-    </div>
+          {/* Condition */}
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>Condition</label>
+            <PresetSelect
+              fullWidth
+              options={(isDate ? DATE_OPERATORS : OPERATORS).map(op => ({ value: op.value, label: op.label }))}
+              value={isDate && !DATE_OP_VALUES.has(chip.operator) ? 'on' : chip.operator}
+              onChange={setCondition}
+            />
+          </div>
+
+          {/* Value */}
+          <div>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
+              {isDate ? (chip.operator === 'between' ? 'Date range' : 'Date') : 'Value'}
+            </label>
+
+            {!isDate ? (
+              <input
+                value={chip.value}
+                onChange={e => onChange({ ...chip, value: e.target.value })}
+                onKeyDown={e => { if (e.key === 'Enter' && canDone) onDone() }}
+                placeholder="Enter value…"
+                autoFocus
+                style={{
+                  width: '100%', boxSizing: 'border-box', height: 38, padding: '0 12px',
+                  background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)', borderRadius: 8,
+                  fontSize: 'var(--type-p14)', color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+                  outline: 'none', transition: 'border-color 150ms',
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = 'var(--b100)' }}
+                onBlur={e  => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
+              />
+            ) : chip.operator === 'between' ? (
+              /* Range: two date inputs */
+              <div style={{
+                display: 'flex', alignItems: 'center',
+                border: '1.5px solid var(--border-default)', borderRadius: 8, overflow: 'hidden',
+              }}>
+                <input
+                  type="date"
+                  value={rangeFrom || ''}
+                  onChange={e => setRange(e.target.value, rangeTo || '')}
+                  style={{
+                    flex: 1, minWidth: 0, height: 38, padding: '0 10px',
+                    background: 'var(--bg-canvas)', border: 'none', outline: 'none',
+                    fontSize: 'var(--type-p14)', color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+                  }}
+                />
+                <span style={{ color: 'var(--text-muted)', fontSize: 14, flexShrink: 0 }}>→</span>
+                <input
+                  type="date"
+                  value={rangeTo || ''}
+                  min={rangeFrom || undefined}
+                  onChange={e => setRange(rangeFrom || '', e.target.value)}
+                  style={{
+                    flex: 1, minWidth: 0, height: 38, padding: '0 10px',
+                    background: 'var(--bg-canvas)', border: 'none', outline: 'none',
+                    fontSize: 'var(--type-p14)', color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", textAlign: 'right',
+                  }}
+                />
+              </div>
+            ) : (
+              /* Single specific date */
+              <input
+                type="date"
+                value={chip.value}
+                onChange={e => onChange({ ...chip, value: e.target.value })}
+                style={{
+                  width: '100%', boxSizing: 'border-box', height: 38, padding: '0 12px',
+                  background: 'var(--bg-canvas)', border: '1.5px solid var(--border-default)', borderRadius: 8,
+                  fontSize: 'var(--type-p14)', color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+                  outline: 'none', transition: 'border-color 150ms',
+                }}
+                onFocus={e => { e.currentTarget.style.borderColor = 'var(--b100)' }}
+                onBlur={e  => { e.currentTarget.style.borderColor = 'var(--border-default)' }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </Modal>
   )
 }
 
-// ── DataPageV2 ────────────────────────────────────────────────────────────────
+const DATE_RANGES = [
+  { key: 'today',   label: 'Today' },
+  { key: 'week',    label: 'This week' },
+  { key: 'month',   label: 'This month' },
+  { key: 'quarter', label: 'This quarter' },
+  { key: 'year',    label: 'This year' },
+  { key: 'custom',  label: 'Custom range' },
+]
+
+function fmtDate(iso) {
+  if (!iso) return ''
+  const [, m, d] = iso.split('-')
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  return `${months[+m - 1]} ${+d}`
+}
+
+function ColumnsIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink: 0 }}>
+      <path d="M1 3h11M1 6.5h11M1 10h11" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <circle cx="4" cy="3" r="1.5" fill="var(--bg-sidebar)" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="9" cy="6.5" r="1.5" fill="var(--bg-sidebar)" stroke="currentColor" strokeWidth="1.3" />
+      <circle cx="5" cy="10" r="1.5" fill="var(--bg-sidebar)" stroke="currentColor" strokeWidth="1.3" />
+    </svg>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink: 0 }}>
+      <rect x="1" y="2.5" width="11" height="9.5" rx="2" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M1 5.5h11" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M4 1v3M9 1v3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+// ── DataPage ──────────────────────────────────────────────────────────────────
 
 export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sidebarTransition, companyConfig = null, onOpenCall }) {
   const [schemaId,       setSchemaId]       = useState('acme')
   const [customPresets,  setCustomPresets]  = useState([])
   const [selectedPreset, setSelectedPreset] = useState('')
   const [chips,          setChips]          = useState([])
-  const [appliedChips,   setAppliedChips]   = useState([])
   const [searchText,     setSearchText]     = useState('')
-  const [activePopover,  setActivePopover]  = useState(null) // { id, anchor:{x,y} }
+  const [activePopover,  setActivePopover]  = useState(null) // { id }
+  const [filterStep,     setFilterStep]     = useState('column') // 'column' | 'config'
   const [editingChip,    setEditingChip]    = useState({ field: '', operator: 'contains', value: '' })
-  const [saveModalOpen,  setSaveModalOpen]  = useState(false)
-  const [presetNameDraft, setPresetNameDraft] = useState('')
-  const [filterExpanded, setFilterExpanded] = useState(false)
-  const [queryText,      setQueryText]      = useState('')
+  const [saveModalOpen,    setSaveModalOpen]    = useState(false)
+  const [presetNameDraft,  setPresetNameDraft]  = useState('')
+  const [manageColsOpen,   setManageColsOpen]   = useState(false)
+  const [colSearch,        setColSearch]        = useState('')
+  const [expandedGroups,   setExpandedGroups]   = useState(() => new Set())
+  const [draftCols,        setDraftCols]        = useState(() => new Set(COL_DEFS.map(c => c.field)))
+  const [dateRange,      setDateRange]      = useState(null)
+  const [dateRangeOpen,  setDateRangeOpen]  = useState(false)
+  const [customFrom,      setCustomFrom]      = useState('')
+  const [customTo,        setCustomTo]        = useState('')
+  const [customDateField, setCustomDateField] = useState('equals')
 
-  // Columns picker state — visibleFields is applied; draft is what the modal is editing
-  const [visibleFields,    setVisibleFields]    = useState(ALL_FIELDS)
-  const [columnsModalOpen, setColumnsModalOpen] = useState(false)
-  const [columnsDraft,     setColumnsDraft]     = useState(ALL_FIELDS)
-  const [columnsSearch,    setColumnsSearch]    = useState('')
-  const [expandedGroups,   setExpandedGroups]   = useState(() =>
-    new Set(COLUMN_GROUPS.map(g => g.id))   // all groups open by default
-  )
-
-  function openColumnsModal() {
-    setColumnsDraft(visibleFields)
-    setColumnsSearch('')
-    setColumnsModalOpen(true)
-  }
-  function applyColumns() {
-    setVisibleFields(columnsDraft)
-    setColumnsModalOpen(false)
-  }
-  function toggleDraftField(field) {
-    setColumnsDraft(v => v.includes(field)
-      ? v.filter(f => f !== field)
-      : [...v, field]
-    )
-  }
-  function toggleGroupExpand(id) {
-    setExpandedGroups(s => {
-      const next = new Set(s)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
-  }
-
-  // AG Grid columnDefs driven by visibleFields (preserves user-chosen order)
-  const activeColDefs = useMemo(
-    () => visibleFields.map(f => COL_DEFS.find(c => c.field === f)).filter(Boolean),
-    [visibleFields]
-  )
-
-  const gridRef = useRef(null)
+  const gridRef      = useRef(null)
+  const dateRangeRef   = useRef(null)
+  const manageColsRef  = useRef(null)
 
   // Track dark mode — switch AG Grid theme reactively
   const [isDark, setIsDark] = useState(
@@ -567,14 +949,32 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
   useEffect(() => {
     setSelectedPreset('')
     setChips([])
-    setAppliedChips([])
     setSearchText('')
     setActivePopover(null)
   }, [schemaId])
 
+  useEffect(() => {
+    if (!dateRangeOpen) return
+    function handleClick(e) {
+      if (dateRangeRef.current && !dateRangeRef.current.contains(e.target))
+        setDateRangeOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [dateRangeOpen])
+
+  useEffect(() => {
+    if (!manageColsOpen) return
+    function handleClick(e) {
+      if (manageColsRef.current && !manageColsRef.current.contains(e.target))
+        setManageColsOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [manageColsOpen])
+
   const [gridApi, setGridApi] = useState(null)
 
-  const isDirty    = JSON.stringify(chips) !== JSON.stringify(appliedChips)
   const allPresets = useMemo(() => [...PRESETS, ...customPresets], [customPresets])
 
   // Full row pool — use company data when config is available, otherwise schema mock data
@@ -583,7 +983,7 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
       ? generateCompanyRows(companyConfig)
       : generateRows(schemaId),
   [schemaId, companyConfig])
-  const filteredPool = useMemo(() => runFilters(appliedChips, searchText, rowPool), [appliedChips, searchText, rowPool])
+  const filteredPool = useMemo(() => runFilters(chips, searchText, rowPool), [chips, searchText, rowPool])
 
   // Infinite-row datasource — slices filteredPool on demand
   const datasource = useMemo(() => ({
@@ -600,6 +1000,11 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
   useEffect(() => {
     gridApi?.setGridOption('datasource', datasource)
   }, [datasource, gridApi])
+
+  function applyColumns() {
+    if (gridApi) COL_DEFS.forEach(c => gridApi.setColumnVisible(c.field, draftCols.has(c.field)))
+    setManageColsOpen(false)
+  }
 
   function savePreset() {
     if (!presetNameDraft.trim()) return
@@ -620,7 +1025,6 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
         ? { ...p2, filters: chips.map(({ id: _id, ...rest }) => rest) }
         : p2
     ))
-    setAppliedChips(chips)
   }
 
   function loadPreset(id) {
@@ -631,15 +1035,26 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
     setChips(newChips)
   }
 
-  function openPopover(id, el) {
-    const r = el.getBoundingClientRect()
-    setActivePopover({ id, anchor: { x: r.left, y: r.bottom + 6 } })
+  function openPopover(id) {
+    setActivePopover({ id })
     if (id === 'new') {
       setEditingChip({ field: '', operator: 'contains', value: '' })
+      setFilterStep('column')
     } else {
       const c = chips.find(x => x.id === id)
       if (c) setEditingChip({ field: c.field, operator: c.operator, value: c.value })
+      setFilterStep('config')
     }
+  }
+
+  function pickFilterField(field) {
+    setEditingChip(c => ({
+      ...c,
+      field,
+      operator: isDateField(field) ? 'on' : 'contains',
+      value: '',
+    }))
+    setFilterStep('config')
   }
 
   function closePopover() { setActivePopover(null) }
@@ -656,28 +1071,11 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
 
   function removeChip(id) { setChips(c => c.filter(x => x.id !== id)) }
 
-  function addInlineRow() {
-    setChips(c => [...c, { id: _chipId++, field: '', operator: 'contains', value: '' }])
-    setFilterExpanded(true)
-  }
-  function updateInlineRow(id, patch) {
-    setChips(c => c.map(x => x.id === id ? { ...x, ...patch } : x))
-  }
-  function resetToDefaults() {
-    setChips([])
-    setAppliedChips([])
-    setSelectedPreset('')
-    setQueryText('')
-  }
-  function applyRows() { setAppliedChips(chips) }
-
-  const MAX_INLINE_CHIPS = 1
-
   const left = isMobile ? 0 : sidebarWidth
 
   return (
     <div
-      data-inspector="DataPage"
+      data-inspector="DataPageV2"
       style={{
         position: 'fixed', top: 0, left, right: 0, bottom: 0,
         background: 'var(--bg-canvas)',
@@ -696,7 +1094,7 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
         boxShadow: 'var(--page-header-shadow)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Data</span>
+          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Data V2</span>
           {companyConfig?.companyName && (
             <>
               <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
@@ -710,255 +1108,279 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Button variant="ghost" size="sm" onClick={openColumnsModal}>Add columns</Button>
+          {/* Search */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            height: 30, padding: '0 10px',
+            background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+            borderRadius: 6, flexShrink: 0, width: 190,
+          }}>
+            <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <SearchIcon />
+            </span>
+            <input
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              placeholder="Search…"
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
+                fontFamily: "'Byrd', sans-serif",
+              }}
+            />
+            {searchText && (
+              <button onClick={() => setSearchText('')} style={{
+                display: 'flex', alignItems: 'center', background: 'none', border: 'none',
+                cursor: 'pointer', color: 'var(--text-secondary)', padding: 0, fontSize: 15, lineHeight: 1,
+              }}>×</button>
+            )}
+          </div>
           <Button size="sm">Upload</Button>
           <Button variant="ghost" size="sm" leftIcon={<MoreIcon />} />
         </div>
       </div>
 
-      {/* ── Filter Strip — collapsible pill ──────────────────────────────── */}
+      {/* ── Filter Strip — floating pill ─────────────────────────────────── */}
       <div style={{
-        display: 'flex', flexDirection: 'column',
-        flexShrink: 0,
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '0 14px', height: 48, flexShrink: 0,
         margin: '8px 16px 0',
         background: 'var(--bg-sidebar)',
         border: 'var(--page-header-border)',
         borderRadius: 12,
         boxShadow: 'var(--page-header-shadow)',
-        overflow: 'hidden',
+        minWidth: 0,
       }}>
-        {/* Top row — always visible */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '0 14px', height: 56,
-        }}>
+        {/* Preset selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
           <span style={{
-            fontSize: 'var(--type-p14)', fontWeight: 600, color: 'var(--text-primary)',
+            fontSize: 'var(--type-p14)', fontWeight: 500, color: 'var(--text-secondary)',
             fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
-          }}>Preset</span>
-
+          }}>Preset:</span>
           <PresetSelect
-            options={[{ value: '', label: 'Select a preset' }, ...allPresets.map(p => ({ value: p.id, label: p.label }))]}
+            options={[{ value: '', label: 'None' }, ...allPresets.map(p => ({ value: p.id, label: p.label }))]}
             value={selectedPreset}
             onChange={loadPreset}
           />
+        </div>
 
+        {/* Divider */}
+        <div style={{ width: 1, height: 22, background: 'var(--border-input)', flexShrink: 0 }} />
+
+        {/* Chips + Add */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0 }}>
+          {chips.length === 1 && (
+            <FilterChip
+              chip={chips[0]}
+              onEdit={() => openPopover(chips[0].id)}
+              onRemove={() => removeChip(chips[0].id)}
+            />
+          )}
+          {chips.length > 1 && (
+            <CollapsedChips
+              chips={chips}
+              onClearAll={() => setChips([])}
+              onRemove={chip => removeChip(chip.id)}
+              onEdit={chip => openPopover(chip.id)}
+              isCustomPreset={selectedPreset && customPresets.some(p => p.id === selectedPreset)}
+              onSave={() => { setPresetNameDraft(''); setSaveModalOpen(true) }}
+              onUpdatePreset={updatePreset}
+            />
+          )}
           <button
-            onClick={() => loadPreset('')}
-            disabled={!selectedPreset}
+            onClick={() => openPopover('new')}
             style={{
-              background: 'none', border: 'none',
-              fontSize: 'var(--type-p14)',
-              fontFamily: "'Byrd', sans-serif",
-              color: selectedPreset ? 'var(--text-secondary)' : 'var(--text-muted)',
-              cursor: selectedPreset ? 'pointer' : 'default',
-              padding: 0,
-              textDecoration: selectedPreset ? 'underline' : 'none',
-              textDecorationColor: 'transparent',
-              transition: 'text-decoration-color 150ms ease',
+              display: 'flex', alignItems: 'center', gap: 5,
+              height: 28, padding: '0 11px',
+              background: 'none', border: '1px solid var(--border-input)',
+              borderRadius: 99, fontSize: 12, color: 'var(--text-secondary)',
+              fontFamily: "'Byrd', sans-serif", cursor: 'pointer',
+              whiteSpace: 'nowrap', flexShrink: 0,
+              transition: 'border-color 150ms ease, color 150ms ease, background 150ms ease',
             }}
-            onMouseEnter={e => { if (selectedPreset) e.currentTarget.style.textDecorationColor = 'currentColor' }}
-            onMouseLeave={e => { e.currentTarget.style.textDecorationColor = 'transparent' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--b100)'; e.currentTarget.style.color = 'var(--b100)'; e.currentTarget.style.background = 'var(--b20)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-input)';  e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'none' }}
           >
-            Clear preset
-          </button>
-
-          {/* Applied chips inline */}
-          <div className="smooth-scroll" style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            flex: 1, overflowX: 'auto', overflowY: 'hidden',
-            minWidth: 0, justifyContent: 'flex-end',
-          }}>
-            {appliedChips.slice(0, MAX_INLINE_CHIPS).map(chip => (
-              <FilterChip
-                key={chip.id}
-                chip={chip}
-                onEdit={() => setFilterExpanded(true)}
-                onRemove={() => {
-                  setAppliedChips(c => c.filter(x => x.id !== chip.id))
-                  setChips(c => c.filter(x => x.id !== chip.id))
-                }}
-              />
-            ))}
-            {appliedChips.length > MAX_INLINE_CHIPS && (
-              <span
-                onClick={() => setFilterExpanded(true)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center',
-                  height: 26, padding: '0 10px', borderRadius: 99,
-                  background: 'var(--b20)', color: 'var(--b100)',
-                  fontSize: 12, fontFamily: "'Byrd', sans-serif",
-                  fontWeight: 600, cursor: 'pointer', flexShrink: 0,
-                }}
-              >
-                +{appliedChips.length - MAX_INLINE_CHIPS}
-              </span>
-            )}
-          </div>
-
-          {/* Expand / collapse toggle */}
-          <button
-            onClick={() => setFilterExpanded(v => !v)}
-            aria-label={filterExpanded ? 'Collapse filters' : 'Expand filters'}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 32, height: 32, flexShrink: 0,
-              background: 'none', border: 'none', borderRadius: 8,
-              cursor: 'pointer', color: 'var(--text-secondary)',
-              transition: 'background 120ms ease, color 120ms ease',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-              style={{ transition: 'transform 180ms ease', transform: filterExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-              <path d="M2 3l5 4 5-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 8l5 4 5-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <PlusIcon /> Add filter
           </button>
         </div>
 
-        {/* Expanded body */}
-        {filterExpanded && (
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: 10,
-            padding: '0 14px 14px',
-            borderTop: '1px solid var(--border-default)',
-            paddingTop: 14,
-          }}>
-            {/* Describe + Generate query */}
+        {/* Add columns */}
+        <div ref={manageColsRef} style={{ position: 'relative', flexShrink: 0 }}>
+          <button style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            height: 28, padding: '0 11px',
+            background: manageColsOpen ? 'var(--b20)' : 'none',
+            border: `1px solid ${manageColsOpen ? 'var(--b60)' : 'var(--border-input)'}`,
+            borderRadius: 99, fontSize: 12, color: manageColsOpen ? 'var(--b100)' : 'var(--text-secondary)',
+            fontFamily: "'Byrd', sans-serif", cursor: 'pointer', whiteSpace: 'nowrap',
+            transition: 'border-color 150ms, color 150ms, background 150ms',
+          }}
+            onMouseEnter={e => { if (!manageColsOpen) { e.currentTarget.style.borderColor = 'var(--b100)'; e.currentTarget.style.color = 'var(--b100)'; e.currentTarget.style.background = 'var(--b20)' } }}
+            onMouseLeave={e => { if (!manageColsOpen) { e.currentTarget.style.borderColor = 'var(--border-input)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'none' } }}
+            onClick={() => setManageColsOpen(v => !v)}
+          >
+            <ColumnsIcon /> Manage columns
+          </button>
+        </div>
+
+
+        {/* Date range picker */}
+        <div ref={dateRangeRef} style={{ position: 'relative', flexShrink: 0 }}>
+          {/* Trigger pill */}
+          <button
+            onClick={() => setDateRangeOpen(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              height: 28, padding: '0 11px',
+              background: dateRange ? 'var(--b20)' : 'none',
+              border: `1px solid ${dateRange ? 'var(--b60)' : 'var(--border-input)'}`,
+              borderRadius: 99,
+              fontSize: 12, color: dateRange ? 'var(--b100)' : 'var(--text-secondary)',
+              fontFamily: "'Byrd', sans-serif", cursor: 'pointer', whiteSpace: 'nowrap',
+              transition: 'all 150ms ease',
+            }}
+          >
+            <CalendarIcon />
+            {!dateRange
+              ? 'Date range'
+              : dateRange === 'custom'
+                ? (customFrom && customTo
+                    ? `${fmtDate(customFrom)} – ${fmtDate(customTo)}`
+                    : 'Custom range')
+                : DATE_RANGES.find(r => r.key === dateRange)?.label
+            }
+            {dateRange && (
+              <span
+                onClick={e => {
+                  e.stopPropagation()
+                  setDateRange(null)
+                  setCustomFrom('')
+                  setCustomTo('')
+                  setDateRangeOpen(false)
+                }}
+                style={{ marginLeft: 2, fontSize: 14, lineHeight: 1, opacity: 0.7 }}
+              >×</span>
+            )}
+          </button>
+
+          {/* Dropdown */}
+          {dateRangeOpen && (
             <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              height: 38, padding: '0 4px 0 12px',
-              background: 'var(--bg-canvas)',
-              border: '1px solid var(--border-input)',
-              borderRadius: 8,
+              position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+              background: '#fff',
+              border: '1px solid var(--border-default)',
+              borderRadius: 12,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.14)',
+              overflow: 'hidden', zIndex: 100, width: 240,
             }}>
-              <input
-                value={queryText}
-                onChange={e => setQueryText(e.target.value)}
-                placeholder="Describe the data you want to filter…"
-                style={{
-                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                  fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
-                  fontFamily: "'Byrd', sans-serif",
-                }}
-              />
-              <button
-                disabled={!queryText.trim()}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  height: 30, padding: '0 12px',
-                  background: 'var(--bg-sidebar)',
-                  border: '1px solid var(--border-default)',
-                  borderRadius: 6,
-                  fontSize: 'var(--type-p14)',
-                  fontFamily: "'Byrd', sans-serif",
-                  color: queryText.trim() ? 'var(--b100)' : 'var(--text-muted)',
-                  cursor: queryText.trim() ? 'pointer' : 'default',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 1l1.2 2.8L10 5l-2.8 1.2L6 9 4.8 6.2 2 5l2.8-1.2L6 1z" fill="currentColor" />
-                </svg>
-                Generate query
-              </button>
-            </div>
-
-            {/* Editable filter rows */}
-            {chips.map(chip => (
-              <div key={chip.id} style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <PresetSelect
-                    fullWidth
-                    options={[{ value: '', label: 'Field…' }, ...FILTER_FIELDS.map(f => ({ value: f.value, label: f.label }))]}
-                    value={chip.field}
-                    onChange={v => updateInlineRow(chip.id, { field: v })}
-                  />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <PresetSelect
-                    fullWidth
-                    options={OPERATORS.map(op => ({ value: op.value, label: op.label }))}
-                    value={chip.operator}
-                    onChange={v => updateInlineRow(chip.id, { operator: v })}
-                  />
-                </div>
-                <input
-                  value={chip.value}
-                  onChange={e => updateInlineRow(chip.id, { value: e.target.value })}
-                  placeholder="Value…"
-                  style={{
-                    flex: 1, minWidth: 0,
-                    height: 32, padding: '0 10px',
-                    background: 'var(--bg-canvas)',
-                    border: '1px solid var(--border-input)',
-                    borderRadius: 6,
-                    fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
-                    fontFamily: "'Byrd', sans-serif",
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                  }}
-                />
-                <button
-                  onClick={() => removeChip(chip.id)}
-                  aria-label="Remove filter"
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    width: 30, height: 30, flexShrink: 0,
-                    background: 'none', border: 'none', borderRadius: 6,
-                    cursor: 'pointer', color: 'var(--text-muted)',
-                    fontSize: 18, lineHeight: 1,
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-muted)' }}
-                >×</button>
+              {/* Quick options */}
+              <div style={{ padding: 6 }}>
+                {DATE_RANGES.filter(r => r.key !== 'custom').map(r => {
+                  const active = dateRange === r.key
+                  return (
+                    <button
+                      key={r.key}
+                      onClick={() => { setDateRange(r.key); setDateRangeOpen(false) }}
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        width: '100%', textAlign: 'left',
+                        padding: '8px 10px', border: 'none', cursor: 'pointer', borderRadius: 8,
+                        background: active ? 'var(--b20)' : 'transparent',
+                        fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif",
+                        color: active ? 'var(--b100)' : 'var(--text-primary)',
+                        fontWeight: active ? 600 : 400,
+                        transition: 'background 100ms ease',
+                      }}
+                      onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--bg-active)' }}
+                      onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+                    >
+                      {r.label}
+                      {active && (
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M2 6l3 3 5-5" stroke="var(--b100)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
-            ))}
 
-            {/* Footer — Add Filter + actions */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
+              {/* Custom range toggle */}
               <button
-                onClick={addInlineRow}
+                onClick={() => setDateRange(dateRange === 'custom' ? null : 'custom')}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  height: 32, padding: '0 12px',
-                  background: 'var(--bg-canvas)',
-                  border: '1px solid var(--border-input)',
-                  borderRadius: 8,
-                  fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
-                  fontFamily: "'Byrd', sans-serif",
-                  cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  width: '100%', textAlign: 'left',
+                  padding: '11px 16px', border: 'none', cursor: 'pointer',
+                  borderTop: '1px solid var(--border-default)',
+                  background: dateRange === 'custom' ? 'var(--b20)' : 'transparent',
+                  fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif",
+                  color: dateRange === 'custom' ? 'var(--b100)' : 'var(--text-primary)',
+                  fontWeight: dateRange === 'custom' ? 600 : 400,
+                  transition: 'background 100ms ease',
                 }}
+                onMouseEnter={e => { if (dateRange !== 'custom') e.currentTarget.style.background = 'var(--bg-active)' }}
+                onMouseLeave={e => { if (dateRange !== 'custom') e.currentTarget.style.background = 'transparent' }}
               >
-                Add Filter <PlusIcon />
+                Custom range
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+                  style={{ transition: 'transform 160ms', transform: dateRange === 'custom' ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                  <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </button>
 
-              <div style={{ flex: 1 }} />
+              {/* Custom date inputs — expands when Custom is selected */}
+              {dateRange === 'custom' && (
+                <div style={{ padding: '14px 16px 16px', borderTop: '1px solid var(--border-default)' }}>
+                  {/* From → To row */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center',
+                    border: '1px solid var(--border-input)',
+                    borderRadius: 10, overflow: 'hidden',
+                  }}>
+                    <input
+                      type="date"
+                      value={customFrom}
+                      onChange={e => setCustomFrom(e.target.value)}
+                      style={{
+                        flex: 1, minWidth: 0, padding: '9px 10px', boxSizing: 'border-box',
+                        background: 'transparent', border: 'none',
+                        fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif",
+                        color: 'var(--text-primary)', outline: 'none',
+                      }}
+                    />
+                    <span style={{ color: 'var(--text-muted)', fontSize: 14, flexShrink: 0 }}>→</span>
+                    <input
+                      type="date"
+                      value={customTo}
+                      min={customFrom || undefined}
+                      onChange={e => setCustomTo(e.target.value)}
+                      style={{
+                        flex: 1, minWidth: 0, padding: '9px 10px', boxSizing: 'border-box',
+                        background: 'transparent', border: 'none',
+                        fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif",
+                        color: 'var(--text-primary)', outline: 'none', textAlign: 'right',
+                      }}
+                    />
+                  </div>
 
-              <button
-                onClick={resetToDefaults}
-                style={{
-                  background: 'none', border: 'none',
-                  fontSize: 'var(--type-p14)',
-                  fontFamily: "'Byrd', sans-serif",
-                  color: 'var(--c100)',
-                  cursor: 'pointer', padding: '0 6px',
-                }}
-              >Reset to defaults</button>
-
-              {selectedPreset && customPresets.some(p => p.id === selectedPreset)
-                ? <Button variant="ghost" size="sm" onClick={updatePreset}>Update preset</Button>
-                : <Button variant="ghost" size="sm" disabled={chips.length === 0} onClick={() => { setPresetNameDraft(''); setSaveModalOpen(true) }}>Save</Button>
-              }
-
-              <Button size="sm" variant="outline" onClick={applyRows} disabled={!isDirty}>Apply</Button>
+                  {/* Apply */}
+                  <div style={{ marginTop: 12 }}>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      fullWidth
+                      disabled={!customFrom || !customTo}
+                      onClick={() => setDateRangeOpen(false)}
+                    >Apply</Button>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
+
       </div>
 
       {/* ── AG Grid ──────────────────────────────────────────────────────── */}
@@ -972,7 +1394,7 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
           maxBlocksInCache={10}
           infiniteInitialRowCount={100}
           onGridReady={e => setGridApi(e.api)}
-          columnDefs={activeColDefs}
+          columnDefs={COL_DEFS}
           defaultColDef={DEFAULT_COL_DEF}
           rowHeight={44}
           headerHeight={38}
@@ -981,199 +1403,17 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
         />
       </div>
 
-      {/* ── Filter popover (portal-style) ─────────────────────────────── */}
-      {activePopover && (
-        <FilterPopover
-          anchor={activePopover.anchor}
-          chip={editingChip}
-          onChange={setEditingChip}
-          onDone={donePopover}
-          onClose={closePopover}
-        />
-      )}
-
-      {/* ── Manage Columns modal ──────────────────────────────────────── */}
-      <Modal
-        open={columnsModalOpen}
-        onClose={() => setColumnsModalOpen(false)}
-        title="Manage Columns"
-        width={560}
-        footer={
-          <>
-            <Button variant="outline" size="sm" onClick={() => setColumnsModalOpen(false)}>Close</Button>
-            <Button variant="outline" size="sm" onClick={applyColumns}>Apply</Button>
-          </>
-        }
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-          {/* Search */}
-          <div style={{ padding: '4px 0 18px' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              height: 44, padding: '0 16px',
-              background: 'var(--bg-canvas)',
-              border: '1.5px solid var(--border-input)',
-              borderRadius: 999,
-            }}>
-              <span style={{ color: 'var(--text-muted)', display: 'flex' }}>
-                <SearchIcon />
-              </span>
-              <input
-                value={columnsSearch}
-                onChange={e => setColumnsSearch(e.target.value)}
-                placeholder="Search columns..."
-                style={{
-                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                  fontSize: 'var(--type-p13)', color: 'var(--text-primary)',
-                  fontFamily: "'Byrd', sans-serif",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* SIGNALS divider */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 14,
-            padding: '6px 0 14px',
-          }}>
-            <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
-            <span style={{
-              fontSize: 11, fontWeight: 700, letterSpacing: '0.12em',
-              textTransform: 'uppercase', color: 'var(--text-muted)',
-              fontFamily: "'Byrd', sans-serif",
-            }}>Signals</span>
-            <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
-          </div>
-
-          {/* Accordion groups */}
-          <div style={{
-            display: 'flex', flexDirection: 'column',
-            maxHeight: 420, overflowY: 'auto',
-            margin: '0 -4px', padding: '0 4px',
-          }}>
-            {COLUMN_GROUPS.map((group, gi) => {
-              const matchingFields = group.fields.filter(f => {
-                const label = FIELD_LABELS[f] ?? f
-                return label.toLowerCase().includes(columnsSearch.trim().toLowerCase())
-              })
-              if (matchingFields.length === 0) return null
-              const isOpen      = expandedGroups.has(group.id) || columnsSearch.trim().length > 0
-              const allChecked  = matchingFields.every(f => columnsDraft.includes(f))
-
-              return (
-                <div key={group.id} style={{
-                  borderTop: gi === 0 ? 'none' : '1px solid var(--border-default)',
-                  padding: '14px 0',
-                }}>
-                  {/* Group header */}
-                  <button
-                    onClick={() => toggleGroupExpand(group.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', width: '100%',
-                      background: 'none', border: 'none', padding: 0,
-                      cursor: 'pointer', textAlign: 'left',
-                    }}
-                  >
-                    <span style={{
-                      flex: 1,
-                      fontSize: 'var(--type-p12)', fontWeight: 700,
-                      color: 'var(--text-primary)',
-                      fontFamily: "'Byrd', sans-serif",
-                    }}>{group.label}</span>
-                    <span style={{ color: 'var(--text-secondary)', display: 'flex' }}>
-                      <ChevronDown open={isOpen} />
-                    </span>
-                  </button>
-
-                  {/* Group body */}
-                  {isOpen && (
-                    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column' }}>
-                      {/* Select All */}
-                      <label style={{
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '8px 0',
-                        borderBottom: '1px solid var(--border-default)',
-                        marginBottom: 6,
-                        cursor: 'pointer',
-                      }}>
-                        <input
-                          type="checkbox"
-                          checked={allChecked}
-                          onChange={() => {
-                            if (allChecked) {
-                              setColumnsDraft(v => v.filter(f => !matchingFields.includes(f)))
-                            } else {
-                              setColumnsDraft(v => {
-                                const merged = [...v]
-                                matchingFields.forEach(f => { if (!merged.includes(f)) merged.push(f) })
-                                return merged
-                              })
-                            }
-                          }}
-                          style={{
-                            width: 18, height: 18, accentColor: 'var(--b100)',
-                            cursor: 'pointer', flexShrink: 0,
-                          }}
-                        />
-                        <span style={{
-                          fontSize: 'var(--type-p13)', color: 'var(--text-primary)',
-                          fontFamily: "'Byrd', sans-serif",
-                        }}>Select All</span>
-                      </label>
-
-                      {/* Items */}
-                      {matchingFields.map(field => {
-                        const checked = columnsDraft.includes(field)
-                        return (
-                          <label
-                            key={field}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 12,
-                              padding: '7px 0',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleDraftField(field)}
-                              style={{
-                                width: 18, height: 18, accentColor: 'var(--b100)',
-                                cursor: 'pointer', flexShrink: 0,
-                              }}
-                            />
-                            <span style={{
-                              fontSize: 'var(--type-p13)', color: 'var(--text-primary)',
-                              fontFamily: "'Byrd', sans-serif",
-                              textTransform: 'capitalize',
-                            }}>
-                              {(FIELD_LABELS[field] ?? field).toLowerCase()}
-                            </span>
-                          </label>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-
-            {/* Empty state for search */}
-            {COLUMN_GROUPS.every(g => g.fields.every(f => {
-              const label = FIELD_LABELS[f] ?? f
-              return !label.toLowerCase().includes(columnsSearch.trim().toLowerCase())
-            })) && (
-              <div style={{
-                padding: '32px 12px', textAlign: 'center',
-                fontSize: 'var(--type-p14)', color: 'var(--text-muted)',
-                fontFamily: "'Byrd', sans-serif",
-              }}>
-                No columns match "{columnsSearch}"
-              </div>
-            )}
-          </div>
-        </div>
-      </Modal>
+      {/* ── Filter modal (column-first, two-step) ─────────────────────── */}
+      <FilterModal
+        open={!!activePopover}
+        step={filterStep}
+        chip={editingChip}
+        onChange={setEditingChip}
+        onPickField={pickFilterField}
+        onBack={() => setFilterStep('column')}
+        onDone={donePopover}
+        onClose={closePopover}
+      />
 
       {/* ── Save preset modal ─────────────────────────────────────────── */}
       <Modal
@@ -1221,13 +1461,213 @@ export default function DataPageV2({ isMobile = false, sidebarWidth = 272, sideb
             }}>
               {chips.length} filter{chips.length > 1 ? 's' : ''} will be saved:&nbsp;
               {chips.map(c => {
-                const fl = FILTER_FIELDS.find(f => f.value === c.field)?.label ?? c.field
+                const fl = colLabel(c.field)
                 return `${fl}: ${c.value}`
               }).join(' · ')}
             </p>
           )}
         </div>
       </Modal>
+
+      {/* ── Manage Columns floating panel ─────────────────────────────────── */}
+      {manageColsOpen && manageColsRef.current && (
+        <>
+          {/* Floating panel — anchored below the button */}
+          <div
+            onMouseDown={e => e.stopPropagation()}
+            style={{
+              position: 'fixed',
+              top: manageColsRef.current.getBoundingClientRect().bottom + 8,
+              right: window.innerWidth - manageColsRef.current.getBoundingClientRect().right,
+              width: 320, maxHeight: 520,
+              background: '#fff', zIndex: 500,
+              display: 'flex', flexDirection: 'column',
+              borderRadius: 12,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.16)',
+              border: '1px solid var(--border-default)',
+            }}>
+            {/* Header */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 16px 12px',
+              borderBottom: '1px solid var(--border-default)', flexShrink: 0,
+            }}>
+              <span style={{ fontSize: 15, fontWeight: 600, fontFamily: "'Byrd', sans-serif", color: 'var(--text-primary)' }}>
+                Manage columns
+              </span>
+              <button
+                onClick={() => setManageColsOpen(false)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  width: 28, height: 28, background: 'none', border: 'none',
+                  borderRadius: 6, cursor: 'pointer', fontSize: 18, color: 'var(--text-muted)',
+                  transition: 'background 100ms',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
+              >×</button>
+            </div>
+
+            {/* Search */}
+            <div style={{ padding: '12px 14px 0', flexShrink: 0 }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 12px', borderRadius: 10,
+                background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+              }}>
+                <SearchIcon />
+                <input
+                  value={colSearch}
+                  onChange={e => setColSearch(e.target.value)}
+                  placeholder="Search..."
+                  autoFocus
+                  style={{
+                    flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                    fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif",
+                    color: 'var(--text-primary)',
+                  }}
+                />
+                {colSearch && (
+                  <button onClick={() => setColSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 15, padding: 0, lineHeight: 1 }}>×</button>
+                )}
+              </div>
+            </div>
+
+            {/* Section label */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '10px 14px 6px', flexShrink: 0,
+            }}>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+              <span style={{
+                fontSize: 11, fontWeight: 600, letterSpacing: '0.09em',
+                textTransform: 'uppercase', color: 'var(--text-muted)',
+                fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap',
+              }}>Signals</span>
+              <div style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+            </div>
+
+            {/* Groups — scrollable */}
+            <div className="manage-cols-scroll" style={{ flex: 1, overflowY: 'auto', padding: '0 14px' }}>
+              {COLUMN_GROUPS.map(group => {
+                const matchedFields = group.fields.filter(f =>
+                  colLabel(f).toLowerCase().includes(colSearch.toLowerCase())
+                )
+                if (matchedFields.length === 0 && colSearch) return null
+                const isExpanded = expandedGroups.has(group.id)
+                const checkedCount = group.fields.filter(f => draftCols.has(f)).length
+
+                return (
+                  <div key={group.id} style={{ borderBottom: '1px solid var(--border-default)' }}>
+                    {/* Group header */}
+                    <button
+                      onClick={() => setExpandedGroups(s => {
+                        const n = new Set(s); n.has(group.id) ? n.delete(group.id) : n.add(group.id); return n
+                      })}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        width: '100%', padding: '14px 0',
+                        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+                      }}
+                    >
+                      {/* Group-level checkbox */}
+                      <div
+                        onClick={e => {
+                          e.stopPropagation()
+                          const allChecked = group.fields.every(f => draftCols.has(f))
+                          setDraftCols(s => {
+                            const n = new Set(s)
+                            group.fields.forEach(f => allChecked ? n.delete(f) : n.add(f))
+                            return n
+                          })
+                        }}
+                        style={{
+                          width: 18, height: 18, borderRadius: 4, flexShrink: 0,
+                          border: `1.5px solid ${checkedCount > 0 ? 'var(--b100)' : 'var(--border-input)'}`,
+                          background: checkedCount === group.fields.length ? 'var(--b100)' : checkedCount > 0 ? 'var(--b20)' : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          transition: 'all 120ms',
+                        }}
+                      >
+                        {checkedCount === group.fields.length && (
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                            <path d="M2 5l2.5 2.5L8 3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                        {checkedCount > 0 && checkedCount < group.fields.length && (
+                          <div style={{ width: 8, height: 2, background: 'var(--b100)', borderRadius: 1 }} />
+                        )}
+                      </div>
+                      <span style={{ color: 'var(--text-muted)', fontSize: 13, flexShrink: 0 }}>•</span>
+                      <span style={{
+                        flex: 1, fontSize: 15, fontWeight: 600,
+                        color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+                      }}>{group.label}</span>
+                      <span style={{
+                        fontSize: 12, fontWeight: 500, color: 'var(--text-muted)',
+                        fontFamily: "'Byrd', sans-serif", marginRight: 4,
+                      }}>{group.fields.length}</span>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+                        style={{ transition: 'transform 180ms', transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}>
+                        <path d="M3 5l4 4 4-4" stroke="var(--text-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+
+                    {/* Items — flex wrap grid */}
+                    {isExpanded && (
+                      <div style={{
+                        display: 'flex', flexWrap: 'wrap', gap: '6px 16px',
+                        padding: '2px 0 10px 24px',
+                      }}>
+                        {(colSearch ? matchedFields : group.fields).map(field => {
+                          const checked = draftCols.has(field)
+                          return (
+                            <label key={field} style={{
+                              display: 'flex', alignItems: 'center', gap: 8,
+                              cursor: 'pointer', minWidth: 140,
+                            }}>
+                              <div
+                                onClick={() => setDraftCols(s => { const n = new Set(s); n.has(field) ? n.delete(field) : n.add(field); return n })}
+                                style={{
+                                  width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                                  border: `1.5px solid ${checked ? 'var(--b100)' : 'var(--border-input)'}`,
+                                  background: checked ? 'var(--b100)' : 'transparent',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                  transition: 'all 120ms',
+                                }}
+                              >
+                                {checked && (
+                                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
+                                    <path d="M2 5l2.5 2.5L8 3" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                )}
+                              </div>
+                              <span style={{
+                                fontSize: 13, fontFamily: "'Byrd', sans-serif",
+                                color: 'var(--text-primary)',
+                              }}>{colLabel(field)}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+              padding: '12px 14px',
+              borderTop: '1px solid var(--border-default)', flexShrink: 0,
+            }}>
+              <Button variant="ghost" size="sm" onClick={() => setManageColsOpen(false)}>Close</Button>
+              <Button size="sm" onClick={applyColumns}>Apply</Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
