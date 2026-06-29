@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Tasks — Mission Control · Lo-Fi</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #EFEFED;
+    color: #181818;
+    min-height: 100vh;
+  }
+
+  /* ── Tokens ── */
+  :root {
+    --bg-canvas:   #EFEFED;
+    --bg-card:     #FFFFFF;
+    --bg-sidebar:  #F5F5F3;
+    --bg-active:   #E8E8E6;
+    --text-primary:   #181818;
+    --text-secondary: #606060;
+    --text-muted:     #9B9B9B;
+    --border-default: #E5E7EB;
+    --border-input:   #D2D2D0;
+    --c100: #FF7056;
+    --b100: #1779F7;
+    --g100: #4BA373;
+    --red100: #E5484D;
+    --amber: #E6A85C;
+    --purple: #8B5CF6;
+  }
+
+  /* ── Layout ── */
+  .page { display: flex; flex-direction: column; height: 100vh; }
+
+  /* ── Sticky header ── */
+  .page-header {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg-canvas);
+    border-bottom: 1px solid var(--border-default);
+    padding: 14px 28px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .header-identity { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .header-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: rgba(139,92,246,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .header-title { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+  .header-sub   { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-top: 1px; }
+
+  .search-bar {
+    flex: 1; max-width: 420px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-input);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .search-bar svg { flex-shrink: 0; opacity: 0.5; }
+
+  .btn-ghost {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500;
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: 7px 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ── View mode tabs ── */
+  .view-tabs {
+    display: flex; align-items: center; gap: 0;
+    padding: 12px 28px 0;
+    border-bottom: 1px solid var(--border-default);
+    background: var(--bg-canvas);
+  }
+  .view-tab {
+    font-size: 13px; font-weight: 500;
+    padding: 8px 16px;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .view-tab.active { color: var(--amber); border-bottom-color: var(--amber); font-weight: 600; }
+
+  /* ── Status cards ── */
+  .status-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; padding: 16px 28px;
+  }
+  .status-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px;
+    position: relative;
+  }
+  .status-icon {
+    width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .icon-amber  { background: rgba(230,168,92,0.12); }
+  .icon-green  { background: rgba(75,163,115,0.12); }
+  .icon-purple { background: rgba(139,92,246,0.12); }
+  .icon-red    { background: rgba(229,72,77,0.12);  }
+
+  .status-body { flex: 1; min-width: 0; }
+  .status-num  { font-size: 24px; font-weight: 700; color: var(--text-primary); line-height: 1; }
+  .status-lbl  { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-top: 3px; }
+
+  .orange-dot {
+    position: absolute; top: 10px; right: 10px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--c100);
+  }
+
+  /* ── Two-panel grid ── */
+  .panels {
+    display: grid; grid-template-columns: 1fr 1.6fr;
+    gap: 12px; padding: 0 28px 28px;
+    flex: 1; min-height: 0;
+    overflow: hidden;
+  }
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border-default);
+    flex-shrink: 0;
+  }
+  .panel-title-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 3px;
+  }
+  .panel-title { font-size: 13px; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+  .panel-sub   { font-size: 11px; color: var(--text-muted); }
+  .count-badge {
+    font-size: 10px; font-weight: 700;
+    background: rgba(230,168,92,0.12);
+    color: var(--amber);
+    border: 1px solid rgba(230,168,92,0.3);
+    padding: 1px 7px; border-radius: 99px;
+  }
+  .panel-body { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+
+  /* ── Filter tabs (right panel) ── */
+  .filter-tabs {
+    display: flex; gap: 4px;
+    padding: 8px 16px 0;
+    flex-shrink: 0;
+  }
+  .filter-tab {
+    font-size: 11px; font-weight: 500;
+    padding: 4px 10px; border-radius: 99px;
+    border: 1px solid var(--border-default);
+    color: var(--text-secondary);
+    cursor: pointer;
+    background: transparent;
+  }
+  .filter-tab.active {
+    background: var(--text-primary); color: #fff; border-color: var(--text-primary);
+  }
+
+  /* ── Pending card (left) ── */
+  .pending-card {
+    background: var(--bg-canvas);
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 150ms;
+  }
+  .pending-card:hover { border-color: var(--b100); }
+  .pending-card.selected { border-color: var(--b100); background: rgba(23,121,247,0.04); }
+
+  .pc-top { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .pc-icon {
+    width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0;
+    background: rgba(230,168,92,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .pc-title { font-size: 13px; font-weight: 600; color: var(--text-primary); flex: 1; }
+  .op-badge {
+    font-size: 10px; font-weight: 700;
+    background: rgba(230,168,92,0.12);
+    color: var(--amber);
+    border: 1px solid rgba(230,168,92,0.3);
+    padding: 2px 7px; border-radius: 99px; flex-shrink: 0;
+  }
+  .pc-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px; }
+  .pc-footer { display: flex; align-items: center; justify-content: space-between; }
+  .pc-footer-left { display: flex; align-items: center; gap: 6px; }
+  .entity-chip {
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 99px;
+    background: rgba(23,121,247,0.07);
+    border: 1px solid rgba(23,121,247,0.18);
+    color: #0d5dd6;
+  }
+  .entity-chip.signal { background: rgba(139,92,246,0.07); border-color: rgba(139,92,246,0.2); color: #6d35c5; }
+  .entity-chip.report { background: rgba(75,163,115,0.07); border-color: rgba(75,163,115,0.18); color: #2d6b4a; }
+  .avatar-row { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+  .avatar-sm {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: rgba(255,112,86,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 700; color: var(--c100);
+  }
+
+  /* processing + failed states */
+  .pending-card.processing { opacity: 0.55; }
+  .pending-card.failed { border-color: var(--red100); background: rgba(229,72,77,0.04); }
+  .state-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 99px;
+    margin-bottom: 4px;
+  }
+  .pill-processing { background: var(--bg-active); color: var(--text-muted); }
+  .pill-failed { background: rgba(229,72,77,0.08); color: var(--red100); border: 1px solid rgba(229,72,77,0.2); }
+
+  /* ── Log row (right) ── */
+  .log-row {
+    background: var(--bg-canvas);
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    padding: 10px 14px;
+  }
+  .lr-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot-blue   { background: var(--b100); }
+  .dot-green  { background: var(--g100); }
+  .dot-red    { background: var(--red100); }
+  .status-badge {
+    font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 99px;
+    border: 1px solid;
+  }
+  .badge-complete { background: rgba(75,163,115,0.07);  border-color: rgba(75,163,115,0.18);  color: #2d6b4a; }
+  .badge-approved { background: rgba(23,121,247,0.07);  border-color: rgba(23,121,247,0.18);  color: #0d5dd6; }
+  .badge-rejected { background: rgba(229,72,77,0.07);   border-color: rgba(229,72,77,0.2);    color: var(--red100); }
+  .lr-title { font-size: 12px; font-weight: 600; color: var(--text-primary); flex: 1; }
+  .lr-time  { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+  .lr-desc  { font-size: 11px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 6px; }
+  .lr-footer { display: flex; align-items: center; justify-content: space-between; }
+  .ops-count { font-size: 10px; color: var(--text-muted); }
+
+  /* ── Annotation labels ── */
+  .annot {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    color: #1779F7; background: #EEF4FF;
+    border: 1px solid #C3D4F9;
+    padding: 1px 6px; border-radius: 4px;
+    margin-left: 6px; vertical-align: middle;
+  }
+
+  /* ── MODAL overlay ── */
+  .modal-section {
+    margin: 0 28px 40px;
+  }
+  .modal-section-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 12px;
+  }
+  .modal-frame {
+    display: flex; gap: 0;
+    background: #fff;
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .modal-overlay-bg {
+    width: 200px; flex-shrink: 0;
+    background: rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .overlay-label {
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.6);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    writing-mode: vertical-rl; transform: rotate(180deg);
+  }
+  .modal-inner {
+    flex: 1; display: flex; flex-direction: column; max-height: 680px;
+  }
+
+  /* modal header */
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-default);
+    flex-shrink: 0;
+  }
+  .modal-header-left { display: flex; align-items: center; gap: 10px; }
+  .modal-sparkle {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: rgba(23,121,247,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .modal-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
+  .modal-close {
+    width: 26px; height: 26px; border-radius: 6px;
+    background: var(--bg-active); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--text-muted);
+  }
+
+  /* modal body */
+  .modal-body { flex: 1; overflow-y: auto; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+
+  .modal-user-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--text-secondary);
+  }
+  .modal-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(255,112,86,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: var(--c100);
+  }
+
+  .modal-section-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 5px;
+  }
+  .modal-text { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+  .summary-callout {
+    background: rgba(23,121,247,0.05);
+    border: 1px solid rgba(23,121,247,0.15);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  .summary-callout .modal-section-label { color: #0d5dd6; }
+  .summary-callout .modal-text { color: #0d5dd6; }
+
+  .meta-card {
+    background: var(--bg-canvas);
+    border: 1px solid var(--border-default);
+    border-radius: 8px; padding: 10px 12px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .meta-item .modal-section-label { margin-bottom: 2px; }
+  .meta-val { font-size: 11px; font-family: 'SF Mono', monospace; color: var(--text-secondary); }
+
+  /* diff toggle */
+  .diff-toggle {
+    display: flex; justify-content: flex-end; margin-bottom: -6px;
+  }
+  .toggle-pill {
+    display: flex; background: var(--bg-active); border-radius: 7px; padding: 3px; gap: 2px;
+  }
+  .tp-item {
+    font-size: 11px; font-weight: 500;
+    padding: 4px 10px; border-radius: 5px;
+    color: var(--text-muted); cursor: pointer; border: none; background: transparent;
+  }
+  .tp-item.active {
+    background: #fff; color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* change group card */
+  .change-card {
+    border: 1px solid var(--border-default);
+    border-radius: 10px; overflow: hidden;
+  }
+  .change-card-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-canvas);
+    border-bottom: 1px solid var(--border-default);
+    cursor: pointer;
+  }
+  .entity-type-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .action-badge-blue {
+    font-size: 10px; font-weight: 700;
+    background: rgba(23,121,247,0.07);
+    border: 1px solid rgba(23,121,247,0.18); color: #0d5dd6;
+    padding: 1px 7px; border-radius: 99px;
+  }
+  .entity-name { font-size: 12px; font-weight: 700; color: var(--text-primary); flex: 1; }
+  .chevron-icon { font-size: 10px; color: var(--text-muted); }
+
+  /* count chips */
+  .count-chips {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-default);
+    background: #fff;
+  }
+  .chip-row { display: flex; gap: 10px; }
+  .chip {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 600; color: var(--text-muted);
+  }
+  .chip-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .cd-green  { background: var(--g100); }
+  .cd-amber  { background: var(--amber); }
+  .cd-red    { background: var(--red100); }
+  .total-chip { font-size: 10px; font-weight: 700; color: var(--text-muted); }
+
+  /* change rows */
+  .change-rows { background: #fff; }
+  .change-row {
+    display: flex; align-items: flex-start;
+    border-bottom: 1px solid var(--border-default);
+  }
+  .change-row:last-child { border-bottom: none; }
+  .accent-bar { width: 3px; flex-shrink: 0; align-self: stretch; }
+  .ab-amber  { background: var(--amber); }
+  .ab-green  { background: var(--g100); }
+  .ab-red    { background: var(--red100); }
+  .change-row-inner {
+    flex: 1; padding: 8px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .type-icon {
+    width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+  }
+  .ti-amber { background: rgba(230,168,92,0.15); color: var(--amber); }
+  .ti-green { background: rgba(75,163,115,0.15); color: var(--g100); }
+  .ti-red   { background: rgba(229,72,77,0.12);  color: var(--red100); }
+  .field-name { font-size: 11px; font-family: 'SF Mono', monospace; color: var(--text-secondary); flex: 1; }
+  .type-badge {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 1px 6px; border-radius: 4px;
+  }
+  .tb-amber { background: rgba(230,168,92,0.12); color: var(--amber); }
+  .tb-green { background: rgba(75,163,115,0.1);  color: var(--g100); }
+  .tb-red   { background: rgba(229,72,77,0.08);  color: var(--red100); }
+
+  /* expanded row */
+  .change-row-expanded { flex-direction: column; }
+  .change-row-expanded .change-row-inner { border-bottom: 1px solid var(--border-default); width: 100%; }
+  .change-diff {
+    padding: 8px 12px 10px 23px; width: 100%;
+    display: flex; flex-direction: column; gap: 8px; background: #FAFAF9;
+  }
+  .diff-block { }
+  .diff-label { font-size: 9px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 3px; }
+  .diff-val {
+    font-size: 11px; font-family: 'SF Mono', monospace;
+    background: var(--bg-canvas); border: 1px solid var(--border-default);
+    border-radius: 6px; padding: 6px 8px; color: var(--text-secondary);
+    white-space: pre-wrap; line-height: 1.5;
+  }
+  .diff-val.old { text-decoration: line-through; color: var(--text-muted); }
+
+  /* AI reasoning */
+  .ai-reasoning {
+    margin: 0 12px 12px;
+    border-left: 3px solid var(--b100);
+    background: rgba(23,121,247,0.04);
+    border-radius: 0 8px 8px 0;
+    padding: 8px 12px;
+  }
+  .ai-reasoning-label {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--b100); margin-bottom: 4px;
+  }
+  .ai-reasoning-text { font-size: 11px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* per-group action buttons */
+  .group-actions {
+    display: flex; gap: 8px; padding: 10px 12px;
+    border-top: 1px solid var(--border-default);
+    background: #fff;
+  }
+  .action-btn {
+    flex: 1; font-size: 11px; font-weight: 600;
+    padding: 6px 10px; border-radius: 7px; cursor: pointer;
+    border: 1px solid var(--border-default);
+    background: var(--bg-canvas); color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .action-btn.approve { background: rgba(75,163,115,0.08); border-color: rgba(75,163,115,0.25); color: var(--g100); }
+  .action-btn.decline { background: rgba(229,72,77,0.07);  border-color: rgba(229,72,77,0.22);  color: var(--red100); }
+  .action-btn.modify  { background: rgba(230,168,92,0.08); border-color: rgba(230,168,92,0.25); color: var(--amber); }
+
+  /* auto operations */
+  .auto-ops-card {
+    margin: 0 12px 12px;
+    background: rgba(75,163,115,0.06);
+    border: 1px solid rgba(75,163,115,0.2);
+    border-radius: 10px; padding: 10px 12px;
+  }
+  .auto-ops-header {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 9px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--g100); margin-bottom: 4px;
+  }
+  .auto-ops-sub { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; }
+  .auto-ops-list { display: flex; flex-direction: column; gap: 4px; }
+  .auto-op-item {
+    font-size: 11px; color: var(--text-secondary);
+    display: flex; align-items: flex-start; gap: 6px;
+  }
+  .auto-op-item::before { content: '•'; color: var(--g100); flex-shrink: 0; }
+
+  /* modal footer */
+  .modal-footer {
+    border-top: 1px solid var(--border-default);
+    padding: 12px 18px;
+    background: var(--bg-canvas); flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .footer-hint { font-size: 11px; color: var(--text-muted); text-align: center; }
+  .submit-btn {
+    width: 100%; padding: 10px;
+    border-radius: 8px; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 600;
+    background: var(--b100); color: #fff;
+  }
+  .submit-btn.disabled {
+    background: var(--border-default); color: var(--text-muted); cursor: not-allowed;
+  }
+
+  /* section divider */
+  .section-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); padding: 20px 28px 10px;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── PAGE HEADER ── -->
+  <div class="page-header">
+    <div class="header-identity">
+      <div class="header-icon">⚡</div>
+      <div>
+        <div class="header-title">Mission Control<span class="annot">New page</span></div>
+        <div class="header-sub">AI Operations</div>
+      </div>
+    </div>
+    <div class="search-bar">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <circle cx="5.5" cy="5.5" r="4" stroke="#9B9B9B" stroke-width="1.4"/>
+        <path d="M9 9l2.5 2.5" stroke="#9B9B9B" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      Search tasks, events, users…
+    </div>
+    <button class="btn-ghost">↻ Refresh</button>
+  </div>
+
+  <!-- ── VIEW MODE TABS ── -->
+  <div class="view-tabs">
+    <div class="view-tab active">⚡ Operation Requests</div>
+    <div class="view-tab">System Improvements</div>
+    <div class="view-tab">Scheduled Tasks</div>
+  </div>
+
+  <!-- ── STATUS CARDS ── -->
+  <div class="status-strip">
+    <div class="status-card">
+      <div class="status-icon icon-amber">🕐</div>
+      <div class="status-body">
+        <div class="status-num">2</div>
+        <div class="status-lbl">Awaiting Approval</div>
+      </div>
+      <div class="orange-dot"></div>
+    </div>
+    <div class="status-card">
+      <div class="status-icon icon-green">✓</div>
+      <div class="status-body">
+        <div class="status-num">14</div>
+        <div class="status-lbl">Approved</div>
+      </div>
+    </div>
+    <div class="status-card">
+      <div class="status-icon icon-purple">✦</div>
+      <div class="status-body">
+        <div class="status-num">31</div>
+        <div class="status-lbl">Completed</div>
+      </div>
+    </div>
+    <div class="status-card">
+      <div class="status-icon icon-red">✕</div>
+      <div class="status-body">
+        <div class="status-num">3</div>
+        <div class="status-lbl">Rejected</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TWO-PANEL GRID ── -->
+  <div class="panels">
+
+    <!-- LEFT: Awaiting Approval -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <span class="panel-title">Awaiting Approval <span class="count-badge">2</span></span>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="#9B9B9B" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <div class="panel-sub">Operational tasks waiting for your decision.</div>
+      </div>
+      <div class="panel-body">
+
+        <!-- Pending card 1 — selected -->
+        <div class="pending-card selected">
+          <div class="pc-top">
+            <div class="pc-icon">⚡</div>
+            <div class="pc-title">Daily schedule fix</div>
+            <span class="op-badge">2 OP</span>
+          </div>
+          <div class="pc-desc">AI detected a scheduling conflict in the Daily Alerts Report and proposed a revised execution time and updated query prompt.</div>
+          <div class="pc-footer">
+            <div class="pc-footer-left">
+              <span class="entity-chip report">Report</span>
+              <div class="avatar-row"><div class="avatar-sm">A</div> Anouk · 2d ago</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending card 2 — normal -->
+        <div class="pending-card">
+          <div class="pc-top">
+            <div class="pc-icon">⚡</div>
+            <div class="pc-title">KYC signal revision</div>
+            <span class="op-badge">1 OP</span>
+          </div>
+          <div class="pc-desc">Suggested revision to the Interfering w/ KYC monitor query to reduce false positives.</div>
+          <div class="pc-footer">
+            <div class="pc-footer-left">
+              <span class="entity-chip signal">Signal</span>
+              <div class="avatar-row"><div class="avatar-sm">Y</div> Yossi · 5h ago</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending card — processing state -->
+        <div class="pending-card processing">
+          <div class="state-pill pill-processing">🕐 Processing approval…</div>
+          <div class="pc-top">
+            <div class="pc-icon">⚡</div>
+            <div class="pc-title">Monthly report update</div>
+            <span class="op-badge">3 OP</span>
+          </div>
+          <div class="pc-footer">
+            <div class="pc-footer-left">
+              <span class="entity-chip report">Report</span>
+              <div class="avatar-row"><div class="avatar-sm">A</div> Anouk · 1h ago</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending card — failed state -->
+        <div class="pending-card failed">
+          <div class="state-pill pill-failed">✕ Failed · Retry</div>
+          <div class="pc-top">
+            <div class="pc-icon">⚡</div>
+            <div class="pc-title">Escalation tracker fix</div>
+            <span class="op-badge">1 OP</span>
+          </div>
+          <div class="pc-footer">
+            <div class="pc-footer-left">
+              <span class="entity-chip signal">Signal</span>
+              <div class="avatar-row"><div class="avatar-sm">Y</div> Yossi · 3d ago</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: AI Tasks Log -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title-row">
+          <span class="panel-title">AI Tasks Log</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:var(--text-muted);">12 events</span>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4h10M4 7h6M6 10h2" stroke="#9B9B9B" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <div class="panel-sub">Resolved history — what's already been actioned.</div>
+      </div>
+      <div class="filter-tabs">
+        <div class="filter-tab active">All</div>
+        <div class="filter-tab">Approved</div>
+        <div class="filter-tab">Rejected</div>
+        <div class="filter-tab">Done</div>
+      </div>
+      <div class="panel-body" style="padding-top:8px;">
+
+        <div class="log-row">
+          <div class="lr-top">
+            <span class="status-dot dot-green"></span>
+            <span class="status-badge badge-complete">✓ COMPLETED</span>
+            <span class="lr-title">Peak hour detection — weekly</span>
+            <span class="lr-time">1d ago</span>
+          </div>
+          <div class="lr-desc">Report updated with new peak hour window. Staffing recommendations attached.</div>
+          <div class="lr-footer">
+            <div class="avatar-row"><div class="avatar-sm">A</div> Anouk</div>
+            <span class="ops-count">2 operations</span>
+          </div>
+        </div>
+
+        <div class="log-row">
+          <div class="lr-top">
+            <span class="status-dot dot-blue"></span>
+            <span class="status-badge badge-approved">APPROVED</span>
+            <span class="lr-title">Distressed client signal update</span>
+            <span class="lr-time">2d ago</span>
+          </div>
+          <div class="lr-desc">Query prompt revised to catch new linguistic patterns.</div>
+          <div class="lr-footer">
+            <div class="avatar-row"><div class="avatar-sm">Y</div> Yossi M.</div>
+            <span class="ops-count">1 operation</span>
+          </div>
+        </div>
+
+        <div class="log-row">
+          <div class="lr-top">
+            <span class="status-dot dot-red"></span>
+            <span class="status-badge badge-rejected">REJECTED</span>
+            <span class="lr-title">Legal & Regulatory schedule change</span>
+            <span class="lr-time">3d ago</span>
+          </div>
+          <div class="lr-desc">Proposed schedule moved to off-hours — rejected, frequency kept as-is.</div>
+          <div class="lr-footer">
+            <div class="avatar-row"><div class="avatar-sm">A</div> Anouk</div>
+            <span class="ops-count">1 operation</span>
+          </div>
+        </div>
+
+        <div class="log-row">
+          <div class="lr-top">
+            <span class="status-dot dot-green"></span>
+            <span class="status-badge badge-complete">✓ COMPLETED</span>
+            <span class="lr-title">Information Violation threshold update</span>
+            <span class="lr-time">5d ago</span>
+          </div>
+          <div class="lr-desc">Alert sensitivity threshold increased from 0.7 to 0.82 based on false positive rate.</div>
+          <div class="lr-footer">
+            <div class="avatar-row"><div class="avatar-sm">Y</div> Yossi M.</div>
+            <span class="ops-count">3 operations</span>
+          </div>
+        </div>
+
+        <div class="log-row">
+          <div class="lr-top">
+            <span class="status-dot dot-blue"></span>
+            <span class="status-badge badge-approved">APPROVED</span>
+            <span class="lr-title">Daily trends report revision</span>
+            <span class="lr-time">6d ago</span>
+          </div>
+          <div class="lr-desc">Added week-over-week comparison columns and updated cadence to include Fridays.</div>
+          <div class="lr-footer">
+            <div class="avatar-row"><div class="avatar-sm">A</div> Anouk</div>
+            <span class="ops-count">2 operations</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ── APPROVAL MODAL (shown inline for wireframe) ── -->
+  <div class="section-title">Approval Modal — opens as right-side drawer<span class="annot">700px sheet · overlay behind</span></div>
+
+  <div class="modal-section">
+    <div class="modal-frame">
+
+      <!-- overlay simulation -->
+      <div class="modal-overlay-bg">
+        <span class="overlay-label">Page content + overlay</span>
+      </div>
+
+      <!-- modal inner -->
+      <div class="modal-inner">
+
+        <!-- Header -->
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <div class="modal-sparkle">✦</div>
+            <span class="modal-title">Waiting for your approval</span>
+          </div>
+          <button class="modal-close">✕</button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body">
+
+          <!-- User row -->
+          <div class="modal-user-row">
+            <div class="modal-avatar">A</div>
+            <span><strong>Anouk</strong> · Mar 10, 01:37 PM</span>
+          </div>
+
+          <!-- Triggered event -->
+          <div>
+            <div class="modal-section-label">Triggered Event</div>
+            <div class="modal-text">Daily Alerts Report ran and detected a scheduling conflict causing overlapping executions on Monday mornings.</div>
+          </div>
+
+          <!-- Summary -->
+          <div class="summary-callout">
+            <div class="modal-section-label">Summary</div>
+            <div class="modal-text">Reschedule daily report to 06:00 and update query prompt to exclude duplicate entries.</div>
+          </div>
+
+          <!-- Metadata -->
+          <div class="meta-card">
+            <div class="meta-item">
+              <div class="modal-section-label">Related User</div>
+              <div class="meta-val">Anouk</div>
+            </div>
+            <div class="meta-item">
+              <div class="modal-section-label">Event ID</div>
+              <div class="meta-val">evt_8f3a2c…</div>
+            </div>
+            <div class="meta-item">
+              <div class="modal-section-label">Entity ID</div>
+              <div class="meta-val">rpt_4d1b9e…</div>
+            </div>
+          </div>
+
+          <!-- Diff toggle -->
+          <div class="diff-toggle">
+            <div class="toggle-pill">
+              <button class="tp-item active">Inline</button>
+              <button class="tp-item">Side by side</button>
+            </div>
+          </div>
+
+          <!-- Change group card -->
+          <div class="change-card">
+            <div class="change-card-header">
+              <span class="entity-type-label">Report</span>
+              <span class="action-badge-blue">Update</span>
+              <span class="entity-name">Daily Alerts Report (Conversion)</span>
+              <span class="chevron-icon">▾</span>
+            </div>
+            <div class="count-chips">
+              <div class="chip-row">
+                <div class="chip"><span class="chip-dot cd-green"></span>0 Added</div>
+                <div class="chip"><span class="chip-dot cd-amber"></span>1 Updated</div>
+                <div class="chip"><span class="chip-dot cd-red"></span>0 Deleted</div>
+              </div>
+              <div class="total-chip">1 Total</div>
+            </div>
+            <!-- Change row — collapsed -->
+            <div class="change-rows">
+              <div class="change-row">
+                <div class="accent-bar ab-amber"></div>
+                <div class="change-row-inner">
+                  <div class="type-icon ti-amber">~</div>
+                  <span class="field-name">Scheduled Time Hour</span>
+                  <span class="type-badge tb-amber">Updated</span>
+                  <span class="chevron-icon">▾</span>
+                </div>
+              </div>
+              <!-- Change row — expanded with diff -->
+              <div class="change-row change-row-expanded">
+                <div style="display:flex;width:100%;">
+                  <div class="accent-bar ab-amber"></div>
+                  <div class="change-row-inner" style="border-bottom:1px solid var(--border-default);">
+                    <div class="type-icon ti-amber">~</div>
+                    <span class="field-name">Query Prompt</span>
+                    <span class="type-badge tb-amber">Updated</span>
+                    <span class="chevron-icon">▴</span>
+                  </div>
+                </div>
+                <div class="change-diff">
+                  <div class="diff-block">
+                    <div class="diff-label">Old Value</div>
+                    <div class="diff-val old">SELECT * FROM calls WHERE date = today AND monitor_id IN (…)</div>
+                  </div>
+                  <div class="diff-block">
+                    <div class="diff-label">New Value</div>
+                    <div class="diff-val">SELECT DISTINCT * FROM calls WHERE date = today AND monitor_id IN (…) AND NOT EXISTS (SELECT 1 FROM processed WHERE id = calls.id)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- AI Reasoning -->
+            <div class="ai-reasoning">
+              <div class="ai-reasoning-label">💡 AI Reasoning</div>
+              <div class="ai-reasoning-text">Duplicate entries were detected 3× in the past week due to the Monday overlap window. Deduplication via NOT EXISTS eliminates the root cause without changing report scope.</div>
+            </div>
+            <!-- Per-group actions -->
+            <div class="group-actions">
+              <button class="action-btn approve">👍 Approve</button>
+              <button class="action-btn decline">👎 Decline</button>
+              <button class="action-btn modify">✏️ Modify</button>
+            </div>
+          </div>
+
+          <!-- Automatic operations -->
+          <div class="auto-ops-card">
+            <div class="auto-ops-header">✓ Automatic Operations</div>
+            <div class="auto-ops-sub">These operations do not require approval</div>
+            <div class="auto-ops-list">
+              <div class="auto-op-item">Run the report immediately after approval</div>
+              <div class="auto-op-item">Send confirmation email to report owner</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer">
+          <div class="footer-hint">Select an action for each change to submit</div>
+          <button class="submit-btn disabled">Submit decisions</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

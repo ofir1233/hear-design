@@ -4,6 +4,7 @@ import ReactApexChart from 'react-apexcharts'
 import { AgGridReact } from 'ag-grid-react'
 import { ModuleRegistry, AllCommunityModule, themeQuartz, colorSchemeDark, colorSchemeLight } from 'ag-grid-community'
 import Button from '../Button.jsx'
+import PageHeader from '../PageHeader.jsx'
 import Modal from '../Modal.jsx'
 
 // ── AG Grid setup (matches DataPage exactly) ───────────────────────────────────
@@ -1361,46 +1362,40 @@ function AgentDetailView({ agent, onBack, sidebarWidth, sidebarTransition, onOpe
       transition: sidebarTransition, background: 'var(--bg-canvas)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* Header — floating pill */}
-      <div style={{
-        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
-        padding: '0 16px', height: 52,
-        margin: '16px 16px 0',
-        background: 'var(--bg-sidebar)',
-        border: 'var(--page-header-border)',
-        borderRadius: 16,
-        boxShadow: 'var(--page-header-shadow)',
-      }}>
-        <button
-          onClick={onBack}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 3,
-            height: 28, padding: '0 10px',
-            background: 'none', border: '1px solid var(--border-default)',
-            borderRadius: 7, cursor: 'pointer',
-            fontSize: 12, color: 'var(--text-secondary)',
-            fontFamily: "'Byrd', sans-serif",
-            transition: 'background 130ms ease, color 130ms ease',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-        >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Agent evaluation
-        </button>
-        <span style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: "'Byrd', sans-serif", userSelect: 'none' }}>›</span>
-        <span style={{
-          fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280,
-        }}>
-          {agent.name}
-        </span>
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <Button variant="secondary" size="sm" onClick={() => setFeedbackOpen(true)}>Export</Button>
-        </div>
-      </div>
+      {/* Header */}
+      <PageHeader
+        left={
+          <>
+            <button
+              onClick={onBack}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 3,
+                height: 28, padding: '0 10px',
+                background: 'none', border: '1px solid var(--border-default)',
+                borderRadius: 7, cursor: 'pointer',
+                fontSize: 12, color: 'var(--text-secondary)',
+                fontFamily: "'Byrd', sans-serif",
+                transition: 'background 130ms ease, color 130ms ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Agent evaluation
+            </button>
+            <span style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: "'Byrd', sans-serif", userSelect: 'none' }}>›</span>
+            <span style={{
+              fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 280,
+            }}>
+              {agent.name}
+            </span>
+          </>
+        }
+        actions={<Button variant="secondary" size="sm" onClick={() => setFeedbackOpen(true)}>Export</Button>}
+      />
 
       {/* Filter bar for agent-specific filtering */}
       <FilterBar />
@@ -1445,31 +1440,25 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
       transition: sidebarTransition, background: 'var(--bg-canvas)',
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* Header — floating pill */}
-      <div style={{
-        flexShrink: 0, padding: '0 16px', height: 52,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        margin: '16px 16px 0',
-        background: 'var(--bg-sidebar)',
-        border: 'var(--page-header-border)',
-        borderRadius: 16,
-        boxShadow: 'var(--page-header-shadow)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Agent evaluation</span>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            padding: '3px 10px', background: '#1779F715', border: '1px solid #1779F740',
-            borderRadius: 999, fontSize: 12, fontWeight: 600, color: '#1779F7',
-          }}>
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.4"/>
-              <path d="M5 3v4M3 5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-            </svg>
-            Total Agents: 7,360
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+      {/* Header */}
+      <PageHeader
+        left={
+          <>
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Agent evaluation</span>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '3px 10px', background: '#1779F715', border: '1px solid #1779F740',
+              borderRadius: 999, fontSize: 12, fontWeight: 600, color: '#1779F7',
+            }}>
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <circle cx="5" cy="5" r="4" stroke="currentColor" strokeWidth="1.4"/>
+                <path d="M5 3v4M3 5h4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+              </svg>
+              Total Agents: 7,360
+            </div>
+          </>
+        }
+        actions={
           <button style={{
             background: 'none', border: 'none', cursor: 'pointer',
             color: 'var(--text-secondary)', display: 'flex', alignItems: 'center',
@@ -1481,8 +1470,8 @@ export default function AgentEvalPage({ sidebarWidth, sidebarTransition }) {
               <circle cx="8" cy="13" r="1.3" fill="currentColor"/>
             </svg>
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Filter bar */}
       <FilterBar />

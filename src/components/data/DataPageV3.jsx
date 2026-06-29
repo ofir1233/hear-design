@@ -37,6 +37,7 @@ const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
 import { SCHEMAS, generateRows, generateCompanyRows } from './mockData.js'
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
+import PageHeader from '../PageHeader.jsx'
 import Modal from '../Modal.jsx'
 
 ModuleRegistry.registerModules([AllCommunityModule])
@@ -1181,62 +1182,44 @@ export default function DataPageV3({ isMobile = false, sidebarWidth = 272, sideb
         transition: sidebarTransition,
       }}
     >
-      {/* ── Page Header — floating pill ──────────────────────────────────── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '0 16px', height: 52, flexShrink: 0,
-        margin: '16px 16px 0',
-        background: 'var(--bg-sidebar)',
-        border: 'var(--page-header-border)',
-        borderRadius: 16,
-        boxShadow: 'var(--page-header-shadow)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Data V2</span>
-          {companyConfig?.companyName && (
-            <>
-              <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
-              <span style={{ fontSize: 'var(--type-p13)', color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>{companyConfig.companyName}</span>
-            </>
-          )}
-          <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
-          <Badge variant="tinted" color="teal" shape="pill">
-            Total records&nbsp;{filteredPool.length}
-          </Badge>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Search */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            height: 30, padding: '0 10px',
-            background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
-            borderRadius: 6, flexShrink: 0, width: 190,
-          }}>
-            <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-              <SearchIcon />
-            </span>
-            <input
-              value={searchText}
-              onChange={e => setSearchText(e.target.value)}
-              placeholder="Search…"
-              style={{
-                flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
-                fontFamily: "'Byrd', sans-serif",
-              }}
-            />
-            {searchText && (
-              <button onClick={() => setSearchText('')} style={{
-                display: 'flex', alignItems: 'center', background: 'none', border: 'none',
-                cursor: 'pointer', color: 'var(--text-secondary)', padding: 0, fontSize: 15, lineHeight: 1,
-              }}>×</button>
-            )}
-          </div>
-          <Button size="sm">Upload</Button>
-          <Button variant="ghost" size="sm" leftIcon={<MoreIcon />} />
-        </div>
-      </div>
+      {/* ── Page Header ── */}
+      <PageHeader
+        title="Data V2"
+        crumbs={companyConfig?.companyName ? [companyConfig.companyName] : []}
+        badge={<Badge variant="tinted" color="teal" shape="pill">Total records&nbsp;{filteredPool.length}</Badge>}
+        actions={
+          <>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              height: 30, padding: '0 10px',
+              background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
+              borderRadius: 6, flexShrink: 0, width: 190,
+            }}>
+              <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                <SearchIcon />
+              </span>
+              <input
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+                placeholder="Search…"
+                style={{
+                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                  fontSize: 'var(--type-p14)', color: 'var(--text-primary)',
+                  fontFamily: "'Byrd', sans-serif",
+                }}
+              />
+              {searchText && (
+                <button onClick={() => setSearchText('')} style={{
+                  display: 'flex', alignItems: 'center', background: 'none', border: 'none',
+                  cursor: 'pointer', color: 'var(--text-secondary)', padding: 0, fontSize: 15, lineHeight: 1,
+                }}>×</button>
+              )}
+            </div>
+            <Button size="sm">Upload</Button>
+            <Button variant="ghost" size="sm" leftIcon={<MoreIcon />} />
+          </>
+        }
+      />
 
       {/* ── Filter Strip — floating pill ─────────────────────────────────── */}
       <div style={{

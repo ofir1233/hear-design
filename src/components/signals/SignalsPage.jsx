@@ -8,6 +8,7 @@ function navigate(path, state = {}) {
 
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
+import PageHeader from '../PageHeader.jsx'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 
@@ -514,43 +515,39 @@ export default function SignalsPage({ isMobile, sidebarWidth = 272, sidebarTrans
       }}
     >
       {/* ── Page Header ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '0 16px', height: 52, flexShrink: 0,
-        margin: '16px 16px 0',
-        background: 'var(--bg-sidebar)',
-        border: 'var(--page-header-border)',
-        borderRadius: 16,
-        boxShadow: 'var(--page-header-shadow)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
-            Signals
-          </span>
-          <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
-          <Badge variant="tinted" color="teal" shape="pill">
-            Total signals&nbsp;{signals.length}
-          </Badge>
-          <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
-          {/* Quota indicator */}
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            height: 22, padding: '0 8px', borderRadius: 999,
-            background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.28)',
-            flexShrink: 0,
-          }}>
-            <span style={{ width: 28, height: 3, borderRadius: 99, background: 'rgba(220,38,38,0.25)', overflow: 'hidden', flexShrink: 0 }}>
-              <span style={{ display: 'block', height: '100%', width: '90%', background: '#DC2626', borderRadius: 99 }} />
+      <PageHeader
+        left={
+          <>
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
+              Signals
             </span>
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap' }}>
-              9 / 10
+            <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
+            <Badge variant="tinted" color="teal" shape="pill">
+              Total signals&nbsp;{signals.length}
+            </Badge>
+            <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
+            {/* Quota indicator */}
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              height: 22, padding: '0 8px', borderRadius: 999,
+              background: 'rgba(220,38,38,0.1)', border: '1px solid rgba(220,38,38,0.28)',
+              flexShrink: 0,
+            }}>
+              <span style={{ width: 28, height: 3, borderRadius: 99, background: 'rgba(220,38,38,0.25)', overflow: 'hidden', flexShrink: 0 }}>
+                <span style={{ display: 'block', height: '100%', width: '90%', background: '#DC2626', borderRadius: 99 }} />
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#DC2626', fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap' }}>
+                9 / 10
+              </span>
             </span>
-          </span>
-        </div>
-        <Button variant="primary" size="sm" leftIcon={<PlusIcon />} onClick={() => navigate('/signals/create')}>
-          Create
-        </Button>
-      </div>
+          </>
+        }
+        actions={
+          <Button variant="primary" size="sm" leftIcon={<PlusIcon />} onClick={() => navigate('/signals/create')}>
+            Create
+          </Button>
+        }
+      />
 
       {/* ── Content panel ── */}
       <div style={{

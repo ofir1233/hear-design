@@ -4,12 +4,33 @@ import HearLogo from '../../components/HearLogo.jsx'
 import { DEMO_INV_PROFILE } from '../../lib/demoConstants.js'
 import NotificationsPopover from './NotificationsPopover.jsx'
 import {
-  HomeIcon, DataIcon, ReportsIcon, SignalsIcon, AlertsIcon,
-  AgentIcon, KnowledgeIcon, AiTaskIcon, CustomersIcon, SettingsIcon,
-  MagicApiIcon, ActionsIcon, MarketplaceIcon, TopicsIcon,
+  SettingsIcon,
   BellIcon, ChevronIcon, CollapseArrow, DotsIcon,
   MoonIcon, AccessibilityIcon, LogoutIcon,
 } from '../../components/icons'
+import {
+  BsChatDotsFill, BsDatabaseFill, BsDatabaseFillGear, BsCpuFill, BsGridFill,
+  BsFileEarmarkBarGraphFill, BsMegaphoneFill, BsExclamationTriangleFill,
+  BsClipboardCheckFill, BsBookFill, BsStars, BsPeopleFill,
+  BsLightningChargeFill, BsBagFill,
+} from 'react-icons/bs'
+
+// Sidebar nav icons — Bootstrap filled (react-icons/bs), sized to match the rail
+const NAV_ICON_SIZE = 17
+const HomeIcon        = () => <BsChatDotsFill             size={NAV_ICON_SIZE} />
+const DataIcon        = () => <BsDatabaseFill            size={NAV_ICON_SIZE} />
+const DataV2Icon      = () => <BsDatabaseFillGear        size={NAV_ICON_SIZE} />
+const AiTaskIcon      = () => <BsCpuFill                 size={NAV_ICON_SIZE} />
+const TopicsIcon      = () => <BsGridFill                size={NAV_ICON_SIZE} />
+const ReportsIcon     = () => <BsFileEarmarkBarGraphFill size={NAV_ICON_SIZE} />
+const SignalsIcon     = () => <BsMegaphoneFill           size={NAV_ICON_SIZE} />
+const AlertsIcon      = () => <BsExclamationTriangleFill size={NAV_ICON_SIZE} />
+const AgentIcon       = () => <BsClipboardCheckFill      size={NAV_ICON_SIZE} />
+const KnowledgeIcon   = () => <BsBookFill                size={NAV_ICON_SIZE} />
+const MagicApiIcon    = () => <BsStars                   size={NAV_ICON_SIZE} />
+const CustomersIcon   = () => <BsPeopleFill              size={NAV_ICON_SIZE} />
+const ActionsIcon     = () => <BsLightningChargeFill     size={NAV_ICON_SIZE} />
+const MarketplaceIcon = () => <BsBagFill                 size={NAV_ICON_SIZE} />
 
 // Sun icon — shown when dark mode is active (click to return to light)
 function SunIcon() {
@@ -588,15 +609,15 @@ function StorybookDisabledButton() {
 const NAV_ITEMS = [
   { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon,        group: 'MAIN'         },
   { id: 'data',        label: 'Data',             Icon: DataIcon,        group: 'MAIN'         },
-  { id: 'data-v2',     label: 'Data V2',          Icon: DataIcon,        group: 'MAIN'         },
-  { id: 'topics',      label: 'Topics',           Icon: TopicsIcon,      group: 'MAIN',        disabled: true },
+  { id: 'data-v2',     label: 'Data V2',          Icon: DataV2Icon,      group: 'MAIN'         },
+  { id: 'ai-task',     label: 'AI Tasks',         Icon: AiTaskIcon,      group: 'MAIN'         },
+  { id: 'topics',      label: 'Topics',           Icon: TopicsIcon,      group: 'MAIN' },
   { id: 'reports',     label: 'Reports',          Icon: ReportsIcon,     group: 'MAIN'         },
   { id: 'signals',     label: 'Signals',          Icon: SignalsIcon,     group: 'INTELLIGENCE' },
   { id: 'alerts',      label: 'Alerts',           Icon: AlertsIcon,      group: 'INTELLIGENCE' },
   { id: 'agent-eval',  label: 'Agent Evaluation', Icon: AgentIcon,       group: 'INTELLIGENCE' },
   { id: 'knowledge',   label: 'Knowledge',        Icon: KnowledgeIcon,   group: 'INTELLIGENCE' },
   { id: 'magic-api',   label: 'Magic API',        Icon: MagicApiIcon,    group: 'INTELLIGENCE' },
-  { id: 'ai-task',     label: 'AI Tasks',         Icon: AiTaskIcon,      group: 'INTELLIGENCE' },
   { id: 'customers',   label: 'Customers',        Icon: CustomersIcon,   group: 'OPERATIONS'   },
   { id: 'actions',     label: 'Actions',          Icon: ActionsIcon,     group: 'OPERATIONS'   },
   { id: 'marketplace', label: 'Marketplace',      Icon: MarketplaceIcon, group: 'OPERATIONS'   },

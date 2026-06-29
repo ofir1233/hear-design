@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import Button from '../Button.jsx'
+import PageHeader from '../PageHeader.jsx'
 import Modal from '../Modal.jsx'
 
 function navigate(path, state = {}) {
@@ -569,60 +570,57 @@ export default function CreateReportPage({ sidebarWidth = 272, sidebarTransition
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
 
-        {/* ── Header — floating pill ────────────────────────────────────────── */}
-        <div style={{
-          flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
-          padding: '0 16px', height: 52,
-          margin: '16px 16px 0',
-          background: 'var(--bg-sidebar)',
-          border: 'var(--page-header-border)',
-          borderRadius: 16,
-          boxShadow: 'var(--page-header-shadow)',
-        }}>
-          <button
-            onClick={tryDiscard}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              height: 28, padding: '0 10px',
-              background: 'none', border: '1px solid var(--border-default)',
-              borderRadius: 7, cursor: 'pointer',
-              fontSize: 12, color: 'var(--text-secondary)',
-              fontFamily: "'Byrd', sans-serif",
-              transition: 'background 130ms ease, color 130ms ease',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none';             e.currentTarget.style.color = 'var(--text-secondary)' }}
-          >
-            <BackIcon /> Reports
-          </button>
+        {/* ── Header ────────────────────────────────────────── */}
+        <PageHeader
+          left={
+            <>
+              <button
+                onClick={tryDiscard}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  height: 28, padding: '0 10px',
+                  background: 'none', border: '1px solid var(--border-default)',
+                  borderRadius: 7, cursor: 'pointer',
+                  fontSize: 12, color: 'var(--text-secondary)',
+                  fontFamily: "'Byrd', sans-serif",
+                  transition: 'background 130ms ease, color 130ms ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'none';             e.currentTarget.style.color = 'var(--text-secondary)' }}
+              >
+                <BackIcon /> Reports
+              </button>
 
-          <svg width="5" height="9" viewBox="0 0 5 9" fill="none" style={{ color: 'var(--text-muted)' }}>
-            <path d="M1 1l3 3.5L1 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+              <svg width="5" height="9" viewBox="0 0 5 9" fill="none" style={{ color: 'var(--text-muted)' }}>
+                <path d="M1 1l3 3.5L1 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
 
-          <span style={{
-            fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)',
-            fontFamily: "'Byrd', sans-serif",
-          }}>Create Report</span>
+              <span style={{
+                fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
+                fontFamily: "'Byrd', sans-serif",
+              }}>Create Report</span>
+            </>
+          }
+          actions={
+            <>
+              {/* Warnings badge */}
+              {warnings.length > 0 && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  fontSize: 11, color: 'var(--c100)', fontFamily: "'Byrd', sans-serif",
+                }}>
+                  <WarnIcon />
+                  {warnings.length} {warnings.length === 1 ? 'warning' : 'warnings'}
+                </div>
+              )}
 
-          <div style={{ flex: 1 }} />
-
-          {/* Warnings badge */}
-          {warnings.length > 0 && (
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              fontSize: 11, color: 'var(--c100)', fontFamily: "'Byrd', sans-serif",
-            }}>
-              <WarnIcon />
-              {warnings.length} {warnings.length === 1 ? 'warning' : 'warnings'}
-            </div>
-          )}
-
-          <Button variant="ghost" size="sm" onClick={tryDiscard}>Cancel</Button>
-          <Button size="sm" disabled={!canSave}>
-            Save Report
-          </Button>
-        </div>
+              <Button variant="ghost" size="sm" onClick={tryDiscard}>Cancel</Button>
+              <Button size="sm" disabled={!canSave}>
+                Save Report
+              </Button>
+            </>
+          }
+        />
 
         {/* ── Scrollable body ────────────────────────────────────────────────── */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>

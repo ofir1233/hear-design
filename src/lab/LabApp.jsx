@@ -4,7 +4,7 @@
  * To override a component: copy src/components/X.jsx → src/lab/components/X.jsx
  * and update the import below. Demo is never affected.
  */
-import { useState, useRef, useEffect, lazy, Suspense } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { gsap } from 'gsap'
 import { apiFetch, apiHeaders } from '../lib/api.js'
 import HearLogo    from '../components/HearLogo.jsx'
@@ -20,6 +20,8 @@ import CreateReportPage from '../components/reports/CreateReportPage.jsx'
 import AgentEvalPage from '../components/agent-eval/AgentEvalPage.jsx'
 import SignalsPage from '../components/signals/SignalsPage.jsx'
 import CreateSignalPage from '../components/signals/CreateSignalPage.jsx'
+import AlertsPage from '../components/alerts/AlertsPage.jsx'
+import AiTasksPage from '../components/ai-tasks/AiTasksPage.jsx'
 import KnowledgePage from '../components/knowledge/KnowledgePage.jsx'
 import OrganizationPage from '../components/settings/OrganizationPage.jsx'
 import ProjectsPage, { PROJECT_NAMES } from '../components/settings/ProjectsPage.jsx'
@@ -33,9 +35,6 @@ import TopicsPage from '../components/topics/TopicsPage.jsx'
 import Badge from '../components/Badge.jsx'
 import Button from '../components/Button.jsx'
 import DailyBriefing from './components/DailyBriefing.jsx'
-
-// Inspector lives here — never in Demo
-const InspectorRoot = lazy(() => import('../inspector/index.jsx'))
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -335,16 +334,6 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
     }
     return () => clearTimeout(logoTimerRef.current)
   }, [inputFocused])
-
-  useEffect(() => {
-    window.__hearActivePage = activePage
-    window.dispatchEvent(new CustomEvent('hear:nav-changed', { detail: activePage }))
-  }, [activePage])
-  useEffect(() => {
-    function onInspectorNav(e) { navigate(`/${e.detail}`) }
-    window.addEventListener('hear:nav', onInspectorNav)
-    return () => window.removeEventListener('hear:nav', onInspectorNav)
-  }, [])
 
   useEffect(() => {
     if (activePage !== 'dashboard' || submitted) return
@@ -840,6 +829,10 @@ Ask me anything about your operations, or explore a topic below to get started.`
         <CreateSignalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'signals' ? (
         <SignalsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+      ) : activePage === 'alerts' ? (
+        <AlertsPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+      ) : activePage === 'ai-task' ? (
+        <AiTasksPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'topics' ? (
         <TopicsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'knowledge' ? (
@@ -1243,10 +1236,6 @@ Ask me anything about your operations, or explore a topic below to get started.`
 
 
 
-      {/* Inspector — Design Lab only */}
-      <Suspense fallback={null}>
-        <InspectorRoot />
-      </Suspense>
     </div>
   )
 }

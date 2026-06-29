@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import PageHeader from '../PageHeader.jsx'
 
 function navigate(path, state = {}) {
   window.history.pushState(state, '', path)
@@ -454,108 +455,105 @@ export default function CreateSignalPage({ sidebarWidth = 0, sidebarTransition =
       }}
     >
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div style={{
-        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
-        padding: '0 16px', height: 52,
-        margin: '16px 16px 0',
-        background: 'var(--bg-sidebar)',
-        border: 'var(--page-header-border)',
-        borderRadius: 16,
-        boxShadow: 'var(--page-header-shadow)',
-      }}>
-        {/* Back button */}
-        <button
-          onClick={() => onBack ? onBack() : navigate('/signals')}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            height: 28, padding: '0 10px',
-            background: 'none', border: '1px solid var(--border-default)',
-            borderRadius: 7, cursor: 'pointer',
-            fontSize: 12, color: 'var(--text-secondary)',
-            fontFamily: "'Byrd', sans-serif",
-            transition: 'background 130ms ease, color 130ms ease',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-        >
-          <BackIcon /> Signals
-        </button>
+      <PageHeader
+        left={
+          <>
+            {/* Back button */}
+            <button
+              onClick={() => onBack ? onBack() : navigate('/signals')}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                height: 28, padding: '0 10px',
+                background: 'none', border: '1px solid var(--border-default)',
+                borderRadius: 7, cursor: 'pointer',
+                fontSize: 12, color: 'var(--text-secondary)',
+                fontFamily: "'Byrd', sans-serif",
+                transition: 'background 130ms ease, color 130ms ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            >
+              <BackIcon /> Signals
+            </button>
 
-        {/* Breadcrumb chevron */}
-        <svg width="5" height="9" viewBox="0 0 5 9" fill="none" style={{ color: 'var(--text-muted)' }}>
-          <path d="M1 1l3 3.5L1 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+            {/* Breadcrumb chevron */}
+            <svg width="5" height="9" viewBox="0 0 5 9" fill="none" style={{ color: 'var(--text-muted)' }}>
+              <path d="M1 1l3 3.5L1 8" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
 
-        {/* Title — editable name */}
-        <input
-          value={name}
-          onChange={e => setName(e.target.value)}
-          placeholder="Signal name…"
-          style={{
-            fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)',
-            fontFamily: "'Byrd', sans-serif",
-            background: 'none', border: 'none', outline: 'none',
-            padding: '0 4px', borderRadius: 5,
-            width: 200,
-            transition: 'background 130ms ease',
-          }}
-          onFocus={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-          onBlur={e => { e.currentTarget.style.background = 'none' }}
-        />
+            {/* Title — editable name */}
+            <input
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Signal name…"
+              style={{
+                fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
+                fontFamily: "'Byrd', sans-serif",
+                background: 'none', border: 'none', outline: 'none',
+                padding: '0 4px', borderRadius: 5,
+                width: 200,
+                transition: 'background 130ms ease',
+              }}
+              onFocus={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
+              onBlur={e => { e.currentTarget.style.background = 'none' }}
+            />
+          </>
+        }
+        actions={
+          <>
+            {/* History */}
+            <button
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                height: 28, padding: '0 10px',
+                background: 'none', border: 'none',
+                borderRadius: 7, cursor: 'pointer',
+                fontSize: 12, color: 'var(--text-secondary)',
+                fontFamily: "'Byrd', sans-serif",
+                transition: 'background 130ms ease, color 130ms ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            >
+              <HistoryIcon /> History
+            </button>
 
-        <div style={{ flex: 1 }} />
+            {/* Import Configuration */}
+            <button
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                height: 28, padding: '0 12px',
+                background: 'none', border: '1px solid var(--border-default)',
+                borderRadius: 7, cursor: 'pointer',
+                fontSize: 12, color: 'var(--text-secondary)',
+                fontFamily: "'Byrd', sans-serif",
+                transition: 'background 130ms ease, color 130ms ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            >
+              Import Configuration
+            </button>
 
-        {/* History */}
-        <button
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            height: 28, padding: '0 10px',
-            background: 'none', border: 'none',
-            borderRadius: 7, cursor: 'pointer',
-            fontSize: 12, color: 'var(--text-secondary)',
-            fontFamily: "'Byrd', sans-serif",
-            transition: 'background 130ms ease, color 130ms ease',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-        >
-          <HistoryIcon /> History
-        </button>
-
-        {/* Import Configuration */}
-        <button
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            height: 28, padding: '0 12px',
-            background: 'none', border: '1px solid var(--border-default)',
-            borderRadius: 7, cursor: 'pointer',
-            fontSize: 12, color: 'var(--text-secondary)',
-            fontFamily: "'Byrd', sans-serif",
-            transition: 'background 130ms ease, color 130ms ease',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-        >
-          Import Configuration
-        </button>
-
-        {/* Save */}
-        <button
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            height: 28, padding: '0 14px',
-            background: 'var(--c100)', border: 'none',
-            borderRadius: 7, cursor: 'pointer',
-            fontSize: 12, fontWeight: 600, color: '#fff',
-            fontFamily: "'Byrd', sans-serif",
-            transition: 'opacity 130ms ease',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
-        >
-          {isEditing ? 'Save Changes' : 'Save'}
-        </button>
-      </div>
+            {/* Save */}
+            <button
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                height: 28, padding: '0 14px',
+                background: 'var(--c100)', border: 'none',
+                borderRadius: 7, cursor: 'pointer',
+                fontSize: 12, fontWeight: 600, color: '#fff',
+                fontFamily: "'Byrd', sans-serif",
+                transition: 'opacity 130ms ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '0.85' }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+            >
+              {isEditing ? 'Save Changes' : 'Save'}
+            </button>
+          </>
+        }
+      />
 
       {/* ── Scrollable body ──────────────────────────────────────────────────── */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>

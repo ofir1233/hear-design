@@ -14,6 +14,7 @@ import AgentEvalPage from './components/agent-eval/AgentEvalPage.jsx'
 import TopicsPage from './components/topics/TopicsPage.jsx'
 import SignalsPage from './components/signals/SignalsPage.jsx'
 import CreateSignalPage from './components/signals/CreateSignalPage.jsx'
+import AlertsPage from './components/alerts/AlertsPage.jsx'
 import LabApp from './lab/LabApp.jsx'
 
 function getGreeting() {
@@ -176,16 +177,6 @@ function MainApp({ isDark, onThemeToggle, companyConfig, onSignOut, onProjectCha
   const logoRef     = useRef(null)
   const subtitleRef = useRef(null)
 
-  // ── Inspector ↔ App page nav bridge ────────────────────────────────────────
-  useEffect(() => {
-    window.__hearActivePage = activePage
-    window.dispatchEvent(new CustomEvent('hear:nav-changed', { detail: activePage }))
-  }, [activePage])
-  useEffect(() => {
-    function onInspectorNav(e) { navigate(`/${e.detail}`) }
-    window.addEventListener('hear:nav', onInspectorNav)
-    return () => window.removeEventListener('hear:nav', onInspectorNav)
-  }, [])
 
   // ── Dashboard entrance animation ───────────────────────────────────────────
   useEffect(() => {
@@ -616,6 +607,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         <AgentEvalPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'signals' ? (
         <SignalsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
+      ) : activePage === 'alerts' ? (
+        <AlertsPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage !== 'dashboard' ? (
         /* Placeholder for unimplemented pages */
         <div style={{

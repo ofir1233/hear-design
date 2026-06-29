@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Alerts Page — Lo-Fi Structure</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F0EFED;
+    color: #1a1a1a;
+    padding: 32px;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .page-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .page-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    background: #EBEBEB;
+    color: #555;
+    padding: 2px 8px;
+    border-radius: 99px;
+    border: 1px solid #DDD;
+  }
+  .btn-primary {
+    font-size: 12px;
+    font-weight: 600;
+    background: #FF7056;
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 7px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-ghost {
+    font-size: 12px;
+    font-weight: 500;
+    background: #fff;
+    color: #555;
+    padding: 7px 12px;
+    border-radius: 7px;
+    border: 1px solid #DDD;
+    cursor: pointer;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #E5E3DF;
+  }
+
+  /* ── Chart section ── */
+  .chart-card {
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+  .chart-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #999;
+  }
+  .chart-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toggle-pill {
+    display: flex;
+    background: #F4F3F1;
+    border-radius: 7px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .toggle-pill-item {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 5px;
+    color: #888;
+    cursor: pointer;
+  }
+  .toggle-pill-item.active {
+    background: #fff;
+    color: #111;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* chart placeholder */
+  .chart-area {
+    background: #F7F6F4;
+    border-radius: 8px;
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1.5px dashed #DDD;
+    position: relative;
+    overflow: hidden;
+  }
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    height: 100px;
+    padding: 0 24px;
+    width: 100%;
+    justify-content: center;
+  }
+  .chart-week {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .chart-bar-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    width: 40px;
+  }
+  .bar-seg {
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+  }
+  .chart-week-label {
+    font-size: 9px;
+    color: #bbb;
+    font-weight: 500;
+  }
+  .chart-placeholder-label {
+    font-size: 11px;
+    color: #bbb;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    position: absolute;
+    bottom: 10px;
+    right: 14px;
+  }
+
+  /* ── KPI cards strip ── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi-card {
+    padding: 16px 18px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #999;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .kpi-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .kpi-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 99px;
+  }
+  .delta-up   { background: #EDFAF3; color: #1a8a4a; }
+  .delta-down { background: #FFF0EE; color: #C4391A; }
+  .delta-neutral { background: #F4F3F1; color: #888; }
+
+  /* ── Table section ── */
+  .table-section {}
+  .table-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid #F0EFED;
+  }
+  .filter-pills {
+    display: flex;
+    gap: 6px;
+  }
+  .pill {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid #E0DED9;
+    color: #666;
+    background: #fff;
+    cursor: pointer;
+  }
+  .pill.active {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+  }
+  .table-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  /* table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead tr {
+    border-bottom: 1px solid #F0EFED;
+  }
+  th {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #aaa;
+    padding: 8px 12px;
+    text-align: left;
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #333;
+    border-bottom: 1px solid #F7F6F4;
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr.inactive td { opacity: 0.45; }
+
+  .checkbox-cell { width: 32px; }
+  .num-cell { width: 28px; color: #bbb; font-size: 11px; text-align: center; }
+
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    display: inline-block; margin-right: 7px; flex-shrink: 0;
+  }
+  .dot-active   { background: #4BA373; }
+  .dot-inactive { background: #CBCAC8; }
+
+  .monitor-name {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: #111;
+  }
+  .inactive .monitor-name { color: #999; }
+
+  .alert-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: #111;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* mini sparkline bars */
+  .sparkline-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 20px;
+  }
+  .spark-bar {
+    width: 5px;
+    border-radius: 2px 2px 0 0;
+    background: #FF7056;
+    opacity: 0.6;
+  }
+
+  .timestamp {
+    font-size: 11px;
+    color: #888;
+  }
+  .never-triggered {
+    font-size: 11px;
+    color: #bbb;
+    font-style: italic;
+  }
+
+  .toggle-cell {
+    display: flex;
+    align-items: center;
+  }
+  .toggle-mock {
+    width: 32px; height: 18px;
+    border-radius: 99px;
+    border: none;
+    cursor: pointer;
+  }
+  .toggle-on  { background: #1779F7; }
+  .toggle-off { background: #DDD; }
+
+  .avatar-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #666;
+  }
+  .avatar {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #E8E4FF;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: #6031C4;
+    flex-shrink: 0;
+  }
+
+  .bulk-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    background: #111;
+    border-radius: 0 0 12px 12px;
+    margin-top: 0;
+  }
+  .bulk-bar-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.7);
+  }
+  .bulk-bar-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .bulk-btn {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+  }
+  .bulk-btn-activate   { background: #4BA373; color: #fff; }
+  .bulk-btn-deactivate { background: rgba(255,255,255,0.12); color: #fff; }
+
+  /* annotation labels */
+  .annot {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #1779F7;
+    background: #EEF4FF;
+    border: 1px solid #C3D4F9;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Page header ── -->
+<div class="page-header">
+  <div class="page-header-left">
+    <span class="page-title">Alerts</span>
+    <span class="badge">9 monitors</span>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-ghost">Debug Query</button>
+    <button class="btn-primary">+ Create Alert</button>
+  </div>
+</div>
+
+<!-- ── Chart card ── -->
+<div class="card chart-card" style="margin-bottom:12px;">
+  <div class="chart-card-header">
+    <span class="section-label">Alert Volume<span class="annot">Stacked total — default</span></span>
+    <div class="chart-controls">
+      <div class="toggle-pill">
+        <div class="toggle-pill-item active">Stacked total</div>
+        <div class="toggle-pill-item">Compare monitors</div>
+      </div>
+      <button class="btn-ghost" style="font-size:11px;padding:5px 10px;">⛶ Expand</button>
+    </div>
+  </div>
+  <div class="chart-area">
+    <div class="chart-bars">
+      <!-- week 20 -->
+      <div class="chart-week">
+        <div class="chart-bar-stack">
+          <div class="bar-seg" style="height:8px;background:#FBBF8A;"></div>
+          <div class="bar-seg" style="height:5px;background:#7DC4A8;"></div>
+          <div class="bar-seg" style="height:12px;background:#A78BFA;"></div>
+          <div class="bar-seg" style="height:6px;background:#93C5FD;"></div>
+        </div>
+        <span class="chart-week-label">Wk 20</span>
+      </div>
+      <!-- week 21 -->
+      <div class="chart-week">
+        <div class="chart-bar-stack">
+          <div class="bar-seg" style="height:14px;background:#FBBF8A;"></div>
+          <div class="bar-seg" style="height:8px;background:#7DC4A8;"></div>
+          <div class="bar-seg" style="height:60px;background:#FDA4A4;"></div>
+          <div class="bar-seg" style="height:7px;background:#93C5FD;"></div>
+        </div>
+        <span class="chart-week-label">Wk 21</span>
+      </div>
+      <!-- week 22 -->
+      <div class="chart-week">
+        <div class="chart-bar-stack">
+          <div class="bar-seg" style="height:10px;background:#FBBF8A;"></div>
+          <div class="bar-seg" style="height:6px;background:#7DC4A8;"></div>
+          <div class="bar-seg" style="height:40px;background:#FDA4A4;"></div>
+          <div class="bar-seg" style="height:5px;background:#93C5FD;"></div>
+        </div>
+        <span class="chart-week-label">Wk 22</span>
+      </div>
+      <!-- week 23 -->
+      <div class="chart-week">
+        <div class="chart-bar-stack">
+          <div class="bar-seg" style="height:6px;background:#FBBF8A;"></div>
+          <div class="bar-seg" style="height:4px;background:#7DC4A8;"></div>
+          <div class="bar-seg" style="height:22px;background:#FDA4A4;"></div>
+          <div class="bar-seg" style="height:4px;background:#93C5FD;"></div>
+        </div>
+        <span class="chart-week-label">Wk 23</span>
+      </div>
+      <!-- week 24 -->
+      <div class="chart-week">
+        <div class="chart-bar-stack">
+          <div class="bar-seg" style="height:8px;background:#FBBF8A;"></div>
+          <div class="bar-seg" style="height:5px;background:#7DC4A8;"></div>
+          <div class="bar-seg" style="height:30px;background:#FDA4A4;"></div>
+          <div class="bar-seg" style="height:6px;background:#93C5FD;"></div>
+        </div>
+        <span class="chart-week-label">Wk 24</span>
+      </div>
+    </div>
+    <span class="chart-placeholder-label">Click a row to highlight in chart →</span>
+  </div>
+</div>
+
+<!-- ── KPI strip ── -->
+<div class="kpi-strip">
+  <div class="card kpi-card">
+    <div class="kpi-label">Total Monitors</div>
+    <div class="kpi-value">9</div>
+    <span class="kpi-delta delta-neutral">— same as last period</span>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-label">Total Alerts</div>
+    <div class="kpi-value">319</div>
+    <span class="kpi-delta delta-down">↓ 8% vs last period</span>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-label">Active Monitors</div>
+    <div class="kpi-value">9</div>
+    <span class="kpi-delta delta-up">↑ 2 since last period</span>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-label">Unique Alerts</div>
+    <div class="kpi-value">280</div>
+    <span class="kpi-delta delta-down">↓ 5% vs last period</span>
+  </div>
+</div>
+
+<!-- ── Table section ── -->
+<div class="card table-section">
+  <div class="table-header">
+    <div class="filter-pills">
+      <div class="pill active">All</div>
+      <div class="pill">Active only</div>
+      <div class="pill">Triggered today</div>
+      <div class="pill">Never triggered</div>
+    </div>
+    <div class="table-actions">
+      <span style="font-size:11px;color:#aaa;">Sort: Alert count ↓<span class="annot">Default</span></span>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="checkbox-cell"><input type="checkbox" /></th>
+        <th class="num-cell">#</th>
+        <th>Name</th>
+        <th>Total Alerts</th>
+        <th>Last 7 Days<span class="annot">New</span></th>
+        <th>Last Triggered</th>
+        <th>Is Active</th>
+        <th>Created by</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- Row 1 — Third Party (highest, active) -->
+      <tr>
+        <td class="checkbox-cell"><input type="checkbox" /></td>
+        <td class="num-cell">1</td>
+        <td><span class="monitor-name"><span class="status-dot dot-active"></span>Third Party</span></td>
+        <td>
+          <div class="alert-count">
+            247
+            <div class="sparkline-bars">
+              <div class="spark-bar" style="height:6px;"></div>
+              <div class="spark-bar" style="height:10px;"></div>
+              <div class="spark-bar" style="height:8px;"></div>
+              <div class="spark-bar" style="height:16px;"></div>
+              <div class="spark-bar" style="height:20px;"></div>
+            </div>
+          </div>
+        </td>
+        <td class="timestamp">47 this week</td>
+        <td class="timestamp">Today, 16:21</td>
+        <td class="toggle-cell"><div class="toggle-mock toggle-on"></div></td>
+        <td><div class="avatar-chip"><div class="avatar">A</div>Anouk</div></td>
+        <td>⋯</td>
+      </tr>
+
+      <!-- Row 2 — Information Violation (active) -->
+      <tr>
+        <td class="checkbox-cell"><input type="checkbox" /></td>
+        <td class="num-cell">2</td>
+        <td><span class="monitor-name"><span class="status-dot dot-active"></span>Information Violation</span></td>
+        <td>
+          <div class="alert-count">
+            25
+            <div class="sparkline-bars">
+              <div class="spark-bar" style="height:14px;"></div>
+              <div class="spark-bar" style="height:8px;"></div>
+              <div class="spark-bar" style="height:12px;"></div>
+              <div class="spark-bar" style="height:6px;"></div>
+              <div class="spark-bar" style="height:10px;"></div>
+            </div>
+          </div>
+        </td>
+        <td class="timestamp">8 this week</td>
+        <td class="timestamp">Today, 14:58</td>
+        <td class="toggle-cell"><div class="toggle-mock toggle-on"></div></td>
+        <td><div class="avatar-chip"><div class="avatar" style="background:#FFF0EE;color:#C4391A;">YM</div>Yossi M.</div></td>
+        <td>⋯</td>
+      </tr>
+
+      <!-- Row 3 — KYC (active) -->
+      <tr>
+        <td class="checkbox-cell"><input type="checkbox" /></td>
+        <td class="num-cell">3</td>
+        <td><span class="monitor-name"><span class="status-dot dot-active"></span>Interfering w/ KYC / Proof of Funds</span></td>
+        <td>
+          <div class="alert-count">
+            19
+            <div class="sparkline-bars">
+              <div class="spark-bar" style="height:10px;"></div>
+              <div class="spark-bar" style="height:18px;"></div>
+              <div class="spark-bar" style="height:14px;"></div>
+              <div class="spark-bar" style="height:9px;"></div>
+              <div class="spark-bar" style="height:12px;"></div>
+            </div>
+          </div>
+        </td>
+        <td class="timestamp">3 this week</td>
+        <td class="timestamp">Jun 1, 19:57</td>
+        <td class="toggle-cell"><div class="toggle-mock toggle-on"></div></td>
+        <td><div class="avatar-chip"><div class="avatar">A</div>Anouk</div></td>
+        <td>⋯</td>
+      </tr>
+
+      <!-- Row 4 — Legal (active) -->
+      <tr>
+        <td class="checkbox-cell"><input type="checkbox" /></td>
+        <td class="num-cell">4</td>
+        <td><span class="monitor-name"><span class="status-dot dot-active"></span>Legal &amp; Regulatory Violations</span></td>
+        <td>
+          <div class="alert-count">
+            8
+            <div class="sparkline-bars">
+              <div class="spark-bar" style="height:8px;"></div>
+              <div class="spark-bar" style="height:6px;"></div>
+              <div class="spark-bar" style="height:12px;"></div>
+              <div class="spark-bar" style="height:4px;"></div>
+              <div class="spark-bar" style="height:7px;"></div>
+            </div>
+          </div>
+        </td>
+        <td class="timestamp">0 this week</td>
+        <td class="timestamp">May 29, 20:19</td>
+        <td class="toggle-cell"><div class="toggle-mock toggle-on"></div></td>
+        <td><div class="avatar-chip"><div class="avatar">A</div>Anouk</div></td>
+        <td>⋯</td>
+      </tr>
+
+      <!-- Row 5 — Distressed Client (active) -->
+      <tr>
+        <td class="checkbox-cell"><input type="checkbox" /></td>
+        <td class="num-cell">5</td>
+        <td><span class="monitor-name"><span class="status-dot dot-active"></span>Distressed Client</span></td>
+        <td>
+          <div class="alert-count">
+            15
+            <div class="sparkline-bars">
+              <div class="spark-bar" style="height:12px;"></div>
+              <div class="spark-bar" style="height:10px;"></div>
+              <div class="spark-bar" style="height:16px;"></div>
+              <div class="spark-bar" style="height:8px;"></div>
+              <div class="spark-bar" style="height:14px;"></div>
+            </div>
+          </div>
+        </td>
+        <td class="timestamp">2 this week</td>
+        <td class="timestamp">Jun 1, 20:37</td>
+        <td class="toggle-cell"><div class="toggle-mock toggle-on"></div></td>
+        <td><div class="avatar-chip"><div class="avatar">A</div>Anouk</div></td>
+        <td>⋯</td>
+      </tr>
+
+      <!-- Row 6 — Unprofessional (active) -->
+      <tr>
+        <td class="checkbox-cell"><input type="checkbox" /></td>
+        <td class="num-cell">6</td>
+        <td><span class="monitor-name"><span class="status-dot dot-active"></span>Unprofessional Behavior</span></td>
+        <td>
+          <div class="alert-count">
+            3
+            <div class="sparkline-bars">
+              <div class="spark-bar" style="height:4px;"></div>
+              <div class="spark-bar" style="height:8px;"></div>
+              <div class="spark-bar" style="height:6px;"></div>
+              <div class="spark-bar" style="height:4px;"></div>
+              <div class="spark-bar" style="height:3px;"></div>
+            </div>
+          </div>
+        </td>
+        <td class="timestamp">1 this week</td>
+        <td class="timestamp">Jun 1, 20:37</td>
+        <td class="toggle-cell"><div class="toggle-mock toggle-on"></div></td>
+        <td><div class="avatar-chip"><div class="avatar">A</div>Anouk</div></td>
+        <td>⋯</td>
+      </tr>
+
+      <!-- Row 7 — Deposits (active) -->
+      <tr>
+        <td class="checkbox-cell"><input type="checkbox" /></td>
+        <td class="num-cell">7</td>
+        <td><span class="monitor-name"><span class="status-dot dot-active"></span>Deposits/Withdrawals Recommendations</span></td>
+        <td>
+          <div class="alert-count">
+            2
+            <div class="sparkline-bars">
+              <div class="spark-bar" style="height:6px;"></div>
+              <div class="spark-bar" style="height:3px;"></div>
+              <div class="spark-bar" style="height:5px;"></div>
+              <div class="spark-bar" style="height:4px;"></div>
+              <div class="spark-bar" style="height:2px;"></div>
+            </div>
+          </div>
+        </td>
+        <td class="timestamp">0 this week</td>
+        <td class="timestamp">Jun 1, 19:56</td>
+        <td class="toggle-cell"><div class="toggle-mock toggle-on"></div></td>
+        <td><div class="avatar-chip"><div class="avatar">A</div>Anouk</div></td>
+        <td>⋯</td>
+      </tr>
+
+      <!-- Row 8 — Investment Advice (active, 0 alerts) -->
+      <tr class="inactive">
+        <td class="checkbox-cell"><input type="checkbox" /></td>
+        <td class="num-cell">8</td>
+        <td><span class="monitor-name"><span class="status-dot dot-inactive"></span>Investment Advice</span></td>
+        <td>
+          <div class="alert-count" style="color:#bbb;">
+            0
+            <div class="sparkline-bars">
+              <div class="spark-bar" style="height:2px;background:#DDD;"></div>
+              <div class="spark-bar" style="height:2px;background:#DDD;"></div>
+              <div class="spark-bar" style="height:2px;background:#DDD;"></div>
+              <div class="spark-bar" style="height:2px;background:#DDD;"></div>
+              <div class="spark-bar" style="height:2px;background:#DDD;"></div>
+            </div>
+          </div>
+        </td>
+        <td><span class="never-triggered">Never triggered</span></td>
+        <td><span class="never-triggered">—</span></td>
+        <td class="toggle-cell"><div class="toggle-mock toggle-on"></div></td>
+        <td><div class="avatar-chip"><div class="avatar">A</div>Anouk</div></td>
+        <td>⋯</td>
+      </tr>
+
+      <!-- Row 9 — Loan Mentioned (active, 0 alerts) -->
+      <tr class="inactive">
+        <td class="checkbox-cell"><input type="checkbox" /></td>
+        <td class="num-cell">9</td>
+        <td><span class="monitor-name"><span class="status-dot dot-inactive"></span>Loan Mentioned</span></td>
+        <td>
+          <div class="alert-count" style="color:#bbb;">
+            0
+            <div class="sparkline-bars">
+              <div class="spark-bar" style="height:2px;background:#DDD;"></div>
+              <div class="spark-bar" style="height:2px;background:#DDD;"></div>
+              <div class="spark-bar" style="height:2px;background:#DDD;"></div>
+              <div class="spark-bar" style="height:2px;background:#DDD;"></div>
+              <div class="spark-bar" style="height:2px;background:#DDD;"></div>
+            </div>
+          </div>
+        </td>
+        <td><span class="never-triggered">Never triggered</span></td>
+        <td><span class="never-triggered">—</span></td>
+        <td class="toggle-cell"><div class="toggle-mock toggle-on"></div></td>
+        <td><div class="avatar-chip"><div class="avatar">A</div>Anouk</div></td>
+        <td>⋯</td>
+      </tr>
+
+    </tbody>
+  </table>
+
+  <!-- Bulk action bar (shown when rows selected) -->
+  <div class="bulk-bar">
+    <span class="bulk-bar-label">2 monitors selected</span>
+    <div class="bulk-bar-actions">
+      <button class="bulk-btn bulk-btn-activate">Activate</button>
+      <button class="bulk-btn bulk-btn-deactivate">Deactivate</button>
+      <button class="bulk-btn bulk-btn-deactivate">Cancel</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

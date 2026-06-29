@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Saved Views — Planning Mockup (HAI-4817)</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #F0EFED;
+    color: #1a1a1a;
+    padding: 40px 32px 80px;
+  }
+
+  .page-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #AAA;
+    margin-bottom: 4px;
+  }
+  .page-subtitle {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 6px;
+  }
+  .page-desc {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 36px;
+    max-width: 820px;
+    line-height: 1.55;
+  }
+  .jira-pill {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    background: #E8E6E1;
+    color: #555;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-right: 8px;
+  }
+
+  /* Section */
+  .section {
+    margin-bottom: 48px;
+  }
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #BBB;
+    margin-bottom: 6px;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 4px;
+  }
+  .section-desc {
+    font-size: 12.5px;
+    color: #888;
+    margin-bottom: 20px;
+    max-width: 720px;
+    line-height: 1.55;
+  }
+
+  /* Mockup card */
+  .mockup {
+    background: #fff;
+    border-radius: 16px;
+    border: 1.5px solid #E0DED9;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .mockup-header {
+    padding: 14px 22px;
+    border-bottom: 1px solid #EBEBEB;
+    background: #FAFAF9;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .mockup-state-num {
+    font-size: 11px;
+    font-weight: 700;
+    background: #1a1a1a;
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .mockup-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+  }
+  .mockup-sub {
+    font-size: 12px;
+    color: #999;
+  }
+  .mockup-body {
+    padding: 22px;
+    background: #F0EFED;
+  }
+
+  /* ───── Page chrome (mimics data v2) ───── */
+  .page-chrome {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #E5E3DE;
+    padding: 16px 20px;
+  }
+  .page-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #F0EEEA;
+    margin-bottom: 14px;
+  }
+  .breadcrumb {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111;
+  }
+  .breadcrumb .sep { color: #CCC; margin: 0 6px; font-weight: 400; }
+  .breadcrumb .total {
+    font-size: 10px;
+    background: #E8E6E1;
+    color: #555;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-left: 8px;
+  }
+  .top-actions { display: flex; align-items: center; gap: 10px; }
+  .top-link { font-size: 12px; color: #555; cursor: pointer; }
+  .top-btn-primary {
+    background: #3366FF;
+    color: #fff;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .kebab { color: #999; font-size: 16px; cursor: pointer; }
+
+  /* ───── The strip ───── */
+  .strip {
+    background: #F7F6F2;
+    border-radius: 10px;
+    border: 1px solid #EAE7E0;
+    padding: 14px 16px;
+  }
+  .strip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0;
+  }
+  .strip-header.with-margin { margin-bottom: 14px; }
+  .view-row { display: flex; align-items: center; gap: 10px; flex: 1; }
+  .view-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #111;
+  }
+  .view-select {
+    background: #fff;
+    border: 1px solid #DAD7D0;
+    border-radius: 6px;
+    padding: 6px 28px 6px 12px;
+    font-size: 12px;
+    color: #555;
+    position: relative;
+    cursor: pointer;
+    min-width: 180px;
+  }
+  .view-select::after {
+    content: '⌄';
+    position: absolute;
+    right: 10px;
+    top: 4px;
+    color: #999;
+  }
+  .view-select.active {
+    background: #fff;
+    color: #111;
+    font-weight: 600;
+    border-color: #BBB;
+  }
+  .dirty-pill {
+    font-size: 10px;
+    background: #FFF3D6;
+    color: #946A00;
+    padding: 3px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .clear-link { font-size: 12px; color: #888; cursor: pointer; }
+
+  .collapse-arrow {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #DAD7D0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    cursor: pointer;
+    position: relative;
+  }
+  .collapse-badge {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    background: #FF6B3D;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 5px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  /* Sub-section inside strip */
+  .substrip {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #EAE7E0;
+    margin-top: 12px;
+    overflow: hidden;
+  }
+  .substrip-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid #F0EEEA;
+    background: #FAFAF9;
+  }
+  .substrip-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #333;
+    letter-spacing: 0.02em;
+  }
+  .substrip-title .count {
+    color: #999;
+    font-weight: 500;
+    margin-left: 6px;
+  }
+  .substrip-body {
+    padding: 12px 14px;
+  }
+
+  /* Filter row */
+  .fil-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 2fr 24px;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .fil-row:last-child { margin-bottom: 0; }
+  .fil-input {
+    background: #F7F6F2;
+    border: 1px solid #E5E3DE;
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-size: 12px;
+    color: #888;
+  }
+  .fil-x { color: #BBB; text-align: center; cursor: pointer; line-height: 28px; }
+  .add-filter {
+    font-size: 11.5px;
+    color: #555;
+    background: #fff;
+    border: 1px dashed #D0CDC5;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-block;
+    margin-top: 6px;
+  }
+
+  /* Columns area */
+  .cols-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .cols-search {
+    flex: 1;
+    background: #F7F6F2;
+    border: 1px solid #E5E3DE;
+    border-radius: 6px;
+    padding: 7px 10px 7px 28px;
+    font-size: 12px;
+    color: #888;
+    position: relative;
+  }
+  .cols-search::before {
+    content: '⌕';
+    position: absolute;
+    left: 10px;
+    top: 5px;
+    color: #BBB;
+  }
+  .cols-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .cols-pane {
+    border: 1px solid #EEEBE4;
+    border-radius: 6px;
+    background: #FCFBF8;
+    padding: 10px 12px;
+  }
+  .cols-pane-title {
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 8px;
+  }
+  .col-group {
+    margin-bottom: 8px;
+  }
+  .col-group-head {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .col-group-head .chev { color: #BBB; }
+  .col-item {
+    font-size: 11.5px;
+    color: #555;
+    padding: 3px 0 3px 18px;
+    position: relative;
+  }
+  .col-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 5px;
+    width: 11px; height: 11px;
+    border: 1.2px solid #C8C5BD;
+    border-radius: 3px;
+    background: #fff;
+  }
+  .col-item.checked::before {
+    background: #3366FF;
+    border-color: #3366FF;
+  }
+  .col-item.checked::after {
+    content: '✓';
+    position: absolute;
+    left: 2px; top: 1px;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+  }
+  .ordered-item {
+    font-size: 11.5px;
+    color: #333;
+    padding: 6px 8px 6px 24px;
+    background: #fff;
+    border: 1px solid #EEEBE4;
+    border-radius: 5px;
+    margin-bottom: 4px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .ordered-item::before {
+    content: '⋮⋮';
+    position: absolute;
+    left: 6px;
+    top: 5px;
+    color: #BBB;
+    font-size: 12px;
+    letter-spacing: -2px;
+  }
+  .ordered-x { color: #CCC; cursor: pointer; font-size: 13px; }
+
+  /* Strip footer */
+  .strip-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #EAE7E0;
+  }
+  .footer-left { display: flex; gap: 14px; align-items: center; }
+  .reset-link {
+    font-size: 12px;
+    color: #FF6B3D;
+    cursor: pointer;
+  }
+  .save-link {
+    font-size: 12px;
+    color: #333;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .save-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .apply-btn {
+    background: #fff;
+    border: 1.5px solid #FF6B3D;
+    color: #FF6B3D;
+    padding: 7px 18px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Dropdown mockup */
+  .dropdown {
+    background: #fff;
+    border: 1px solid #DAD7D0;
+    border-radius: 10px;
+    width: 280px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    padding: 6px;
+  }
+  .dd-item {
+    font-size: 12.5px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .dd-item:hover, .dd-item.hover { background: #F4F2EC; }
+  .dd-item.current { font-weight: 700; }
+  .dd-meta { font-size: 10px; color: #AAA; }
+  .dd-sep { height: 1px; background: #F0EEEA; margin: 6px 4px; }
+  .dd-search {
+    background: #F7F6F2;
+    border: 1px solid #E5E3DE;
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 4px;
+    font-size: 12px;
+    color: #888;
+  }
+  .dd-action {
+    font-size: 11.5px;
+    color: #3366FF;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+
+  /* Decisions table */
+  .decisions {
+    background: #fff;
+    border-radius: 12px;
+    border: 1.5px solid #E0DED9;
+    overflow: hidden;
+  }
+  .dec-row {
+    display: grid;
+    grid-template-columns: 1.5fr 2fr 2fr 0.8fr;
+    padding: 14px 18px;
+    border-bottom: 1px solid #F0EEEA;
+    align-items: start;
+    gap: 18px;
+  }
+  .dec-row:last-child { border-bottom: none; }
+  .dec-row.head {
+    background: #FAFAF9;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    padding: 12px 18px;
+  }
+  .dec-q { font-size: 13px; font-weight: 700; color: #111; line-height: 1.4; }
+  .dec-options { font-size: 12px; color: #666; line-height: 1.55; }
+  .dec-rec {
+    font-size: 12px;
+    color: #1a1a1a;
+    line-height: 1.55;
+    background: #F4F8F2;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border-left: 3px solid #6FB874;
+  }
+  .dec-impact {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .dec-impact.high { background: #FFE3D9; color: #C2410C; }
+  .dec-impact.med  { background: #FFF3D6; color: #946A00; }
+  .dec-impact.low  { background: #E8E6E1; color: #666; }
+
+  /* Edge cases */
+  .edges {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .edge {
+    background: #fff;
+    border: 1.5px solid #E0DED9;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .edge-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .edge-num {
+    font-size: 10px;
+    font-weight: 700;
+    color: #999;
+  }
+  .edge-tag {
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+  .edge-tag.now { background: #DCEAFE; color: #1E40AF; }
+  .edge-tag.v2  { background: #F0EEEA; color: #888; }
+  .edge-q { font-size: 12.5px; font-weight: 700; color: #111; margin-bottom: 4px; line-height: 1.4; }
+  .edge-a { font-size: 11.5px; color: #777; line-height: 1.5; }
+
+  /* Annotation callouts on mockups */
+  .callout-row {
+    display: flex;
+    gap: 14px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .callout {
+    background: #FFF8E8;
+    border: 1px solid #F0E2B0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #6B5700;
+    line-height: 1.5;
+    max-width: 320px;
+  }
+  .callout b { color: #4A3D00; }
+
+  /* Two-up layout */
+  .two-up {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 22px;
+    align-items: start;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">Planning Mockup</div>
+<div class="page-subtitle">
+  <span class="jira-pill">HAI-4817</span>Saved Views — filters + columns as one
+</div>
+<div class="page-desc">
+  Reframes "Preset" as "View" (filters + visible columns + column order, saved together). Brings the Manage Columns modal inline into the same collapsible strip as filters, with a single Apply / Save. This page is a planning artifact: 3 UI states + key decisions + edge cases. Design-only, no implementation.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 1 — UI STATES -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <div class="section-label">Part 1 of 3</div>
+  <div class="section-title">UI States</div>
+  <div class="section-desc">
+    Three states that, together, define the model: collapsed (resting), expanded (editing), and the view-switcher dropdown.
+  </div>
+
+  <!-- STATE 1: Collapsed -->
+  <div class="mockup">
+    <div class="mockup-header">
+      <span class="mockup-state-num">1</span>
+      <span class="mockup-title">Collapsed strip — at rest</span>
+      <span class="mockup-sub">· One badge surfaces both filter and column counts</span>
+    </div>
+    <div class="mockup-body">
+      <div class="page-chrome">
+        <div class="page-top">
+          <div class="breadcrumb">Data <span class="sep">›</span> Demo inv <span class="total">TOTAL RECORDS 2000</span></div>
+          <div class="top-actions">
+            <span class="top-link">Add columns</span>
+            <button class="top-btn-primary">Upload</button>
+            <span class="kebab">⋮</span>
+          </div>
+        </div>
+
+        <div class="strip">
+          <div class="strip-header">
+            <div class="view-row">
+              <span class="view-label">View</span>
+              <div class="view-select active">Compliance — Q2</div>
+              <span class="dirty-pill">Unsaved changes</span>
+            </div>
+            <div class="collapse-arrow">
+              ⌄
+              <span class="collapse-badge">3 filters · 12 cols</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout-row">
+          <div class="callout"><b>A.</b> "Preset" → "View". Reads as the whole screen state, not just filters.</div>
+          <div class="callout"><b>B.</b> Dirty pill appears when current state diverges from the saved view.</div>
+          <div class="callout"><b>C.</b> Single collapse badge shows both halves: filters + columns. One affordance, two facts.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 2: Expanded -->
+  <div class="mockup">
+    <div class="mockup-header">
+      <span class="mockup-state-num">2</span>
+      <span class="mockup-title">Expanded strip — editing</span>
+      <span class="mockup-sub">· Filters and Columns stacked; one Apply, one Save</span>
+    </div>
+    <div class="mockup-body">
+      <div class="page-chrome">
+        <div class="page-top">
+          <div class="breadcrumb">Data <span class="sep">›</span> Demo inv <span class="total">TOTAL RECORDS 2000</span></div>
+          <div class="top-actions">
+            <button class="top-btn-primary">Upload</button>
+            <span class="kebab">⋮</span>
+          </div>
+        </div>
+
+        <div class="strip">
+          <div class="strip-header with-margin">
+            <div class="view-row">
+              <span class="view-label">View</span>
+              <div class="view-select active">Compliance — Q2</div>
+              <span class="dirty-pill">Unsaved changes</span>
+            </div>
+            <div class="collapse-arrow">⌃</div>
+          </div>
+
+          <!-- Filters sub-section -->
+          <div class="substrip">
+            <div class="substrip-head">
+              <div class="substrip-title">Filters <span class="count">3</span></div>
+              <span class="clear-link">Clear all</span>
+            </div>
+            <div class="substrip-body">
+              <div class="fil-row">
+                <div class="fil-input">Call Topic</div>
+                <div class="fil-input">Contains</div>
+                <div class="fil-input">deposit, withdrawal</div>
+                <div class="fil-x">×</div>
+              </div>
+              <div class="fil-row">
+                <div class="fil-input">Created Date</div>
+                <div class="fil-input">Greater than or equals</div>
+                <div class="fil-input">2026-04-24</div>
+                <div class="fil-x">×</div>
+              </div>
+              <div class="fil-row">
+                <div class="fil-input">Sentiment</div>
+                <div class="fil-input">Is</div>
+                <div class="fil-input">Negative</div>
+                <div class="fil-x">×</div>
+              </div>
+              <span class="add-filter">+ Add filter</span>
+            </div>
+          </div>
+
+          <!-- Columns sub-section -->
+          <div class="substrip">
+            <div class="substrip-head">
+              <div class="substrip-title">Columns <span class="count">12 of 47 selected</span></div>
+              <span class="clear-link">Reset to defaults</span>
+            </div>
+            <div class="substrip-body">
+              <div class="cols-toolbar">
+                <div class="cols-search">Search columns…</div>
+              </div>
+              <div class="cols-grid">
+                <div class="cols-pane">
+                  <div class="cols-pane-title">Available</div>
+                  <div class="col-group">
+                    <div class="col-group-head">Call Details <span class="chev">⌄</span></div>
+                    <div class="col-item checked">Call Topic</div>
+                    <div class="col-item checked">Call Summary</div>
+                    <div class="col-item">Sentiment</div>
+                  </div>
+                  <div class="col-group">
+                    <div class="col-group-head">Compliance Signals V7 <span class="chev">⌄</span></div>
+                    <div class="col-item checked">Recommendations For Deposits…</div>
+                    <div class="col-item">Distressed Client V7</div>
+                    <div class="col-item">Risk Disclosure V7</div>
+                  </div>
+                  <div class="col-group">
+                    <div class="col-group-head">On Demand Show Call Main Events <span class="chev">›</span></div>
+                  </div>
+                </div>
+                <div class="cols-pane">
+                  <div class="cols-pane-title">Selected order (drag to reorder)</div>
+                  <div class="ordered-item">Name <span class="ordered-x">×</span></div>
+                  <div class="ordered-item">Created date <span class="ordered-x">×</span></div>
+                  <div class="ordered-item">Call Topic <span class="ordered-x">×</span></div>
+                  <div class="ordered-item">Call Summary <span class="ordered-x">×</span></div>
+                  <div class="ordered-item">Recommendations For Deposits… <span class="ordered-x">×</span></div>
+                  <div class="ordered-item" style="opacity:0.5">+7 more</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="strip-footer">
+            <div class="footer-left">
+              <span class="reset-link">Reset to defaults</span>
+            </div>
+            <div class="save-group">
+              <span class="save-link">Save</span>
+              <span class="clear-link">· Save as new view</span>
+              <button class="apply-btn">Apply</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout-row">
+          <div class="callout"><b>D.</b> Filters and Columns are sub-sections of one strip → enforces "one view, two halves" mental model.</div>
+          <div class="callout"><b>E.</b> Columns pane is split: left = browse/toggle, right = order. Drag handles on selected list.</div>
+          <div class="callout"><b>F.</b> Single Apply commits filter + column changes together. Save writes the full view.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATE 3: Dropdown -->
+  <div class="mockup">
+    <div class="mockup-header">
+      <span class="mockup-state-num">3</span>
+      <span class="mockup-title">View switcher — dropdown open</span>
+      <span class="mockup-sub">· Manage, share, set default</span>
+    </div>
+    <div class="mockup-body">
+      <div class="two-up">
+        <div class="page-chrome">
+          <div class="strip">
+            <div class="strip-header">
+              <div class="view-row">
+                <span class="view-label">View</span>
+                <div class="view-select active">Compliance — Q2</div>
+                <span class="dirty-pill">Unsaved changes</span>
+              </div>
+              <div class="collapse-arrow">⌄<span class="collapse-badge">3 filters · 12 cols</span></div>
+            </div>
+          </div>
+          <div class="callout" style="margin-top:14px;">
+            <b>G.</b> Dropdown opens beneath "View" selector. Hosts management actions for the active view + list of all available views (project scope and org scope separated).
+          </div>
+        </div>
+
+        <div class="dropdown">
+          <div class="dd-search">Search views…</div>
+          <div class="dd-item current">
+            Compliance — Q2 <span class="dd-meta">· Default</span>
+          </div>
+          <div class="dd-item">Distressed clients <span class="dd-meta">· Personal</span></div>
+          <div class="dd-item">All calls, full view <span class="dd-meta">· Org</span></div>
+          <div class="dd-item">High-risk last 7d <span class="dd-meta">· Org</span></div>
+          <div class="dd-sep"></div>
+          <div class="dd-action">+ Save current as new view</div>
+          <div class="dd-sep"></div>
+          <div class="dd-item">Rename current view</div>
+          <div class="dd-item">Duplicate</div>
+          <div class="dd-item">Set as default for this project</div>
+          <div class="dd-item">Share to org</div>
+          <div class="dd-item" style="color:#C2410C;">Delete</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 2 — DECISIONS -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <div class="section-label">Part 2 of 3</div>
+  <div class="section-title">Decisions to lock before hifi</div>
+  <div class="section-desc">
+    Each row: the question, the options, my recommendation (green), and how much it affects layout. Confirm these with PM + eng before investing in hifi mocks.
+  </div>
+
+  <div class="decisions">
+    <div class="dec-row head">
+      <div>Decision</div><div>Options</div><div>Recommended</div><div>Layout impact</div>
+    </div>
+
+    <div class="dec-row">
+      <div class="dec-q">Sub-section layout inside the strip</div>
+      <div class="dec-options">A. Stacked (Filters on top, Columns below)<br/>B. Side-by-side (two columns within the strip)</div>
+      <div class="dec-rec"><b>A — Stacked.</b> Columns content gets tall (groups, search, scroll). Stacked also reads top-to-bottom like a form.</div>
+      <div><span class="dec-impact high">High</span></div>
+    </div>
+
+    <div class="dec-row">
+      <div class="dec-q">Strip height behavior when expanded</div>
+      <div class="dec-options">A. Push the table down<br/>B. Max-height with internal scroll, table stays put</div>
+      <div class="dec-rec"><b>B — Internal scroll.</b> Preserves the "see results while tweaking" loop. Push-down kills that.</div>
+      <div><span class="dec-impact high">High</span></div>
+    </div>
+
+    <div class="dec-row">
+      <div class="dec-q">Columns section density</div>
+      <div class="dec-options">A. Full checklist always visible (current mock)<br/>B. "12 of 47 selected — Edit" row that expands</div>
+      <div class="dec-rec"><b>B — Collapsed by default.</b> Filters are edited often, columns rarely. Don't pay vertical cost on every expand.</div>
+      <div><span class="dec-impact med">Med</span></div>
+    </div>
+
+    <div class="dec-row">
+      <div class="dec-q">Column reorder UX</div>
+      <div class="dec-options">A. Drag inside the checklist<br/>B. Separate "Selected order" pane with drag (current mock)<br/>C. Drag table headers directly, strip just mirrors</div>
+      <div class="dec-rec"><b>C — Drag table headers.</b> Least UI to build, matches user expectation from sheets. Strip reflects order read-only + offers an "Open reorder dialog" escape hatch.</div>
+      <div><span class="dec-impact high">High</span></div>
+    </div>
+
+    <div class="dec-row">
+      <div class="dec-q">Apply without Save — does it persist on reload?</div>
+      <div class="dec-options">A. Yes, treat as "working state" overlay on the view<br/>B. No, reverts to last saved view on reload</div>
+      <div class="dec-rec"><b>A — Persist working state.</b> Matches user mental model (sheets, BI tools). The dirty pill is the signal that something is unsaved.</div>
+      <div><span class="dec-impact med">Med</span></div>
+    </div>
+
+    <div class="dec-row">
+      <div class="dec-q">View scope</div>
+      <div class="dec-options">A. Project-scoped only<br/>B. Project + Org-shared (mock shows this)<br/>C. Personal + Org</div>
+      <div class="dec-rec"><b>B — Project + Org-shared.</b> Sidebar already has Project/Org toggle, so the data model is there. Org views unlock the "team standard" use case.</div>
+      <div><span class="dec-impact low">Low</span></div>
+    </div>
+
+    <div class="dec-row">
+      <div class="dec-q">Default "Reset to defaults" target</div>
+      <div class="dec-options">A. Resets to system default (no filters, default columns)<br/>B. Resets to the currently loaded view's saved state</div>
+      <div class="dec-rec"><b>B — Resets to active view's saved state.</b> Matches user intent: "undo my unsaved tweaks." Footer can offer a secondary "Clear view → system default" link if needed.</div>
+      <div><span class="dec-impact low">Low</span></div>
+    </div>
+
+    <div class="dec-row">
+      <div class="dec-q">"Add columns" button top-right</div>
+      <div class="dec-options">A. Keep as shortcut that expands strip + scrolls to Columns<br/>B. Remove entirely (only entry point is the strip)</div>
+      <div class="dec-rec"><b>A — Keep as shortcut.</b> Existing muscle memory. But it opens the strip, not a modal.</div>
+      <div><span class="dec-impact low">Low</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- SECTION 3 — EDGE CASES -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<div class="section">
+  <div class="section-label">Part 3 of 3</div>
+  <div class="section-title">Edge cases</div>
+  <div class="section-desc">
+    Tagged <span class="edge-tag now">Handle v1</span> for must-design-now, <span class="edge-tag v2">Punt v2</span> for things to acknowledge but defer.
+  </div>
+
+  <div class="edges">
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">01</span><span class="edge-tag now">Handle v1</span></div>
+      <div class="edge-q">Loading a view whose columns no longer exist</div>
+      <div class="edge-a">Signal was renamed/removed. Show a soft toast: "2 columns from this view are no longer available." Drop silently from selection. Don't block load.</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">02</span><span class="edge-tag now">Handle v1</span></div>
+      <div class="edge-q">Loading a view with filters on missing fields</div>
+      <div class="edge-a">Same pattern as #01 — toast + drop. Filters and columns share the same "field went away" mechanic.</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">03</span><span class="edge-tag now">Handle v1</span></div>
+      <div class="edge-q">Dirty state — switching views with unsaved changes</div>
+      <div class="edge-a">Confirm dialog: "You have unsaved changes to Compliance — Q2. Discard / Save as new / Cancel."</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">04</span><span class="edge-tag now">Handle v1</span></div>
+      <div class="edge-q">Empty state — no views saved yet</div>
+      <div class="edge-a">Dropdown shows "No saved views yet" + a prominent "Save current as new view" action. View selector shows "Untitled view" with a save nudge.</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">05</span><span class="edge-tag now">Handle v1</span></div>
+      <div class="edge-q">Migration of existing presets</div>
+      <div class="edge-a">Existing presets become views with the project's current default column set. Surface a one-time tooltip on first visit so users know.</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">06</span><span class="edge-tag now">Handle v1</span></div>
+      <div class="edge-q">Default view per project</div>
+      <div class="edge-a">One default per user per project. "Set as default" in dropdown. On project load, default applies automatically.</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">07</span><span class="edge-tag v2">Punt v2</span></div>
+      <div class="edge-q">Conflicting edits on a shared org view</div>
+      <div class="edge-a">v1: last-write-wins, no locking. Document the limitation. Address later if it becomes a real problem.</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">08</span><span class="edge-tag v2">Punt v2</span></div>
+      <div class="edge-q">Shareable URL for a view</div>
+      <div class="edge-a">v1: rely on view ID being persistent. Deep-link URLs that encode the full state come later.</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">09</span><span class="edge-tag now">Handle v1</span></div>
+      <div class="edge-q">Narrow viewport / zoom behavior</div>
+      <div class="edge-a">Strip already has horizontal scroll for filter rows. Columns section's two-pane layout collapses to a single pane below ~900px (tabs: Available / Order).</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">10</span><span class="edge-tag v2">Punt v2</span></div>
+      <div class="edge-q">Performance — debouncing column toggles</div>
+      <div class="edge-a">Apply is explicit (button), so toggles don't re-query. Only matters when row count scales up — design is safe, eng concern later.</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">11</span><span class="edge-tag now">Handle v1</span></div>
+      <div class="edge-q">Reset to defaults — what does it reset?</div>
+      <div class="edge-a">See decision #7. Resets to currently loaded view's saved state. Secondary "Clear view → system default" link if user wants a true wipe.</div>
+    </div>
+
+    <div class="edge">
+      <div class="edge-head"><span class="edge-num">12</span><span class="edge-tag v2">Punt v2</span></div>
+      <div class="edge-q">View rename collisions</div>
+      <div class="edge-a">v1: allow duplicate names, disambiguate by scope (Project/Org). v2: warn on collision.</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

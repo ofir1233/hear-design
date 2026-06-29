@@ -24,6 +24,7 @@ const VARIANTS = {
     fontWeight:       500,
     paddingH:         8,
     paddingV:         2,
+    lineHeight:       1.4,
     defaultUppercase: false,
   },
   subtle: {
@@ -34,6 +35,7 @@ const VARIANTS = {
     fontWeight:       600,
     paddingH:         10,
     paddingV:         3,
+    lineHeight:       1.4,
     defaultUppercase: true,
   },
   solid: {
@@ -44,6 +46,7 @@ const VARIANTS = {
     fontWeight:       700,
     paddingH:         5,
     paddingV:         2,
+    lineHeight:       1.4,
     defaultUppercase: true,
   },
 }
@@ -80,16 +83,20 @@ export default function Badge({
   let V = VARIANTS[variant] ?? VARIANTS.outline
 
   if (variant === 'tinted') {
+    // Foundation "Pill badge — filled" spec (DS components_badges.html):
+    // h22 · 12% tone fill · 1px solid currentColor · 12/500/lh1 · not uppercase
     const name = BADGE_NAMES.includes(color) ? color : 'cobalt'
     V = {
-      bg:               `var(--badge-${name}-bg)`,
-      border:           `1px solid var(--badge-${name}-bd)`,
+      bg:               `var(--badge-${name}-fill)`,
+      border:           '1px solid currentColor',
       color:            `var(--badge-${name}-text)`,
-      fontSize:         11,
-      fontWeight:       600,
+      fontSize:         12,
+      fontWeight:       500,
       paddingH:         8,
-      paddingV:         2,
-      defaultUppercase: true,
+      paddingV:         0,
+      height:           22,
+      lineHeight:       1,
+      defaultUppercase: false,
     }
   }
 
@@ -103,6 +110,8 @@ export default function Badge({
         display:        'inline-flex',
         alignItems:     'center',
         justifyContent: 'center',
+        gap:            6,
+        height:         V.height,
         padding:        `${V.paddingV}px ${V.paddingH}px`,
         background:     V.bg,
         border:         V.border,
@@ -111,7 +120,7 @@ export default function Badge({
         fontSize:       V.fontSize,
         fontFamily:     "'Byrd', sans-serif",
         fontWeight:     V.fontWeight,
-        lineHeight:     1.4,
+        lineHeight:     V.lineHeight ?? 1.4,
         letterSpacing:  isUppercase ? '0.08em' : undefined,
         textTransform:  isUppercase ? 'uppercase' : undefined,
         whiteSpace:     'nowrap',

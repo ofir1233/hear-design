@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import PageHeader from '../PageHeader.jsx'
 
 // ── Mock data ─────────────────────────────────────────────────────────────────
 
@@ -1118,96 +1119,64 @@ export default function KnowledgePage({
     >
 
       {/* ── Header ── */}
-      <div style={{
-        flexShrink: 0,
-        display: 'flex', alignItems: 'center', gap: 6,
-        padding: '0 16px', height: 52,
-        margin: '16px 16px 0',
-        background: 'var(--bg-sidebar)',
-        borderRadius: 16,
-      }}>
-        {/* Breadcrumb */}
-        <span style={{
-          fontSize: 15, fontWeight: 600,
-          color: 'var(--text-primary)',
-          fontFamily: "'Byrd', sans-serif",
-          flexShrink: 0,
-        }}>
-          Knowledge
-        </span>
-
-        {(selectedFile || selectedGlossary) && (
+      <PageHeader
+        title="Knowledge"
+        crumbs={(selectedFile || selectedGlossary) ? [selectedGlossary ? selectedGlossary.name : selectedFile.name] : []}
+        actions={
           <>
-            <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-              <BreadcrumbChevron />
-            </span>
-            <span style={{
-              fontSize: 13,
-              color: 'var(--text-secondary)',
-              fontFamily: "'Byrd', sans-serif",
-              fontWeight: 500,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              maxWidth: 260,
+            {/* Search */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '0 12px', height: 32,
+              background: 'var(--bg-canvas)',
+              border: `1px solid ${searchFocused ? '#1779F7' : 'var(--border-default)'}`,
+              borderRadius: 8,
+              transition: 'border-color 160ms ease',
+              minWidth: 200,
             }}>
-              {selectedGlossary ? selectedGlossary.name : selectedFile.name}
-            </span>
+              <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                <SearchIcon />
+              </span>
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchValue}
+                onChange={e => setSearchValue(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                style={{
+                  border: 'none', outline: 'none', background: 'transparent',
+                  fontSize: 12, color: 'var(--text-primary)',
+                  fontFamily: "'Byrd', sans-serif",
+                  width: '100%',
+                }}
+              />
+            </div>
+
+            {/* Format Content button */}
+            <button
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '0 14px', height: 32,
+                background: '#FF7056', color: '#fff',
+                border: 'none', borderRadius: 8,
+                fontSize: 12, fontWeight: 600,
+                fontFamily: "'Byrd', sans-serif",
+                cursor: 'pointer', flexShrink: 0,
+                letterSpacing: '0.01em',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#e85f44' }}
+              onMouseLeave={e => { e.currentTarget.style.background = '#FF7056' }}
+            >
+              <FormatIcon />
+              Format Content
+            </button>
+
+            {/* More menu */}
+            <KMoreMenu />
           </>
-        )}
-
-        {/* Spacer */}
-        <div style={{ flex: 1 }} />
-
-        {/* Search */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '0 12px', height: 32,
-          background: 'var(--bg-canvas)',
-          border: `1px solid ${searchFocused ? '#1779F7' : 'var(--border-default)'}`,
-          borderRadius: 8,
-          transition: 'border-color 160ms ease',
-          minWidth: 200,
-        }}>
-          <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-            <SearchIcon />
-          </span>
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchValue}
-            onChange={e => setSearchValue(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            onBlur={() => setSearchFocused(false)}
-            style={{
-              border: 'none', outline: 'none', background: 'transparent',
-              fontSize: 12, color: 'var(--text-primary)',
-              fontFamily: "'Byrd', sans-serif",
-              width: '100%',
-            }}
-          />
-        </div>
-
-        {/* Format Content button */}
-        <button
-          style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '0 14px', height: 32,
-            background: '#FF7056', color: '#fff',
-            border: 'none', borderRadius: 8,
-            fontSize: 12, fontWeight: 600,
-            fontFamily: "'Byrd', sans-serif",
-            cursor: 'pointer', flexShrink: 0,
-            letterSpacing: '0.01em',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = '#e85f44' }}
-          onMouseLeave={e => { e.currentTarget.style.background = '#FF7056' }}
-        >
-          <FormatIcon />
-          Format Content
-        </button>
-
-        {/* More menu */}
-        <KMoreMenu />
-      </div>
+        }
+      />
 
       {/* ── Body ── */}
       <div style={{

@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { BsPinFill, BsPin } from 'react-icons/bs'
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
+import PageHeader from '../PageHeader.jsx'
 
 function navigate(path, state = {}) {
   window.history.pushState(state, '', path)
@@ -751,51 +752,34 @@ export default function ReportsPage({ isMobile = false, sidebarWidth = 272, side
       }}
     >
       {/* ── Page Header ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '0 16px', height: 52, flexShrink: 0,
-        margin: '16px 16px 0',
-        background: 'var(--bg-sidebar)',
-        border: 'var(--page-header-border)',
-        borderRadius: 16,
-        boxShadow: 'var(--page-header-shadow)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>Reports</span>
-          {companyConfig?.companyName && (
-            <>
-              <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
-              <span style={{ fontSize: 'var(--type-p13)', color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>{companyConfig.companyName}</span>
-            </>
-          )}
-          <span style={{ color: 'var(--text-muted)', fontSize: 'var(--type-p14)', fontFamily: "'Byrd', sans-serif" }}>›</span>
-          <Badge variant="tinted" color="coral" shape="pill">
-            Total Reports&nbsp;{filtered.length}
-          </Badge>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', gap: 1, padding: 3, background: 'var(--bg-canvas)', border: '1px solid var(--border-input)', borderRadius: 8 }}>
-            {[{ id: 'list', Icon: ListViewIcon }, { id: 'grid', Icon: GridViewIcon }].map(({ id, Icon }) => (
-              <button
-                key={id}
-                onClick={() => setView(id)}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  width: 26, height: 26, borderRadius: 5,
-                  background: view === id ? 'var(--bg-active)' : 'transparent',
-                  border: 'none', cursor: 'pointer',
-                  color: view === id ? 'var(--c100)' : 'var(--text-muted)',
-                  transition: 'background 150ms ease, color 150ms ease',
-                }}
-              >
-                <Icon active={view === id} />
-              </button>
-            ))}
-          </div>
-          <Button size="sm" leftIcon={<PlusIcon />} onClick={() => navigate('/reports/create')}>Create Report</Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Reports"
+        crumbs={companyConfig?.companyName ? [companyConfig.companyName] : []}
+        badge={<Badge variant="tinted" color="coral" shape="pill">Total Reports&nbsp;{filtered.length}</Badge>}
+        actions={
+          <>
+            <div style={{ display: 'flex', gap: 1, padding: 3, background: 'var(--bg-canvas)', border: '1px solid var(--border-input)', borderRadius: 8 }}>
+              {[{ id: 'list', Icon: ListViewIcon }, { id: 'grid', Icon: GridViewIcon }].map(({ id, Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setView(id)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: 26, height: 26, borderRadius: 5,
+                    background: view === id ? 'var(--bg-active)' : 'transparent',
+                    border: 'none', cursor: 'pointer',
+                    color: view === id ? 'var(--c100)' : 'var(--text-muted)',
+                    transition: 'background 150ms ease, color 150ms ease',
+                  }}
+                >
+                  <Icon active={view === id} />
+                </button>
+              ))}
+            </div>
+            <Button size="sm" leftIcon={<PlusIcon />} onClick={() => navigate('/reports/create')}>Create Report</Button>
+          </>
+        }
+      />
 
 
       {/* ── Content ── */}

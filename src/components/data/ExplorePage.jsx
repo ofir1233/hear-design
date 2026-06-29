@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { ThumbUpIcon, ThumbDownIcon, CopyIcon } from '../icons'
+import PageHeader from '../PageHeader.jsx'
 import CallPanel from './CallPanel.jsx'
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -1281,42 +1282,38 @@ export default function ExplorePage({ call, onBack, isMobile = false, sidebarWid
         transition: sidebarTransition,
       }}
     >
-      {/* ── Top header bar — floating pill ─────────────────────────────── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '0 16px', height: 52, flexShrink: 0,
-        margin: '16px 16px 0',
-        background: 'var(--bg-sidebar)',
-        border: 'var(--page-header-border)',
-        borderRadius: 16,
-        boxShadow: 'var(--page-header-shadow)',
-      }}>
-        <button
-          onClick={onBack}
-          style={{
-            display: 'flex', alignItems: 'center', gap: 3,
-            height: 28, padding: '0 10px',
-            background: 'none', border: '1px solid var(--border-default)',
-            borderRadius: 7, cursor: 'pointer',
-            fontSize: 12, color: 'var(--text-secondary)',
-            fontFamily: "'Byrd', sans-serif",
-            transition: 'background 130ms ease, color 130ms ease',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
-        >
-          <BackIcon /> Data
-        </button>
-        <span style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: "'Byrd', sans-serif", userSelect: 'none' }}>›</span>
-        <span style={{
-          fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)',
-          fontFamily: "'Byrd', sans-serif",
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          maxWidth: 280,
-        }}>
-          {call.id}
-        </span>
-      </div>
+      {/* ── Top header bar ─────────────────────────────── */}
+      <PageHeader
+        left={
+          <>
+            <button
+              onClick={onBack}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 3,
+                height: 28, padding: '0 10px',
+                background: 'none', border: '1px solid var(--border-default)',
+                borderRadius: 7, cursor: 'pointer',
+                fontSize: 12, color: 'var(--text-secondary)',
+                fontFamily: "'Byrd', sans-serif",
+                transition: 'background 130ms ease, color 130ms ease',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)'; e.currentTarget.style.color = 'var(--text-primary)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            >
+              <BackIcon /> Data
+            </button>
+            <span style={{ color: 'var(--text-muted)', fontSize: 13, fontFamily: "'Byrd', sans-serif", userSelect: 'none' }}>›</span>
+            <span style={{
+              fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)',
+              fontFamily: "'Byrd', sans-serif",
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              maxWidth: 280,
+            }}>
+              {call.id}
+            </span>
+          </>
+        }
+      />
 
       {/* ── Scrollable content ─────────────────────────────────────────── */}
       <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '22px 28px 48px', marginTop: 8 }}>
