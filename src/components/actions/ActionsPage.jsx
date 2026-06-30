@@ -921,18 +921,18 @@ export default function ActionsPage({ sidebarWidth = 0, sidebarTransition = '' }
       fontFamily: "'Byrd', sans-serif",
     }}>
       <Header
-        style={{ left: sidebarWidth + 16, transition: sidebarTransition }}
+        style={{ left: sidebarWidth + 16, transition: sidebarTransition, height: 56, padding: '0 24px', background: 'var(--bg-card)' }}
         left={
-          <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
+          <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
             Actions
           </span>
         }
       />
 
-      {/* Filter bar — sits below fixed header (top:16 + height:52 + gap:12 = 80) */}
+      {/* Filter bar — sits below fixed header (top:16 + height:56 + gap:12 = 84) */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-        padding: '80px 24px 12px',
+        padding: '84px 24px 12px',
         borderBottom: '1px solid var(--border-default)',
         background: 'var(--bg-canvas)',
         flexShrink: 0,

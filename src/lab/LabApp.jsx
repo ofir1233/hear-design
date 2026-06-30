@@ -953,9 +953,12 @@ Ask me anything about your operations, or explore a topic below to get started.`
             style={{
               left: effectiveSidebarWidth + 16,
               transition: sidebarTransition,
+              height: 56,
+              padding: '0 24px',
+              background: 'var(--bg-card)',
             }}
             left={
-              <span style={{ fontSize: 'var(--type-p11)', fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
+              <span style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif" }}>
                 Dashboard
               </span>
             }

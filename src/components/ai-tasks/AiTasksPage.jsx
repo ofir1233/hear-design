@@ -9,6 +9,7 @@ import {
 } from 'react-icons/bs'
 import Badge from '../Badge.jsx'
 import PageHeader from '../PageHeader.jsx'
+import SegmentedTabs from '../SegmentedTabs.jsx'
 
 // ── Icons (react-icons/bs) ──────────────────────────────────────────────────────
 
@@ -578,42 +579,9 @@ export default function AiTasksPage({ sidebarWidth = 272, sidebarTransition = 'n
         }
       />
 
-      {/* ── View mode tabs — floating segmented control ── */}
+      {/* ── View mode tabs — shared master segmented control ── */}
       <div style={{ padding: '12px 16px', flexShrink: 0 }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          padding: 4,
-          background: 'var(--bg-card)',
-          border: 'var(--page-header-border)',
-          borderRadius: 12,
-          boxShadow: 'var(--page-header-shadow)',
-        }}>
-          {VIEW_MODES.map(m => {
-            const active = viewMode === m.id
-            return (
-              <button
-                key={m.id}
-                onClick={() => setViewMode(m.id)}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 7,
-                  height: 34, padding: '0 14px',
-                  fontSize: 13, fontWeight: active ? 600 : 500,
-                  fontFamily: "'Byrd', sans-serif",
-                  border: `1px solid ${active ? m.bd : 'transparent'}`, borderRadius: 8,
-                  background: active ? m.tint : 'transparent',
-                  color: active ? m.color : 'var(--text-muted)',
-                  cursor: 'pointer', whiteSpace: 'nowrap',
-                  transition: 'background 160ms ease, color 160ms ease, box-shadow 160ms ease',
-                }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'var(--text-secondary)' }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'var(--text-muted)' }}
-              >
-                <m.Icon size={14} style={{ flexShrink: 0 }} />
-                {m.label}
-              </button>
-            )
-          })}
-        </div>
+        <SegmentedTabs items={VIEW_MODES} value={viewMode} onChange={setViewMode} />
       </div>
 
 

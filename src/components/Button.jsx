@@ -13,11 +13,13 @@ const VARIANTS = {
     spinArc:   '#FFFFFF',
   },
   secondary: {
-    bg:       'transparent',
-    bgHover:  'var(--bg-active)',
-    bgActive: 'var(--bg-active)',
-    color:    'var(--text-primary)',
-    border:   '1.5px solid var(--border-default)',
+    bg:          'transparent',
+    bgHover:     'color-mix(in srgb, var(--b100) 8%, var(--bg-card))',
+    bgActive:    'color-mix(in srgb, var(--b100) 14%, var(--bg-card))',
+    color:       'var(--text-primary)',
+    colorHover:  'var(--b100)',
+    border:      '1.5px solid var(--border-default)',
+    borderHover: '1.5px solid var(--b100)',
     spinTrack: 'var(--border-default)',
     spinArc:   'var(--text-primary)',
   },
@@ -104,6 +106,9 @@ export default function Button({
     : pressed ? V.bgActive
     : hovered ? V.bgHover
     : V.bg
+  const active = !frozen && (hovered || pressed)
+  const color  = active && V.colorHover  ? V.colorHover  : V.color
+  const border = active && V.borderHover ? V.borderHover : V.border
 
   return (
     <button
@@ -129,14 +134,14 @@ export default function Button({
         fontWeight:     500,
         lineHeight:     1,
         letterSpacing:  '0.01em',
-        color:          V.color,
+        color:          color,
         background:     bg,
-        border:         V.border,
+        border:         border,
         borderRadius:   S.borderRadius,
         cursor:         frozen ? 'not-allowed' : 'pointer',
         opacity:        disabled ? 0.4 : 1,
         pointerEvents:  loading ? 'none' : undefined,
-        transition:     'background 150ms ease, opacity 150ms ease',
+        transition:     'background 150ms ease, border-color 150ms ease, color 150ms ease, opacity 150ms ease',
         whiteSpace:     'nowrap',
         userSelect:     'none',
         outline:        'none',

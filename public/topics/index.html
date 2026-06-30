@@ -149,39 +149,10 @@
       </div>
     </div>
 
-    <div style="padding:0 12px 0;flex-shrink:0;">
-      <div style="display:flex;align-items:center;gap:10px;padding:14px 16px;background:var(--bg-card);border:1px solid var(--border-default);border-radius:16px;flex-wrap:wrap;">
-      <div style="position:relative;display:flex;align-items:center;">
-        <span style="position:absolute;right:11px;color:var(--text-muted);display:inline-flex;"><svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg></span>
-        <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="Search topics…" style="width:230px;height:34px;border:1px solid var(--border-input);border-radius:8px;padding:0 32px 0 12px;font-size:13px;font-family:inherit;color:var(--text-primary);background:var(--bg-card);outline:none;" />
-      </div>
-
-      <div style="margin-left:auto;display:flex;align-items:center;gap:10px;">
-        <div style="position:relative;">
-          <button onClick="{{ toggleSortMenu }}" style="height:34px;padding:0 12px;display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border-input);background:var(--bg-card);border-radius:8px;font-size:12.5px;color:var(--text-secondary);cursor:pointer;font-family:inherit;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>Sort: <span style="color:var(--text-primary);font-weight:500;">{{ sortLabel }}</span><span style="color:var(--text-muted);font-size:9px;">▾</span></button>
-          <sc-if value="{{ sortMenuOpen }}" hint-placeholder-val="{{ false }}">
-            <div style="position:absolute;left:0;top:40px;z-index:30;background:#fff;border:1px solid var(--border-default);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.12);padding:5px;min-width:170px;animation:popIn .14s ease-out;">
-              <sc-for list="{{ sortOptions }}" as="o" hint-placeholder-count="4">
-                <button onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</button>
-              </sc-for>
-            </div>
-          </sc-if>
-        </div>
-        <div style="display:inline-flex;align-items:center;gap:0;background:var(--bg-canvas);border:1px solid var(--border-default);border-radius:8px;padding:2px;">
-          <sc-if value="{{ isLandscape }}" hint-placeholder-val="{{ true }}">
-            <button onClick="{{ setLensLandscape }}" style="{{ lensLandStyle }}">Landscape</button>
-          </sc-if>
-          <sc-if value="{{ isFlow }}" hint-placeholder-val="{{ false }}">
-            <button onClick="{{ setLensLandscape }}" style="{{ lensLandStyle }}">Landscape</button>
-          </sc-if>
-          <button onClick="{{ setLensFlow }}" style="{{ lensFlowStyle }}">Flow</button>
-        </div>
-      </div>
-    </div>
-    </div>
+    <!-- Search, view switcher and colour mode all live in the app header -->
 
     <div style="flex:1;overflow:auto;padding:0;">
-      <div style="padding:16px 12px 60px;">
+      <div style="padding:0 12px 60px;">
 
         <sc-if value="{{ isLandscape }}" hint-placeholder-val="{{ true }}">
           <div>
@@ -237,13 +208,7 @@
 
             <sc-if value="{{ isTreemap }}" hint-placeholder-val="{{ false }}">
               <div style="background:var(--bg-card);border:1px solid var(--border-default);border-radius:12px;padding:14px;">
-                <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:12px;">
-                  <span style="font-size:10px;font-weight:700;letter-spacing:0.04em;color:var(--text-muted);">View</span>
-                  <sc-for list="{{ cxViews }}" as="v" hint-placeholder-count="7">
-                    <button onClick="{{ v.onClick }}" style="{{ v.style }}">{{ v.label }}</button>
-                  </sc-for>
-                  <button onClick="{{ setCustomView }}" style="{{ cxCustomStyle }}">Custom</button>
-                </div>
+                <!-- View presets live in the app header; Custom reveals the controls below -->
                 <sc-if value="{{ isCustomView }}" hint-placeholder-val="{{ false }}">
                   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:var(--bg-canvas);border-radius:9px;">
                     <div style="position:relative;">
@@ -269,7 +234,7 @@
                   <span style="font-size:10px;color:var(--text-muted);opacity:0.8;">{{ landLegendNote }}</span>
                   <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
                     <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary);"><span style="width:9px;height:9px;border-radius:2px;background:#4BA373;"></span>Good</span>
-                    <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary);"><span style="width:9px;height:9px;border-radius:2px;background:#D6A042;"></span>Medium</span>
+                    <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary);"><span style="width:9px;height:9px;border-radius:2px;background:#E9B047;"></span>Medium</span>
                     <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-secondary);"><span style="width:9px;height:9px;border-radius:2px;background:#FF7056;"></span>Poor</span>
 
                   </div>
@@ -292,74 +257,7 @@
                 <span style="font-size:12.5px;font-weight:600;color:var(--text-primary);">{{ flowFromLandTopic }}</span>
               </div>
             </sc-if>
-            <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:6px;">
-              <div style="flex:1;min-width:240px;">
-                <div style="font-size:15px;font-weight:600;">Problem Map — multi-dimensional contact center analysis</div>
-                <div style="font-size:12.5px;color:var(--text-muted);margin-top:2px;">Select and order dimensions, track cohorts across columns, click a bar for the cohort file. {{ flowSub }}</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:8px;">
-                <div style="display:inline-flex;background:var(--bg-canvas);border:1px solid var(--border-default);border-radius:8px;padding:2px;">
-                  <button onClick="{{ setColorBySev }}" style="{{ colorBySevStyle }}">Severity</button>
-                  <button onClick="{{ setColorByTopic }}" style="{{ colorByTopicStyle }}">By topic</button>
-                </div>
-              </div>
-            </div>
-
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:14px 0 4px;">
-              <span style="font-size:10px;font-weight:700;letter-spacing:0.04em;color:var(--text-muted);">Dimensions</span>
-              <sc-for list="{{ flowDimChips }}" as="c" hint-placeholder-count="3">
-                <div draggable="{{ c.draggable }}" onDragStart="{{ c.onDragStart }}" onDragOver="{{ c.onDragOver }}" onDrop="{{ c.onDrop }}" style="{{ c.style }}" title="Drag to reorder">
-                  <span style="color:var(--text-muted);font-size:11px;cursor:grab;">⋮⋮</span>
-                  <span>{{ c.label }}</span>
-                  <sc-if value="{{ c.canRemove }}" hint-placeholder-val="{{ true }}">
-                    <button onClick="{{ c.onRemove }}" style="width:18px;height:18px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;border-radius:4px;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;" style-hover="background:var(--bg-active);color:var(--text-primary)">✕</button>
-                  </sc-if>
-                </div>
-              </sc-for>
-              <sc-if value="{{ flowCanAdd }}" hint-placeholder-val="{{ true }}">
-                <div style="position:relative;">
-                  <button onClick="{{ toggleDimMenu }}" style="display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 12px;border:1px dashed var(--border-input);background:transparent;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12.5px;color:var(--text-secondary);">+ Add dimension</button>
-                  <sc-if value="{{ flowDimMenuOpen }}" hint-placeholder-val="{{ false }}">
-                    <div style="position:absolute;right:0;top:38px;z-index:30;background:#fff;border:1px solid var(--border-default);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.12);padding:5px;min-width:170px;max-height:320px;overflow-y:auto;animation:popIn .14s ease-out;">
-                      <sc-for list="{{ flowAddOptions }}" as="o" hint-placeholder-count="6">
-                        <sc-if value="{{ o.isHeader }}" hint-placeholder-val="{{ false }}">
-                          <div style="{{ o.style }}">{{ o.label }}</div>
-                        </sc-if>
-                        <sc-if value="{{ o.isDim }}" hint-placeholder-val="{{ true }}">
-                          <button onClick="{{ o.onClick }}" style="{{ o.style }}" style-hover="background:var(--bg-active)">{{ o.label }}</button>
-                        </sc-if>
-                      </sc-for>
-                    </div>
-                  </sc-if>
-                </div>
-              </sc-if>
-              <sc-if value="{{ flowAvgMode }}" hint-placeholder-val="{{ false }}">
-                <button onClick="{{ toggleOverall }}" style="{{ overallChkStyle }}" title="Roll all active Dimensions into one score">
-                  <span style="{{ overallChkBox }}"><sc-if value="{{ flowOverallOn }}" hint-placeholder-val="{{ false }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></sc-if></span>
-                  <span>Overall score</span>
-                </button>
-              </sc-if>
-              <sc-if value="{{ flowTopicActive }}" hint-placeholder-val="{{ true }}">
-                <div style="position:relative;margin-right:4px;">
-                  <button onClick="{{ toggleTopicMenu }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--border-input);background:var(--bg-card);border-radius:8px;cursor:pointer;font-family:inherit;font-size:12.5px;color:var(--text-secondary);"><svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5m-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5m-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5"/></svg>Topics <span style="font-weight:600;color:var(--text-primary);font-variant-numeric:tabular-nums;">{{ flowTopicCount }}/{{ flowTopicTotal }}</span></button>
-                  <sc-if value="{{ flowTopicMenuOpen }}" hint-placeholder-val="{{ false }}">
-                    <div style="position:absolute;right:0;top:38px;z-index:31;background:#fff;border:1px solid var(--border-default);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,0.14);padding:7px;min-width:236px;max-height:340px;overflow:auto;animation:popIn .14s ease-out;">
-                      <div style="display:flex;align-items:center;gap:8px;padding:4px 6px 8px;border-bottom:1px solid var(--border-default);margin-bottom:5px;">
-                        <span style="font-size:11px;font-weight:700;letter-spacing:0.04em;color:var(--text-muted);">Select Topics</span>
-                        <button onClick="{{ selectAllTopics }}" style="margin-right:auto;border:none;background:transparent;color:#1779F7;cursor:pointer;font-family:inherit;font-size:11.5px;">All</button>
-                        <button onClick="{{ clearTopics }}" style="border:none;background:transparent;color:var(--text-muted);cursor:pointer;font-family:inherit;font-size:11.5px;">Clear</button>
-                      </div>
-                      <sc-for list="{{ flowTopicOptions }}" as="o" hint-placeholder-count="8">
-                        <button onClick="{{ o.onToggle }}" style="{{ o.rowStyle }}" style-hover="background:var(--bg-active)">
-                          <span style="{{ o.boxStyle }}">{{ o.check }}</span>
-                          <span style="flex:1;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ o.name }}</span>
-                        </button>
-                      </sc-for>
-                    </div>
-                  </sc-if>
-                </div>
-              </sc-if>
-            </div>
+            <!-- Overall score toggle now lives in the app header -->
 
             <sc-if value="{{ flowHasFilters }}" hint-placeholder-val="{{ false }}">
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 2px;padding:9px 11px;background:rgba(23,121,247,0.05);border:1px solid rgba(23,121,247,0.18);border-radius:9px;">
@@ -386,7 +284,7 @@
             <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:12px;padding-top:14px;border-top:1px solid var(--border-default);">
               <span style="font-size:10px;font-weight:700;letter-spacing:0.04em;color:var(--text-muted);">Severity</span>
               <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);"><span style="width:9px;height:9px;border-radius:2px;background:#FF7056;"></span>Poor</span>
-              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);"><span style="width:9px;height:9px;border-radius:2px;background:#D6A042;"></span>Medium</span>
+              <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);"><span style="width:9px;height:9px;border-radius:2px;background:#E9B047;"></span>Medium</span>
               <span style="display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-muted);"><span style="width:9px;height:9px;border-radius:2px;background:#4BA373;"></span>Good</span>
               <span style="margin-left:auto;font-size:11px;color:var(--text-muted);">Bandwidth = calls · click bar to filter · click ribbon for cohort · thresholds & cross-dim counts are computed</span>
             </div>
@@ -404,6 +302,10 @@
             </div>
             <div style="margin-top:10px;">{{ scatterEl }}</div>
           </div>
+        </sc-if>
+
+        <sc-if value="{{ isPulse }}" hint-placeholder-val="{{ false }}">
+          {{ pulseEl }}
         </sc-if>
 
       </div>
@@ -901,7 +803,7 @@
 
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;default&quot;:&quot;comfortable&quot;,&quot;tsType&quot;:&quot;'comfortable'|'compact'&quot;},&quot;defaultLens&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;landscape&quot;,&quot;flow&quot;,&quot;anomalies&quot;],&quot;default&quot;:&quot;landscape&quot;,&quot;tsType&quot;:&quot;'landscape'|'flow'|'anomalies'&quot;},&quot;briefing&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;comfortable&quot;,&quot;compact&quot;],&quot;default&quot;:&quot;comfortable&quot;,&quot;tsType&quot;:&quot;'comfortable'|'compact'&quot;},&quot;defaultLens&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;landscape&quot;,&quot;flow&quot;,&quot;anomalies&quot;],&quot;default&quot;:&quot;flow&quot;,&quot;tsType&quot;:&quot;'landscape'|'flow'|'anomalies'&quot;},&quot;briefing&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
 class Component extends DCLogic {
   state = {};
 
@@ -1062,10 +964,11 @@ class Component extends DCLogic {
     };
     return this._dims2_v2;
   }
-  TOPICPAL=['#6E95A0','#8E7CC3','#C8924E','#5E9E78','#B5708A','#6E8BAF','#A88BC0','#9AA6AB','#C28A6B','#7BA0A8','#A0996E','#8C7CA8','#6E95A0'];
-  SKILLPAL={sales:'#6E8BAF',service:'#6E95A0',gold:'#C8A04E',plat:'#8E7CC3'};
+  // Topic palette derived from the Hear design-system dominant hues (cobalt/green/lilac/teal/coral + variants)
+  TOPICPAL=['#1779F7','#4BA373','#D799E2','#455F61','#FF7056','#4594F9','#6FB58F','#B07BC9','#FF8D78','#6E8E90','#0D5DD6','#2D6B4A','#8B44A8'];
+  SKILLPAL={sales:'#1779F7',service:'#455F61',gold:'#FF7056',plat:'#D799E2'};
   sevColor(rank,n){ const f=n<=1?0:rank/(n-1);
-    const stops=[[255,112,86],[214,160,66],[75,163,115]];
+    const stops=[[255,112,86],[233,176,71],[75,163,115]];
     const seg=f<=0.5?0:1, lt=f<=0.5?f/0.5:(f-0.5)/0.5;
     const a=stops[seg],b=stops[seg+1];
     const c=a.map((v,i)=>Math.round(v+(b[i]-v)*lt));
@@ -1109,6 +1012,7 @@ class Component extends DCLogic {
 
   buildAlluvial(dimIds,filters,colorBy,selTopics,mode){
     const DIMS=this.DIMS(); filters=filters||{};
+    dimIds=this.flowColumnOrder(dimIds).slice().reverse(); // Topic first, then chip order (L→R)
     let calls=this.calls();
     const fk=Object.keys(filters);
     if(fk.length) calls=calls.filter(c=>fk.every(d=>c[DIMS[d].field]===filters[d]));
@@ -1212,11 +1116,11 @@ class Component extends DCLogic {
   }
 
   // ── average = continuous parallel-coordinates axes ──
-  sevCont(g){ g=g<0?0:g>1?1:g; const stops=[[255,112,86],[214,160,66],[75,163,115]];
+  sevCont(g){ g=g<0?0:g>1?1:g; const stops=[[255,112,86],[233,176,71],[75,163,115]];
     const seg=g<=0.5?0:1, lt=g<=0.5?g/0.5:(g-0.5)/0.5; const a=stops[seg],b=stops[seg+1];
     const c=a.map((v,i)=>Math.round(v+(b[i]-v)*lt)); return 'rgb('+c[0]+','+c[1]+','+c[2]+')'; }
   AVGAXES(){ if(this._avgax) return this._avgax;
-    const R='#FF7056',Y='#D6A042',G='#4BA373';
+    const R='#FF7056',Y='#E9B047',G='#4BA373';
     this._avgax={
       compliance:{v:t=>t.compliance,dom:[40,100],good:'hi',zones:[[70,R],[85,Y],[100,G]],ticks:[70,85],fmt:v=>Math.round(v)},
       agent:{v:t=>t.agent,dom:[70,100],good:'hi',zones:[[85,R],[90,Y],[100,G]],ticks:[85,90],fmt:v=>Math.round(v)},
@@ -1242,7 +1146,7 @@ class Component extends DCLogic {
     const vol=t=>(callsByTopic[String(t.id)]||[]).length;
     const total=topicList.reduce((a,t)=>a+vol(t),0)||1;
     const AX=this.AVGAXES();
-    const overallAx={dom:[0,100],good:'hi',zones:[[50,'#FF7056'],[75,'#D6A042'],[100,'#4BA373']],ticks:[50,75],fmt:v=>Math.round(v),modeled:dimIds.includes('sentiment')};
+    const overallAx={dom:[0,100],good:'hi',zones:[[50,'#FF7056'],[75,'#E9B047'],[100,'#4BA373']],ticks:[50,75],fmt:v=>Math.round(v),modeled:dimIds.includes('sentiment')};
     const contMetricDims=dimIds.filter(d=>AX[d]);
     const gRaw=(ax,v)=>{ let n=(v-ax.dom[0])/(ax.dom[1]-ax.dom[0]); n=n<0?0:n>1?1:n; return ax.good==='hi'?n:1-n; };
     const overallVal={},overallBd={};
@@ -1250,11 +1154,15 @@ class Component extends DCLogic {
       contMetricDims.forEach(d=>{ const ax=AX[d]; const raw=ax.v(t); if(raw==null)return; sum+=gRaw(ax,raw);cnt++; parts.push(DIMS[d].label+' '+ax.fmt(raw)); });
       overallVal[t.id]=cnt?sum/cnt*100:null; overallBd[t.id]=parts; });
     const useOverall= overall&&contMetricDims.length>0;
-    const dimIds2= useOverall?[...dimIds,'__overall']:dimIds;
+    // Left→right column order: Topic pinned first, then the remaining dimensions in chip order.
+    const ordered=this.flowColumnOrder(dimIds);
+    const display= useOverall?[...ordered,'__overall']:ordered;   // desired L→R order
+    const dimIds2= display.slice().reverse();                     // colX[0] is the rightmost column, so reverse
     const axOf=d=>d==='__overall'?overallAx:AX[d];
     const valOf=(d,t)=>d==='__overall'?overallVal[t.id]:(AX[d]?AX[d].v(t):null);
     const labelOf=d=>d==='__overall'?'Overall score':DIMS[d].label;
     const C=dimIds2.length;
+    const topicCi=dimIds2.indexOf('topic');                       // column index of the Topic axis (-1 if absent)
     const W=940,H=448,nw=9,padX=4,topPad=18,botPad=22;
     const axisH=H-topPad-botPad;
     const colX=[]; const innerW=W-2*padX;
@@ -1285,7 +1193,7 @@ class Component extends DCLogic {
           axisLabel:labelOf(d),cont:!!ax,overall:d==='__overall',fmt:ax?ax.fmt(cc.val):''}; });
       const contIdx=dimIds2.map((d,i)=>isCont(d)?i:-1).filter(i=>i>=0);
       const allWorst=contIdx.length>0 && contIdx.every(i=>!pts[i].missing && pts[i].g<0.34);
-      topics.push({tp:String(t.id),name:t.name.split('(')[0].trim(),volume:vol(t),pts,idx,allWorst});
+      topics.push({tp:String(t.id),name:t.name.split('(')[0].trim(),volume:vol(t),pts,idx,allWorst,color:this.TOPICPAL[idx%this.TOPICPAL.length]});
       for(let i=0;i<C-1;i++){ const s=pts[i],t2=pts[i+1]; if(s.missing||t2.missing) continue;
         links.push({id:rid++,pathId:idx,col:i,d:this.ribbon(colX[i],s.c-s.h/2,s.c+s.h/2,colX[i+1]+nw,t2.c-t2.h/2,t2.c+t2.h/2),
           x1:colX[i],x2:colX[i+1]+nw,sColor:s.color,tColor:t2.color,value:vol(t),allWorst}); }
@@ -1298,9 +1206,11 @@ class Component extends DCLogic {
       const ticks=ax.ticks.map(tv=>({y:yVal(ax,tv).y,label:ax.fmt(tv)}));
       return {ci,x,nw,cont:true,overall:d==='__overall',label:labelOf(d),zones,ticks,topY:topPad,botY:topPad+axisH,
         goodLabel:ax.fmt(ax.good==='hi'?ax.dom[1]:ax.dom[0]),badLabel:ax.fmt(ax.good==='hi'?ax.dom[0]:ax.dom[1])}; });
-    return {W,H,nw,colX,C,heads:dimIds2.map(labelOf),axes,topics,links,total,topicVolume:total,overallBd,useOverall,
+    return {W,H,nw,colX,C,topicCi,neutralRest:colorBy==='topic',heads:dimIds2.map(labelOf),axes,topics,links,total,topicVolume:total,overallBd,useOverall,
       filterSet:new Set(Object.keys(filters).map(d=>d+'__'+filters[d])),mode:'average'};
   }
+  // Desired left→right column order: Topic first, then the remaining dimensions in chip order.
+  flowColumnOrder(dimIds){ const o=dimIds.slice(); const ti=o.indexOf('topic'); if(ti>0){ o.splice(ti,1); o.unshift('topic'); } return o; }
   onAvgTopicClick=(rec)=>{ const t=this.byId(+rec.topic.tp); if(!t)return;
     this.openDataView(t.name.split('(')[0].trim()+' · '+t.volume.toLocaleString()+' calls',t,[t.name.split('(')[0].trim(),'Topics']); };
   onAvgExpand=(rec)=>{ const tp=rec&&rec.topic&&rec.topic.tp; if(!tp)return; this.setState(s=>({flowAvgExpand:s.flowAvgExpand===tp?null:tp})); };
@@ -1312,6 +1222,7 @@ class Component extends DCLogic {
     const f=m[d]; return f?c[f]:null; }
   buildAvgExpand(topicId,dimIds,filters,colorBy){
     const DIMS=this.DIMS(); filters=filters||{};
+    dimIds=this.flowColumnOrder(dimIds).slice().reverse(); // match buildParallel column order (Topic first, L→R)
     let calls=this.calls(); const fk=Object.keys(filters);
     if(fk.length) calls=calls.filter(c=>fk.every(d=>c[DIMS[d].field]===filters[d]));
     const tcalls=calls.filter(c=>c.tp===String(topicId));
@@ -1348,7 +1259,10 @@ class Component extends DCLogic {
     const [hoverPath,setHoverPath]=R.useState(null);
     const [mouse,setMouse]=R.useState({x:0,y:0});
     const wrapRef=R.useRef(null);
-    const {W,H,nw,colX,C,axes,topics,links,topicVolume}=data;
+    const leaveTimer=R.useRef(null);
+    const setHover=(id)=>{ if(leaveTimer.current){clearTimeout(leaveTimer.current);leaveTimer.current=null;} setHoverPath(id); };
+    const clearHover=()=>{ if(leaveTimer.current)clearTimeout(leaveTimer.current); leaveTimer.current=setTimeout(()=>{setHoverPath(null);leaveTimer.current=null;},60); };
+    const {W,H,nw,colX,C,topicCi,neutralRest,axes,topics,links,topicVolume}=data;
     const ex=props.expand;
     const vpath=(a)=>{ const pts=a.dens.slice().sort((p,q)=>p.y-q.y); const MH=20; let s='';
       pts.forEach((p,i)=>{ const w=Math.max(0.5,p.w)*MH; s+=(i?'L':'M')+(a.x+nw/2-w).toFixed(1)+' '+p.y.toFixed(1)+' '; });
@@ -1361,17 +1275,21 @@ class Component extends DCLogic {
     const defs=links.map(l=>R.createElement('linearGradient',{key:'g'+l.id,id:'pc'+uid+'_'+l.id,gradientUnits:'userSpaceOnUse',x1:l.x1,y1:0,x2:l.x2,y2:0},
       R.createElement('stop',{offset:'0%',stopColor:l.sColor}),R.createElement('stop',{offset:'100%',stopColor:l.tColor})));
     const axisEls=[];
-    axes.forEach(a=>{ if(a.cont){ a.zones.forEach((z,zi)=>axisEls.push(R.createElement('rect',{key:'z'+a.ci+'_'+zi,x:a.x,y:z.yt,width:nw,height:Math.max(0,z.h),fill:z.color,opacity:0.22,rx:1.5})));
-        a.ticks.forEach((tk,ti)=>{ axisEls.push(R.createElement('line',{key:'tl'+a.ci+'_'+ti,x1:a.x-3,y1:tk.y,x2:a.x+nw+3,y2:tk.y,stroke:'var(--border-default)',strokeWidth:1,strokeDasharray:'2 2'}));
-          axisEls.push(R.createElement('text',{key:'tt'+a.ci+'_'+ti,x:a.x-5,y:tk.y+3,textAnchor:'end',fontSize:8.5,fill:'var(--text-muted)',fontFamily:'Byrd,sans-serif'},tk.label)); }); }
+    axes.forEach(a=>{ if(a.cont){ a.zones.forEach((z,zi)=>axisEls.push(R.createElement('rect',{key:'z'+a.ci+'_'+zi,x:a.x,y:z.yt,width:nw,height:Math.max(0,z.h),fill:z.color,opacity:0.32,rx:1.5})));
+        a.ticks.forEach((tk,ti)=>{ axisEls.push(R.createElement('line',{key:'tl'+a.ci+'_'+ti,x1:a.x-3,y1:tk.y,x2:a.x+nw+3,y2:tk.y,stroke:'var(--border-default)',strokeWidth:1,strokeDasharray:'2 2'})); }); }
       else axisEls.push(R.createElement('rect',{key:'sp'+a.ci,x:a.x+nw/2-1,y:a.x?16:16,width:2,height:H-40,fill:'var(--border-default)',rx:1,opacity:0.55})); });
+    // Focus+context: in "by topic" mode the resting view is calm neutral grey (the coloured
+    // axis zones are the reference); a ribbon only takes its colour when hovered/focused.
+    const NEUTRAL='#9AA6B2';
     const ribbons=[];
-    links.forEach(l=>{ const op=ex?0.045:(isActive?(l.pathId===active?0.92:0.05):0.5);
-      ribbons.push(R.createElement('path',{key:'r'+l.id,d:l.d,fill:'url(#pc'+uid+'_'+l.id+')',opacity:op,
-        stroke:l.allWorst?'#FF7056':'none',strokeWidth:l.allWorst?1.3:0,strokeOpacity:l.allWorst?(isActive&&l.pathId!==active?0.08:0.5):0,
-        style:{pointerEvents:'none',transition:'opacity .18s ease',mixBlendMode:'multiply'}}));
+    links.forEach(l=>{ const hovered=isActive&&l.pathId===active;
+      const useNeutral=neutralRest&&!hovered;
+      const op=ex?0.045:(isActive?(hovered?0.92:0.05):(neutralRest?0.26:0.5));
+      ribbons.push(R.createElement('path',{key:'r'+l.id,d:l.d,fill:useNeutral?NEUTRAL:('url(#pc'+uid+'_'+l.id+')'),opacity:op,
+        stroke:(l.allWorst&&!useNeutral)?'#FF7056':'none',strokeWidth:(l.allWorst&&!useNeutral)?1.3:0,strokeOpacity:(l.allWorst&&!useNeutral)?(isActive&&l.pathId!==active?0.08:0.5):0,
+        style:{pointerEvents:'none',transition:'opacity .18s ease',mixBlendMode:useNeutral?'normal':'multiply'}}));
       ribbons.push(R.createElement('path',{key:'h'+l.id,d:l.d,fill:'transparent',
-        onMouseEnter:()=>setHoverPath(l.pathId),onMouseLeave:()=>setHoverPath(null),
+        onMouseEnter:()=>setHover(l.pathId),onMouseLeave:clearHover,
         onClick:()=>onPathClick&&onPathClick({pathId:l.pathId,topic:topics[l.pathId]}),
         style:{cursor:'pointer',pointerEvents:'all'}})); });
     const dots=[]; if(isActive&&!ex){ const tp=topics[active]; tp&&tp.pts.forEach(p=>{ if(!p.cont||p.missing) return;
@@ -1402,15 +1320,30 @@ class Component extends DCLogic {
       else{ s.left=((colX[ci]+nw/2)/W*100)+'%'; s.transform='translate(-50%,-50%)'; }
       return R.createElement('span',{key:'h'+ci,style:s},a.label); });
     const headerDiv=R.createElement('div',{style:{position:'relative',width:'100%',height:26,borderBottom:'1px solid var(--border-default)',marginBottom:4,flexShrink:0}},headerItems);
-    // topic name chips at anchor (rightmost, ci=0)
-    const chips=topics.map(tp=>{ const p=tp.pts[0]; if(!p||p.h<11) return null; const dim=(isActive&&tp.idx!==active)||(ex&&tp.tp!==ex.expandTopic);
-      const cy=p.c/H*100, lx=(colX[0]-9)/W*100;
-      return R.createElement('div',{key:'c'+tp.idx,style:{position:'absolute',left:lx+'%',top:cy+'%',transform:'translate(-100%,-50%)',pointerEvents:'none',
-        display:'flex',flexDirection:'column',alignItems:'flex-end',gap:1,padding:'3px 7px',borderRadius:6,whiteSpace:'nowrap',
-        background:'color-mix(in srgb, var(--bg-card) 86%, transparent)',backdropFilter:'blur(3px)',WebkitBackdropFilter:'blur(3px)',
-        opacity:dim?0.28:1,transition:'opacity .18s ease'}},
-        R.createElement('div',{style:{fontSize:12,fontWeight:600,color:'var(--text-primary)',lineHeight:1.2,fontFamily:'Byrd,sans-serif'}},tp.name),
-        R.createElement('div',{style:{fontSize:10.5,fontWeight:600,color:'var(--text-muted)',fontVariantNumeric:'tabular-nums',fontFamily:'Byrd,sans-serif'}},fmt(tp.volume))); });
+    // topic name chips floating ON the diagram, just inside the Topic axis (leftmost)
+    const lci=(topicCi!=null&&topicCi>=0)?topicCi:0;
+    const chips=topics.map(tp=>{ const p=tp.pts[lci]; if(!p||p.h<11) return null;
+      const isHov=isActive&&tp.idx===active;
+      const dim=(isActive&&tp.idx!==active)||(ex&&tp.tp!==ex.expandTopic);
+      const cy=p.c/H*100, lx=(colX[lci]+nw+6)/W*100;
+      return R.createElement('div',{key:'c'+tp.idx,
+        onMouseEnter:()=>setHover(tp.idx),onMouseLeave:clearHover,
+        onClick:()=>onPathClick&&onPathClick({pathId:tp.idx,topic:tp}),
+        style:{position:'absolute',left:lx+'%',top:cy+'%',transform:'translate(0,-50%)',pointerEvents:'auto',cursor:'pointer',
+        display:'flex',flexDirection:'column',alignItems:'flex-start',gap:1,padding:'4px 9px',borderRadius:7,whiteSpace:'nowrap',
+        background:'var(--bg-card)',border:'1px solid '+(isHov?tp.color:'var(--border-default)'),
+        boxShadow:isHov?('0 2px 10px '+tp.color+'55'):'0 1px 5px rgba(0,0,0,0.12)',
+        opacity:dim?0.34:1,transition:'opacity .18s ease, box-shadow .18s ease, border-color .18s ease'}},
+        R.createElement('div',{style:{display:'flex',alignItems:'center',gap:6}},
+          neutralRest?R.createElement('span',{style:{width:8,height:8,borderRadius:'50%',background:tp.color,flexShrink:0}}):null,
+          R.createElement('span',{style:{fontSize:12,fontWeight:600,color:'var(--text-primary)',lineHeight:1.2,fontFamily:'Byrd,sans-serif'}},tp.name)),
+        R.createElement('div',{style:{fontSize:10.5,fontWeight:600,color:'var(--text-muted)',fontVariantNumeric:'tabular-nums',fontFamily:'Byrd,sans-serif',paddingLeft:neutralRest?14:0}},fmt(tp.volume))); });
+    // axis tick value cards (floating, styled like the topic cards)
+    const tickCards=[];
+    axes.forEach(a=>{ if(!a.cont||!a.ticks) return; a.ticks.forEach((tk,ti)=>{
+      tickCards.push(R.createElement('div',{key:'tc'+a.ci+'_'+ti,style:{position:'absolute',left:((a.x-2)/W*100)+'%',top:(tk.y/H*100)+'%',transform:'translate(-100%,-50%)',pointerEvents:'none',
+        background:'var(--bg-card)',border:'1px solid var(--border-default)',boxShadow:'0 1px 5px rgba(0,0,0,0.12)',borderRadius:7,padding:'2px 8px',whiteSpace:'nowrap',
+        fontSize:11.5,fontWeight:600,color:'var(--text-secondary)',fontFamily:'Byrd,sans-serif',fontVariantNumeric:'tabular-nums',lineHeight:1.25,letterSpacing:'0.01em'}},tk.label)); }); });
     // tooltip
     let tipEl=null;
     if(isActive&&!ex){ const tp=topics[active];
@@ -1419,7 +1352,7 @@ class Component extends DCLogic {
         tp.pts.filter(p=>p.cont).map((p,i)=>R.createElement('div',{key:i,style:{fontSize:p.overall?12:11,opacity:p.overall?1:0.85,fontWeight:p.overall?700:400,display:'flex',justifyContent:'space-between',gap:14,lineHeight:1.5,marginTop:p.overall?4:0,paddingTop:p.overall?4:0,borderTop:p.overall?'1px solid rgba(255,255,255,0.18)':'none'}},
           R.createElement('span',null,p.axisLabel),R.createElement('span',{style:{fontVariantNumeric:'tabular-nums',fontWeight:700}},p.fmt))),
         R.createElement('div',{style:{fontSize:11,opacity:0.7,marginTop:5,paddingTop:5,borderTop:'1px solid rgba(255,255,255,0.18)',fontVariantNumeric:'tabular-nums'}},fmt(tp.volume)+' calls · '+pctOf(tp.volume,topicVolume)+' of total')); } }
-    return R.createElement('div',{ref:wrapRef,onMouseMove:onMove,style:{position:'relative',width:'100%',minWidth:680}},
+    return R.createElement('div',{ref:wrapRef,onMouseMove:onMove,onMouseLeave:()=>{ if(leaveTimer.current){clearTimeout(leaveTimer.current);leaveTimer.current=null;} setHoverPath(null); },style:{position:'relative',width:'100%',minWidth:680}},
       headerDiv,
       R.createElement('svg',{viewBox:'0 0 '+W+' '+H,width:'100%',style:{display:'block',overflow:'visible'}},
         R.createElement('defs',null,defs),
@@ -1428,6 +1361,7 @@ class Component extends DCLogic {
         R.createElement('g',null,exEls),
         R.createElement('g',null,dots)),
       chips,
+      tickCards,
       controlBar,
       tipEl);
   };
@@ -1489,10 +1423,45 @@ class Component extends DCLogic {
   DEFAULT_DIMS=['silence','aht','csat','topic'];
   flowDims(){ return this.state.flowDims||this.DEFAULT_DIMS; }
   addDim=(id)=>this.setState(s=>{ const d=(s.flowDims||this.DEFAULT_DIMS); if(d.includes(id)||d.length>=7) return {flowDimMenu:false}; return {flowDims:[...d,id],flowDimMenu:false,flowPath:null}; });
+  // ── Add-dimension modal: rendered by the PARENT React app so its backdrop can
+  //    cover the whole screen. The iframe is the source of truth for dimensions:
+  //    it posts the catalog to the parent and applies 'add' actions sent back. ──
+  DIM_SECTIONS=[
+    {label:'Performance',groups:[
+      {id:'g_time',label:'Time',ids:['silence','aht']},
+      {id:'g_quality',label:'Quality',ids:['csat','agent','compliance']}]},
+    {label:'Outcomes',groups:[
+      {id:'g_res',label:'Resolution',ids:['resolution','conversion','churn','referral']},
+      {id:'g_sig',label:'Signals',ids:['sentiment','alert']}]},
+    {label:'Segment',groups:[
+      {id:'g_seg',label:'Segment',ids:['topic','skill']}]}];
+  buildDimCatalog(dims){ const DIMS=this.DIMS(); const active=new Set(dims); const atMax=dims.length>=7;
+    return this.DIM_SECTIONS.map(sec=>({label:sec.label,groups:sec.groups.map(g=>({id:g.id,label:g.label,
+      dims:g.ids.filter(id=>DIMS[id]).map(id=>({id,label:DIMS[id].label,active:active.has(id),disabled:active.has(id)||atMax}))}))})); }
+  postDimModal=(open,dims)=>{ const d=dims||this.state.flowDims||this.DEFAULT_DIMS;
+    try{ window.parent && window.parent!==window && window.parent.postMessage({type:'hear-dimmodal',open:!!open,catalog:this.buildDimCatalog(d),activeCount:d.length},'*'); }catch(e){} };
+  hookDimMsg(){ if(this._dimMsgHooked) return; this._dimMsgHooked=true;
+    window.addEventListener('message',(e)=>{ const m=e&&e.data; if(!m) return;
+      if(m.type==='hear-dimmodal-action'){ if(m.action==='add') this.pickDim(m.id); else if(m.action==='open') this.openDimModal(); }
+      else if(m.type==='hear-lens-set'){ this.setState({lens:m.lens,sortMenuOpen:false}); }
+      else if(m.type==='hear-colorby-set'){ this.setState({flowColorBy:m.colorBy,flowPath:null}); }
+      else if(m.type==='hear-overall-set'){ this.setState({flowOverall:!!m.on,flowPath:null}); }
+      else if(m.type==='hear-landview-set'){ this.setCXView(m.key); }
+      else if(m.type==='hear-query'){ this.setState({query:m.query||''}); } }); }
+  postLens=(lens)=>{ if(this._lastPostedLens===lens) return; this._lastPostedLens=lens;
+    try{ window.parent && window.parent!==window && window.parent.postMessage({type:'hear-lens',lens},'*'); }catch(e){} };
+  postColorBy=(cb)=>{ if(this._lastPostedColorBy===cb) return; this._lastPostedColorBy=cb;
+    try{ window.parent && window.parent!==window && window.parent.postMessage({type:'hear-colorby',colorBy:cb},'*'); }catch(e){} };
+  postOverall=(on)=>{ on=!!on; if(this._lastPostedOverall===on) return; this._lastPostedOverall=on;
+    try{ window.parent && window.parent!==window && window.parent.postMessage({type:'hear-overall',on},'*'); }catch(e){} };
+  postLandView=(k)=>{ if(this._lastPostedLandView===k) return; this._lastPostedLandView=k;
+    try{ window.parent && window.parent!==window && window.parent.postMessage({type:'hear-landview',key:k},'*'); }catch(e){} };
+  openDimModal=()=>{ this.hookDimMsg(); this.postDimModal(true); };
+  pickDim=(id)=>this.setState(s=>{ const d=(s.flowDims||this.DEFAULT_DIMS); if(d.includes(id)||d.length>=7) return {}; const nd=[...d,id]; this.postDimModal(true,nd); return {flowDims:nd,flowPath:null}; });
   removeDim=(id)=>this.setState(s=>{ let d=(s.flowDims||this.DEFAULT_DIMS); if(d.length<=2) return {}; d=d.filter(x=>x!==id); const f={...(s.flowFilters||{})}; delete f[id]; return {flowDims:d,flowFilters:f,flowPath:null}; });
   reorderDim=(from,to)=>this.setState(s=>{ const d=[...(s.flowDims||this.DEFAULT_DIMS)]; const [m]=d.splice(from,1); d.splice(to,0,m); return {flowDims:d,flowDrag:null,flowPath:null}; });
   setDrag=(i)=>this.setState({flowDrag:i});
-  toggleDimMenu=()=>this.setState(s=>({flowDimMenu:!s.flowDimMenu}));
+  toggleDimMenu=()=>this.setState(s=>({flowDimMenu:!s.flowDimMenu,flowDimSearch:'',flowDimExpanded:new Set()}));
   toggleOverall=()=>this.setState(s=>({flowOverall:!s.flowOverall,flowPath:null}));
   setColorBy=(v)=>()=>this.setState({flowColorBy:v});
   setFlowMode=(v)=>()=>this.setState({flowMode:v,flowPath:null});
@@ -2236,6 +2205,169 @@ class Component extends DCLogic {
       flowPath:null,flowTopicMenu:false,flowDimMenu:false,sel:null});
   };
   backToMap=()=>this.setState({lens:'landscape',flowFilters:{},flowFromLandscape:null,flowPath:null});
+  // ── Pulse: per-topic vitals scorecard (verdict → selectable health strip → focused trend) ──
+  PULSE_METRICS=[{key:'volume',label:'Volume',sub:'calls'},{key:'resolution',label:'Resolution rate',sub:'calls resolved'},
+    {key:'aht',label:'Handle time',sub:'avg per call'},{key:'agent',label:'Agent score',sub:'out of 100'},
+    {key:'csat',label:'Satisfaction',sub:'out of 5.0'},{key:'silence',label:'Silent time',sub:'of call duration'}];
+  PULSE_SEV=['resolution','aht','agent','csat','silence'];
+  openPulse=(id)=>{ if(id==null)return; this.setState({lens:'pulse',pulseTopic:+id,sel:null,flowAvgExpand:null,pulseSelOpen:false}); };
+  selectPulseTopic=(id)=>()=>this.setState({pulseTopic:id==null?null:+id,pulseSelOpen:false});
+  setPulseMetric=(k)=>()=>this.setState({pulseMetric:k});
+  setPulsePeriod=(p)=>()=>this.setState({pulsePeriod:p});
+  togglePulseSel=()=>this.setState(s=>({pulseSelOpen:!s.pulseSelOpen}));
+  postPulse=(active,topicId)=>{ const key=(active?'on':'off')+'|'+(topicId==null?'all':topicId); if(this._lastPostedPulse===key) return; this._lastPostedPulse=key;
+    try{ window.parent && window.parent!==window && window.parent.postMessage({type:'hear-pulse',active:!!active,topicId:topicId==null?null:+topicId},'*'); }catch(e){} };
+  pulseTarget(){ const all=this.topics(); const id=this.state.pulseTopic;
+    if(id!=null){ const t=this.byId(+id); if(t) return t; }
+    const tot=all.reduce((s,x)=>s+x.volume,0)||1; const w=(f)=>all.reduce((s,x)=>s+f(x)*x.volume,0)/tot; const tr=Math.round(w(x=>x.trendPct));
+    return {_all:true,name:'All topics',volume:tot,freq:100,unres:w(x=>x.unres),aht:w(x=>x.aht),agent:w(x=>x.agent),csat:w(x=>x.csat),sil:w(x=>x.sil),trendPct:tr,emerging:false,spark:this.mkSpark(tot,tr,false)}; }
+  pulseZone(ax,val){ for(let i=0;i<ax.zones.length;i++){ if(val<=ax.zones[i][0]) return ax.zones[i][1]; } return ax.zones[ax.zones.length-1][1]; }
+  pulseStat(col){ const G='#4BA373',Y='#E9B047',P='#FF7056'; return col===G?{key:'good',label:'Good',color:G}:(col===P?{key:'poor',label:'Poor',color:P}:{key:'med',label:'Med',color:Y}); }
+  pulseSeries(base,trend,seed){ const n=8,a=[]; let v=base*(1-Math.min(0.3,Math.abs(trend)/150));
+    for(let i=0;i<n;i++){ const wob=Math.sin(i*1.3+seed)*0.04; v=v*(1+(trend/100)/(n-1)+wob); a.push(v);} return a; }
+  pulseMetricInfo(target,key){ const all=this.topics(); const AX=this.AVGAXES();
+    if(key==='volume'){ const tr=target.trendPct||0;
+      return {label:'Volume',sub:target._all?'calls · all topics':'calls · '+target.freq+'% of total',valueStr:Math.round(target.volume).toLocaleString(),status:null,color:'#1779F7',
+        deltaLabel:(tr>=0?'↑ +':'↓ ')+Math.abs(tr)+'%',deltaGood:tr>=0,deltaSub:'vs prev period',
+        series:target.spark||this.mkSpark(target.volume,tr,false),avgSeries:this.pulseSeries((all.reduce((s,x)=>s+x.volume,0)/all.length),1,7)}; }
+    const ax=AX[key]; const val=ax.v(target); const status=this.pulseStat(this.pulseZone(ax,val));
+    const mean=all.reduce((s,x)=>s+ax.v(x),0)/all.length; const d=val-mean; const good=ax.good==='hi'?d>=0:d<=0;
+    const meta=this.PULSE_METRICS.find(m=>m.key===key)||{};
+    return {label:meta.label,sub:meta.sub,valueStr:ax.fmt(val),status,color:status.color,
+      deltaLabel:(d>=0?'↑ ':'↓ ')+ax.fmt(Math.abs(d)),deltaGood:good,deltaSub:'avg '+ax.fmt(mean),
+      series:this.pulseSeries(val,(good?1:-1)*4+(target.trendPct||0)*0.2,key.length+Math.round(val)),
+      avgSeries:this.pulseSeries(mean,1,key.length)}; }
+  pulseLineChart(topicS,avgS,w,h,color){ const R=React; const all=topicS.concat(avgS); const max=Math.max.apply(null,all),min=Math.min.apply(null,all),rng=(max-min)||1;
+    const px=(arr)=>arr.map((v,i)=>[ (i/(arr.length-1))*(w-6)+3, (h-12)-((v-min)/rng)*(h-24)+6 ]);
+    const path=(pts)=>pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+    const tp=px(topicS),ap=px(avgS); const tline=path(tp);
+    const area='M'+tp[0][0].toFixed(1)+','+(h-1)+' '+tline.replace(/^M/,'L')+' L'+tp[tp.length-1][0].toFixed(1)+','+(h-1)+' Z';
+    const last=tp[tp.length-1]; const grid=[0.25,0.5,0.75].map((g,i)=>R.createElement('line',{key:'g'+i,x1:0,y1:(h*g).toFixed(1),x2:w,y2:(h*g).toFixed(1),stroke:'var(--border-default)',strokeWidth:1,opacity:0.5,vectorEffect:'non-scaling-stroke'}));
+    return R.createElement('svg',{viewBox:'0 0 '+w+' '+h,width:'100%',style:{display:'block',height:'auto',overflow:'visible'}},
+      grid,
+      R.createElement('path',{key:'av',d:path(ap),fill:'none',stroke:'var(--border-input)',strokeWidth:1.6,strokeDasharray:'4 4',strokeLinecap:'round',vectorEffect:'non-scaling-stroke'}),
+      R.createElement('path',{key:'ar',d:area,fill:color,opacity:0.10}),
+      R.createElement('path',{key:'tl',d:tline,fill:'none',stroke:color,strokeWidth:2.2,strokeLinecap:'round',strokeLinejoin:'round',vectorEffect:'non-scaling-stroke'}),
+      R.createElement('circle',{key:'dt',cx:last[0],cy:last[1],r:3,fill:color,stroke:'#fff',strokeWidth:1.5})); }
+  buildPulseEl(){ const R=React; const st=this.state; const target=this.pulseTarget(); const all=this.topics();
+    const metric=st.pulseMetric||'volume'; const period=st.pulsePeriod||'30d';
+    const periodLabel={'7d':'Last 7 days','30d':'Last 30 days','90d':'Last 90 days'}[period];
+    const infos={}; this.PULSE_METRICS.forEach(m=>{ infos[m.key]=this.pulseMetricInfo(target,m.key); });
+    const goodN=this.PULSE_SEV.filter(k=>infos[k].status&&infos[k].status.key==='good').length;
+    const poorK=this.PULSE_SEV.find(k=>infos[k].status&&infos[k].status.key==='poor');
+    const medK=this.PULSE_SEV.find(k=>infos[k].status&&infos[k].status.key==='med');
+    const weakK=poorK||medK; const verdict=goodN+' of 5 metrics healthy'+(weakK?' · weakest: '+infos[weakK].label:' · all healthy');
+    const card={background:'var(--bg-card)',border:'1px solid var(--border-default)',borderRadius:12};
+    // ── Header: topic selector + verdict + period ──
+    const selBtn=R.createElement('button',{onClick:this.togglePulseSel,style:{display:'inline-flex',alignItems:'center',gap:8,height:34,padding:'0 12px',border:'1px solid var(--border-input)',background:'var(--bg-card)',borderRadius:8,cursor:'pointer',fontFamily:'inherit',fontSize:14,fontWeight:600,color:'var(--text-primary)'}},
+      target.name, target.emerging?R.createElement('span',{style:{fontSize:9.5,fontWeight:700,letterSpacing:'0.04em',color:'#fff',background:'#FF7056',padding:'2px 6px',borderRadius:4}},'NEW'):null,
+      R.createElement('span',{style:{color:'var(--text-muted)',fontSize:10}},'▾'));
+    const selMenu=st.pulseSelOpen?R.createElement('div',{style:{position:'absolute',left:0,top:40,zIndex:30,background:'#fff',border:'1px solid var(--border-default)',borderRadius:10,boxShadow:'0 8px 28px rgba(0,0,0,0.12)',padding:5,minWidth:240,maxHeight:340,overflowY:'auto'}},
+      [{id:null,name:'All topics',volume:null}].concat(all.slice().sort((a,b)=>b.volume-a.volume)).map((t,i)=>{ const active=(t.id==null&&st.pulseTopic==null)||(t.id!=null&&+st.pulseTopic===t.id);
+        return R.createElement('button',{key:i,onClick:this.selectPulseTopic(t.id),style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,width:'100%',padding:'8px 9px',border:'none',background:active?'var(--bg-active)':'transparent',borderRadius:7,cursor:'pointer',fontFamily:'inherit',fontSize:13,color:'var(--text-primary)',textAlign:'left'},
+          onMouseEnter:(e)=>{ if(!active) e.currentTarget.style.background='var(--bg-active)'; },onMouseLeave:(e)=>{ if(!active) e.currentTarget.style.background='transparent'; }},
+          R.createElement('span',{style:{fontWeight:active?600:500}},t.name), t.volume!=null?R.createElement('span',{style:{color:'var(--text-muted)',fontSize:11.5,fontVariantNumeric:'tabular-nums'}},t.volume.toLocaleString()):null); })):null;
+    const periodBtn=(p)=>R.createElement('button',{key:p,onClick:this.setPulsePeriod(p),style:{height:28,padding:'0 12px',border:'none',borderRadius:6,cursor:'pointer',fontFamily:'inherit',fontSize:12,fontWeight:period===p?600:500,background:period===p?'var(--bg-card)':'transparent',color:period===p?'var(--text-primary)':'var(--text-muted)',boxShadow:period===p?'0 1px 3px rgba(0,0,0,0.10)':'none'}},p);
+    const header=R.createElement('div',{key:'hd',style:{display:'flex',alignItems:'center',gap:16,flexWrap:'wrap',marginBottom:14}},
+      R.createElement('div',{style:{position:'relative'}},selBtn,selMenu),
+      R.createElement('div',{style:{flex:1,minWidth:180,fontSize:13,color:'var(--text-secondary)'}},
+        R.createElement('b',{style:{color:'var(--text-primary)'}},Math.round(target.volume).toLocaleString()+' calls'),'  ·  ',verdict,'  ·  ',periodLabel),
+      R.createElement('div',{style:{display:'inline-flex',background:'var(--bg-canvas)',border:'1px solid var(--border-default)',borderRadius:8,padding:2}},periodBtn('7d'),periodBtn('30d'),periodBtn('90d')));
+    // ── Health strip: selectable metric tiles ──
+    const tiles=R.createElement('div',{key:'strip',style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(158px,1fr))',gap:10,marginBottom:14}},
+      this.PULSE_METRICS.map(m=>{ const inf=infos[m.key]; const sel=metric===m.key; const vcol=(inf.status&&inf.status.key!=='med')?inf.status.color:'var(--text-primary)';
+        return R.createElement('button',{key:m.key,onClick:this.setPulseMetric(m.key),style:Object.assign({},card,{padding:'12px 13px',cursor:'pointer',textAlign:'left',outline:'none',
+          border:'1px solid '+(sel?'var(--b100)':'var(--border-default)'),boxShadow:sel?'0 0 0 3px color-mix(in srgb,var(--b100) 18%,transparent)':'none',transition:'border-color .15s,box-shadow .15s'})},
+          R.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:7}},
+            R.createElement('span',{style:{fontSize:10,fontWeight:700,letterSpacing:'0.05em',color:'var(--text-muted)'}},inf.label.toUpperCase()),
+            inf.status?R.createElement('span',{style:{fontSize:9,fontWeight:700,letterSpacing:'0.04em',color:inf.status.color,background:inf.status.color+'1f',padding:'2px 6px',borderRadius:4}},inf.status.label.toUpperCase()):null),
+          R.createElement('div',{style:{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:6}},
+            R.createElement('div',{style:{fontSize:23,fontWeight:700,lineHeight:1,color:vcol,fontVariantNumeric:'tabular-nums'}},inf.valueStr),
+            R.createElement('div',{style:{width:60,height:24,flexShrink:0}},this.sparkEl(inf.series,60,24,inf.color,true))),
+          R.createElement('div',{style:{fontSize:11,fontWeight:600,color:inf.deltaGood?'#2d6b4a':'#c43d28',marginTop:7}},inf.deltaLabel,
+            R.createElement('span',{style:{color:'var(--text-muted)',fontWeight:500,marginLeft:6}},inf.deltaSub))); }));
+    // ── Focused trend for the selected metric ──
+    const fi=infos[metric];
+    const chart=R.createElement('div',{key:'chart',style:Object.assign({},card,{padding:'16px 18px'})},
+      R.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}},
+        R.createElement('div',null,
+          R.createElement('div',{style:{fontSize:13.5,fontWeight:600,color:'var(--text-primary)'}},fi.label+' trend'),
+          R.createElement('div',{style:{fontSize:11,color:'var(--text-muted)',marginTop:1}},'Weekly · last 8 weeks')),
+        R.createElement('div',{style:{display:'flex',gap:14,fontSize:11,color:'var(--text-muted)'}},
+          R.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:5}},R.createElement('span',{style:{width:14,height:2,background:fi.color,borderRadius:2}}),'Topic'),
+          R.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:5}},R.createElement('span',{style:{width:14,height:0,borderTop:'2px dashed var(--border-input)'}}),'Avg'))),
+      this.pulseLineChart(fi.series,fi.avgSeries,720,170,fi.color),
+      R.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginTop:6,fontSize:10.5,color:'var(--text-muted)',fontWeight:600}},
+        ['W7','W6','W5','W4','W3','W2','W1','Now'].map((l,i)=>R.createElement('span',{key:i},l))));
+    // ── Drill (focused topic only) ──
+    const drill=target._all?null:R.createElement('div',{key:'drill',style:{marginTop:12}},
+      R.createElement('button',{onClick:()=>this.openDataView(target.name.split('(')[0].trim()+' · '+target.volume.toLocaleString()+' calls',target,[target.name.split('(')[0].trim(),'Topics']),style:{border:'none',background:'transparent',color:'var(--b100)',cursor:'pointer',fontFamily:'inherit',fontSize:13,fontWeight:600,padding:0}},'Explore '+target.volume.toLocaleString()+' calls →'));
+    return R.createElement('div',{style:{fontFamily:"'Byrd',sans-serif"}},header,tiles,chart,drill);
+  }
+  buildPulseEl(topicId){ const R=React; const t=this.byId(+topicId); if(!t) return null;
+    const all=this.topics(); const n=all.length; const avg=(f)=>all.reduce((s,x)=>s+f(x),0)/n;
+    const avgRes=avg(x=>100-x.unres),avgAht=avg(x=>x.aht),avgAgent=avg(x=>x.agent),avgCsat=avg(x=>x.csat),avgSil=avg(x=>x.sil),avgVol=avg(x=>x.volume);
+    const period=this.state.pulsePeriod||'30d';
+    const fmtT=(m)=>{ const mm=Math.floor(m),ss=Math.round((m-mm)*60); return mm+':'+String(ss).padStart(2,'0'); };
+    const res=Math.round(100-t.unres);
+    const delta=(arrowUp,good,text,sub)=>({arrowUp,good,text,sub});
+    const cards=[
+      {label:'VOLUME',big:t.volume.toLocaleString(),sub:'calls · '+t.freq+'% of total',status:null,
+        d:delta(t.trendPct>=0,t.trendPct>=0,(t.trendPct>=0?'↑ +':'↓ ')+Math.abs(t.trendPct)+'%','vs prev period'),spark:t.spark,sc:'#1779F7'},
+      {label:'RESOLUTION RATE',big:res+'%',sub:'calls resolved',status:this.pulseStatus('res',res),
+        d:delta(res>=avgRes,res>=avgRes,(res>=avgRes?'↑ +':'↓ ')+Math.abs(Math.round(res-avgRes))+'pp','avg '+Math.round(avgRes)+'%'),spark:this.pulseSeries(res,2,t.id+1),sc:'#4BA373'},
+      {label:'HANDLE TIME',big:fmtT(t.aht),sub:'avg per call',status:this.pulseStatus('aht',t.aht),
+        d:delta(t.aht>=avgAht,t.aht<=avgAht,(t.aht>=avgAht?'↑ +':'↓ −')+Math.abs(Math.round((t.aht-avgAht)/avgAht*100))+'%','avg '+fmtT(avgAht)),spark:this.pulseSeries(t.aht,5,t.id+2),sc:'#FF7056'},
+      {label:'AGENT SCORE',big:t.agent.toFixed(1),sub:'out of 100',status:this.pulseStatus('agent',t.agent),
+        d:delta(t.agent>=avgAgent,t.agent>=avgAgent,(t.agent>=avgAgent?'↑ +':'↓ −')+Math.abs((t.agent-avgAgent)).toFixed(1),'target 80'),spark:this.pulseSeries(t.agent,3,t.id+3),sc:'#1779F7'},
+      {label:'SATISFACTION',big:t.csat.toFixed(1),sub:'out of 5.0',status:this.pulseStatus('csat',t.csat),
+        d:delta(t.csat>=avgCsat,t.csat>=avgCsat,(t.csat>=avgCsat?'↑ +':'↓ −')+Math.abs((t.csat-avgCsat)).toFixed(1),'avg '+avgCsat.toFixed(1)),spark:this.pulseSeries(t.csat,2,t.id+4),sc:'#E9B047'},
+      {label:'SILENT TIME',big:t.sil.toFixed(1)+'%',sub:'of call duration',status:this.pulseStatus('sil',t.sil),
+        d:delta(t.sil>=avgSil,t.sil<=avgSil,(t.sil>=avgSil?'↑ +':'↓ −')+Math.abs((t.sil-avgSil)).toFixed(1)+'pp','avg '+avgSil.toFixed(1)+'%'),spark:this.pulseSeries(t.sil,4,t.id+5),sc:'#E9B047'} ];
+    const periodBtn=(p,lbl)=>R.createElement('button',{key:p,onClick:this.setPulsePeriod(p),
+      style:{height:28,padding:'0 12px',border:'none',borderRadius:6,cursor:'pointer',fontFamily:'inherit',fontSize:12,fontWeight:period===p?600:500,
+        background:period===p?'var(--bg-card)':'transparent',color:period===p?'var(--text-primary)':'var(--text-muted)',boxShadow:period===p?'0 1px 3px rgba(0,0,0,0.10)':'none',transition:'all .15s'}},lbl);
+    const periodLabel={'7d':'Last 7 days','30d':'Last 30 days','90d':'Last 90 days'}[period];
+    const header=R.createElement('div',{key:'hd',style:{display:'flex',alignItems:'flex-start',gap:16,flexWrap:'wrap',marginBottom:16}},
+      R.createElement('div',{style:{flex:1,minWidth:240}},
+        R.createElement('div',{style:{display:'flex',alignItems:'center',gap:10}},
+          R.createElement('span',{style:{fontSize:21,fontWeight:700,color:'var(--text-primary)'}},t.name),
+          t.emerging?R.createElement('span',{style:{fontSize:10,fontWeight:700,letterSpacing:'0.04em',color:'#fff',background:'#FF7056',padding:'2px 7px',borderRadius:5}},'NEW'):null),
+        R.createElement('div',{style:{fontSize:13,color:'var(--text-secondary)',marginTop:4,fontVariantNumeric:'tabular-nums'}},
+          R.createElement('b',{style:{color:'var(--text-primary)'}},t.volume.toLocaleString()+' calls'),'  '+t.freq+'% of total volume · ',
+          R.createElement('span',{style:{color:t.trendPct>=0?'#2d6b4a':'#c43d28'}},(t.trendPct>=0?'↑ ':'↓ ')+Math.abs(t.trendPct)+'% vs previous period'),' · '+periodLabel)),
+      R.createElement('div',{style:{display:'inline-flex',background:'var(--bg-canvas)',border:'1px solid var(--border-default)',borderRadius:8,padding:2}},
+        periodBtn('7d','7d'),periodBtn('30d','30d'),periodBtn('90d','90d')));
+    const cardEls=R.createElement('div',{key:'cards',style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))',gap:12,marginBottom:14}},
+      cards.map((c,i)=>R.createElement('div',{key:i,style:{background:'var(--bg-card)',border:'1px solid var(--border-default)',borderRadius:12,padding:'14px 15px'}},
+        R.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8}},
+          R.createElement('span',{style:{fontSize:10.5,fontWeight:700,letterSpacing:'0.06em',color:'var(--text-muted)'}},c.label),
+          c.status?R.createElement('span',{style:{fontSize:9.5,fontWeight:700,letterSpacing:'0.04em',color:c.status.color,background:c.status.color+'1f',padding:'2px 7px',borderRadius:5}},c.status.label.toUpperCase()):null),
+        R.createElement('div',{style:{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:8}},
+          R.createElement('div',null,
+            R.createElement('div',{style:{fontSize:26,fontWeight:700,lineHeight:1,color:(c.status&&c.status.key!=='med')?c.status.color:'var(--text-primary)',fontVariantNumeric:'tabular-nums'}},c.big),
+            R.createElement('div',{style:{fontSize:11,color:'var(--text-muted)',marginTop:4}},c.sub)),
+          R.createElement('div',{style:{width:74,height:30,flexShrink:0}},this.sparkEl(c.spark,74,30,c.status?c.status.color:'#1779F7',true))),
+        R.createElement('div',{style:{fontSize:11,fontWeight:600,color:c.d.good?'#2d6b4a':'#c43d28',marginTop:8}},c.d.text,
+          R.createElement('span',{style:{color:'var(--text-muted)',fontWeight:500,marginLeft:6}},c.d.sub)))));
+    const volTopic=this.pulseSeries(t.volume,t.trendPct,t.id),volAvg=this.pulseSeries(avgVol*0.78,1,7);
+    const agTopic=this.pulseSeries(t.agent,t.agent>=avgAgent?4:-3,t.id+9),agAvg=this.pulseSeries(avgAgent,1,3);
+    const chart=(title,topicS,avgS,color)=>R.createElement('div',{style:{background:'var(--bg-card)',border:'1px solid var(--border-default)',borderRadius:12,padding:'16px 18px'}},
+      R.createElement('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}},
+        R.createElement('div',null,
+          R.createElement('div',{style:{fontSize:13.5,fontWeight:600,color:'var(--text-primary)'}},title),
+          R.createElement('div',{style:{fontSize:11,color:'var(--text-muted)',marginTop:1}},'Weekly · last 8 weeks')),
+        R.createElement('div',{style:{display:'flex',gap:12,fontSize:11,color:'var(--text-muted)'}},
+          R.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:5}},R.createElement('span',{style:{width:14,height:2,background:color,borderRadius:2}}),'Topic'),
+          R.createElement('span',{style:{display:'inline-flex',alignItems:'center',gap:5}},R.createElement('span',{style:{width:14,height:0,borderTop:'2px dashed var(--border-input)'}}),'Avg'))),
+      this.pulseLineChart(topicS,avgS,460,150,color),
+      R.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginTop:6,fontSize:10.5,color:'var(--text-muted)',fontWeight:600}},
+        ['W7','W6','W5','W4','W3','W2','W1','Now'].map((l,i)=>R.createElement('span',{key:i},l))));
+    const charts=R.createElement('div',{key:'charts',style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(320px,1fr))',gap:12}},
+      chart('Call volume trend',volTopic,volAvg,'#1779F7'),
+      chart('Agent score trend',agTopic,agAvg,'#1779F7'));
+    return R.createElement('div',{style:{fontFamily:"'Byrd',sans-serif"}},header,cardEls,charts);
+  }
   cyclePeriod=()=>this.setState(s=>{ const ps=['Last 30 days','Last 7 days','Last 90 days']; const cur=s.period||ps[0]; return {period:ps[(ps.indexOf(cur)+1)%ps.length]}; });
   evPrev=()=>this.setState(s=>({evIdx:((s.evIdx||0)-1+3)%3}));
   evNext=()=>this.setState(s=>({evIdx:((s.evIdx||0)+1)%3}));
@@ -2338,9 +2470,14 @@ class Component extends DCLogic {
   }
 
   renderVals(){
+    this.hookDimMsg(); // ensure the parent↔iframe modal bridge is live (e.g. for the header "Manage columns" button)
     const st=this.state;
     const density=this.props.density||'comfortable';
-    const lens=st.lens||this.props.defaultLens||'landscape';
+    const lens=st.lens||this.props.defaultLens||'flow';
+    this.postLens(lens); // keep the app-header view switcher in sync
+    this.postColorBy(st.flowColorBy||'severity'); // keep the app-header colour toggle in sync
+    this.postOverall(!!st.flowOverall); // keep the app-header Overall score toggle in sync
+    this.postPulse(true, st.pulseTopic!=null?+st.pulseTopic:null); // Pulse rendered by the React shell; report the focused topic (null = All)
     const view='treemap';
     const sort=st.sort||'volume';
     const sentF=st.sentF||'all';
@@ -2361,6 +2498,7 @@ class Component extends DCLogic {
 
     // ── Landscape active view (configurable size/color) ──
     const landView=st.landView||'pain';
+    this.postLandView(landView); // keep the app-header View presets in sync
     const preset=this.CXVIEWS.find(v=>v.key===landView)||this.CXVIEWS[0];
     const sizeDefs=this.landSizeDefs(), colorDefs=this.landColorDefs();
     const sizeKey_r= landView==='custom'?(st.landSize||'volume'):(preset?.size||'volume');
@@ -2407,7 +2545,8 @@ class Component extends DCLogic {
       sortLabel:sortLabels[sort],sortMenuOpen:!!st.sortMenuOpen,toggleSortMenu:this.toggleSortMenu,sortOptions,
       lensLandStyle:this.segStyle(lens==='landscape'),lensFlowStyle:this.segStyle(lens==='flow'),lensAnomStyle:this.segStyle(lens==='anomalies'),
       setLensLandscape:this.setLens('landscape'),setLensFlow:this.setLens('flow'),setLensAnomalies:this.setLens('anomalies'),
-      isLandscape:lens==='landscape',isFlow:lens==='flow',isAnomalies:lens==='anomalies',
+      isLandscape:lens==='landscape',isFlow:lens==='flow',isAnomalies:lens==='anomalies',isPulse:lens==='pulse',
+      pulseEl:null,
       showBanner:this.props.briefing!==false && !emergingOnly && !query.trim() && sentF==='all' && view==='grid',
       bannerHead,bannerSub,emergingChips,
       countLabel:list.length+' Topics'+(emergingOnly?' emerging':'')+(sentF!=='all'?' · '+this.SENT[sentF].label:''),
@@ -2417,7 +2556,7 @@ class Component extends DCLogic {
       setViewGrid:this.setView('grid'),setViewTreemap:this.setView('treemap'),
       isGrid:view==='grid',isTreemap:view==='treemap',isEmpty:list.length===0,
       cards,clearFilters:this.clearFilters,
-      treemapEl:view==='treemap'?React.createElement(this.LandMap,{key:'lm'+landView+sizeKey+colorKey,uid:'lm',list:(list.length?list:all),sizeKey,colorKey,spotlight:!!st.landSpotlight,onOpen:(id)=>this.openInFlow(id,landView)}):null,
+      treemapEl:view==='treemap'?React.createElement(this.LandMap,{key:'lm'+landView+sizeKey+colorKey,uid:'lm',list:(list.length?list:all),sizeKey,colorKey,spotlight:!!st.landSpotlight,onOpen:(id)=>this.openPulse(id)}):null,
       measuredLegend:'● Modeled · No mark = measured',
       showMeasured,toggleMeasuredOnly:this.toggleMeasuredOnly,
       measuredToggleStyle:this.chipStyle(showMeasured),
@@ -2446,7 +2585,7 @@ class Component extends DCLogic {
     out.collapseBtnStyle={position:'absolute',top:78,left:-13,width:26,height:26,background:'var(--bg-card)',border:'1px solid var(--border-default)',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'var(--text-secondary)',zIndex:20,boxShadow:'0 2px 6px rgba(0,0,0,0.10)',transition:'background .15s,color .15s'};
     const sbW=0;
     out.headerStyle={display:'none'};
-    out.mainStyle={flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minWidth:0,paddingTop:'12px'};
+    out.mainStyle={flex:1,display:'flex',flexDirection:'column',overflow:'hidden',minWidth:0,paddingTop:'0'};
 
     // Flow
     if(lens==='flow'){
@@ -2482,23 +2621,7 @@ class Component extends DCLogic {
         style:{display:'inline-flex',alignItems:'center',gap:7,height:32,padding:'0 6px 0 11px',borderRadius:8,fontFamily:'inherit',fontSize:12.5,fontWeight:500,border:'1px solid var(--border-input)',background:'var(--bg-card)',color:'var(--text-primary)',cursor:'grab',whiteSpace:'nowrap'}}));
       const inactive=Object.keys(DIMS).filter(d=>!dimIds.includes(d));
       out.flowCanAdd=dimIds.length<7 && inactive.length>0;
-      out.flowDimMenuOpen=!!st.flowDimMenu && out.flowCanAdd;
-      out.toggleDimMenu=this.toggleDimMenu;
-      const TIER_GROUPS=[
-        {label:'Context',ids:['topic','skill']},
-        {label:'Experience',ids:['sentiment','aht','silence','compliance','agent','csat']},
-        {label:'Outcome',ids:['resolution','alert','referral','conversion','churn']}];
-      const inactiveSet=new Set(inactive);
-      const dimOpts=[];
-      TIER_GROUPS.forEach(g=>{
-        const avail=g.ids.filter(d=>inactiveSet.has(d));
-        if(!avail.length) return;
-        dimOpts.push({label:g.label,isHeader:true,onClick:null,
-          style:{display:'block',width:'100%',textAlign:'right',padding:'5px 10px 3px',border:'none',background:'transparent',fontFamily:'inherit',fontSize:9.5,fontWeight:700,letterSpacing:'0.06em',color:'var(--text-muted)',cursor:'default',pointerEvents:'none'}});
-        avail.forEach(d=>dimOpts.push({label:DIMS[d].label,isHeader:false,isDim:true,onClick:()=>this.addDim(d),
-          style:{display:'block',width:'100%',textAlign:'right',padding:'8px 10px',border:'none',background:'transparent',borderRadius:6,cursor:'pointer',fontFamily:'inherit',fontSize:13,color:'var(--text-primary)'}}));
-      });
-      out.flowAddOptions=dimOpts;
+      out.openDimModal=this.openDimModal;
       // color-by toggle
       const segC=(active)=>({height:28,padding:'0 11px',border:'none',borderRadius:6,cursor:'pointer',fontFamily:'inherit',fontSize:12,fontWeight:500,background:active?'var(--bg-card)':'transparent',color:active?'var(--text-primary)':'var(--text-muted)',boxShadow:active?'0 1px 3px rgba(0,0,0,0.10)':'none'});
       out.colorBySevStyle=segC(colorBy==='severity'); out.colorByTopicStyle=segC(colorBy==='topic');
@@ -2525,7 +2648,7 @@ class Component extends DCLogic {
         return {id,name:t.name.split('(')[0].trim(),checked:on,onToggle:()=>this.toggleTopic(id),check:on?'✓':'',
           rowStyle:{display:'flex',alignItems:'center',gap:9,width:'100%',padding:'7px 9px',border:'none',background:'transparent',borderRadius:7,cursor:'pointer',fontFamily:'inherit',fontSize:12.5,color:'var(--text-primary)',textAlign:'right'},
           boxStyle:{width:16,height:16,borderRadius:4,flexShrink:0,border:'1.5px solid '+(on?'#1779F7':'var(--border-input)'),background:on?'#1779F7':'transparent',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:11}}; });
-      out.sankeyEl=React.createElement(avgMode?this.ParallelView:this.SankeyView,{key:'al'+dimIds.join('-')+'_'+fk.join('-')+'_'+colorBy+'_'+flowMode,uid:'v2',data,pinnedPath:(st.flowPath?st.flowPath.pathId:null),onPathClick:avgMode?this.onAvgExpand:this.onPathClick,onBandClick:this.onBandClick,expand:(avgMode&&st.flowAvgExpand)?this.buildAvgExpand(st.flowAvgExpand,dimIds,filters,colorBy):null,onCollapseExpand:this.collapseExpand,onExploreExpand:this.exploreExpand});
+      out.sankeyEl=React.createElement(avgMode?this.ParallelView:this.SankeyView,{key:'al'+dimIds.join('-')+'_'+fk.join('-')+'_'+colorBy+'_'+flowMode,uid:'v2',data,pinnedPath:(st.flowPath?st.flowPath.pathId:null),onPathClick:avgMode?((l)=>this.openPulse(l&&l.topic?+l.topic.tp:null)):this.onPathClick,onBandClick:this.onBandClick,expand:(avgMode&&st.flowAvgExpand)?this.buildAvgExpand(st.flowAvgExpand,dimIds,filters,colorBy):null,onCollapseExpand:this.collapseExpand,onExploreExpand:this.exploreExpand});
       out.pathOpen=!!st.flowPath;
       if(st.flowPath){
         const ps=this.cohortStory(dimIds,st.flowPath,filters,colorBy);

@@ -18,7 +18,7 @@ export default function Header({ left, center, right, style }) {
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        padding: '0 16px',
+        padding: '0 24px',
 
         background: 'var(--bg-sidebar)',
         border: 'var(--page-header-border)',

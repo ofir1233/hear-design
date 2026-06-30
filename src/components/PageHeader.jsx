@@ -30,7 +30,7 @@ export default function PageHeader({ title, crumbs = [], badge, actions, left, s
         data-inspector="PageHeader"
         style={{
           display: 'flex', alignItems: 'center', gap: 12,
-          height: 56, padding: '0 13px',
+          height: 56, padding: '0 24px',
           background: 'var(--bg-card)',
           border: 'var(--page-header-border)',
           boxShadow: 'var(--page-header-shadow)',

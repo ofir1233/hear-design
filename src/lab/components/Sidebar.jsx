@@ -8,29 +8,32 @@ import {
   BellIcon, ChevronIcon, CollapseArrow, DotsIcon,
   MoonIcon, AccessibilityIcon, LogoutIcon,
 } from '../../components/icons'
-import {
-  BsChatDotsFill, BsDatabaseFill, BsDatabaseFillGear, BsCpuFill, BsGridFill,
-  BsFileEarmarkBarGraphFill, BsMegaphoneFill, BsExclamationTriangleFill,
-  BsClipboardCheckFill, BsBookFill, BsStars, BsPeopleFill,
-  BsLightningChargeFill, BsBagFill,
-} from 'react-icons/bs'
+import { BsGridFill, BsStars } from 'react-icons/bs'
 
-// Sidebar nav icons — Bootstrap filled (react-icons/bs), sized to match the rail
+// Sidebar nav icons — custom set (sidebar-icons), inline so currentColor follows active/muted state
 const NAV_ICON_SIZE = 17
-const HomeIcon        = () => <BsChatDotsFill             size={NAV_ICON_SIZE} />
-const DataIcon        = () => <BsDatabaseFill            size={NAV_ICON_SIZE} />
-const DataV2Icon      = () => <BsDatabaseFillGear        size={NAV_ICON_SIZE} />
-const AiTaskIcon      = () => <BsCpuFill                 size={NAV_ICON_SIZE} />
-const TopicsIcon      = () => <BsGridFill                size={NAV_ICON_SIZE} />
-const ReportsIcon     = () => <BsFileEarmarkBarGraphFill size={NAV_ICON_SIZE} />
-const SignalsIcon     = () => <BsMegaphoneFill           size={NAV_ICON_SIZE} />
-const AlertsIcon      = () => <BsExclamationTriangleFill size={NAV_ICON_SIZE} />
-const AgentIcon       = () => <BsClipboardCheckFill      size={NAV_ICON_SIZE} />
-const KnowledgeIcon   = () => <BsBookFill                size={NAV_ICON_SIZE} />
-const MagicApiIcon    = () => <BsStars                   size={NAV_ICON_SIZE} />
-const CustomersIcon   = () => <BsPeopleFill              size={NAV_ICON_SIZE} />
-const ActionsIcon     = () => <BsLightningChargeFill     size={NAV_ICON_SIZE} />
-const MarketplaceIcon = () => <BsBagFill                 size={NAV_ICON_SIZE} />
+// Shared wrappers for the two icon families in the set
+const Stroke = ({ vb = '0 0 24 24', children }) => (
+  <svg width={NAV_ICON_SIZE} height={NAV_ICON_SIZE} viewBox={vb} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" xmlns="http://www.w3.org/2000/svg">{children}</svg>
+)
+const Fill = ({ vb = '0 0 16 16', children }) => (
+  <svg width={NAV_ICON_SIZE} height={NAV_ICON_SIZE} viewBox={vb} fill="currentColor" xmlns="http://www.w3.org/2000/svg">{children}</svg>
+)
+
+const HomeIcon = () => <Stroke><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" /><path d="M9 21V12h6v9" /></Stroke>
+const DataIcon = () => <Stroke><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M3 5v4c0 1.657 4.03 3 9 3s9-1.343 9-3V5" /><path d="M3 9v4c0 1.657 4.03 3 9 3s9-1.343 9-3V9" /><path d="M3 13v4c0 1.657 4.03 3 9 3s9-1.343 9-3v-4" /></Stroke>
+const DataV2Icon = DataIcon
+const AiTaskIcon = () => <Fill vb="0 -960 960 960"><path d="M491-339q70 0 119-45t49-109q0-57-36.5-96.5T534-629q-47 0-79.5 30T422-525q0 19 7.5 37t21.5 33l57-57q-3-2-4.5-5t-1.5-7q0-11 9-17.5t23-6.5q20 0 33 16.5t13 39.5q0 31-25.5 52.5T492-418q-47 0-79.5-38T380-549q0-29 11-55.5t31-46.5l-57-57q-32 31-49 72t-17 86q0 88 56 149.5T491-339ZM240-80v-172q-57-52-88.5-121.5T120-520q0-150 105-255t255-105q125 0 221.5 73.5T827-615l52 205q5 19-7 34.5T840-360h-80v120q0 33-23.5 56.5T680-160h-80v80h-80v-160h160v-200h108l-38-155q-23-91-98-148t-172-57q-116 0-198 81t-82 197q0 60 24.5 114t69.5 96l26 24v208h-80Zm254-360Z" /></Fill>
+const TopicsIcon = () => <BsGridFill size={NAV_ICON_SIZE} />
+const ReportsIcon = () => <Stroke><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></Stroke>
+const SignalsIcon = () => <Fill><path d="M12.3717 2.6696C12.5268 2.67208 12.669 2.67673 12.7968 2.68718C13.0602 2.70873 13.322 2.75665 13.5741 2.88509C13.9497 3.07645 14.2564 3.38183 14.4485 3.75879C14.5769 4.01087 14.6249 4.27292 14.6464 4.53614C14.6673 4.79166 14.6666 5.10353 14.6666 5.46517V10.5355C14.6666 10.897 14.6673 11.2085 14.6464 11.4639C14.6249 11.7271 14.5769 11.9892 14.4485 12.2412C14.2568 12.6175 13.9504 12.9238 13.5741 13.1156C13.3221 13.244 13.06 13.292 12.7968 13.3135C12.5414 13.3343 12.2299 13.3337 11.8684 13.3337H4.13143C3.76979 13.3337 3.45792 13.3344 3.2024 13.3135C2.93918 13.292 2.67713 13.244 2.42505 13.1156C2.04809 12.9234 1.74271 12.6168 1.55135 12.2412C1.42291 11.9891 1.37499 11.7273 1.35344 11.4639C1.33254 11.2082 1.33325 10.8959 1.33325 10.5335V5.46713C1.33325 5.10475 1.33254 4.79263 1.35344 4.53679C1.37497 4.27327 1.42283 4.01103 1.55135 3.75879C1.74309 3.38255 2.04881 3.07683 2.42505 2.88509C2.67729 2.75657 2.93953 2.70871 3.20305 2.68718C3.45889 2.66628 3.77101 2.667 4.13339 2.667H11.8665L12.3717 2.6696ZM4.13339 4.00033C3.74902 4.00033 3.50074 4.00117 3.31177 4.0166C3.13057 4.03141 3.06344 4.05647 3.03052 4.07325C2.90512 4.13715 2.80341 4.23886 2.73951 4.36426C2.72273 4.39718 2.69767 4.46431 2.68286 4.64551C2.66743 4.83448 2.66659 5.08276 2.66659 5.46713V10.5335C2.66659 10.9179 2.66678 11.1664 2.68221 11.3551C2.69699 11.5358 2.72268 11.6027 2.73951 11.6357C2.80379 11.7619 2.9058 11.8645 3.03052 11.9281C3.06339 11.9448 3.13055 11.9699 3.31112 11.9847C3.49975 12.0001 3.7478 12.0003 4.13143 12.0003H11.8684C12.2518 12.0003 12.4996 12.0001 12.6881 11.9847C12.8683 11.97 12.9357 11.9448 12.9687 11.9281C13.0941 11.8641 13.1971 11.7612 13.261 11.6357C13.2777 11.6028 13.3029 11.5353 13.3176 11.3551C13.333 11.1667 13.3333 10.9189 13.3333 10.5355V5.46517C13.3333 5.08154 13.333 4.83349 13.3176 4.64486C13.3029 4.46429 13.2777 4.39713 13.261 4.36426C13.1974 4.23954 13.0948 4.13753 12.9687 4.07325C12.9356 4.05642 12.8687 4.03073 12.6881 4.01595C12.5937 4.00824 12.4844 4.00434 12.3508 4.00228L11.8665 4.00033H4.13339ZM4.15422 6.23991C4.38994 5.95712 4.81084 5.91894 5.09367 6.15463L7.09367 7.82129C7.24563 7.94795 7.33325 8.13584 7.33326 8.33366C7.33326 8.53149 7.24563 8.71937 7.09367 8.84603L5.09367 10.5127C4.81084 10.7484 4.38994 10.7102 4.15422 10.4274C3.91853 10.1446 3.95671 9.72368 4.2395 9.48796L5.62427 8.33366L4.2395 7.17937C3.95671 6.94365 3.91853 6.52274 4.15422 6.23991ZM11.3333 9.33366C11.7014 9.33366 11.9999 9.63214 11.9999 10.0003C11.9999 10.3685 11.7014 10.667 11.3333 10.667H7.99992C7.63173 10.667 7.33326 10.3685 7.33326 10.0003C7.33326 9.63214 7.63173 9.33366 7.99992 9.33366H11.3333Z" /></Fill>
+const AlertsIcon = () => <Stroke><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></Stroke>
+const AgentIcon = () => <Fill><path d="M11.1999 1.33334C11.5621 1.33334 11.8743 1.33309 12.1302 1.35418C12.3941 1.37594 12.6569 1.42363 12.9095 1.5534C13.2856 1.74665 13.5919 2.05487 13.7832 2.4336C13.9109 2.68642 13.9584 2.9495 13.9798 3.2142C14.0006 3.47129 14 3.78496 14 4.14975V6.81772C14 11.6395 10.3677 13.7887 8.89388 14.4616H8.89193L8.89258 14.4622C8.73095 14.536 8.5939 14.5992 8.33985 14.6432C8.2294 14.6624 8.09736 14.6667 8.00065 14.6667C7.90392 14.6667 7.77138 14.6624 7.66081 14.6432C7.40645 14.5992 7.26889 14.5362 7.10547 14.4616C5.65443 13.7991 2.11288 11.706 2.00261 7.04168L2 6.81772V4.1517C2 3.7862 1.99936 3.47225 2.02018 3.21485C2.04164 2.94986 2.08903 2.68657 2.2168 2.4336C2.40777 2.05559 2.71307 1.74702 3.08985 1.5534C3.3426 1.42353 3.6058 1.37592 3.86979 1.35418C4.12587 1.3331 4.43797 1.33334 4.80013 1.33334H11.1999ZM4.80013 2.66668C4.41578 2.66668 4.16784 2.66742 3.97917 2.68295C3.79839 2.69785 3.73164 2.72293 3.69922 2.73959C3.57429 2.80381 3.47159 2.90653 3.4069 3.03452C3.3894 3.06917 3.36448 3.13869 3.34961 3.32228C3.33414 3.51342 3.33334 3.76431 3.33334 4.1517V6.81772L3.3418 7.18751C3.51863 10.9408 6.36691 12.6586 7.65951 13.2487C7.73989 13.2854 7.76828 13.2977 7.79362 13.3067C7.81024 13.3125 7.83403 13.32 7.88867 13.3294C7.88019 13.328 7.88729 13.3291 7.91472 13.3307C7.93873 13.3321 7.96879 13.3333 8.00065 13.3333C8.03239 13.3333 8.06201 13.3321 8.08594 13.3307C8.11338 13.3291 8.12047 13.328 8.11198 13.3294C8.1662 13.3201 8.18963 13.313 8.20573 13.3073C8.23073 13.2985 8.25832 13.286 8.33854 13.2494L8.34571 13.2461C9.68271 12.6345 12.6667 10.8233 12.6667 6.81772V4.14975C12.6667 3.76303 12.6659 3.51244 12.6504 3.32162C12.6355 3.13839 12.6105 3.06905 12.5931 3.03452C12.5288 2.90726 12.4258 2.80417 12.3001 2.73959C12.2676 2.72287 12.2012 2.69782 12.0208 2.68295C11.8324 2.66741 11.5843 2.66668 11.1999 2.66668H4.80013ZM9.52669 5.56511C9.78593 5.30366 10.2079 5.30198 10.4694 5.56121C10.7307 5.82046 10.7325 6.24251 10.4733 6.50392L7.80664 9.19337C7.68147 9.31957 7.51109 9.39064 7.33334 9.39064C7.15558 9.39063 6.9852 9.31957 6.86003 9.19337L5.5267 7.84832C5.26751 7.58685 5.26916 7.16483 5.5306 6.90561C5.79201 6.64647 6.21407 6.64824 6.47331 6.90952L7.33334 7.7767L9.52669 5.56511Z" /></Fill>
+const KnowledgeIcon = () => <Stroke><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></Stroke>
+const MagicApiIcon = () => <BsStars size={NAV_ICON_SIZE} />
+const CustomersIcon = () => <Stroke><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></Stroke>
+const ActionsIcon = () => <Stroke><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></Stroke>
+const MarketplaceIcon = () => <Stroke><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 0 1-8 0" /></Stroke>
 
 // Sun icon — shown when dark mode is active (click to return to light)
 function SunIcon() {
@@ -608,7 +611,6 @@ function StorybookDisabledButton() {
 
 const NAV_ITEMS = [
   { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon,        group: 'MAIN'         },
-  { id: 'data',        label: 'Data',             Icon: DataIcon,        group: 'MAIN'         },
   { id: 'data-v2',     label: 'Data V2',          Icon: DataV2Icon,      group: 'MAIN'         },
   { id: 'ai-task',     label: 'AI Tasks',         Icon: AiTaskIcon,      group: 'MAIN'         },
   { id: 'topics',      label: 'Topics',           Icon: TopicsIcon,      group: 'MAIN' },
@@ -790,7 +792,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           width: isOpen ? 0 : 56, flexShrink: 0,
           border: 'var(--page-header-border)',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
-          background: 'var(--bg-sidebar)',
+          background: 'var(--bg-card)',
           borderRadius: 16, height: '100%',
           border: isOpen ? 'none' : 'var(--page-header-border)',
           boxShadow: isOpen ? 'none' : 'var(--page-header-shadow)',
@@ -898,7 +900,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
           transition: 'width 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms ease',
           display: 'flex',
           flexDirection: 'column',
-          background: 'var(--bg-sidebar)',
+          background: 'var(--bg-card)',
           borderRadius: 16,
           height: '100%',
           border: isOpen ? 'var(--page-header-border)' : 'none',
