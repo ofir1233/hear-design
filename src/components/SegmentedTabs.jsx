@@ -2,7 +2,7 @@
 // Single source of truth for its height/look — use this everywhere instead of
 // re-implementing the control inline, so every instance stays identical.
 
-export const SEG_HEIGHT = 30
+export const SEG_HEIGHT = 36
 // Full rendered height of the control (inner button + 4px padding top/bottom),
 // so sibling controls (e.g. checkbox pills) can match the card's height exactly.
 export const SEG_OUTER = SEG_HEIGHT + 8

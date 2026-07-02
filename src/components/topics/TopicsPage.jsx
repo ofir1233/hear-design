@@ -4,6 +4,7 @@ import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
 import PageHeader from '../PageHeader.jsx'
 import SegmentedTabs, { SEG_OUTER } from '../SegmentedTabs.jsx'
+import DatePicker from '../DatePicker.jsx'
 
 export default function TopicsPage({ isMobile, sidebarWidth = 272, sidebarTransition }) {
   const left = isMobile ? 0 : sidebarWidth
@@ -21,7 +22,7 @@ export default function TopicsPage({ isMobile, sidebarWidth = 272, sidebarTransi
   const [landView, setLandView] = useState('pain') // mirror of the iframe's Landscape preset
   const [pulse, setPulse] = useState(null) // truthy once the iframe reports Pulse is available (tab visibility)
   const [pulseTopicId, setPulseTopicId] = useState(null) // focused topic for the Pulse view (null = All topics)
-  const [pulsePeriod, setPulsePeriod] = useState('30d')
+  const [pulsePeriod, setPulsePeriod] = useState({ type: 'preset', label: 'Last 30 days' })
   const [pulseSelOpen, setPulseSelOpen] = useState(false)
   const [query, setQuery] = useState('')
 
@@ -73,6 +74,11 @@ export default function TopicsPage({ isMobile, sidebarWidth = 272, sidebarTransi
     if (w) w.postMessage({ type: 'hear-dimmodal-action', action: 'open' }, '*')
   }
 
+  // On Pulse with a topic focused, the header reflects that topic (else the global roll-up).
+  const pulseTopic = lens === 'pulse' && pulseTopicId != null
+    ? PULSE_TOPICS.find(t => t.id === pulseTopicId)
+    : null
+
   return (
     <div
       data-inspector="TopicsPage"
@@ -83,16 +89,20 @@ export default function TopicsPage({ isMobile, sidebarWidth = 272, sidebarTransi
         transition: sidebarTransition,
       }}
     >
-      {/* ── Page Header ── */}
+      {/* ── Page Header ── reflects the focused topic on the Pulse tab ── */}
       <PageHeader
         title="Topics"
-        crumbs={['Demo inv']}
-        badge={<Badge variant="tinted" color="cobalt" shape="pill">13 topics · 23,109 calls</Badge>}
+        crumbs={pulseTopic ? ['Demo inv', pulseTopic.name] : ['Demo inv']}
+        badge={
+          <Badge variant="tinted" color="cobalt" shape="pill">
+            {pulseTopic ? `${pulseTopic.volume.toLocaleString()} calls` : '13 topics · 23,109 calls'}
+          </Badge>
+        }
         actions={
-          <>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <TopicSearch value={query} onChange={onQuery} />
-            <Button variant="secondary" size="sm" onClick={manageColumns}>Manage columns</Button>
-          </>
+            {lens === 'flow' && <Button variant="secondary" size="md" onClick={manageColumns}>Manage columns</Button>}
+          </div>
         }
       />
 
@@ -184,6 +194,7 @@ function ModeTabs({ lens, onLens, colorBy, onColorBy, overall, onToggleOverall, 
       {/* Primary: view switcher (shared master component) */}
       <SegmentedTabs items={views} value={lens} onChange={onLens} />
 
+      {/* Separator between the view switcher and per-view controls (all tabs) */}
       <div style={{ width: 1, height: SEG_OUTER - 8, background: 'var(--border-input)', flexShrink: 0 }} />
 
       {/* Flow-only options */}
@@ -211,11 +222,14 @@ function ModeTabs({ lens, onLens, colorBy, onColorBy, overall, onToggleOverall, 
   )
 }
 
+const PULSE_PERIODS = [
+  { label: 'Last 7 days', kind: 'days', days: 7 },
+  { label: 'Last 30 days', kind: 'days', days: 30 },
+  { label: 'Last 90 days', kind: 'days', days: 90 },
+]
+
 function PulseControls({ topicId, onSelect, period, onPeriod, open, onToggle, onClose }) {
   const current = topicId == null ? 'All topics' : (PULSE_TOPICS.find(t => t.id === topicId) || {}).name
-  const periodBtn = p => (
-    <button key={p} onClick={() => onPeriod(p)} style={{ height: 28, padding: '0 12px', border: 'none', borderRadius: 6, cursor: 'pointer', fontFamily: "'Byrd',sans-serif", fontSize: 12, fontWeight: period === p ? 600 : 500, background: period === p ? 'var(--bg-card)' : 'transparent', color: period === p ? 'var(--text-primary)' : 'var(--text-muted)', boxShadow: period === p ? '0 1px 3px rgba(0,0,0,0.10)' : 'none' }}>{p}</button>
-  )
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ position: 'relative' }}>
@@ -237,7 +251,7 @@ function PulseControls({ topicId, onSelect, period, onPeriod, open, onToggle, on
           </div>
         )}
       </div>
-      <div style={{ display: 'inline-flex', background: 'var(--bg-canvas)', border: '1px solid var(--border-default)', borderRadius: 8, padding: 2 }}>{periodBtn('7d')}{periodBtn('30d')}{periodBtn('90d')}</div>
+      <DatePicker value={period} onChange={onPeriod} presets={PULSE_PERIODS} triggerStyle={{ height: SEG_OUTER }} />
     </div>
   )
 }
@@ -422,7 +436,10 @@ const PULSE_METRICS = [
 ]
 function pulseStatus(m, v) {
   if (!m.dir) return null
-  const G = { k: 'good', label: 'Good', color: PS_GOOD }, M = { k: 'med', label: 'Med', color: PS_MED }, P = { k: 'poor', label: 'Poor', color: PS_POOR }
+  // badge = design-system Badge tone name (horizon = amber)
+  const G = { k: 'good', label: 'Good', color: PS_GOOD, badge: 'green' }
+  const M = { k: 'med', label: 'Med', color: PS_MED, badge: 'horizon' }
+  const P = { k: 'poor', label: 'Poor', color: PS_POOR, badge: 'coral' }
   if (m.dir === 'hi') return v >= m.good ? G : v >= m.med ? M : P
   return v <= m.good ? G : v <= m.med ? M : P
 }
@@ -480,11 +497,11 @@ function PulseView({ topicId }) {
     const val = m.get(target), status = pulseStatus(m, val)
     if (m.key === 'volume') {
       const tr = target.trendPct
-      return { m, val, status, color: '#1779F7', deltaLabel: (tr >= 0 ? '↑ +' : '↓ ') + Math.abs(tr) + '%', deltaGood: tr >= 0, deltaSub: 'vs prev period', series: pulseSeries(val, tr, 1), avg: pulseSeries(total / PULSE_TOPICS.length, 1, 7) }
+      return { m, val, status, color: '#1779F7', deltaLabel: (tr >= 0 ? '↗ +' : '↘ ') + Math.abs(tr) + '%', deltaGood: tr >= 0, deltaSub: 'vs prev period', series: pulseSeries(val, tr, 1), avg: pulseSeries(total / PULSE_TOPICS.length, 1, 7) }
     }
     const mean = PULSE_TOPICS.reduce((s, t) => s + m.get(t), 0) / PULSE_TOPICS.length
     const d = val - mean, good = m.dir === 'hi' ? d >= 0 : d <= 0
-    return { m, val, status, color: status.color, deltaLabel: (d >= 0 ? '↑ ' : '↓ ') + m.fmt(Math.abs(d)), deltaGood: good, deltaSub: 'avg ' + m.fmt(mean), series: pulseSeries(val, (good ? 1 : -1) * 4, m.key.length + Math.round(val)), avg: pulseSeries(mean, 1, m.key.length) }
+    return { m, val, status, color: status.color, deltaLabel: (d >= 0 ? '↗ ' : '↘ ') + m.fmt(Math.abs(d)), deltaGood: good, deltaSub: 'avg ' + m.fmt(mean), series: pulseSeries(val, (good ? 1 : -1) * 4, m.key.length + Math.round(val)), avg: pulseSeries(mean, 1, m.key.length) }
   }
   const infos = {}; PULSE_METRICS.forEach(m => { infos[m.key] = info(m) })
   const fi = infos[metricKey]
@@ -501,15 +518,12 @@ function PulseView({ topicId }) {
             <button key={m.key} onClick={() => setMetricKey(m.key)} style={{ ...card, padding: '12px 13px', cursor: 'pointer', textAlign: 'left', border: '1px solid ' + (selected ? 'var(--b100)' : 'var(--border-default)'), boxShadow: selected ? '0 0 0 3px color-mix(in srgb,var(--b100) 18%,transparent)' : 'none', transition: 'border-color .15s,box-shadow .15s' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', color: 'var(--text-muted)' }}>{m.label.toUpperCase()}</span>
-                {inf.status && <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.04em', color: inf.status.color, background: inf.status.color + '1f', padding: '2px 6px', borderRadius: 4 }}>{inf.status.label.toUpperCase()}</span>}
+                {inf.status && <Badge variant="tinted" color={inf.status.badge} shape="soft" style={{ height: 20, fontSize: 11, padding: '0 8px' }}>{inf.status.label}</Badge>}
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 6 }}>
-                <div style={{ fontSize: 23, fontWeight: 700, lineHeight: 1, color: vcol, fontVariantNumeric: 'tabular-nums' }}>{m.fmt(inf.val)}</div>
-                <Sparkline data={inf.series} color={inf.color} />
-              </div>
+              <div style={{ fontSize: 30, fontWeight: 700, lineHeight: 1.05, color: vcol, fontVariantNumeric: 'tabular-nums' }}>{m.fmt(inf.val)}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8 }}>
                 <Badge variant="tinted" color={inf.deltaGood ? 'green' : 'coral'} shape="pill" style={{ height: 20, fontSize: 11, padding: '0 7px' }}>{inf.deltaLabel}</Badge>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{inf.deltaSub}</span>
+                <span style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{inf.deltaSub}</span>
               </div>
             </button>
           )

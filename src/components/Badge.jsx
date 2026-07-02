@@ -10,7 +10,7 @@
  *   tinted  — color-tinted status chip (DataPage status / priority labels)
  *             requires `color` prop: 'cobalt'|'green'|'coral'|'lilac'|'teal'|'horizon'|'sage'
  *
- * Shapes: pill (borderRadius 999) · rect (borderRadius 4)
+ * Shapes: pill (borderRadius 999) · soft (borderRadius 6) · rect (borderRadius 4)
  */
 
 // ─── Design tokens (values taken directly from source files) ──────────────────
@@ -67,6 +67,7 @@ const BADGE_NAMES = ['cobalt', 'green', 'coral', 'lilac', 'teal', 'horizon', 'sa
 
 const SHAPES = {
   pill: 999,
+  soft: 6,
   rect: 4,
 }
 

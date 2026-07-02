@@ -13,7 +13,7 @@ const VARIANTS = {
     spinArc:   '#FFFFFF',
   },
   secondary: {
-    bg:          'transparent',
+    bg:          'var(--bg-card)',
     bgHover:     'color-mix(in srgb, var(--b100) 8%, var(--bg-card))',
     bgActive:    'color-mix(in srgb, var(--b100) 14%, var(--bg-card))',
     color:       'var(--text-primary)',
@@ -52,10 +52,13 @@ const VARIANTS = {
   },
 }
 
+// Four-step scale from the DS (shared/Button.styles.ts): 24 / 32 / 44 / 56.
+// Radius 8 + gap 8 + weight 600 are base values shared across sizes (xl = 16/700).
 const SIZES = {
-  sm: { height: 32, paddingH: 12, fontSize: 12, borderRadius: 6,  gap: 6,  iconSize: 14 },
-  md: { height: 40, paddingH: 16, fontSize: 13, borderRadius: 8,  gap: 8,  iconSize: 16 },
-  lg: { height: 48, paddingH: 20, fontSize: 14, borderRadius: 10, gap: 8,  iconSize: 18 },
+  sm: { height: 24, paddingH: 14, fontSize: 14, lineHeight: 16, borderRadius: 8, gap: 8, fontWeight: 600, iconSize: 15 },
+  md: { height: 32, paddingH: 20, fontSize: 14, lineHeight: 16, borderRadius: 8, gap: 8, fontWeight: 600, iconSize: 15 },
+  lg: { height: 44, paddingH: 24, fontSize: 14, lineHeight: 18, borderRadius: 8, gap: 8, fontWeight: 600, iconSize: 16 },
+  xl: { height: 56, paddingH: 32, fontSize: 16, lineHeight: 20, borderRadius: 8, gap: 8, fontWeight: 700, iconSize: 18 },
 }
 
 // ─── Spinner ──────────────────────────────────────────────────────────────────
@@ -131,9 +134,9 @@ export default function Button({
         padding:        iconOnly  ? 0 : `0 ${S.paddingH}px`,
         fontFamily:     "'Byrd', sans-serif",
         fontSize:       S.fontSize,
-        fontWeight:     500,
-        lineHeight:     1,
-        letterSpacing:  '0.01em',
+        fontWeight:     S.fontWeight ?? 600,
+        lineHeight:     `${S.lineHeight ?? 16}px`,
+        fontFeatureSettings: "'case' on",
         color:          color,
         background:     bg,
         border:         border,
