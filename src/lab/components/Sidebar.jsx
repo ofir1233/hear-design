@@ -21,6 +21,7 @@ const Fill = ({ vb = '0 0 16 16', children }) => (
 )
 
 const HomeIcon = () => <Stroke><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z" /><path d="M9 21V12h6v9" /></Stroke>
+const NewsIcon = () => <Stroke><path d="M4 4h13a1 1 0 0 1 1 1v13a2 2 0 0 0 2 2H5a2 2 0 0 1-2-2V4z" /><path d="M18 8h2a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2" /><line x1="7" y1="8" x2="14" y2="8" /><line x1="7" y1="12" x2="14" y2="12" /><line x1="7" y1="16" x2="11" y2="16" /></Stroke>
 const DataIcon = () => <Stroke><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M3 5v4c0 1.657 4.03 3 9 3s9-1.343 9-3V5" /><path d="M3 9v4c0 1.657 4.03 3 9 3s9-1.343 9-3V9" /><path d="M3 13v4c0 1.657 4.03 3 9 3s9-1.343 9-3v-4" /></Stroke>
 const DataV2Icon = DataIcon
 const AiTaskIcon = () => <Fill vb="0 -960 960 960"><path d="M491-339q70 0 119-45t49-109q0-57-36.5-96.5T534-629q-47 0-79.5 30T422-525q0 19 7.5 37t21.5 33l57-57q-3-2-4.5-5t-1.5-7q0-11 9-17.5t23-6.5q20 0 33 16.5t13 39.5q0 31-25.5 52.5T492-418q-47 0-79.5-38T380-549q0-29 11-55.5t31-46.5l-57-57q-32 31-49 72t-17 86q0 88 56 149.5T491-339ZM240-80v-172q-57-52-88.5-121.5T120-520q0-150 105-255t255-105q125 0 221.5 73.5T827-615l52 205q5 19-7 34.5T840-360h-80v120q0 33-23.5 56.5T680-160h-80v80h-80v-160h160v-200h108l-38-155q-23-91-98-148t-172-57q-116 0-198 81t-82 197q0 60 24.5 114t69.5 96l26 24v208h-80Zm254-360Z" /></Fill>
@@ -611,6 +612,8 @@ function StorybookDisabledButton() {
 
 const NAV_ITEMS = [
   { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon,        group: 'MAIN'         },
+  { id: 'news',        label: 'News',             Icon: NewsIcon,        group: 'MAIN'         },
+  { id: 'data',        label: 'Data',             Icon: DataV2Icon,      group: 'MAIN'         },
   { id: 'data-v2',     label: 'Data V2',          Icon: DataV2Icon,      group: 'MAIN'         },
   { id: 'topics',      label: 'Topics',           Icon: TopicsIcon,      group: 'MAIN' },
   { id: 'reports',     label: 'Reports',          Icon: ReportsIcon,     group: 'MAIN'         },

@@ -205,13 +205,9 @@ function ModeTabs({ lens, onLens, colorBy, onColorBy, overall, onToggleOverall, 
         </>
       )}
 
-      {/* Landscape-only: view presets */}
+      {/* Landscape-only: view preset selector (dropdown, mirrors Pulse) */}
       {lens === 'landscape' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-          {LAND_PRESETS.map(p => (
-            <PresetChip key={p.key} active={landView === p.key} label={p.label} onClick={() => onLandView(p.key)} />
-          ))}
-        </div>
+        <LandscapeSelect value={landView} onChange={onLandView} />
       )}
 
       {/* Pulse-only: topic selector + period */}
@@ -256,21 +252,35 @@ function PulseControls({ topicId, onSelect, period, onPeriod, open, onToggle, on
   )
 }
 
-function PresetChip({ active, label, onClick, dashed }) {
+function LandscapeSelect({ value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [open])
+  const current = (LAND_PRESETS.find(p => p.key === value) || LAND_PRESETS[0]).label
   return (
-    <button
-      onClick={onClick}
-      style={{
-        height: SEG_OUTER, boxSizing: 'border-box', padding: '0 12px', borderRadius: 99, cursor: 'pointer',
-        fontFamily: "'Byrd', sans-serif", fontSize: 12.5, fontWeight: active ? 600 : 500, whiteSpace: 'nowrap',
-        border: `1px ${dashed ? 'dashed' : 'solid'} ${active ? 'var(--b100)' : 'var(--border-input)'}`,
-        background: active ? 'color-mix(in srgb, var(--b100) 10%, var(--bg-card))' : (dashed ? 'transparent' : 'var(--bg-card)'),
-        color: active ? 'var(--b100)' : 'var(--text-secondary)',
-        transition: 'background 150ms ease, color 150ms ease, border-color 150ms ease',
-      }}
-    >
-      {label}
-    </button>
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(o => !o)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: SEG_OUTER, boxSizing: 'border-box', padding: '0 13px', border: `1px solid ${open ? 'var(--b100)' : 'var(--border-input)'}`, background: 'var(--bg-card)', borderRadius: 8, cursor: 'pointer', fontFamily: "'Byrd',sans-serif", fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)' }}>
+        {current}
+        <span style={{ color: 'var(--text-muted)', fontSize: 10 }}>▾</span>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', left: 0, top: SEG_OUTER + 4, zIndex: 30, background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 10, boxShadow: '0 8px 28px rgba(0,0,0,0.12)', padding: 5, minWidth: 220, maxHeight: 360, overflowY: 'auto' }}>
+          {LAND_PRESETS.map(p => {
+            const active = p.key === value
+            return (
+              <button key={p.key} onClick={() => { onChange(p.key); setOpen(false) }} style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '8px 9px', border: 'none', background: active ? 'var(--bg-active)' : 'transparent', borderRadius: 7, cursor: 'pointer', fontFamily: "'Byrd',sans-serif", fontSize: 13, fontWeight: active ? 600 : 500, color: 'var(--text-primary)', textAlign: 'left' }}>
+                {p.label}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 

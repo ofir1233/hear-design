@@ -1,24 +1,63 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
-import { BsPinFill, BsPin } from 'react-icons/bs'
-import Badge from '../Badge.jsx'
-import Button from '../Button.jsx'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
+import { AgGridReact } from 'ag-grid-react'
+import { ModuleRegistry, AllCommunityModule, themeQuartz, colorSchemeDark, colorSchemeLight } from 'ag-grid-community'
 import PageHeader from '../PageHeader.jsx'
+import Button from '../Button.jsx'
+import Badge from '../Badge.jsx'
+import { DotsIcon } from '../icons/index.jsx'
 
 function navigate(path, state = {}) {
   window.history.pushState(state, '', path)
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
 
-// ── Icons ──────────────────────────────────────────────────────────────────────
+// ── AG Grid setup (mirrors AlertsPage) ───────────────────────────────────────
 
-function ChevronIcon({ open }) {
-  return (
-    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
-      style={{ transition: 'transform 200ms ease', transform: open ? 'rotate(90deg)' : 'rotate(0deg)', flexShrink: 0 }}>
-      <path d="M3 2l4 3-4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  )
+ModuleRegistry.registerModules([AllCommunityModule])
+
+const THEME_PARAMS = {
+  fontFamily: "'Byrd', sans-serif",
+  fontSize: 14,
+  cellHorizontalPaddingScale: 1.15,
+  wrapperBorderRadius: 0,
 }
+const lightTheme = themeQuartz.withPart(colorSchemeLight).withParams({
+  ...THEME_PARAMS,
+  backgroundColor:               '#FFFFFF',
+  foregroundColor:               '#181818',
+  headerBackgroundColor:         '#FFFFFF',
+  headerTextColor:               '#606060',
+  borderColor:                   '#E5E7EB',
+  rowHoverColor:                 '#E8E8E6',
+  selectedRowBackgroundColor:    'rgba(23,121,247,0.07)',
+  oddRowBackgroundColor:         '#F9F9F7',
+  headerColumnResizeHandleColor: '#D1D5DB',
+})
+const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
+  ...THEME_PARAMS,
+  backgroundColor:               '#242424',
+  foregroundColor:               '#F4F3F1',
+  headerBackgroundColor:         '#242424',
+  headerTextColor:               '#9B9B9B',
+  borderColor:                   '#333333',
+  rowHoverColor:                 '#2A2A2A',
+  selectedRowBackgroundColor:    'rgba(23,121,247,0.12)',
+  oddRowBackgroundColor:         '#202020',
+  headerColumnResizeHandleColor: '#444444',
+})
+
+function useIsDark() {
+  const [isDark, setIsDark] = useState(() => document.documentElement.dataset.theme === 'dark')
+  useEffect(() => {
+    const obs = new MutationObserver(() => setIsDark(document.documentElement.dataset.theme === 'dark'))
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
+  return isDark
+}
+
+// ── Icons ────────────────────────────────────────────────────────────────────
 
 function PlusIcon() {
   return (
@@ -28,830 +67,352 @@ function PlusIcon() {
   )
 }
 
-function SearchIcon() {
+function SparkleIcon({ size = 12 }) {
   return (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-      <circle cx="5.5" cy="5.5" r="4" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M9 9l2.5 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <path d="M8 1l1.4 3.9L13 6l-3.6 1.1L8 11 6.6 7.1 3 6l3.6-1.1L8 1z" fill="currentColor" />
+      <path d="M13 10.5l.5 1.5 1.5.5-1.5.5-.5 1.5-.5-1.5-1.5-.5 1.5-.5.5-1.5z" fill="currentColor" opacity="0.6" />
     </svg>
   )
 }
 
-function ListViewIcon({ active }) {
-  const col = active ? 'var(--c100)' : 'currentColor'
+function CopyIcon12() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <rect x="2" y="3"  width="12" height="2" rx="1" fill={col} />
-      <rect x="2" y="7"  width="12" height="2" rx="1" fill={col} />
-      <rect x="2" y="11" width="12" height="2" rx="1" fill={col} />
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+      <rect x="5" y="5" width="8" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M11 5V3.5A1.5 1.5 0 009.5 2H4A1.5 1.5 0 002.5 3.5V9A1.5 1.5 0 004 10.5H5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
 
-function GridViewIcon({ active }) {
-  const col = active ? 'var(--c100)' : 'currentColor'
+function CheckIcon12() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <rect x="2" y="2" width="5" height="5" rx="1.5" fill={col} />
-      <rect x="9" y="2" width="5" height="5" rx="1.5" fill={col} />
-      <rect x="2" y="9" width="5" height="5" rx="1.5" fill={col} />
-      <rect x="9" y="9" width="5" height="5" rx="1.5" fill={col} />
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+      <path d="M3 8.5l3.5 3.5 6.5-7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
 
-function MoreIcon() {
+function ShieldIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="3.5"  r="1.2" fill="currentColor" />
-      <circle cx="8" cy="8"    r="1.2" fill="currentColor" />
-      <circle cx="8" cy="12.5" r="1.2" fill="currentColor" />
+    <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
+      <path d="M10 2.5l6 2.2v4.6c0 3.4-2.5 6.1-6 6.9-3.5-.8-6-3.5-6-6.9V4.7l6-2.2z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
     </svg>
   )
 }
 
-function SparkleIcon() {
+function ApertureIcon() {
   return (
-    <svg width="9" height="9" viewBox="0 0 10 10" fill="none">
-      <path d="M5 0.5L5.9 3.8L9 5L5.9 6.2L5 9.5L4.1 6.2L1 5L4.1 3.8L5 0.5Z" fill="currentColor" />
+    <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="7.2" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M10 2.8v7.2l5.1 5.1M17.2 10h-7.2L4.9 15.1M2.8 10h7.2L15.1 4.9" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" opacity="0.85" />
     </svg>
   )
 }
 
-// ── Sparkline ─────────────────────────────────────────────────────────────────
-
-function Sparkline({ data, color = '#FF7056', height = 56 }) {
-  const min = Math.min(...data)
-  const max = Math.max(...data)
-  const range = max - min || 1
-  const W = 200, H = height, pX = 2, pY = 6
-
-  const pts = data.map((v, i) => [
-    pX + (i / (data.length - 1)) * (W - pX * 2),
-    pY + (H - pY * 2) - ((v - min) / range) * (H - pY * 2),
-  ])
-
-  const line = pts.map(([x, y]) => `${x},${y}`).join(' ')
-  const area = `M${pts[0][0]},${H} ` + pts.map(([x, y]) => `L${x},${y}`).join(' ') + ` L${pts.at(-1)[0]},${H} Z`
-  const [lx, ly] = pts.at(-1)
-  const gid = `sg${color.replace('#', '')}`
-
-  const dotLeft = `${(lx / W) * 100}%`
-  const dotTop  = `${(ly / H) * 100}%`
-
-  return (
-    <div style={{ position: 'relative', height }}>
-      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" fill="none"
-        style={{ display: 'block' }}>
-        <defs>
-          <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.22" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={area} fill={`url(#${gid})`} />
-        <polyline points={line} stroke={color} strokeWidth="1.8" strokeLinecap="round"
-          strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
-      </svg>
-      <div style={{
-        position: 'absolute', left: dotLeft, top: dotTop,
-        width: 14, height: 14, borderRadius: '50%',
-        background: color, opacity: 0.18,
-        transform: 'translate(-50%, -50%)',
-        animation: 'spark-pulse 2s ease-in-out infinite',
-        pointerEvents: 'none',
-      }} />
-      <div style={{
-        position: 'absolute', left: dotLeft, top: dotTop,
-        width: 8, height: 8, borderRadius: '50%',
-        background: color, transform: 'translate(-50%, -50%)',
-        pointerEvents: 'none',
-      }} />
-    </div>
-  )
+// icons for the actions menu
+function RunIcon() {
+  return <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M4 3l9 5-9 5V3z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /></svg>
+}
+function EditIcon() {
+  return <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M11 2.5l2.5 2.5M2.5 13.5L3 11l7.5-7.5 2.5 2.5L5.5 13.5 2.5 13.5z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+}
+function HistoryIcon() {
+  return <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 4v4l2.5 1.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /><path d="M2.6 8a5.4 5.4 0 105.4-5.4A5.4 5.4 0 003.2 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /><path d="M2.6 2.6V5H5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+}
+function TrashIcon() {
+  return <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 4.5h10M6.5 4V2.5h3V4M4.5 4.5l.5 8.5a1 1 0 001 1h4a1 1 0 001-1l.5-8.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" /></svg>
 }
 
-// ── Data ──────────────────────────────────────────────────────────────────────
+// ── Mock data (ExtendedReport) ───────────────────────────────────────────────
 
-const PREVIEW_DATA = {
-  '694d64ceefa95f9cc2ababdb3': {
-    lastRun: 'Today · 07:09', apiKey: 'hear_sk_••••3f9a',
-    sparkData: [42, 38, 46, 55, 49, 61, 67], sparkColor: '#FF7056',
-    sparkLabel: 'Billing complaints / 7d', sparkDelta: '+12%', sparkUp: true,
-    stats: [
-      { label: 'Calls analyzed', value: '1,247' },
-      { label: 'Avg handle time', value: '4m 36s' },
-      { label: 'CSAT avg', value: '87%' },
-    ],
-  },
-  '6942b63cfd8049b0c779c75b': {
-    lastRun: 'Running now', apiKey: 'hear_sk_••••8c2d',
-    sparkData: [5.1, 4.9, 4.7, 4.4, 4.3, 4.4, 4.2], sparkColor: '#1779F7',
-    sparkLabel: 'Escalation rate / 7d', sparkDelta: '−0.9pp', sparkUp: false,
-    stats: [
-      { label: 'Escalation rate', value: '4.2%' },
-      { label: 'Avg wait time', value: '2m 11s' },
-      { label: 'Same-day resolved', value: '91%' },
-    ],
-  },
-  '694265261dcb88436adfcac5': {
-    lastRun: 'Mar 14 · 06:00', apiKey: 'hear_sk_••••a7e1',
-    sparkData: [11, 14, 13, 16, 12, 15, 14], sparkColor: '#4BA373',
-    sparkLabel: 'Peak hour calls / 7d', sparkDelta: '+3 slots', sparkUp: true,
-    stats: [
-      { label: 'Peak: 10–11 AM', value: '14 calls' },
-      { label: '2–3 PM peak', value: '11 calls' },
-      { label: 'Staff target', value: '94%' },
-    ],
-  },
-}
-
-const DEFAULT_PINNED = [
-  '694d64ceefa95f9cc2ababdb3',
-  '6942b63cfd8049b0c779c75b',
-  '694265261dcb88436adfcac5',
+const REPORTS = [
+  { _id: '694d64ceefa95f9cc2abadb3', title: 'Daily trends report',                  is_active: false, aiGenerated: true,  kind: 'trends',     updated_at: null,                  last_run_at: '03/11/2026 07:32', created_by_name: 'System', report_has_run: true },
+  { _id: '695ba702efa95f9cc2abae06', title: 'Weekly trends report',                 is_active: false, aiGenerated: true,  kind: 'trends',     updated_at: null,                  last_run_at: '03/08/2026 06:15', created_by_name: 'System', report_has_run: true },
+  { _id: '695ba722efa95f9cc2abae07', title: 'Monthly trends report',                is_active: true,  aiGenerated: true,  kind: 'trends',     updated_at: null,                  last_run_at: '07/01/2026 05:00', created_by_name: 'System', report_has_run: true },
+  { _id: '69b994d55c386b25c10c17cc', title: 'Monthly Compliance Violations by CS',  is_active: true,  aiGenerated: false, kind: 'compliance', updated_at: '03/22/2026 10:06:52', last_run_at: '07/01/2026 02:30', created_by_name: 'Anouk Berger', report_has_run: true },
+  { _id: '69bae78d60ec7fa0284b8b9c', title: "Weekly Agent's Violations Report",     is_active: true,  aiGenerated: false, kind: 'compliance', updated_at: '03/22/2026 08:11:05', last_run_at: '06/29/2026 09:45', created_by_name: 'Anouk Berger', report_has_run: true },
 ]
 
-const STATUS_CFG = {
-  'ai-generated': { label: 'AI Generated', border: 'var(--c100)' },
-  'running':      { label: 'Running',      border: 'var(--g100)' },
-  'completed':    { label: 'Completed',    border: 'var(--g100)' },
-  'failed':       { label: 'Failed',       border: '#DC2626'     },
-  'not-executed': { label: 'Not Executed', border: 'var(--border-default)' },
-}
+const ACTIVE_QUOTA = { current: 2, limit: 20 }
 
-const STATUS_FILTERS = [
-  { value: 'all',          label: 'All' },
-  { value: 'ai-generated', label: 'AI Generated' },
-  { value: 'running',      label: 'Running' },
-  { value: 'completed',    label: 'Completed' },
-  { value: 'failed',       label: 'Failed' },
-  { value: 'not-executed', label: 'Not Executed' },
-]
+// ── Small shared pieces ───────────────────────────────────────────────────────
 
-const MOCK_REPORTS = [
-  { id: '694d64ceefa95f9cc2ababdb3', name: 'Daily trends report',                                    status: 'ai-generated', schedule: 'Daily',     createdAt: '2026-03-08', trend: 'Billing complaints up 12%, resolution time improved 8% vs. last week.' },
-  { id: '695ba722efa95f9cc2abae07',  name: 'Monthly trends report',                                  status: 'ai-generated', schedule: 'Monthly',   createdAt: '2026-03-07', trend: 'Monthly report not yet executed for the current period.' },
-  { id: '695ba702efa95f9cc2abae06',  name: 'Weekly trends report',                                   status: 'ai-generated', schedule: 'Weekly',    createdAt: '2026-03-07', trend: 'Weekly report not yet executed for the current period.' },
-  { id: '6942b608aa54410857420f45',  name: 'Call closure rate — 7 days',                             status: 'failed',       schedule: 'Daily',     createdAt: '2026-03-06', trend: 'Missing data for yesterday prevented anomaly detection from running.' },
-  { id: '6942b63cfd8049b0c779c75b',  name: 'Escalation tracking report',                             status: 'running',      schedule: 'Weekly',    createdAt: '2026-03-06', trend: 'Escalation rate stable at 4.2%. High-volume periods: Mon & Thu afternoons.' },
-  { id: '694265261dcb88436adfcac5',  name: 'Peak hour detection — weekly',                           status: 'completed',    schedule: 'Weekly',    createdAt: '2026-03-05', trend: 'Peak hours: 10–11 AM and 2–3 PM. Staffing recommendations attached.' },
-  { id: '6852ce3f2e71d4df0f611c6b',  name: 'Anomaly report by agent',                               status: 'completed',    schedule: 'On demand', createdAt: '2026-03-05', trend: '3 agents flagged for unusual silence patterns. Data gaps resolved.' },
-  { id: '6942b65037dbc5b2b07a3fee',  name: 'Open interactions — 7 days',                            status: 'failed',       schedule: 'Daily',     createdAt: '2026-03-04', trend: 'Cannot compare without two comparable input datasets. Manual review required.' },
-  { id: '6947a86c068a8c032426eac0',  name: 'Avg. handle time — weekly',                             status: 'completed',    schedule: 'Weekly',    createdAt: '2026-03-04', trend: 'Week of 21–27 Mar: avg 4m 36s, down 18s vs. prior week.' },
-  { id: '6942653a1dcb88436adfcac8',  name: 'Live interaction audit — daily',                        status: 'completed',    schedule: 'Daily',     createdAt: '2026-03-03', trend: 'No critical compliance flags. 2 borderline interactions flagged for review.' },
-  { id: '685be8d47b919e47fa5d959d',  name: 'Agent performance: staffing & personal breakdown',      status: 'completed',    schedule: 'Monthly',   createdAt: '2026-03-03', trend: 'Top 5 agents exceeded CSAT target. Bottom 3 agents recommended for coaching.' },
-  { id: '685be91a8774d22c95d77ed8',  name: 'Agent performance: follow-up & ticket creation',        status: 'failed',       schedule: 'Weekly',    createdAt: '2026-03-02', trend: 'CRM integration returned empty dataset. Retry scheduled for next cycle.' },
-  { id: '685be92d7b919e47fa5d95e2',  name: 'Agent performance: portal access & knowledge',          status: 'failed',       schedule: 'Weekly',    createdAt: '2026-03-02', trend: 'Knowledge base sync failed. Report will re-run once sync is restored.' },
-  { id: '685be9067b919e47fa5d95ce',  name: 'Agent performance: behavior & compliance',              status: 'failed',       schedule: 'Weekly',    createdAt: '2026-03-01', trend: 'Compliance module offline during scheduled run. Escalated to IT.' },
-  { id: '685be8e57b919e47fa5d95ac',  name: 'Agent performance: interview quality assessment',       status: 'failed',       schedule: 'On demand', createdAt: '2026-03-01', trend: 'No interview data found for the requested period. Report skipped.' },
-  { id: '685be8c08774d22c95d77ec8',  name: 'Agent performance: call topics',                        status: 'failed',       schedule: 'Daily',     createdAt: '2026-02-28', trend: 'Topic classification model returned null for this batch. Retrying.' },
-  { id: '6852cdbbe139c8454f7a8252',  name: 'Agent performance: portal access & knowledge',          status: 'not-executed', schedule: 'Weekly',    createdAt: '2026-02-28', trend: null },
-  { id: '6852cda72e71d4df0f611c46',  name: 'Agent performance: follow-up & ticket creation',        status: 'not-executed', schedule: 'Weekly',    createdAt: '2026-02-27', trend: null },
-  { id: '6852cd97e139c8454f7a8239',  name: 'Agent performance: behavior & compliance',              status: 'not-executed', schedule: 'Weekly',    createdAt: '2026-02-27', trend: null },
-  { id: '6852cd882e71d4df0f611c44',  name: 'Agent performance: interview quality assessment',       status: 'not-executed', schedule: 'On demand', createdAt: '2026-02-26', trend: null },
-  { id: '6852cd75e139c8454f7a8236',  name: 'Agent performance: staffing & personal breakdown',      status: 'not-executed', schedule: 'Monthly',   createdAt: '2026-02-26', trend: null },
-  { id: '6852ccbc2e71d4df0f611a30',  name: 'Agent performance: call topics',                        status: 'not-executed', schedule: 'Daily',     createdAt: '2026-02-25', trend: null },
-]
-
-// ── Status atoms ───────────────────────────────────────────────────────────────
-
-const STATUS_DOT_COLOR = {
-  'ai-generated': 'var(--c100)',
-  'running':      '#3B82F6',
-  'completed':    'var(--g100)',
-  'failed':       '#DC2626',
-  'not-executed': 'var(--border-default)',
-}
-
-function StatusDot({ status }) {
+function ActiveToggle({ checked, disabled, onClick }) {
   return (
-    <span style={{
-      width: 7, height: 7, borderRadius: '50%',
-      background: STATUS_DOT_COLOR[status] ?? 'var(--border-default)',
-      flexShrink: 0, display: 'inline-block',
-    }} />
-  )
-}
-
-function AIBadge() {
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 4,
-      height: 20, padding: '0 8px', borderRadius: 999,
-      background: 'rgba(255,112,86,0.12)', border: '1px solid rgba(255,112,86,0.28)',
-      color: 'var(--c100)', fontSize: 11, fontWeight: 600,
-      fontFamily: "'Byrd', sans-serif", whiteSpace: 'nowrap', flexShrink: 0,
+    <button role="switch" aria-checked={checked} disabled={disabled} onClick={onClick} style={{
+      width: 34, height: 20, borderRadius: 99, border: 'none', padding: 0, position: 'relative', flexShrink: 0,
+      background: checked ? 'var(--b100)' : 'var(--border-default)',
+      cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1, transition: 'background 200ms ease',
     }}>
-      <SparkleIcon /> AI Generated
-    </span>
-  )
-}
-
-function FailedBadge() {
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center',
-      height: 20, padding: '0 8px', borderRadius: 999,
-      background: 'rgba(220,38,38,0.10)', border: '1px solid rgba(220,38,38,0.28)',
-      color: '#DC2626', fontSize: 11, fontWeight: 600,
-      fontFamily: "'Byrd', sans-serif",
-      letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0,
-    }}>
-      Failed
-    </span>
-  )
-}
-
-function NotExecutedBadge() {
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center',
-      height: 20, padding: '0 8px', borderRadius: 999,
-      background: 'var(--bg-active)', border: '1px solid var(--border-input)',
-      color: 'var(--text-muted)', fontSize: 11, fontWeight: 600,
-      fontFamily: "'Byrd', sans-serif",
-      letterSpacing: '0.07em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0,
-    }}>
-      Not Executed
-    </span>
-  )
-}
-
-function StatusBadge({ status }) {
-  if (status === 'ai-generated') return <AIBadge />
-  if (status === 'failed')       return <FailedBadge />
-  if (status === 'not-executed') return <NotExecutedBadge />
-  if (status === 'running')      return <Badge variant="tinted" color="green">Running</Badge>
-  if (status === 'completed')    return <Badge variant="tinted" color="green">Completed</Badge>
-  return null
-}
-
-function SchedulePill({ label }) {
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center',
-      height: 20, padding: '0 8px', borderRadius: 4,
-      background: 'var(--bg-active)', border: '1px solid var(--border-input)',
-      color: 'var(--text-muted)', fontSize: 10, fontWeight: 600,
-      fontFamily: "'Byrd', sans-serif",
-      letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0,
-    }}>
-      {label}
-    </span>
-  )
-}
-
-// ── Toggle ────────────────────────────────────────────────────────────────────
-
-function Toggle({ value, onChange }) {
-  const [on, setOn] = useState(value ?? true)
-  function handleClick(e) {
-    e.stopPropagation()
-    const next = !on
-    setOn(next)
-    onChange?.(next)
-  }
-  return (
-    <button
-      onClick={handleClick}
-      style={{
-        position: 'relative',
-        width: 32, height: 18, borderRadius: 9,
-        background: on ? 'var(--b100)' : 'var(--border-default)',
-        border: 'none', cursor: 'pointer', flexShrink: 0, padding: 0,
-        transition: 'background 200ms ease',
-        boxShadow: on ? '0 0 0 3px rgba(23,121,247,0.12)' : 'none',
-        outline: 'none',
-      }}
-    >
       <span style={{
-        position: 'absolute',
-        top: 2, left: on ? 14 : 2,
-        width: 14, height: 14, borderRadius: '50%',
-        background: '#fff',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
-        transition: 'left 180ms cubic-bezier(0.34,1.56,0.64,1)',
+        position: 'absolute', top: 3, left: checked ? 17 : 3, width: 14, height: 14, borderRadius: '50%',
+        background: '#fff', boxShadow: '0 1px 2px rgba(0,0,0,0.25)', transition: 'left 200ms ease',
       }} />
     </button>
   )
 }
 
-// ── Status filter tabs ─────────────────────────────────────────────────────────
-
-function StatusTabs({ active, onChange, counts }) {
-  return (
-    <div className="smooth-scroll" style={{ display: 'flex', gap: 2, flexShrink: 1, overflowX: 'auto', minWidth: 0 }}>
-      {STATUS_FILTERS.map(f => {
-        const isActive = active === f.value
-        const count = counts[f.value]
-        return (
-          <button
-            key={f.value}
-            onClick={() => onChange(f.value)}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              height: 28, padding: '0 10px', borderRadius: 6,
-              background: isActive ? 'var(--bg-active)' : 'transparent',
-              border: isActive ? '1px solid var(--border-default)' : '1px solid transparent',
-              color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
-              fontSize: 12, fontWeight: isActive ? 600 : 400,
-              fontFamily: "'Byrd', sans-serif",
-              cursor: 'pointer',
-              transition: 'background 120ms ease, color 120ms ease, border-color 120ms ease',
-              whiteSpace: 'nowrap',
-            }}
-            onMouseEnter={e => { if (!isActive) { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'var(--bg-active)' } }}
-            onMouseLeave={e => { if (!isActive) { e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'transparent' } }}
-          >
-            {f.label}
-            {count != null && count > 0 && (
-              <span style={{
-                minWidth: 16, height: 16, padding: '0 4px', borderRadius: 99,
-                background: isActive ? 'var(--border-default)' : 'var(--bg-active)',
-                fontSize: 10, fontWeight: 700,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                color: isActive ? 'var(--text-secondary)' : 'var(--text-muted)',
-              }}>
-                {count}
-              </span>
-            )}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-// ── ReportRow (accordion item) ────────────────────────────────────────────────
-
-function FieldLabel({ children }) {
+function AiGeneratedBadge() {
   return (
     <span style={{
-      fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
-      textTransform: 'uppercase', color: 'var(--text-muted)',
-      fontFamily: "'Byrd', sans-serif",
+      display: 'inline-flex', alignItems: 'center', gap: 5, height: 20, padding: '0 8px', borderRadius: 5,
+      background: 'var(--b20)', color: 'var(--badge-cobalt-text)', flexShrink: 0,
+      fontSize: 10, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase',
     }}>
-      {children}
+      <SparkleIcon size={11} /> AI Generated
     </span>
   )
 }
 
-function ReportRow({ report, isOpen, onToggle, isPinned, onTogglePin }) {
-  const showStatusBadge = report.status === 'failed' || report.status === 'not-executed'
-  const defaultOn = report.status !== 'failed' && report.status !== 'not-executed'
+// ── Cell renderers ────────────────────────────────────────────────────────────
 
+function ActiveToggleCellRenderer(params) {
+  const r = params.data
+  const [busy, setBusy] = useState(false)
+  if (!r) return null
+  const click = () => { if (busy) return; setBusy(true); params.onToggle(r); setTimeout(() => setBusy(false), 350) }
   return (
-    <div data-report-id={report.id} style={{
-      background: 'var(--bg-card)',
-      border: `1px solid ${isOpen ? 'var(--border-default)' : 'var(--border-input)'}`,
-      borderRadius: 10,
-      overflow: 'hidden',
-      transition: 'border-color 150ms ease, box-shadow 150ms ease',
-      boxShadow: isOpen ? '0 2px 12px rgba(0,0,0,0.07)' : 'none',
-    }}>
-      {/* ── Collapsed header ── */}
-      <div
-        onClick={onToggle}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '0 14px', height: 44, minWidth: 0,
-          cursor: 'pointer', flexWrap: 'nowrap', overflow: 'hidden',
-          background: 'transparent',
-          transition: 'background 120ms ease',
-          userSelect: 'none',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-active)' }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-      >
-        <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <ChevronIcon open={isOpen} />
-        </span>
-        <StatusDot status={report.status} />
-        <span style={{
-          fontSize: 13, fontWeight: 600,
-          color: report.status === 'not-executed' ? 'var(--text-muted)' : 'var(--text-primary)',
-          fontFamily: "'Byrd', sans-serif",
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          flexShrink: 1, minWidth: 0,
-        }}>
-          {report.name}
-        </span>
-        {report.status === 'ai-generated' && <AIBadge />}
-        <SchedulePill label={report.schedule} />
-        <span style={{
-          fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif",
-          whiteSpace: 'nowrap', flexShrink: 0,
-        }}>
-          {report.createdAt}
-        </span>
-        <div style={{ flex: 1 }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          {showStatusBadge && <StatusBadge status={report.status} />}
-          <Toggle value={defaultOn} />
-        </div>
-      </div>
+    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+      <ActiveToggle checked={r.is_active} disabled={busy} onClick={click} />
+    </div>
+  )
+}
 
-      {/* ── Expanded body — grid-rows animation never clips content once open ── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateRows: isOpen ? '1fr' : '0fr',
-        transition: 'grid-template-rows 260ms ease',
+function ReportIdCellRenderer(params) {
+  const r = params.data
+  const [copied, setCopied] = useState(false)
+  const [hover, setHover] = useState(false)
+  if (!r) return null
+  const copy = (e) => {
+    e.stopPropagation()
+    navigator.clipboard?.writeText(r._id).catch(() => {})
+    setCopied(true); params.onCopyToast?.('Report ID copied to clipboard'); setTimeout(() => setCopied(false), 1400)
+  }
+  return (
+    <div
+      onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+      style={{ display: 'flex', alignItems: 'center', gap: 10, height: '100%', minWidth: 0 }}>
+      {r.aiGenerated && <AiGeneratedBadge />}
+      <span style={{ fontSize: 14, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r._id}</span>
+      <button onClick={copy} title="Copy report ID" aria-label="Copy report ID" style={{
+        display: 'flex', border: 'none', background: 'transparent', padding: 0, cursor: 'pointer', flexShrink: 0,
+        color: copied ? 'var(--g100)' : 'var(--text-muted)', opacity: copied || hover ? 1 : 0, transition: 'opacity 120ms ease',
       }}>
-        <div style={{ overflow: 'hidden' }}>
-        <div style={{
-          padding: '14px 16px 16px',
-          borderTop: '1px solid var(--border-input)',
-          background: 'var(--bg-card)',
-          display: 'flex', flexDirection: 'column', gap: 12,
+        {copied ? <CheckIcon12 /> : <CopyIcon12 />}
+      </button>
+    </div>
+  )
+}
+
+function NameCellRenderer(params) {
+  const r = params.data
+  if (!r) return null
+  const Icon = r.kind === 'compliance' ? ApertureIcon : ShieldIcon
+  const clickable = r.report_has_run
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 9, height: '100%', minWidth: 0 }}>
+      <span title={r.kind === 'compliance' ? 'AI Generated Report' : 'System Report'} style={{ color: 'var(--text-muted)', display: 'flex', flexShrink: 0 }}><Icon /></span>
+      <span
+        onClick={clickable ? () => navigate(`/reports/talk/${r._id}`) : undefined}
+        title={r.title}
+        style={{
+          fontSize: 14, fontWeight: 600, color: clickable ? 'var(--b100)' : 'var(--text-secondary)',
+          cursor: clickable ? 'pointer' : 'default', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}
+        onMouseEnter={e => { if (clickable) e.currentTarget.style.textDecoration = 'underline' }}
+        onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}
+      >{r.title}</span>
+    </div>
+  )
+}
+
+function DateCellRenderer(params) {
+  if (params.data == null) return null
+  return params.value
+    ? <span style={{ color: 'var(--text-secondary)' }}>{params.value}</span>
+    : <span style={{ color: 'var(--text-muted)' }}>-</span>
+}
+
+function CreatedByCellRenderer(params) {
+  if (params.data == null) return null
+  return <span style={{ color: 'var(--text-secondary)' }}>{params.value || 'N/A'}</span>
+}
+
+function ActionsCellRenderer(params) {
+  const r = params.data
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState(null)
+  const btnRef = useRef(null)
+  const menuRef = useRef(null)
+
+  const openMenu = () => {
+    const rect = btnRef.current.getBoundingClientRect()
+    setPos({ top: rect.bottom + 4, left: rect.left })
+    setOpen(true)
+  }
+  useEffect(() => {
+    if (!open) return
+    const onDown = e => { if (menuRef.current?.contains(e.target) || btnRef.current?.contains(e.target)) return; setOpen(false) }
+    const close = () => setOpen(false)
+    document.addEventListener('mousedown', onDown)
+    window.addEventListener('resize', close); window.addEventListener('scroll', close, true)
+    return () => { document.removeEventListener('mousedown', onDown); window.removeEventListener('resize', close); window.removeEventListener('scroll', close, true) }
+  }, [open])
+  if (!r) return null
+
+  const trends = r.kind === 'trends'
+  const items = [
+    !trends && { key: 'run', label: 'Run', Icon: RunIcon, onClick: () => params.onCopyToast?.(`Running "${r.title}"…`) },
+    { key: 'edit', label: trends ? 'View' : 'Edit', Icon: EditIcon, onClick: () => navigate(`/reports/edit/${r._id}`) },
+    !trends && { key: 'history', label: 'History', Icon: HistoryIcon, onClick: () => navigate(`/reports/history/${r._id}`) },
+    !trends && { key: 'delete', label: 'Delete', Icon: TrashIcon, danger: true, onClick: () => params.onDelete?.(r) },
+  ].filter(Boolean)
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+      <button ref={btnRef} onClick={() => (open ? setOpen(false) : openMenu())} aria-label="Actions" style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28, borderRadius: 6, border: 'none',
+        background: open ? 'var(--bg-active)' : 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', transition: 'background 120ms ease',
+      }}>
+        <DotsIcon />
+      </button>
+      {open && pos && createPortal(
+        <div ref={menuRef} style={{
+          position: 'fixed', top: pos.top, left: pos.left, zIndex: 10002, minWidth: 160, padding: 4, borderRadius: 10,
+          background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', boxShadow: '0 10px 30px rgba(0,0,0,0.16)',
         }}>
-          {/* Trend text */}
-          {report.trend ? (
-            <p style={{
-              margin: 0, fontSize: 13, color: 'var(--text-secondary)',
-              fontFamily: "'Byrd', sans-serif", lineHeight: 1.55,
-            }}>
-              {report.trend}
-            </p>
-          ) : (
-            <p style={{
-              margin: 0, fontSize: 12, color: 'var(--text-muted)',
-              fontFamily: "'Byrd', sans-serif", fontStyle: 'italic',
-            }}>
-              No data yet — this report hasn't been executed.
-            </p>
-          )}
-
-          {/* Fields */}
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <FieldLabel>Schedule</FieldLabel>
-              <SchedulePill label={report.schedule} />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <FieldLabel>Created</FieldLabel>
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif" }}>
-                {report.createdAt}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <FieldLabel>Status</FieldLabel>
-              <StatusBadge status={report.status} />
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            paddingTop: 12, borderTop: '1px solid var(--border-input)',
-            flexWrap: 'wrap',
-          }}>
-            <Button size="sm" onClick={() => navigate(`/reports/${report.id}`)}>
-              ↗ Open Report
-            </Button>
-            <Button variant="ghost" size="sm">↻ Re-run</Button>
-            <Button variant="ghost" size="sm">⧉ Duplicate</Button>
-            <button
-              onClick={e => { e.stopPropagation(); onTogglePin() }}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                height: 28, padding: '0 10px', borderRadius: 6,
-                background: isPinned ? 'rgba(23,121,247,0.07)' : 'transparent',
-                border: `1px solid ${isPinned ? 'rgba(23,121,247,0.22)' : 'var(--border-input)'}`,
-                color: isPinned ? 'var(--b100)' : 'var(--text-secondary)',
-                fontSize: 12, fontFamily: "'Byrd', sans-serif", fontWeight: 500,
-                cursor: 'pointer', transition: 'all 150ms ease',
-              }}
+          {items.map(({ key, label, Icon, onClick, danger }) => (
+            <button key={key} onClick={() => { setOpen(false); onClick() }} style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '8px 10px', borderRadius: 6,
+              border: 'none', background: 'transparent', cursor: 'pointer', textAlign: 'left',
+              fontSize: 13, fontFamily: "'Byrd', sans-serif", color: danger ? 'var(--red100)' : 'var(--text-primary)',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = danger ? 'rgba(229,72,77,0.08)' : 'var(--bg-active)' }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              {isPinned ? <BsPinFill size={11} /> : <BsPin size={11} />}
-              {isPinned ? 'Pinned' : 'Pin'}
+              <span style={{ color: danger ? 'var(--red100)' : 'var(--text-muted)', display: 'flex' }}><Icon /></span>
+              {label}
             </button>
-            <div style={{ flex: 1 }} />
-            <button style={{
-              display: 'inline-flex', alignItems: 'center',
-              height: 28, padding: '0 10px', borderRadius: 6,
-              background: 'rgba(220,38,38,0.06)', border: '1px solid rgba(220,38,38,0.2)',
-              color: '#DC2626', fontSize: 12, fontFamily: "'Byrd', sans-serif", fontWeight: 500,
-              cursor: 'pointer',
-            }}>
-              Delete
-            </button>
-          </div>
-        </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── ReportCard (grid view) ─────────────────────────────────────────────────────
-
-function ReportCard({ report }) {
-  const [hovered, setHovered] = useState(false)
-  const cfg = STATUS_CFG[report.status] ?? STATUS_CFG['not-executed']
-
-  return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: 'var(--bg-card)',
-        border: `1px solid ${hovered ? cfg.border : 'var(--border-input)'}`,
-        borderRadius: 12, padding: '16px', cursor: 'pointer',
-        transition: 'border-color 180ms ease, box-shadow 180ms ease',
-        boxShadow: hovered ? `0 0 0 3px ${cfg.border}20` : 'none',
-        display: 'flex', flexDirection: 'column', gap: 10,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-        <StatusBadge status={report.status} />
-        <SchedulePill label={report.schedule} />
-      </div>
-      <div style={{ flex: 1 }}>
-        <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", lineHeight: 1.45 }}>
-          {report.name}
-        </p>
-        <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
-          {report.id.slice(0, 20)}…
-        </p>
-      </div>
-      {report.trend ? (
-        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', fontFamily: "'Byrd', sans-serif", lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {report.trend}
-        </p>
-      ) : (
-        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", fontStyle: 'italic' }}>
-          No data yet
-        </p>
+          ))}
+        </div>,
+        document.body,
       )}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>{report.createdAt}</span>
-        <button onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24, borderRadius: 4, background: hovered ? 'var(--bg-active)' : 'transparent', border: hovered ? '1px solid var(--border-input)' : '1px solid transparent', cursor: 'pointer', color: 'var(--text-secondary)', transition: 'background 150ms ease, border-color 150ms ease' }}>
-          <MoreIcon />
-        </button>
-      </div>
     </div>
   )
 }
 
-// ── PinnedReportCard ──────────────────────────────────────────────────────────
+// ── Quota pill (header) ─────────────────────────────────────────────────────────
 
-function PinnedReportCard({ report }) {
-  const [hovered, setHovered] = useState(false)
-  const cfg = STATUS_CFG[report.status] ?? STATUS_CFG['not-executed']
+function QuotaPill({ current, limit }) {
+  const pct = Math.min(100, (current / limit) * 100)
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 8, height: 22, padding: '0 10px', borderRadius: 99,
+      background: 'var(--badge-cobalt-fill)', color: 'var(--badge-cobalt-text)', fontSize: 12, fontWeight: 600,
+    }}>
+      <span style={{ width: 34, height: 5, borderRadius: 99, background: 'rgba(23,121,247,0.2)', overflow: 'hidden', flexShrink: 0 }}>
+        <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: 'var(--b100)', borderRadius: 99 }} />
+      </span>
+      {current} / {limit}
+    </span>
+  )
+}
+
+// ── Table ─────────────────────────────────────────────────────────────────────
+
+const ROW_H = 41
+const HEADER_H = 56
+
+function ReportsTable({ reports, onToggle, onCopyToast, onDelete }) {
+  const isDark = useIsDark()
+
+  const colDefs = useMemo(() => [
+    { headerName: '', width: 56, valueGetter: p => (p.node?.rowIndex ?? 0) + 1, cellStyle: { color: 'var(--text-muted)' }, sortable: false, resizable: false, suppressMovable: true },
+    { headerName: 'Active', width: 90, cellRenderer: ActiveToggleCellRenderer, cellRendererParams: { onToggle }, sortable: false },
+    { headerName: 'Actions', width: 90, cellRenderer: ActionsCellRenderer, cellRendererParams: { onCopyToast, onDelete }, sortable: false, resizable: false },
+    { field: '_id', headerName: 'Report ID', flex: 1.2, minWidth: 340, cellRenderer: ReportIdCellRenderer, cellRendererParams: { onCopyToast } },
+    { field: 'title', headerName: 'Name', flex: 1, minWidth: 300, cellRenderer: NameCellRenderer },
+    { field: 'updated_at', headerName: 'Updated At', width: 190, cellRenderer: DateCellRenderer },
+    { field: 'last_run_at', headerName: 'Last Run At', width: 190, cellRenderer: DateCellRenderer },
+    { field: 'created_by_name', headerName: 'Created by', flex: 0.7, minWidth: 150, cellRenderer: CreatedByCellRenderer },
+  ], [onToggle, onCopyToast, onDelete])
+
+  const gridHeight = HEADER_H + Math.max(reports.length, 3) * ROW_H + 2
 
   return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        flex: '1 1 340px', minWidth: 320, maxWidth: 540,
-        background: 'var(--bg-card)',
-        border: `1px solid ${hovered ? cfg.border : 'var(--border-input)'}`,
-        borderRadius: 12, display: 'flex', flexDirection: 'column',
-        overflow: 'hidden', cursor: 'pointer',
-        transition: 'border-color 180ms ease, box-shadow 180ms ease',
-        boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.12)' : '0 1px 4px rgba(0,0,0,0.08)',
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '14px 14px 0' }}>
-        <StatusBadge status={report.status} />
-        <SchedulePill label={report.schedule} />
-        <div style={{ flex: 1 }} />
-        <button onClick={e => e.stopPropagation()} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, height: 22, padding: '0 8px', borderRadius: 5, background: hovered ? 'var(--bg-active)' : 'transparent', border: '1px solid var(--border-input)', color: 'var(--text-secondary)', fontSize: 10.5, fontWeight: 600, fontFamily: "'Byrd', sans-serif", cursor: 'pointer', transition: 'background 150ms ease' }}>
-          Open ↗
-        </button>
-      </div>
-      <div style={{ padding: '8px 14px 0' }}>
-        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {report.name}
-        </p>
-      </div>
-      <div style={{ padding: '10px 14px 6px' }}>
-        <Sparkline data={report.sparkData} color={report.sparkColor} height={52} />
-      </div>
-      <div style={{ display: 'flex', padding: '4px 8px 14px' }}>
-        {report.stats.map((s, i) => (
-          <div key={i} style={{ flex: 1, textAlign: 'center', padding: '6px 8px', borderRight: i < report.stats.length - 1 ? '1px solid var(--border-input)' : 'none' }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif", lineHeight: 1.2 }}>{s.value}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", marginTop: 3, whiteSpace: 'nowrap' }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
+    <div className="hear-grid reports-grid" style={{
+      height: gridHeight, width: '100%', borderRadius: 12, overflow: 'hidden',
+      border: '1px solid var(--border-default)', background: 'var(--bg-card)',
+    }}>
+      <AgGridReact
+        theme={isDark ? darkTheme : lightTheme}
+        className="hear-grid"
+        rowData={reports}
+        columnDefs={colDefs}
+        defaultColDef={{ resizable: true, sortable: false, suppressHeaderMenuButton: true }}
+        rowHeight={ROW_H}
+        headerHeight={HEADER_H}
+        suppressCellFocus
+        getRowId={p => p.data._id}
+        overlayNoRowsTemplate="No reports yet"
+      />
     </div>
   )
 }
 
-function PinnedReportsStrip({ reports }) {
-  if (!reports.length) return null
-  return (
-    <div style={{ padding: '14px 20px 14px', background: 'var(--bg-canvas)', flexShrink: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-        <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif", letterSpacing: '0.07em', textTransform: 'uppercase' }}>Pinned</span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 16, height: 16, borderRadius: 4, background: 'var(--bg-active)', border: '1px solid var(--border-input)', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>
-          {reports.length}
-        </span>
-      </div>
-      <div className="pinned-cards-scroll" style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '6px 4px 10px', margin: '-6px -4px -10px' }}>
-        {reports.map(r => <PinnedReportCard key={r.id} report={r} />)}
-      </div>
-    </div>
-  )
-}
+// ── Page ─────────────────────────────────────────────────────────────────────────
 
-function EmptyState() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 0', flexDirection: 'column', gap: 6 }}>
-      <span style={{ fontSize: 14, color: 'var(--text-muted)', fontFamily: "'Byrd', sans-serif" }}>No reports found</span>
-      <span style={{ fontSize: 12, color: 'var(--text-muted)', opacity: 0.6, fontFamily: "'Byrd', sans-serif" }}>Try adjusting your filters</span>
-    </div>
-  )
-}
-
-// ── ReportsPage ────────────────────────────────────────────────────────────────
-
-export default function ReportsPage({ isMobile = false, sidebarWidth = 272, sidebarTransition, companyConfig = null }) {
-  const [view, setView]           = useState('list')
-  const [statusFilter, setStatus] = useState('all')
-  const [search, setSearch]       = useState('')
-  const [pinnedIds, setPinnedIds] = useState(new Set(DEFAULT_PINNED))
-  const [openId, setOpenId]       = useState(null)
-  const listRef                   = useRef(null)
-
+export default function ReportsPage({ isMobile = false, sidebarWidth = 272, sidebarTransition = 'none', companyConfig = null }) {
+  const [reports, setReports] = useState(REPORTS)
+  const [toast, setToast] = useState(null)
+  const toastTimer = useRef(null)
   const left = isMobile ? 0 : sidebarWidth
 
-  const togglePin = useCallback((id) => {
-    setPinnedIds(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
+  const showToast = useCallback((msg) => {
+    setToast(msg); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 1800)
   }, [])
 
-  const pinnedReports = useMemo(() =>
-    [...pinnedIds]
-      .map(id => {
-        const base    = MOCK_REPORTS.find(r => r.id === id)
-        const preview = PREVIEW_DATA[id]
-        if (!base || !preview) return null
-        return { ...base, ...preview }
-      })
-      .filter(Boolean),
-  [pinnedIds])
+  const handleToggle = useCallback((r) => {
+    setReports(prev => prev.map(x => x._id === r._id ? { ...x, is_active: !x.is_active } : x))
+    showToast('Report updated successfully')
+  }, [showToast])
 
-  const counts = useMemo(() => {
-    const c = { all: MOCK_REPORTS.length }
-    STATUS_FILTERS.slice(1).forEach(f => {
-      c[f.value] = MOCK_REPORTS.filter(r => r.status === f.value).length
-    })
-    return c
-  }, [])
-
-  const filtered = useMemo(() => {
-    let data = MOCK_REPORTS
-    if (statusFilter !== 'all') data = data.filter(r => r.status === statusFilter)
-    if (search.trim()) {
-      const q = search.toLowerCase()
-      data = data.filter(r =>
-        r.name.toLowerCase().includes(q) ||
-        r.id.includes(q) ||
-        (r.trend ?? '').toLowerCase().includes(q)
-      )
-    }
-    return data
-  }, [statusFilter, search])
-
-  function handleToggleOpen(id) {
-    setOpenId(prev => prev === id ? null : id)
-  }
-
-  // After expand animation completes, scroll container so the full expanded row is visible
-  useEffect(() => {
-    if (!openId || !listRef.current) return
-    const timer = setTimeout(() => {
-      const container = listRef.current
-      const el = container.querySelector(`[data-report-id="${openId}"]`)
-      if (!el) return
-      const elBottom = el.getBoundingClientRect().bottom
-      const containerBottom = container.getBoundingClientRect().bottom
-      if (elBottom > containerBottom) {
-        container.scrollBy({ top: elBottom - containerBottom + 24, behavior: 'smooth' })
-      }
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [openId])
+  const handleDelete = useCallback((r) => {
+    setReports(prev => prev.filter(x => x._id !== r._id))
+    showToast(`Deleted "${r.title}"`)
+  }, [showToast])
 
   return (
-    <div
-      data-inspector="ReportsPage"
-      style={{
-        position: 'fixed', top: 0, left, right: 0, bottom: 0,
-        background: 'var(--bg-canvas)',
-        display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        transition: sidebarTransition,
-      }}
-    >
-      {/* ── Page Header ── */}
+    <div data-inspector="ReportsPage" style={{
+      position: 'fixed', top: 0, left, right: 0, bottom: 0,
+      background: 'var(--bg-canvas)', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: sidebarTransition,
+    }}>
       <PageHeader
         title="Reports"
         crumbs={companyConfig?.companyName ? [companyConfig.companyName] : []}
-        badge={<Badge variant="tinted" color="coral" shape="pill">Total Reports&nbsp;{filtered.length}</Badge>}
-        actions={
-          <>
-            <div style={{ display: 'flex', gap: 1, padding: 3, background: 'var(--bg-canvas)', border: '1px solid var(--border-input)', borderRadius: 8 }}>
-              {[{ id: 'list', Icon: ListViewIcon }, { id: 'grid', Icon: GridViewIcon }].map(({ id, Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setView(id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    width: 26, height: 26, borderRadius: 5,
-                    background: view === id ? 'var(--bg-active)' : 'transparent',
-                    border: 'none', cursor: 'pointer',
-                    color: view === id ? 'var(--c100)' : 'var(--text-muted)',
-                    transition: 'background 150ms ease, color 150ms ease',
-                  }}
-                >
-                  <Icon active={view === id} />
-                </button>
-              ))}
-            </div>
-            <Button size="sm" leftIcon={<PlusIcon />} onClick={() => navigate('/reports/create')}>Create Report</Button>
-          </>
+        badge={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Badge variant="tinted" color="cobalt" shape="pill">Total Reports&nbsp;{reports.length}</Badge>
+            <QuotaPill current={ACTIVE_QUOTA.current} limit={ACTIVE_QUOTA.limit} />
+          </span>
         }
+        actions={<Button size="sm" leftIcon={<PlusIcon />} onClick={() => navigate('/reports/create')}>Create Report</Button>}
       />
 
-
-      {/* ── Content ── */}
-      {view === 'list' ? (
-        <div style={{
-          flex: 1, overflow: 'hidden', minHeight: 0,
-          margin: '16px 16px 16px',
-          borderRadius: 16,
-          border: 'var(--page-header-border)',
-          boxShadow: 'var(--page-header-shadow)',
-          background: 'var(--bg-sidebar)',
-          display: 'flex', flexDirection: 'column',
-        }}>
-          {/* Toolbar */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '10px 14px',
-            borderBottom: '1px solid var(--border-input)',
-            flexShrink: 0, flexWrap: 'nowrap', overflow: 'hidden',
-          }}>
-            <StatusTabs active={statusFilter} onChange={setStatus} counts={counts} />
-            <div style={{ flex: 1 }} />
-            {/* Search */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              height: 30, padding: '0 10px',
-              background: 'var(--bg-canvas)', border: '1px solid var(--border-input)',
-              borderRadius: 8,
-            }}>
-              <span style={{ color: 'var(--text-muted)', display: 'flex' }}><SearchIcon /></span>
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search reports…"
-                style={{
-                  border: 'none', outline: 'none', background: 'transparent',
-                  fontSize: 12, color: 'var(--text-primary)', fontFamily: "'Byrd', sans-serif",
-                  width: 160,
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Accordion list */}
-          <div ref={listRef} className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '12px 14px 32px', display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {filtered.length === 0 ? (
-              <EmptyState />
-            ) : (
-              filtered.map(r => (
-                <ReportRow
-                  key={r.id}
-                  report={r}
-                  isOpen={openId === r.id}
-                  onToggle={() => handleToggleOpen(r.id)}
-                  isPinned={pinnedIds.has(r.id)}
-                  onTogglePin={() => togglePin(r.id)}
-                />
-              ))
-            )}
-          </div>
+      <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        <div style={{ padding: '20px 16px 40px' }}>
+          <ReportsTable reports={reports} onToggle={handleToggle} onCopyToast={showToast} onDelete={handleDelete} />
         </div>
-      ) : (
-        <div className="smooth-scroll" style={{
-          flex: 1, overflowY: 'auto', padding: 20,
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: 12, alignContent: 'start',
+      </div>
+
+      {toast && (
+        <div style={{
+          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)', zIndex: 10001,
+          display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderRadius: 8,
+          background: 'var(--text-primary)', color: 'var(--text-inverse)', fontSize: 13, fontWeight: 500, boxShadow: '0 8px 24px rgba(0,0,0,0.22)',
         }}>
-          {filtered.length === 0
-            ? <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 60 }}><EmptyState /></div>
-            : filtered.map(r => <ReportCard key={r.id} report={r} />)
-          }
+          {toast}
         </div>
       )}
     </div>
