@@ -33,6 +33,7 @@ import UsagePage from '../components/settings/UsagePage.jsx'
 import ActionsPage from '../components/actions/ActionsPage.jsx'
 import TopicsPage from '../components/topics/TopicsPage.jsx'
 import NewsPage from '../components/news/NewsPage.jsx'
+import NewsV2Page from '../components/news/NewsV2Page.jsx'
 import Badge from '../components/Badge.jsx'
 import Button from '../components/Button.jsx'
 import DailyBriefing from './components/DailyBriefing.jsx'
@@ -836,6 +837,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         <AiTasksPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'news' ? (
         <NewsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
+      ) : activePage === 'news-v2' ? (
+        <NewsV2Page isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
       ) : activePage === 'topics' ? (
         <TopicsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'knowledge' ? (
