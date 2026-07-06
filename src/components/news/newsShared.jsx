@@ -58,6 +58,74 @@ export function Kicker({ type, featured, showDot }) {
 
 export const N = ({ children }) => <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{children}</span>
 
+// ── Trust: provenance ("why you're seeing this") + evidence (drill-through) ───
+function InfoDot() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }} aria-hidden>
+      <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" opacity="0.55" />
+      <path d="M7 6.1v3.3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="7" cy="4.25" r="0.85" fill="currentColor" />
+    </svg>
+  )
+}
+// Qualitative signal strength (illustrative — platform stores magnitude, not a score).
+const STRENGTH = {
+  strong:   { label: 'strong signal',   color: 'var(--c100)' },
+  moderate: { label: 'moderate signal', color: 'var(--text-muted)' },
+  watch:    { label: 'for your watch',  color: 'var(--text-muted)' },
+}
+// Compact provenance line for feed cards; the ⓘ tooltip carries the basis/method.
+export function WhyLine({ trust }) {
+  if (!trust) return null
+  const s = STRENGTH[trust.strength] || STRENGTH.moderate
+  return (
+    <div title={trust.method ? `Basis · ${trust.method}` : undefined}
+      style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--text-muted)', fontFamily: FONT, lineHeight: 1.4, cursor: 'help' }}>
+      <InfoDot />
+      <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{trust.trigger}</span>
+      <span style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>·&nbsp;<span style={{ color: s.color, fontWeight: 600 }}>{s.label}</span></span>
+    </div>
+  )
+}
+// "See N calls →" evidence drill-through (cobalt = interactive; visual in the lab).
+export function EvidenceLink({ evidence, onOpen }) {
+  const label = evidence && evidence.count ? `See ${evidence.count} ${evidence.noun || 'calls'}` : 'Open in Data'
+  const go = e => { e.stopPropagation(); onOpen && onOpen() }
+  return (
+    <button onClick={go}
+      onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+      onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12.5, fontWeight: 600, fontFamily: FONT, color: 'var(--color-interactive)', whiteSpace: 'nowrap' }}>
+      {label} <span style={{ fontSize: 13 }}>→</span>
+    </button>
+  )
+}
+// Full provenance panel for the article page: trigger + basis + strength + evidence.
+export function WhyPanel({ trust, evidence }) {
+  if (!trust) return null
+  const s = STRENGTH[trust.strength] || STRENGTH.moderate
+  const evLabel = evidence && evidence.count ? `See ${evidence.count} ${evidence.noun || 'calls'}` : 'Open in Data'
+  return (
+    <div style={{ border: '1px solid var(--border-default)', background: 'var(--bg-card)', borderRadius: 12, padding: '14px 16px', marginBottom: 22 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9 }}>
+        <span style={{ color: 'var(--color-interactive)', display: 'inline-flex' }}><InfoDot /></span>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: FONT }}>Why you’re seeing this</span>
+        <span style={{ marginInlineStart: 'auto', display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: s.color, fontFamily: FONT, whiteSpace: 'nowrap' }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color }} />{s.label}
+        </span>
+      </div>
+      <div style={{ fontSize: 15, color: 'var(--text-primary)', fontFamily: FONT, lineHeight: 1.5 }}>{trust.trigger}</div>
+      {trust.method && <div style={{ fontSize: 12.5, color: 'var(--text-muted)', fontFamily: FONT, marginTop: 5 }}>Basis · {trust.method}</div>}
+      <button
+        onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+        onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+        style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, fontWeight: 600, fontFamily: FONT, color: 'var(--color-interactive)' }}>
+        {evLabel} <span style={{ fontSize: 14 }}>→</span>
+      </button>
+    </div>
+  )
+}
+
 export function Meta({ items }) {
   if (!items || !items.length) return null
   return (
@@ -70,7 +138,7 @@ export function Meta({ items }) {
 export function Stat({ label, value, tone }) {
   const color = tone === 'up' ? 'var(--c100)' : tone === 'down' ? 'var(--g100)' : 'var(--text-primary)'
   return (
-    <div style={{ padding: '14px 20px', borderRight: '1px solid var(--border-default)', borderBottom: '1px solid var(--border-default)' }}>
+    <div style={{ padding: '16px 22px', borderRight: '1px solid var(--border-default)', borderBottom: '1px solid var(--border-default)' }}>
       <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: FONT }}>{label}</div>
       <div style={{ fontSize: 17, fontWeight: 600, marginTop: 3, color, fontFamily: FONT }}>{value}</div>
     </div>

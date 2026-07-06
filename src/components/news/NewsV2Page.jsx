@@ -1,24 +1,24 @@
 /**
  * NewsV2Page — newspaper-homepage feed.
  *
- * Layout: [ sticky section-aware TimelineRail ] [ feed column ]
+ * Layout: two columns — left "In this edition" section nav + feed. Wayfinding via
+ *   BOTH the nav (jump + active highlight) and sticky section headers.
  *   Masthead → BreakingStrip → HERO (top featured) → Top stories →
  *   Daily-briefing KPI strip → SECTION BLOCKS by platform surface.
  *
  * Every card is clickable → onOpenArticle(article) → full ArticlePage.
- * Data comes from newsData.js; the rail syncs to scroll position by section.
+ * Data comes from newsData.js; the nav syncs to scroll position by section block.
  */
 import { useState, useEffect, useRef } from 'react'
 import PageHeader from '../PageHeader.jsx'
 import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
-import ChatInput from '../ChatInput.jsx'
-import { ARTICLES, SECTIONS, sectionOf, anchorId } from './newsData.js'
+import { ARTICLES, SECTIONS, sectionOf } from './newsData.js'
 import { FONT, usePageBg, SectionEyebrow } from './newsShared.jsx'
-import TimelineRail from './TimelineRail.jsx'
 import ArticleCard from './ArticleCard.jsx'
 import BreakingStrip from './BreakingStrip.jsx'
 import SectionBlock from './SectionBlock.jsx'
+import TimelineRail from './TimelineRail.jsx'
 
 function Masthead({ count = `${ARTICLES.length} stories` }) {
   return (
@@ -36,10 +36,13 @@ function Masthead({ count = `${ARTICLES.length} stories` }) {
   )
 }
 
-function KpiTile({ label, value, delta, tone }) {
+// One connected KPI plate: cells share a single bordered panel, split by dividers.
+function KpiTile({ label, value, delta, tone, idx = 0, total = 4, isMobile }) {
   const color = tone === 'attention' ? 'var(--c100)' : tone === 'positive' ? 'var(--g100)' : 'var(--text-muted)'
+  const rightDiv = isMobile ? idx % 2 === 0 : idx < total - 1
+  const bottomDiv = isMobile ? idx < 2 : false
   return (
-    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 14, padding: '14px 16px' }}>
+    <div style={{ padding: '16px 20px', borderRight: rightDiv ? '1px solid var(--border-default)' : 'none', borderBottom: bottomDiv ? '1px solid var(--border-default)' : 'none' }}>
       <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: FONT }}>{label}</div>
       <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--text-primary)', margin: '6px 0 5px', fontFamily: FONT }}>{value}</div>
       {delta && <div style={{ fontSize: 12, fontWeight: 600, color, fontFamily: FONT }}>{delta}</div>}
@@ -53,44 +56,48 @@ function FilterPill({ children }) {
 
 export default function NewsV2Page({ isMobile = false, sidebarWidth = 272, sidebarTransition = 'none', onOpenArticle }) {
   const pageBg = usePageBg()
-  const scrollRef = useRef(null)
-  const [activeId, setActiveId] = useState(ARTICLES[0]?.id ?? null)
-  const askLeft = isMobile ? '50%' : `calc(50% + ${sidebarWidth / 2}px)`
-  const askWidth = isMobile ? 'calc(100% - 3rem)' : `min(720px, calc(100% - ${sidebarWidth}px - 3rem))`
-
-  // Sync the rail's active marker to the article currently near the top of view.
-  useEffect(() => {
-    const root = scrollRef.current
-    if (!root) return
-    const els = ARTICLES.map(a => document.getElementById(anchorId(a.id))).filter(Boolean)
-    if (!els.length) return
-    const tops = new Map()
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) tops.set(e.target.id, e.boundingClientRect.top)
-        else tops.delete(e.target.id)
-      })
-      let best = null, bestTop = Infinity
-      tops.forEach((top, id) => { if (top < bestTop) { bestTop = top; best = id } })
-      if (best) setActiveId(best.replace('article-', ''))
-    }, { root, rootMargin: '-80px 0px -55% 0px', threshold: 0 })
-    els.forEach(el => io.observe(el))
-    return () => io.disconnect()
-  }, [])
-
-  const onJump = (id) => {
-    const el = document.getElementById(anchorId(id))
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
 
   const featured = ARTICLES.filter(a => a.featured)
   const hero = featured[0]
   const topStories = featured.slice(1)
   const feed = ARTICLES.filter(a => !a.featured)
   const sectionArticles = (key) => feed.filter(a => sectionOf(a) === key)
+  const presentSections = SECTIONS.filter(s => feed.some(a => sectionOf(a) === s.key))
+
+  // Highlight the section whose block is currently pinned at the top. Tracked by
+  // section BLOCK (not article) so the featured hero/top-stories region above the
+  // sections doesn't mis-point the nav — the old rail's core bug.
+  const scrollRef = useRef(null)
+  const [activeSection, setActiveSection] = useState(null)
+  useEffect(() => {
+    const root = scrollRef.current
+    if (!root) return
+    const onScroll = () => {
+      const base = root.getBoundingClientRect().top
+      let current = null
+      for (const s of presentSections) {
+        const el = document.getElementById(`section-${s.key}`)
+        if (el && el.getBoundingClientRect().top - base <= 80) current = s.key
+      }
+      setActiveSection(current)
+    }
+    root.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => root.removeEventListener('scroll', onScroll)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const onJumpSection = (key) => {
+    const el = document.getElementById(`section-${key}`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: pageBg, transition: sidebarTransition }}>
+      <style>{`
+        .news-read-cta { background: transparent; color: var(--c100); border: 1px solid var(--c100); }
+        .news-card:hover .news-read-cta, .news-read-cta:hover { background: var(--c100); color: #fff; }
+        .news-read-link { color: var(--c100); }
+        .news-card:hover .news-read-link { text-decoration: underline; }
+      `}</style>
       <div style={{ position: 'absolute', top: 0, insetInlineStart: sidebarWidth, insetInlineEnd: 0, bottom: 0, transition: sidebarTransition, display: 'flex', flexDirection: 'column', fontFamily: FONT }}>
         <PageHeader
           title="News"
@@ -99,11 +106,9 @@ export default function NewsV2Page({ isMobile = false, sidebarWidth = 272, sideb
           actions={<><FilterPill>📅 Last 7 days ▾</FilterPill><FilterPill>Surface ▾</FilterPill><Button variant="secondary" size="sm">Share</Button></>}
         />
 
-        <div ref={scrollRef} className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px 160px' }}>
-          <div style={{ maxWidth: 1160, margin: '0 auto', width: '100%', display: 'flex', gap: 28, alignItems: 'flex-start' }}>
-
-            {!isMobile && <TimelineRail articles={ARTICLES} activeId={activeId} onJump={onJump} />}
-
+        <div ref={scrollRef} className="smooth-scroll" style={{ flex: 1, marginTop: 1, overflowY: 'auto', padding: '0 24px 56px' }}>
+          <div style={{ maxWidth: 1180, margin: '0 auto', width: '100%', display: 'flex', gap: 28, alignItems: 'flex-start', paddingTop: 20 }}>
+            {!isMobile && <TimelineRail sections={presentSections} activeKey={activeSection} onJump={onJumpSection} />}
             <div style={{ flex: 1, minWidth: 0 }}>
               <Masthead />
               <BreakingStrip />
@@ -121,11 +126,13 @@ export default function NewsV2Page({ isMobile = false, sidebarWidth = 272, sideb
 
               <div style={{ marginTop: 26 }}>
                 <SectionEyebrow>Daily briefing · at a glance</SectionEyebrow>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12 }}>
-                  <KpiTile label="Calls handled" value="1,284" delta="↑ 12% vs 7-day avg" tone="neutral" />
-                  <KpiTile label="Avg sentiment" value="72%" delta="↑ 3 pts" tone="positive" />
-                  <KpiTile label="Escalations" value="23" delta="↓ 8%" tone="positive" />
-                  <KpiTile label="Top agent CSAT" value="94%" delta="Martha Kellett" tone="neutral" />
+                <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 14, overflow: 'hidden', display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)' }}>
+                  {[
+                    { label: 'Calls handled', value: '1,284', delta: '↑ 12% vs 7-day avg', tone: 'neutral' },
+                    { label: 'Avg sentiment', value: '72%', delta: '↑ 3 pts', tone: 'positive' },
+                    { label: 'Escalations', value: '23', delta: '↓ 8%', tone: 'positive' },
+                    { label: 'Top agent CSAT', value: '94%', delta: 'Martha Kellett', tone: 'neutral' },
+                  ].map((k, i, arr) => <KpiTile key={i} {...k} idx={i} total={arr.length} isMobile={isMobile} />)}
                 </div>
               </div>
 
@@ -138,12 +145,6 @@ export default function NewsV2Page({ isMobile = false, sidebarWidth = 272, sideb
           </div>
         </div>
       </div>
-
-      {!isMobile && (
-        <div style={{ position: 'fixed', bottom: 24, left: askLeft, transform: 'translateX(-50%)', width: askWidth, zIndex: 50, transition: sidebarTransition }}>
-          <ChatInput onSubmit={() => {}} settled />
-        </div>
-      )}
     </div>
   )
 }

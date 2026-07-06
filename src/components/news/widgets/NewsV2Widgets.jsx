@@ -346,9 +346,9 @@ export function StatusBarWidget({
 export function BulletWidget({ metric = '6.4′', delta = '↑ 40%', fillPct = 82, targetPct = 58, sub = 'avg handle time · target 4.5′ · deviation 2.3σ' }) {
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <span style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', fontFamily: FONT }}>{metric}</span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 12, fontWeight: 700, color: 'var(--c100)', background: 'var(--c10)', padding: '2px 8px', borderRadius: 99 }}>{delta}</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11.5, fontWeight: 700, color: 'var(--c100)', fontFamily: FONT }}>{delta}</span>
       </div>
       <div style={{ position: 'relative', height: 14, background: 'var(--bg-active)', borderRadius: 7, overflow: 'hidden', margin: '10px 0 6px' }}>
         <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${fillPct}%`, background: 'var(--c100)', borderRadius: 7 }} />

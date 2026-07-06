@@ -5,11 +5,14 @@
  * narrative + hero figure + sources (calls behind it) + stats + actions +
  * "ask about this article" chat + prev/next navigation.
  */
+import { useState, useEffect, useRef } from 'react'
 import PageHeader from '../PageHeader.jsx'
 import Button from '../Button.jsx'
 import ChatInput from '../ChatInput.jsx'
-import { TYPE, articleWhen } from './newsData.js'
-import { FONT, SERIF, usePageBg, Kicker, StatGrid, DataTable, renderWidget } from './newsShared.jsx'
+import ChatBubble from '../ChatBubble.jsx'
+import { apiFetch, apiHeaders } from '../../lib/api.js'
+import { TYPE, articleWhen, trustOf, evidenceOf } from './newsData.js'
+import { FONT, SERIF, usePageBg, Kicker, StatGrid, DataTable, WhyPanel, renderWidget } from './newsShared.jsx'
 
 function BackBar({ onBack, type }) {
   const label = (TYPE[type] || {}).label || 'News'
@@ -42,6 +45,49 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
   const askLeft = isMobile ? '50%' : `calc(50% + ${sidebarWidth / 2}px)`
   const askWidth = isMobile ? 'calc(100% - 3rem)' : `min(720px, calc(100% - ${sidebarWidth}px - 3rem))`
 
+  // ── Ask about this article — inline conversation on the same real /api/chat
+  // endpoint the Chat screen uses, with the article injected as context. Same
+  // ChatBubble + thinking flow; resets when you open a different story.
+  const [messages, setMessages]       = useState([])
+  const [loading, setLoading]         = useState(false)
+  const [hoveredMsg, setHoveredMsg]   = useState(null)
+  const [copiedIndex, setCopiedIndex] = useState(null)
+  const convEndRef = useRef(null)
+  useEffect(() => { setMessages([]); setLoading(false) }, [a.id])
+  useEffect(() => {
+    if (messages.length || loading) convEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }, [messages, loading])
+
+  function articleContext() {
+    const stats = (a.stats || []).map(s => `${s.label}: ${s.value}`).join('; ')
+    const excerpts = (a.sources || []).map(s => `"${s.quote}"`).join(' ')
+    return [
+      "You are Hear's conversation-intelligence assistant. The reader is viewing this item in the News feed and wants to discuss it — answer concisely and specifically about it; the figures are illustrative.",
+      `TITLE: ${a.title}`,
+      a.lede ? `SUMMARY: ${a.lede}` : '',
+      (a.body && a.body.length) ? `DETAILS: ${a.body.join(' ')}` : '',
+      stats ? `KEY FIGURES: ${stats}` : '',
+      excerpts ? `CALL EXCERPTS: ${excerpts}` : '',
+    ].filter(Boolean).join('\n')
+  }
+
+  function handleAsk(text) {
+    const q = (text || '').trim()
+    if (!q || loading) return
+    const next = [...messages, { role: 'user', text: q }]
+    setMessages(next)
+    setLoading(true)
+    const history = [
+      { role: 'user', content: articleContext() },
+      { role: 'model', content: 'Understood — I have the full context of this story. Ask me anything about it.' },
+      ...next.map(m => ({ role: m.role === 'user' ? 'user' : 'model', content: m.text })),
+    ]
+    apiFetch('/api/chat', { method: 'POST', headers: apiHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify({ messages: history }) })
+      .then(r => r.json())
+      .then(data => { setLoading(false); setMessages(prev => [...prev, { role: 'ai', text: data.reply || data.error || 'Something went wrong.', related: data.related || [] }]) })
+      .catch(() => { setLoading(false); setMessages(prev => [...prev, { role: 'ai', text: 'Failed to reach the server. Please try again.' }]) })
+  }
+
   return (
     <div style={{ position: 'fixed', inset: 0, background: pageBg, transition: sidebarTransition }}>
       <div style={{ position: 'absolute', top: 0, left: sidebarWidth, right: 0, bottom: 0, transition: sidebarTransition, display: 'flex', flexDirection: 'column', fontFamily: FONT }}>
@@ -55,6 +101,9 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
             <div style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: FONT, paddingBottom: 18, marginBottom: 22, borderBottom: '1px solid var(--border-default)' }}>
               By Hear Intelligence · {articleWhen(a).label}
             </div>
+
+            {/* Why you're seeing this — provenance + evidence (trust) */}
+            <WhyPanel trust={trustOf(a)} evidence={evidenceOf(a)} />
 
             {a.template === 'riskAlert' && (
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'var(--badge-coral-bg)', border: '1px solid var(--badge-coral-bd)', borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
@@ -122,6 +171,12 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
               <div style={{ marginTop: 26 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: FONT, marginBottom: 14 }}>
                   <span>Sources · calls behind this</span><span style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+                  <button
+                    onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+                    onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-interactive)', fontFamily: FONT, whiteSpace: 'nowrap' }}>
+                    Open in Data →
+                  </button>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
                   {a.sources.map((s, i) => <SourceCard key={i} who={s.who} quote={s.quote} />)}
@@ -136,6 +191,35 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
               </div>
             )}
 
+            {/* Ask about this article — inline conversation, blended into the page */}
+            {(messages.length > 0 || loading) && (
+              <div style={{ marginTop: 30, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {(() => {
+                  const lastAIIndex = messages.reduce((acc, m, i) => (m.role === 'ai' ? i : acc), -1)
+                  return messages.map((msg, i) => {
+                    const isAI = msg.role === 'ai'
+                    const showActions = isAI && (i === lastAIIndex || hoveredMsg === i)
+                    return (
+                      <ChatBubble
+                        key={i}
+                        role={msg.role}
+                        text={msg.text}
+                        related={i === lastAIIndex ? (msg.related ?? []) : []}
+                        showActions={showActions}
+                        onCopy={() => { navigator.clipboard.writeText(msg.text); setCopiedIndex(i); setTimeout(() => setCopiedIndex(null), 1500) }}
+                        copied={copiedIndex === i}
+                        onRelatedClick={(topic) => handleAsk(topic)}
+                        onMouseEnter={() => isAI && setHoveredMsg(i)}
+                        onMouseLeave={() => isAI && setHoveredMsg(null)}
+                      />
+                    )
+                  })
+                })()}
+                {loading && <ChatBubble role="thinking" />}
+                <div ref={convEndRef} style={{ scrollMarginBottom: 96 }} />
+              </div>
+            )}
+
             {/* Prev / next */}
             <div style={{ display: 'flex', gap: 12, marginTop: 32 }}>
               <NavCard dir="prev" title={prevTitle} onClick={onPrev} />
@@ -147,7 +231,7 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
 
       {!isMobile && (
         <div style={{ position: 'fixed', bottom: 24, left: askLeft, transform: 'translateX(-50%)', width: askWidth, zIndex: 50, transition: sidebarTransition }}>
-          <ChatInput onSubmit={() => {}} settled />
+          <ChatInput onSubmit={handleAsk} loading={loading} settled />
         </div>
       )}
     </div>

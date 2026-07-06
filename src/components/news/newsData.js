@@ -79,6 +79,45 @@ export function articleWhen(a) {
   return { kind: 'period', label: full, short: dayShort }
 }
 
+// ── Trust: why you're seeing this (provenance) + evidence (drill-through) ─────
+// Honest to the platform's data model: trend magnitude is stored QUALITATIVELY
+// (drastic_change + compare_result), so trend triggers stay qualitative — no
+// invented numeric thresholds. Alerts, compliance scorecards and evaluations DO
+// carry real configured thresholds/targets. `strength` is illustrative.
+const TRUST_BY_TYPE = {
+  spike:      { trigger: 'Flagged as a drastic change vs the prior period', method: 'Signal trend comparison', strength: 'strong' },
+  storm:      { trigger: 'Monitor fired far above its normal daily rate',   method: 'Alert · trigger rate vs baseline', strength: 'strong' },
+  approval:   { trigger: 'Review queue passed its backlog threshold',       method: 'AI Tasks · queue depth', strength: 'watch' },
+  compliance: { trigger: 'Criterion adherence fell below its QA target',    method: 'Compliance scorecard vs target', strength: 'strong' },
+  anomaly:    { trigger: 'Statistical deviation from the recent baseline',  method: 'Metric vs baseline (σ)', strength: 'moderate' },
+  emergent:   { trigger: 'New theme surfaced by Discovery — no signal tracks it yet', method: 'Unsupervised discovery', strength: 'watch' },
+  outlier:    { trigger: 'Single call flagged as an outlier for review',    method: 'Per-call summarizer flag', strength: 'watch' },
+  volume:     { trigger: 'Volume mix shifted vs the prior period',          method: 'Period comparison', strength: 'moderate' },
+  benchmark:  { trigger: 'Evaluation gap widened across teams',             method: 'Agent Evaluation comparison', strength: 'moderate' },
+  signal:     { trigger: 'AI-proposed signal awaiting your review',         method: 'Discovery proposal', strength: 'watch' },
+  report:     { trigger: 'Scheduled report completed on time',              method: 'Report schedule', strength: 'watch' },
+  cohort:     { trigger: 'Customers grouped by repeat-contact pattern',     method: 'Customer grouping', strength: 'moderate' },
+  workflow:   { trigger: 'Workflow trigger condition met',                  method: 'Workflow rule', strength: 'watch' },
+  risk:       { trigger: 'Projected to breach SLA if the trend holds',      method: 'Forward projection vs SLA', strength: 'strong' },
+  rootcause:  { trigger: 'Contributing signals traced to a common cause',   method: 'Causal analysis', strength: 'moderate' },
+  digest:     { trigger: 'Roundup of the week’s smaller movements',         method: 'Weekly aggregation', strength: 'watch' },
+  milestone:  { trigger: 'Evaluation score crossed a category threshold',   method: 'Agent Evaluation', strength: 'strong' },
+  sentiment:  { trigger: 'Sentiment shifted vs the prior period',           method: 'Sentiment trend comparison', strength: 'moderate' },
+  resolution: { trigger: 'Resolution rate improved vs the prior period',    method: 'Period comparison', strength: 'moderate' },
+}
+// Per-type provenance, overridable per article via `a.trust`.
+export function trustOf(a) {
+  return { ...(TRUST_BY_TYPE[a.type] || TRUST_BY_TYPE.signal), ...(a.trust || {}) }
+}
+// "See N …" drill-through target: explicit a.evidence, else the first call count
+// parsed from meta, else a generic Data drill-in.
+export function evidenceOf(a) {
+  if (a.evidence && a.evidence.count) return a.evidence
+  const m = (a.meta || []).map(String).find(x => /\d[\d,]*\s*calls?/i.test(x))
+  if (m) { const num = m.match(/[\d,]+/); if (num) return { count: num[0], noun: 'calls' } }
+  return { count: null, noun: 'calls' }
+}
+
 // Breaking / just-detected ticker — the newest events, compact.
 export const BREAKING = [
   { time: '4:12pm', label: 'Cancellation intent spiking (+240%)', tone: 'attention' },
@@ -126,6 +165,7 @@ export const ARTICLES = [
     title: '“Third Party” monitor triggered 18× in two hours',
     lede: "The ‘Third Party’ monitor fired eighteen times in a two-hour window this morning — about three times its daily average — routing follow-up tasks to Slack and email as fraud-pattern language clustered.",
     meta: ['9–11am', 'high severity', '3 agents'],
+    evidence: { count: '47', noun: 'triggers' },
     widget: { kind: 'stackedBars', props: {} },
     legend: [{ color: 'var(--c80)', label: 'Third Party' }, { color: 'var(--h100)', label: 'Info Violation' }, { color: 'var(--t100)', label: 'Legal & Regulatory' }],
     stats: [
@@ -152,6 +192,7 @@ export const ARTICLES = [
     title: '393 AI-suggested actions are awaiting your approval',
     lede: 'The review queue has grown to 393 AI-suggested actions awaiting human sign-off, the oldest pending three days. Low-risk, auto-verified items can be cleared in bulk.',
     meta: ['oldest 3 days', 'auto-verify on'],
+    evidence: { count: '393', noun: 'pending actions' },
     widget: { kind: 'statusBar', props: {} },
     stats: [
       { label: 'Awaiting', value: '393', tone: 'up' },
@@ -256,7 +297,6 @@ export const ARTICLES = [
     lede: 'Over the trailing 30 days, Team A has cut average handle time to 3.8 minutes while B and C hold steady.',
     meta: ['Agent Evaluation', 'trailing 30 days'],
     widget: { kind: 'compareLines', props: {} },
-    legend: [{ color: 'var(--t100)', label: 'Team A' }, { color: 'var(--h100)', label: 'Team B' }, { color: 'var(--s100)', label: 'Team C' }],
     body: [
       "Team A's average handle time has fallen steadily to 3.8 minutes over the last thirty days, opening a clear gap over Teams B (5.3′) and C (6.0′).",
       "The divergence is recent and consistent — a candidate to study for what Team A changed and whether it transfers.",
@@ -270,6 +310,7 @@ export const ARTICLES = [
     title: 'Cooling-off disclosures slipped to 82% — three agents driving it',
     lede: 'Cooling-off disclosure adherence fell to 82% this week, driven by three agents. It remains the weakest of the tracked criteria and is trending down.',
     meta: ['5 flags', 'high risk'],
+    evidence: { count: '5', noun: 'flagged calls' },
     widget: { kind: 'passRateBars', props: {} },
     stats: [
       { label: 'Worst criterion', value: 'Cooling-off' },
