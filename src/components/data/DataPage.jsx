@@ -1276,11 +1276,11 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
       </div>
 
       {/* ── AG Grid ──────────────────────────────────────────────────────── */}
-      <div data-inspector="DataGrid" style={{ flex: 1, overflow: 'hidden', padding: 0, border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', borderRadius: 16, margin: '16px 16px 16px', background: 'var(--bg-sidebar)' }}>
+      <div data-inspector="DataGrid" style={{ flex: 1, overflow: 'hidden', padding: 0, border: 'var(--page-header-border)', boxShadow: 'var(--page-header-shadow)', borderRadius: 16, margin: '16px 16px 16px', background: isDark ? 'var(--bg-sidebar)' : '#FFFFFF' }}>
         <AgGridReact
           ref={gridRef}
           theme={isDark ? darkTheme : lightTheme}
-          className="hear-grid data-white-grid"
+          className="hear-grid"
           rowModelType="infinite"
           cacheBlockSize={100}
           maxBlocksInCache={10}

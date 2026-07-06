@@ -502,13 +502,6 @@ input::placeholder {
   height: 100%;
   width: 100%;
 }
-/* Data screen — force white grid surface (light mode only) */
-:root:not([data-theme="dark"]) .hear-grid.data-white-grid {
-  --ag-background-color: #FFFFFF;
-  --ag-header-background-color: #FFFFFF;
-  --ag-odd-row-background-color: #FFFFFF;
-  --ag-row-hover-color: #F5F5F3;
-}
 .hear-grid .ag-header-cell-text {
   text-transform: uppercase;
   letter-spacing: 0.05em;
