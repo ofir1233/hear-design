@@ -417,3 +417,32 @@ export function CompareLinesWidget({
     </>
   )
 }
+
+// ── 9. Causal chain (root-cause contributing factors) ────────────────────────
+export function CausalChainWidget({
+  steps = [
+    { n: 1, title: 'Cause one', text: 'Contributing factor.' },
+    { n: 2, title: 'Cause two', text: 'Contributing factor.' },
+    { n: 3, title: 'Cause three', text: 'Contributing factor.' },
+  ],
+}) {
+  return (
+    <div>
+      {steps.map((s, i) => {
+        const last = i === steps.length - 1
+        return (
+          <div key={i} style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '0 0 auto' }}>
+              <span style={{ width: 22, height: 22, borderRadius: '50%', background: 'var(--c100)', color: '#fff', fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT, flexShrink: 0 }}>{s.n}</span>
+              {!last && <span style={{ flex: 1, width: 2, background: 'var(--border-default)', margin: '4px 0' }} />}
+            </div>
+            <div style={{ paddingBottom: last ? 0 : 16, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: FONT, marginBottom: 3 }}>{s.title}</div>
+              <div style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--text-secondary)', fontFamily: FONT }}>{s.text}</div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}

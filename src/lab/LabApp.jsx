@@ -34,6 +34,8 @@ import ActionsPage from '../components/actions/ActionsPage.jsx'
 import TopicsPage from '../components/topics/TopicsPage.jsx'
 import NewsPage from '../components/news/NewsPage.jsx'
 import NewsV2Page from '../components/news/NewsV2Page.jsx'
+import ArticlePage from '../components/news/ArticlePage.jsx'
+import { ARTICLES } from '../components/news/newsData.js'
 import Badge from '../components/Badge.jsx'
 import Button from '../components/Button.jsx'
 import DailyBriefing from './components/DailyBriefing.jsx'
@@ -190,6 +192,14 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
     ? JSON.parse(sessionStorage.getItem(`hear-call-${route.id}`) || 'null')
     : null
 
+  // News V2 article detail (from static ARTICLES, so it survives refresh/direct URL)
+  const selectedArticle = route.page === 'news-v2' && route.sub === 'article' && route.id
+    ? ARTICLES.find(a => a.id === route.id) || null
+    : null
+  const artIndex   = selectedArticle ? ARTICLES.findIndex(a => a.id === selectedArticle.id) : -1
+  const prevArticle = artIndex > 0 ? ARTICLES[artIndex - 1] : null
+  const nextArticle = artIndex >= 0 && artIndex < ARTICLES.length - 1 ? ARTICLES[artIndex + 1] : null
+
   useEffect(() => {
     function onPop() { setRoute(parsePath()) }
     window.addEventListener('popstate', onPop)
@@ -204,6 +214,8 @@ export default function LabApp({ isDark, onThemeToggle, companyConfig, onSignOut
   }
 
   function closeExplore() { navigate('/data') }
+
+  function openArticle(a) { navigate(`/news-v2/article/${a.id}`) }
 
   const [sidebarOpen, setSidebarOpen]         = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => localStorage.getItem('sidebar_collapsed') === 'true')
@@ -837,8 +849,20 @@ Ask me anything about your operations, or explore a topic below to get started.`
         <AiTasksPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'news' ? (
         <NewsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
+      ) : activePage === 'news-v2' && selectedArticle ? (
+        <ArticlePage
+          article={selectedArticle}
+          onBack={() => navigate('/news-v2')}
+          onPrev={prevArticle ? () => openArticle(prevArticle) : undefined}
+          onNext={nextArticle ? () => openArticle(nextArticle) : undefined}
+          prevTitle={prevArticle?.title}
+          nextTitle={nextArticle?.title}
+          isMobile={isMobile}
+          sidebarWidth={effectiveSidebarWidth}
+          sidebarTransition={sidebarTransition}
+        />
       ) : activePage === 'news-v2' ? (
-        <NewsV2Page isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
+        <NewsV2Page isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} onOpenArticle={openArticle} />
       ) : activePage === 'topics' ? (
         <TopicsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'knowledge' ? (
