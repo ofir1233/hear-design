@@ -23,15 +23,9 @@ const Lede = ({ children, clamp }) => (
     ...(clamp ? { display: '-webkit-box', WebkitLineClamp: clamp, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {}) }}>{children}</p>
 )
 
-// Quick actions in the card footer — clicks must not open the article.
-function QuickActions({ actions = [], onOpen }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14 }} onClick={e => e.stopPropagation()}>
-      {actions.slice(0, 2).map((a, i) => <Button key={i} variant={i === 0 ? 'secondary' : 'ghost'} size="sm">{a}</Button>)}
-      <span style={{ marginLeft: 'auto' }} onClick={onOpen}><DeepDive /></span>
-    </div>
-  )
-}
+// Feed cards are fully clickable to open the article; per-card action buttons
+// (Edit signal / Open in Data / Read story) live on the article page instead.
+function QuickActions() { return null }
 
 export default function ArticleCard({ article, onOpen, hero, gutter = true }) {
   const a = article

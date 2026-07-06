@@ -93,7 +93,7 @@ export default function NewsV2Page({ isMobile = false, sidebarWidth = 272, sideb
     <div style={{ position: 'fixed', inset: 0, background: pageBg, transition: sidebarTransition }}>
       <div style={{ position: 'absolute', top: 0, insetInlineStart: sidebarWidth, insetInlineEnd: 0, bottom: 0, transition: sidebarTransition, display: 'flex', flexDirection: 'column', fontFamily: FONT }}>
         <PageHeader
-          title="News V2"
+          title="News"
           crumbs={['Demo inv']}
           badge={<Badge variant="tinted" color="coral" shape="soft" uppercase={false}>feed · illustrative data</Badge>}
           actions={<><FilterPill>📅 Last 7 days ▾</FilterPill><FilterPill>Surface ▾</FilterPill><Button variant="secondary" size="sm">Share</Button></>}

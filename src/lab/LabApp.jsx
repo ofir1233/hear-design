@@ -32,7 +32,6 @@ import BillingPage from '../components/settings/BillingPage.jsx'
 import UsagePage from '../components/settings/UsagePage.jsx'
 import ActionsPage from '../components/actions/ActionsPage.jsx'
 import TopicsPage from '../components/topics/TopicsPage.jsx'
-import NewsPage from '../components/news/NewsPage.jsx'
 import NewsV2Page from '../components/news/NewsV2Page.jsx'
 import ArticlePage from '../components/news/ArticlePage.jsx'
 import { ARTICLES } from '../components/news/newsData.js'
@@ -847,8 +846,6 @@ Ask me anything about your operations, or explore a topic below to get started.`
         <AlertsPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'ai-task' ? (
         <AiTasksPage sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
-      ) : activePage === 'news' ? (
-        <NewsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} />
       ) : activePage === 'news-v2' && selectedArticle ? (
         <ArticlePage
           article={selectedArticle}
