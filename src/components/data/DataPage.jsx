@@ -11,14 +11,14 @@ const THEME_PARAMS = {
 }
 const lightTheme = themeQuartz.withPart(colorSchemeLight).withParams({
   ...THEME_PARAMS,
-  backgroundColor:            '#F5F5F3',
+  backgroundColor:            '#FFFFFF',
   foregroundColor:            '#181818',
-  headerBackgroundColor:      '#F5F5F3',
+  headerBackgroundColor:      '#FFFFFF',
   headerTextColor:            '#606060',
   borderColor:                '#E5E7EB',
-  rowHoverColor:              '#E8E8E6',
+  rowHoverColor:              '#F5F5F3',
   selectedRowBackgroundColor: 'rgba(23,121,247,0.07)',
-  oddRowBackgroundColor:      '#F5F5F3',
+  oddRowBackgroundColor:      '#FFFFFF',
   headerColumnResizeHandleColor: '#D1D5DB',
 })
 const darkTheme = themeQuartz.withPart(colorSchemeDark).withParams({
@@ -1280,7 +1280,7 @@ export default function DataPage({ isMobile = false, sidebarWidth = 272, sidebar
         <AgGridReact
           ref={gridRef}
           theme={isDark ? darkTheme : lightTheme}
-          className="hear-grid"
+          className="hear-grid data-white-grid"
           rowModelType="infinite"
           cacheBlockSize={100}
           maxBlocksInCache={10}
