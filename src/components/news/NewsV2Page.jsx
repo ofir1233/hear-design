@@ -15,22 +15,24 @@ import Badge from '../Badge.jsx'
 import Button from '../Button.jsx'
 import { ARTICLES, SECTIONS, sectionOf } from './newsData.js'
 import { FONT, usePageBg, SectionEyebrow } from './newsShared.jsx'
+import { useLang, t as tr, localizeArticle, KPI_HE, storiesCount } from './newsI18n.js'
 import ArticleCard from './ArticleCard.jsx'
 import BreakingStrip from './BreakingStrip.jsx'
 import SectionBlock from './SectionBlock.jsx'
 import TimelineRail from './TimelineRail.jsx'
 
-function Masthead({ count = `${ARTICLES.length} stories` }) {
+function Masthead() {
+  const lang = useLang()
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, borderBottom: '1px solid var(--text-primary)', paddingBottom: 14, marginBottom: 22 }}>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: FONT, marginBottom: 8 }}>Conversation Intelligence</div>
-        <div style={{ fontFamily: FONT, fontWeight: 800, fontSize: 34, letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--text-primary)' }}>The Daily Signal</div>
+        <div style={{ fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: FONT, marginBottom: 8 }}>{tr('masthead_kicker', lang)}</div>
+        <div style={{ fontFamily: FONT, fontWeight: 800, fontSize: 34, letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--text-primary)' }}>{tr('masthead_title', lang)}</div>
       </div>
       <div style={{ textAlign: 'end', flexShrink: 0, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: FONT, lineHeight: 1.7 }}>
-        <div>Daily edition</div>
-        <div>Jul 2 · covers Jun 25 – Jul 2</div>
-        <div>Demo inv · {count}</div>
+        <div>{tr('edition', lang)}</div>
+        <div>{tr('dateline', lang)}</div>
+        <div>{tr('crumb_inv', lang)} · {storiesCount(ARTICLES.length, lang)}</div>
       </div>
     </div>
   )
@@ -42,7 +44,7 @@ function KpiTile({ label, value, delta, tone, idx = 0, total = 4, isMobile }) {
   const rightDiv = isMobile ? idx % 2 === 0 : idx < total - 1
   const bottomDiv = isMobile ? idx < 2 : false
   return (
-    <div style={{ padding: '16px 20px', borderRight: rightDiv ? '1px solid var(--border-default)' : 'none', borderBottom: bottomDiv ? '1px solid var(--border-default)' : 'none' }}>
+    <div style={{ padding: '16px 20px', borderInlineEnd: rightDiv ? '1px solid var(--border-default)' : 'none', borderBottom: bottomDiv ? '1px solid var(--border-default)' : 'none' }}>
       <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: FONT }}>{label}</div>
       <div style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.01em', color: 'var(--text-primary)', margin: '6px 0 5px', fontFamily: FONT }}>{value}</div>
       {delta && <div style={{ fontSize: 12, fontWeight: 600, color, fontFamily: FONT }}>{delta}</div>}
@@ -56,12 +58,15 @@ function FilterPill({ children }) {
 
 export default function NewsV2Page({ isMobile = false, sidebarWidth = 272, sidebarTransition = 'none', onOpenArticle }) {
   const pageBg = usePageBg()
+  const lang = useLang()
+  const he = lang === 'he'
+  const L = (a) => localizeArticle(a, lang)
 
   const featured = ARTICLES.filter(a => a.featured)
   const hero = featured[0]
   const topStories = featured.slice(1)
   const feed = ARTICLES.filter(a => !a.featured)
-  const sectionArticles = (key) => feed.filter(a => sectionOf(a) === key)
+  const sectionArticles = (key) => feed.filter(a => sectionOf(a) === key).map(L)
   const presentSections = SECTIONS.filter(s => feed.some(a => sectionOf(a) === s.key))
 
   // Highlight the section whose block is currently pinned at the top. Tracked by
@@ -98,12 +103,12 @@ export default function NewsV2Page({ isMobile = false, sidebarWidth = 272, sideb
         .news-read-link { color: var(--c100); }
         .news-card:hover .news-read-link { text-decoration: underline; }
       `}</style>
-      <div style={{ position: 'absolute', top: 0, insetInlineStart: sidebarWidth, insetInlineEnd: 0, bottom: 0, transition: sidebarTransition, display: 'flex', flexDirection: 'column', fontFamily: FONT }}>
+      <div dir={he ? 'rtl' : 'ltr'} style={{ position: 'absolute', top: 0, left: sidebarWidth, right: 0, bottom: 0, transition: sidebarTransition, display: 'flex', flexDirection: 'column', fontFamily: FONT }}>
         <PageHeader
-          title="News"
-          crumbs={['Demo inv']}
-          badge={<Badge variant="tinted" color="coral" shape="soft" uppercase={false}>feed · illustrative data</Badge>}
-          actions={<><FilterPill>📅 Last 7 days ▾</FilterPill><FilterPill>Surface ▾</FilterPill><Button variant="secondary" size="sm">Share</Button></>}
+          title={tr('page_title', lang)}
+          crumbs={[tr('crumb_inv', lang)]}
+          badge={<Badge variant="tinted" color="coral" shape="soft" uppercase={false}>{tr('badge_feed', lang)}</Badge>}
+          actions={<><FilterPill>{tr('filter_days', lang)}</FilterPill><FilterPill>{tr('filter_surface', lang)}</FilterPill><Button variant="secondary" size="sm">{tr('share', lang)}</Button></>}
         />
 
         <div ref={scrollRef} className="smooth-scroll" style={{ flex: 1, marginTop: 1, overflowY: 'auto', padding: '0 24px 56px' }}>
@@ -113,26 +118,26 @@ export default function NewsV2Page({ isMobile = false, sidebarWidth = 272, sideb
               <Masthead />
               <BreakingStrip />
 
-              {hero && <ArticleCard article={hero} onOpen={onOpenArticle} hero />}
+              {hero && <ArticleCard article={L(hero)} onOpen={onOpenArticle} hero />}
 
               {topStories.length > 0 && (
                 <div style={{ marginTop: 20 }}>
-                  <SectionEyebrow>Top stories</SectionEyebrow>
+                  <SectionEyebrow>{tr('top_stories', lang)}</SectionEyebrow>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 16, alignItems: 'start' }}>
-                    {topStories.map(a => <ArticleCard key={a.id} article={a} onOpen={onOpenArticle} gutter={false} />)}
+                    {topStories.map(a => <ArticleCard key={a.id} article={L(a)} onOpen={onOpenArticle} gutter={false} />)}
                   </div>
                 </div>
               )}
 
               <div style={{ marginTop: 26 }}>
-                <SectionEyebrow>Daily briefing · at a glance</SectionEyebrow>
+                <SectionEyebrow>{tr('daily_briefing', lang)}</SectionEyebrow>
                 <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 14, overflow: 'hidden', display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)' }}>
                   {[
                     { label: 'Calls handled', value: '1,284', delta: '↑ 12% vs 7-day avg', tone: 'neutral' },
                     { label: 'Avg sentiment', value: '72%', delta: '↑ 3 pts', tone: 'positive' },
                     { label: 'Escalations', value: '23', delta: '↓ 8%', tone: 'positive' },
                     { label: 'Top agent CSAT', value: '94%', delta: 'Martha Kellett', tone: 'neutral' },
-                  ].map((k, i, arr) => <KpiTile key={i} {...k} idx={i} total={arr.length} isMobile={isMobile} />)}
+                  ].map((k, i, arr) => { const kk = he ? { ...k, label: KPI_HE[i].label, delta: KPI_HE[i].delta } : k; return <KpiTile key={i} {...kk} idx={i} total={arr.length} isMobile={isMobile} /> })}
                 </div>
               </div>
 
@@ -140,7 +145,7 @@ export default function NewsV2Page({ isMobile = false, sidebarWidth = 272, sideb
                 <SectionBlock key={s.key} section={s} articles={sectionArticles(s.key)} onOpen={onOpenArticle} onMore={() => {}} />
               ))}
 
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '34px 0 4px' }}>You're all caught up.</div>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '34px 0 4px' }}>{tr('caught_up', lang)}</div>
             </div>
           </div>
         </div>

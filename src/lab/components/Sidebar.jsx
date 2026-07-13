@@ -613,6 +613,7 @@ function StorybookDisabledButton() {
 const NAV_ITEMS = [
   { id: 'dashboard',   label: 'Chat',             Icon: HomeIcon,        group: 'MAIN'         },
   { id: 'news-v2',     label: 'News',             Icon: NewsIcon,        group: 'MAIN'         },
+  { id: 'news-lab',    label: 'News · Directions',Icon: NewsIcon,        group: 'MAIN'         },
   { id: 'data',        label: 'Data',             Icon: DataV2Icon,      group: 'MAIN'         },
   { id: 'data-v2',     label: 'Data V2',          Icon: DataV2Icon,      group: 'MAIN'         },
   { id: 'topics',      label: 'Topics',           Icon: TopicsIcon,      group: 'MAIN' },
@@ -701,8 +702,20 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
   const [projectOpenKey, setProjectOpenKey] = useState(0)
   const [selectedLabProjectId, setSelectedLabProjectId] = useState(DESIGN_LAB_PROJECTS[0].id)
   const [langOpen, setLangOpen] = useState(false)
-  const [selectedLang, setSelectedLang] = useState({ code: 'HE', label: 'Hebrew' })
+  const [selectedLang, setSelectedLang] = useState(() => (
+    (typeof localStorage !== 'undefined' && localStorage.getItem('hear-lang') === 'he')
+      ? { code: 'HE', label: 'Hebrew' } : { code: 'EN', label: 'English' }
+  ))
   const langRef = useRef(null)
+  // Apply the chosen language to the document: 'he' → Hebrew + RTL. News reads it
+  // via useLang() and flips its own dir; other pages are unaffected for now.
+  function applyLang(code) {
+    const isHe = code === 'HE'
+    document.documentElement.lang = isHe ? 'he' : 'en'
+    try { localStorage.setItem('hear-lang', isHe ? 'he' : 'en') } catch { /* ignore */ }
+    window.dispatchEvent(new Event('hear-lang'))
+  }
+  useEffect(() => { applyLang(selectedLang.code) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const projectRef = useRef(null)
   const [notifOpen, setNotifOpen] = useState(false)
   const [notifUnseen, setNotifUnseen] = useState(true)
@@ -989,9 +1002,9 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                               style={{
                                 flex: 1, height: 28, border: 'none', borderRadius: 6, cursor: 'pointer',
                                 fontSize: 12, fontWeight: orgScope === id ? 600 : 400,
-                                background: orgScope === id ? '#fff' : 'transparent',
+                                background: orgScope === id ? 'var(--bg-card)' : 'transparent',
                                 color: orgScope === id ? 'var(--text-primary)' : 'var(--text-muted)',
-                                boxShadow: orgScope === id ? '0 1px 3px rgba(0,0,0,0.10)' : 'none',
+                                boxShadow: orgScope === id ? '0 1px 3px rgba(0,0,0,0.18)' : 'none',
                                 transition: 'background 160ms ease, color 160ms ease, box-shadow 160ms ease',
                                 userSelect: 'none',
                               }}
@@ -1519,7 +1532,7 @@ export default function Sidebar({ isMobile = false, mobileOpen = false, onMobile
                         return (
                           <div
                             key={lang.code}
-                            onClick={() => { setSelectedLang(lang); setLangOpen(false) }}
+                            onClick={() => { setSelectedLang(lang); applyLang(lang.code); setLangOpen(false) }}
                             style={{
                               padding: '8px 12px',
                               fontSize: 13,

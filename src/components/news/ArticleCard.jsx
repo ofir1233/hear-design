@@ -6,14 +6,15 @@
 import Button from '../Button.jsx'
 import { anchorId, articleWhen, evidenceOf } from './newsData.js'
 import { FONT, SERIF, Kicker, Meta, N, StatGrid, DataTable, DeepDive, EvidenceLink, renderWidget } from './newsShared.jsx'
+import { useLang, t as tr, whenLabel } from './newsI18n.js'
 
 const card = {
   background: 'var(--bg-card)', border: '1px solid var(--border-default)',
   borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
   transition: 'transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease',
 }
-function hoverOn(e) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)'; e.currentTarget.style.borderLeftColor = 'var(--c100)' }
-function hoverOff(e) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderLeftColor = 'var(--border-default)' }
+function hoverOn(e) { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.08)'; e.currentTarget.style.borderInlineStartColor = 'var(--c100)' }
+function hoverOff(e) { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderInlineStartColor = 'var(--border-default)' }
 
 const Headline = ({ children, size = 20 }) => (
   <h3 style={{ fontFamily: FONT, fontSize: size, fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.24, color: 'var(--text-primary)', margin: '10px 0 12px' }}>{children}</h3>
@@ -27,18 +28,20 @@ const Lede = ({ children, clamp }) => (
 // Fill/underline is driven by `.news-card:hover` (see the <style> in NewsV2Page),
 // so hovering anywhere on the card activates the CTA.
 function ReadCTA({ onOpen, variant = 'button' }) {
+  const lang = useLang()
+  const arrow = lang === 'he' ? '←' : '→'
   const go = e => { e.stopPropagation(); onOpen && onOpen() }
   if (variant === 'link') {
     return (
       <button className="news-read-link" onClick={go} style={{ marginTop: 12, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontWeight: 600, fontSize: 12.5, fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-        Expand <span style={{ fontSize: 13 }}>→</span>
+        {tr('expand', lang)} <span style={{ fontSize: 13 }}>{arrow}</span>
       </button>
     )
   }
   return (
     <button className="news-read-cta" onClick={go}
       style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, fontFamily: FONT, borderRadius: 8, padding: '8px 16px', cursor: 'pointer', transition: 'background 140ms ease, color 140ms ease' }}
-    >Expand <span style={{ fontSize: 14 }}>→</span></button>
+    >{tr('expand', lang)} <span style={{ fontSize: 14 }}>{arrow}</span></button>
   )
 }
 
@@ -56,6 +59,7 @@ function CardFooter({ article, onOpen }) {
 
 export default function ArticleCard({ article, onOpen, hero, gutter = true }) {
   const a = article
+  const lang = useLang()
   const open = () => onOpen && onOpen(a)
   // The hero (lead) sits permanently elevated so the hierarchy reads at rest;
   // other cards are flat and lift only on hover.
@@ -65,9 +69,9 @@ export default function ArticleCard({ article, onOpen, hero, gutter = true }) {
   const common = {
     id: anchorId(a.id), className: 'news-card', role: 'button', tabIndex: 0, onClick: open,
     onKeyDown: e => { if (e.key === 'Enter') open() },
-    onMouseEnter: e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = hoverShadow; e.currentTarget.style.borderLeftColor = 'var(--c100)' },
-    onMouseLeave: e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = restShadow; e.currentTarget.style.borderLeftColor = 'var(--border-default)' },
-    style: { ...card, borderLeft: '3px solid var(--border-default)', boxShadow: restShadow, marginBottom: gutter ? 20 : 0 },
+    onMouseEnter: e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = hoverShadow; e.currentTarget.style.borderInlineStartColor = 'var(--c100)' },
+    onMouseLeave: e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = restShadow; e.currentTarget.style.borderInlineStartColor = 'var(--border-default)' },
+    style: { ...card, borderInlineStart: '3px solid var(--border-default)', boxShadow: restShadow, marginBottom: gutter ? 20 : 0 },
   }
 
   // ── feature ── big hero: kicker + serif headline + lede + widget + stat grid
@@ -76,7 +80,7 @@ export default function ArticleCard({ article, onOpen, hero, gutter = true }) {
       <>
         <Kicker type={a.type} featured={a.featured} showDot />
         <Headline size={hero ? 30 : 26}>{a.title}</Headline>
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: FONT, marginBottom: 2 }}>By Hear Intelligence · {articleWhen(a).label}</div>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: FONT, marginBottom: 2 }}>{tr('byline', lang)} · {whenLabel(articleWhen(a).label, lang)}</div>
         {a.lede && <p style={{ fontFamily: SERIF, fontSize: hero ? 19 : 18, lineHeight: 1.55, color: 'var(--text-secondary)', margin: '10px 0 2px', maxWidth: 760 }}>{a.lede}</p>}
       </>
     )
@@ -160,7 +164,7 @@ export default function ArticleCard({ article, onOpen, hero, gutter = true }) {
         <div style={{ padding: '22px 24px' }}>
           <Kicker type={a.type} showDot />
           <Headline>{a.title}</Headline>
-          <blockquote style={{ margin: '12px 0 4px', paddingLeft: 16, borderLeft: '3px solid var(--border-default)' }}>
+          <blockquote style={{ margin: '12px 0 4px', paddingInlineStart: 16, borderInlineStart: '3px solid var(--border-default)' }}>
             <p style={{ fontFamily: SERIF, fontSize: 19, fontStyle: 'italic', lineHeight: 1.5, color: 'var(--text-primary)', margin: 0 }}>“{a.quote.text}”</p>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: FONT, marginTop: 8 }}>{a.quote.who}</div>
           </blockquote>          <CardFooter article={a} onOpen={open} />
@@ -278,7 +282,7 @@ export function MiniCard({ article, onOpen }) {
       role="button" tabIndex={0} onClick={open}
       onKeyDown={e => { if (e.key === 'Enter') open() }}
       onMouseEnter={hoverOn} onMouseLeave={hoverOff}
-      style={{ ...card, borderLeft: '3px solid var(--border-default)', height: '100%', display: 'flex', flexDirection: 'column', padding: '16px 18px' }}
+      style={{ ...card, borderInlineStart: '3px solid var(--border-default)', height: '100%', display: 'flex', flexDirection: 'column', padding: '16px 18px' }}
     >
       <Kicker type={a.type} showDot />
       <h3 style={{ fontFamily: FONT, fontSize: 15, fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.28, margin: '8px 0 6px', color: 'var(--text-primary)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{a.title}</h3>

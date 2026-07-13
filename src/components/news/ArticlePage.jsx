@@ -13,14 +13,16 @@ import ChatBubble from '../ChatBubble.jsx'
 import { apiFetch, apiHeaders } from '../../lib/api.js'
 import { TYPE, articleWhen, trustOf, evidenceOf } from './newsData.js'
 import { FONT, SERIF, usePageBg, Kicker, StatGrid, DataTable, WhyPanel, renderWidget } from './newsShared.jsx'
+import { useLang, t as tr, localizeArticle, localizeTrust, localizeTitle, typeLabel, whenLabel, actionLabel } from './newsI18n.js'
 
 function BackBar({ onBack, type }) {
-  const label = (TYPE[type] || {}).label || 'News'
+  const lang = useLang()
+  const label = typeLabel(type, (TYPE[type] || {}).label || 'News', lang)
   return (
     <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: FONT }}>
       <button onClick={onBack} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13.5, fontWeight: 600, padding: 0 }}>
-        <svg width="7" height="12" viewBox="0 0 7 12" fill="none"><path d="M5.5 1.5 2 6l3.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        Back to News
+        <svg width="7" height="12" viewBox="0 0 7 12" fill="none" style={{ transform: lang === 'he' ? 'scaleX(-1)' : 'none' }}><path d="M5.5 1.5 2 6l3.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+        {tr('back_to_news', lang)}
       </button>
       <span style={{ color: 'var(--n40)' }}>›</span>
       <span style={{ fontSize: 13.5, color: 'var(--c100)', fontWeight: 600, whiteSpace: 'nowrap' }}>{label}</span>
@@ -41,7 +43,9 @@ function SourceCard({ who, quote }) {
 
 export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle, nextTitle, isMobile = false, sidebarWidth = 272, sidebarTransition = 'none' }) {
   const pageBg = usePageBg()
-  const a = article
+  const lang = useLang()
+  const he = lang === 'he'
+  const a = localizeArticle(article, lang)
   const askLeft = isMobile ? '50%' : `calc(50% + ${sidebarWidth / 2}px)`
   const askWidth = isMobile ? 'calc(100% - 3rem)' : `min(720px, calc(100% - ${sidebarWidth}px - 3rem))`
 
@@ -62,7 +66,7 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
     const stats = (a.stats || []).map(s => `${s.label}: ${s.value}`).join('; ')
     const excerpts = (a.sources || []).map(s => `"${s.quote}"`).join(' ')
     return [
-      "You are Hear's conversation-intelligence assistant. The reader is viewing this item in the News feed and wants to discuss it — answer concisely and specifically about it; the figures are illustrative.",
+      "You are Hear's conversation-intelligence assistant. The reader is viewing this item in the News feed and wants to discuss it — answer concisely and specifically about it; the figures are illustrative." + (he ? ' Respond in Hebrew.' : ''),
       `TITLE: ${a.title}`,
       a.lede ? `SUMMARY: ${a.lede}` : '',
       (a.body && a.body.length) ? `DETAILS: ${a.body.join(' ')}` : '',
@@ -90,8 +94,8 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: pageBg, transition: sidebarTransition }}>
-      <div style={{ position: 'absolute', top: 0, left: sidebarWidth, right: 0, bottom: 0, transition: sidebarTransition, display: 'flex', flexDirection: 'column', fontFamily: FONT }}>
-        <PageHeader left={<BackBar onBack={onBack} type={a.type} />} actions={<><Button variant="secondary" size="sm">☆ Follow</Button><Button variant="secondary" size="sm">Share</Button></>} />
+      <div dir={he ? 'rtl' : 'ltr'} style={{ position: 'absolute', top: 0, left: sidebarWidth, right: 0, bottom: 0, transition: sidebarTransition, display: 'flex', flexDirection: 'column', fontFamily: FONT }}>
+        <PageHeader left={<BackBar onBack={onBack} type={a.type} />} actions={<><Button variant="secondary" size="sm">{tr('follow', lang)}</Button><Button variant="secondary" size="sm">{tr('share', lang)}</Button></>} />
 
         <div className="smooth-scroll" style={{ flex: 1, overflowY: 'auto', padding: '24px 24px 160px' }}>
           <article style={{ maxWidth: 720, margin: '0 auto', width: '100%' }}>
@@ -99,16 +103,16 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
             <Kicker type={a.type} showDot />
             <h1 style={{ fontFamily: FONT, fontSize: 34, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.12, color: 'var(--text-primary)', margin: '12px 0 10px' }}>{a.title}</h1>
             <div style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: FONT, paddingBottom: 18, marginBottom: 22, borderBottom: '1px solid var(--border-default)' }}>
-              By Hear Intelligence · {articleWhen(a).label}
+              {tr('byline', lang)} · {whenLabel(articleWhen(a).label, lang)}
             </div>
 
             {/* Why you're seeing this — provenance + evidence (trust) */}
-            <WhyPanel trust={trustOf(a)} evidence={evidenceOf(a)} />
+            <WhyPanel trust={localizeTrust(trustOf(a), a.type, lang)} evidence={evidenceOf(a)} />
 
             {a.template === 'riskAlert' && (
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', background: 'var(--badge-coral-bg)', border: '1px solid var(--badge-coral-bd)', borderRadius: 12, padding: '14px 16px', marginBottom: 20 }}>
                 <span style={{ color: 'var(--c100)', fontSize: 16, lineHeight: 1.4 }}>⚠</span>
-                <div style={{ fontSize: 14, color: 'var(--text-primary)', fontFamily: FONT, lineHeight: 1.5 }}>Forward-looking risk — this flags a <b>projected</b> breach based on the current trend, not a past event.</div>
+                <div style={{ fontSize: 14, color: 'var(--text-primary)', fontFamily: FONT, lineHeight: 1.5 }}>{tr('risk_banner', lang)}</div>
               </div>
             )}
 
@@ -143,7 +147,7 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
                       </div>
                     ))}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: FONT, marginTop: 14 }}>The full report and infographic open in Reports.</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: FONT, marginTop: 14 }}>{tr('recap_footnote', lang)}</div>
                 </div>
               </div>
             )}
@@ -160,7 +164,7 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
 
             {/* Quote */}
             {a.quote && (
-              <blockquote style={{ margin: '18px 0', paddingLeft: 18, borderLeft: '3px solid var(--c100)' }}>
+              <blockquote style={{ margin: '18px 0', paddingInlineStart: 18, borderInlineStart: '3px solid var(--c100)' }}>
                 <p style={{ fontFamily: SERIF, fontSize: 22, fontStyle: 'italic', lineHeight: 1.5, color: 'var(--text-primary)', margin: 0 }}>“{a.quote.text}”</p>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: FONT, marginTop: 10 }}>{a.quote.who}</div>
               </blockquote>
@@ -170,12 +174,12 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
             {a.sources && a.sources.length > 0 && (
               <div style={{ marginTop: 26 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: FONT, marginBottom: 14 }}>
-                  <span>Sources · calls behind this</span><span style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+                  <span>{tr('sources_hdr', lang)}</span><span style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
                   <button
                     onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
                     onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
                     style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--color-interactive)', fontFamily: FONT, whiteSpace: 'nowrap' }}>
-                    Open in Data →
+                    {tr('open_in_data', lang)} {he ? '←' : '→'}
                   </button>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
@@ -184,10 +188,21 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
               </div>
             )}
 
+            {/* Prev / next — anchored above the actions so the growing chat below never pushes it around */}
+            <div style={{ marginTop: 32 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-muted)', fontFamily: FONT, marginBottom: 14 }}>
+                <span>{he ? 'עוד סיפורים' : 'More stories'}</span><span style={{ flex: 1, height: 1, background: 'var(--border-default)' }} />
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <NavCard dir="prev" title={localizeTitle(prevTitle, lang)} onClick={onPrev} />
+                <NavCard dir="next" title={localizeTitle(nextTitle, lang)} onClick={onNext} />
+              </div>
+            </div>
+
             {/* Actions */}
             {a.actions && (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 26, paddingTop: 20, borderTop: '1px solid var(--border-default)' }}>
-                {a.actions.map((act, i) => <Button key={i} variant={i === 0 ? 'primary' : 'secondary'} size="sm">{act}</Button>)}
+                {a.actions.map((act, i) => <Button key={i} variant={i === 0 ? 'primary' : 'secondary'} size="sm">{actionLabel(act, lang)}</Button>)}
               </div>
             )}
 
@@ -219,12 +234,6 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
                 <div ref={convEndRef} style={{ scrollMarginBottom: 96 }} />
               </div>
             )}
-
-            {/* Prev / next */}
-            <div style={{ display: 'flex', gap: 12, marginTop: 32 }}>
-              <NavCard dir="prev" title={prevTitle} onClick={onPrev} />
-              <NavCard dir="next" title={nextTitle} onClick={onNext} />
-            </div>
           </article>
         </div>
       </div>
@@ -239,16 +248,17 @@ export default function ArticlePage({ article, onBack, onPrev, onNext, prevTitle
 }
 
 function NavCard({ dir, title, onClick }) {
+  const lang = useLang()
   const isNext = dir === 'next'
   if (!title) return <div style={{ flex: 1 }} />
   return (
     <button onClick={onClick} style={{
-      flex: 1, textAlign: isNext ? 'right' : 'left', background: 'var(--bg-card)', border: '1px solid var(--border-default)',
+      flex: 1, textAlign: isNext ? 'end' : 'start', background: 'var(--bg-card)', border: '1px solid var(--border-default)',
       borderRadius: 12, padding: '14px 16px', cursor: 'pointer', minWidth: 0,
     }}
       onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--text-muted)'}
       onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-default)'}>
-      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: FONT }}>{isNext ? 'Next story ›' : '‹ Previous story'}</div>
+      <div style={{ fontSize: 11, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: FONT }}>{isNext ? tr('next_story', lang) : tr('prev_story', lang)}</div>
       <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', fontFamily: FONT, marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
     </button>
   )

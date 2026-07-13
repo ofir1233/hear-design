@@ -5,6 +5,7 @@
  */
 import ArticleCard, { MiniCard } from './ArticleCard.jsx'
 import { FONT, usePageBg } from './newsShared.jsx'
+import { useLang, sectionLabel } from './newsI18n.js'
 
 // Chart/prose stories lead the section (full width, stacked); the lighter items
 // flow into a compact multi-across row of MiniCards below.
@@ -12,6 +13,7 @@ const RICH = new Set(['feature', 'standard', 'table', 'rootCause', 'recap', 'ris
 
 export default function SectionBlock({ section, articles, onOpen }) {
   const pageBg = usePageBg()
+  const lang = useLang()
   if (!articles || !articles.length) return null
   const rich = articles.filter(a => RICH.has(a.template))
   const light = articles.filter(a => !RICH.has(a.template))
@@ -19,7 +21,7 @@ export default function SectionBlock({ section, articles, onOpen }) {
     <section id={`section-${section.key}`} style={{ marginTop: 46 }}>
       {/* Sticky header: labels where you are as you scroll through this section. */}
       <div style={{ position: 'sticky', top: 0, zIndex: 20, background: pageBg, display: 'flex', alignItems: 'center', padding: '14px 0 12px', marginBottom: 16, borderBottom: '1px solid var(--border-default)', boxShadow: `0 8px 12px -10px rgba(0,0,0,0.18)` }}>
-        <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-primary)', margin: 0, whiteSpace: 'nowrap' }}>{section.label}</h2>
+        <h2 style={{ fontFamily: FONT, fontSize: 14, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-primary)', margin: 0, whiteSpace: 'nowrap' }}>{sectionLabel(section.key, section.label, lang)}</h2>
       </div>
 
       {rich.map(a => <ArticleCard key={a.id} article={a} onOpen={onOpen} />)}

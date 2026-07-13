@@ -33,6 +33,7 @@ import UsagePage from '../components/settings/UsagePage.jsx'
 import ActionsPage from '../components/actions/ActionsPage.jsx'
 import TopicsPage from '../components/topics/TopicsPage.jsx'
 import NewsV2Page from '../components/news/NewsV2Page.jsx'
+import NewsDirections from '../components/news/NewsDirections.jsx'
 import ArticlePage from '../components/news/ArticlePage.jsx'
 import { ARTICLES } from '../components/news/newsData.js'
 import Badge from '../components/Badge.jsx'
@@ -860,6 +861,8 @@ Ask me anything about your operations, or explore a topic below to get started.`
         />
       ) : activePage === 'news-v2' ? (
         <NewsV2Page isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} companyConfig={companyConfig} onOpenArticle={openArticle} />
+      ) : activePage === 'news-lab' ? (
+        <NewsDirections isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} variant={route.sub || 'edition'} onVariant={(v) => navigate(`/news-lab/${v}`)} />
       ) : activePage === 'topics' ? (
         <TopicsPage isMobile={isMobile} sidebarWidth={effectiveSidebarWidth} sidebarTransition={sidebarTransition} />
       ) : activePage === 'knowledge' ? (
